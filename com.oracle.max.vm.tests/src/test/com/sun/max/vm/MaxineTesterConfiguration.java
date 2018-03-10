@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
@@ -21,8 +21,11 @@
  */
 package test.com.sun.max.vm;
 
+import static com.sun.max.ide.TestCaseClassSet.isJUnitTestCaseClass;
+
 import java.io.*;
 import java.util.*;
+import java.util.zip.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -79,11 +82,28 @@ public class MaxineTesterConfiguration {
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
 
     private static void findJUnitTests() {
-        new ClassSearch() {
+        new ClassSearch(true) {
+            @Override
+            protected boolean visitArchiveEntry(ZipFile archive, ZipEntry resource) {
+                return true;
+            }
+
+            @Override
+            protected boolean visitFile(File parent, String resource) {
+                return !resource.toLowerCase().contains("test")   // Only visit tests
+                       || resource.contains("JsrInliningTestSource") // Omit because of Unverifiable test
+                       || resource.contains("ext/graal")             // Omit because of external dependency
+                       || visit(false, resource.replace(File.separatorChar, '.'));
+            }
+
             @Override
             protected boolean visitClass(String className) {
-                if (className.endsWith(".AutoTest")) {
-                    zeeJUnitTests.add(className);
+                try {
+                    Class javaClass = Class.forName(className, false, getClass().getClassLoader());
+                    if (isJUnitTestCaseClass(javaClass)) {
+                        zeeJUnitTests.add(className);
+                    }
+                } catch (Exception ignored) {
                 }
                 return true;
             }
@@ -142,13 +162,23 @@ public class MaxineTesterConfiguration {
 
         vmoutput(findOutputTests("test.vm.output."));
 
-        // Register all "*.Autotest classes on the class path
+        // Register all classes containing JUnit tests on the class path
         findJUnitTests();
-        junit("test.crossisa.armv7.t1x.AutoTest", FAIL_AMD64);
-        junit("test.crossisa.armv7.t1x.AutoTest", FAIL_AARCH64);
-        junit("test.crossisa.aarch64.t1x.AutoTest", FAIL_AMD64);
-        junit("test.crossisa.aarch64.t1x.AutoTest", FAIL_ARMV7);
-        junit("test.crossisa.armv7.jtt.AutoTest", FAIL_AMD64);
+        junit("test.com.sun.max.asm.amd64.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.amd64.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.amd64.RawExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.arm.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.arm.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.arm.RawExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ia32.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ia32.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ia32.RawExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ppc.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ppc.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ppc.RawExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.sparc.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.sparc.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.sparc.RawExternalTest", FAIL_ALL);
 
         jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class, FAIL_ALL);

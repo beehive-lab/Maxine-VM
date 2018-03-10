@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -53,6 +53,8 @@ public abstract class AdapterGenerator {
         Classes.forName(className);
     }
 
+    @HOSTED_ONLY
+    static boolean initialisedForOfflineCrossISAtesting = false;
     /**
      * Local alias to {@link VMFrameLayout#STACK_SLOT_SIZE}.
      */
@@ -120,7 +122,18 @@ public abstract class AdapterGenerator {
         opt = vm().registerConfigs.standard;
         this.adapterType = adapterType;
         AdapterGenerator old = generatorsByCallee.put(adapterType.callee, this);
-        assert old == null;
+        if (!MaxineVM.isHosted() || !initialisedForOfflineCrossISAtesting) {
+            assert old == null;
+        }
+    }
+
+    /**
+     * Relax the test which prevents overwriting adapters. Necessary when testing
+     * adapters for a platform other than the hosting platform.
+     */
+    @HOSTED_ONLY
+    public static void initialiseForOfflineCrossISAtesting() {
+        initialisedForOfflineCrossISAtesting = true;
     }
 
     /**
@@ -186,7 +199,7 @@ public abstract class AdapterGenerator {
      *         compiler configured for the VM.
      */
     public static AdapterGenerator forCallee(ClassMethodActor callee, CallEntryPoint callingConvention) {
-        if (!vm().compilationBroker.needsAdapters() || vm().compilationBroker.isOffline()) {
+        if (!vm().compilationBroker.needsAdapters() || (vm().compilationBroker.isOffline() && !vm().compilationBroker.needOfflineAdapters())) {
             // Only one calling convention; no adapters in use
             return null;
         }

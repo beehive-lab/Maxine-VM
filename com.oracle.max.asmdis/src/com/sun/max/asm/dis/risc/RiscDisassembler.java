@@ -102,26 +102,29 @@ public abstract class RiscDisassembler extends Disassembler {
         final int instruction = endianness().readInt(stream);
         final List<DisassembledObject> result = new LinkedList<DisassembledObject>();
         final byte[] instructionBytes = endianness().toBytes(instruction);
-        for (SpecificityGroup specificityGroup : assembly().specificityGroups()) {
-            for (OpcodeMaskGroup opcodeMaskGroup : specificityGroup.opcodeMaskGroups()) {
-                final int opcode = instruction & opcodeMaskGroup.mask();
-                for (RiscTemplate template : opcodeMaskGroup.templatesFor(opcode)) {
-                    // Skip synthetic instructions when preference is for raw instructions,
-                    // and skip instructions with a different number of arguments than requested if so (i.e. when running the AssemblyTester):
-                    if (template != null && template.isDisassemblable() && ((abstractionPreference() == AbstractionPreference.SYNTHETIC) || !template.instructionDescription().isSynthetic())) {
-                        final List<Argument> arguments = disassemble(instruction, template);
-                        if (arguments != null && (expectedNumberOfArguments() < 0 || arguments.size() == expectedNumberOfArguments())) {
-                            if (isLegalArgumentList(template, arguments)) {
-                                final Assembler assembler = createAssembler(currentPosition);
-                                try {
-                                    assembly().assemble(assembler, template, arguments);
-                                    final byte[] bytes = assembler.toByteArray();
-                                    if (Arrays.equals(bytes, instructionBytes)) {
-                                        final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
-                                        result.add(disassembledInstruction);
+        final List<SpecificityGroup> specificityGroups = assembly().specificityGroups();
+        if (specificityGroups != null) {
+            for (SpecificityGroup specificityGroup : specificityGroups) {
+                for (OpcodeMaskGroup opcodeMaskGroup : specificityGroup.opcodeMaskGroups()) {
+                    final int opcode = instruction & opcodeMaskGroup.mask();
+                    for (RiscTemplate template : opcodeMaskGroup.templatesFor(opcode)) {
+                        // Skip synthetic instructions when preference is for raw instructions,
+                        // and skip instructions with a different number of arguments than requested if so (i.e. when running the AssemblyTester):
+                        if (template != null && template.isDisassemblable() && ((abstractionPreference() == AbstractionPreference.SYNTHETIC) || !template.instructionDescription().isSynthetic())) {
+                            final List<Argument> arguments = disassemble(instruction, template);
+                            if (arguments != null && (expectedNumberOfArguments() < 0 || arguments.size() == expectedNumberOfArguments())) {
+                                if (isLegalArgumentList(template, arguments)) {
+                                    final Assembler assembler = createAssembler(currentPosition);
+                                    try {
+                                        assembly().assemble(assembler, template, arguments);
+                                        final byte[] bytes = assembler.toByteArray();
+                                        if (Arrays.equals(bytes, instructionBytes)) {
+                                            final DisassembledInstruction disassembledInstruction = createDisassembledInstruction(currentPosition, bytes, template, arguments);
+                                            result.add(disassembledInstruction);
+                                        }
+                                    } catch (AssemblyException assemblyException) {
+                                        ProgramWarning.message("could not assemble matching instruction: " + template);
                                     }
-                                } catch (AssemblyException assemblyException) {
-                                    ProgramWarning.message("could not assemble matching instruction: " + template);
                                 }
                             }
                         }

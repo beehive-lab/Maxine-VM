@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,10 +33,13 @@ public class Aarch64Assembler extends AbstractAssembler {
     private static final int Rs2Offset = 16;
     private static final int Rs3Offset = 10;
     private static final int RtOffset = 0;
+    private static final int Rt2Offset = 10;
+    private static final int RnOffset = 5;
     /**
      * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
      */
     public final CiRegister frameRegister;
+    public final CiRegister scratchRegister;
 
     @Override
     public void patchJumpTarget(int branch, int target) {
@@ -202,6 +205,12 @@ public class Aarch64Assembler extends AbstractAssembler {
     private static final int BarrierOp = 0xD503301F;
     private static final int BarrierKindOffset = 8;
 
+
+    private static final int LoadStorePairOp = 0b101_0 << 26;
+    private static final int LoadStorePairPostIndexOp = 0b101_0_001 << 23;
+    private static final int LoadStorePairPreIndexOp = 0b101_0_011 << 23;
+    private static final int LoadStorePairImm7Offset = 15;
+
     /**
      * Encoding for all instructions.
      */
@@ -221,6 +230,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         LDXR(0x081f7c00),
         LDAR(0x8dffc00),
         LDAXR(0x85ffc00),
+
+
+        LDP(0b1 << 22),
+        STP(0b0 << 22),
 
         STR(0x00000000),
         STXR(0x08007c00),
@@ -528,6 +541,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     public Aarch64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
+        this.scratchRegister = registerConfig == null ? Aarch64.r16 : registerConfig.getScratchRegister();
     }
 
     /* Conditional Branch (5.2.1) */
@@ -642,6 +656,21 @@ public class Aarch64Assembler extends AbstractAssembler {
         return imm << ConditionalBranchImmOffset;
     }
 
+    /**
+     * Branch unconditionally to a label.
+     * @param label
+     */
+    public void b(Label label) {
+        // TODO Handle case where offset is too large for a single
+        // branch immediate instruction.
+        if (label.isBound()) {
+            int offset = label.position() - codeBuffer.position();
+            b(offset);
+        } else {
+            label.addPatchAt(codeBuffer.position());
+            emitInt(PatchLabelKind.BRANCH_UNCONDITIONALLY.encoding);
+        }
+    }
     /* Unconditional Branch (immediate) (5.2.2) */
 
     /**
@@ -667,6 +696,93 @@ public class Aarch64Assembler extends AbstractAssembler {
      */
     public void bl(int imm28) {
         unconditionalBranchImmInstruction(imm28, Instruction.BL, -1);
+    }
+
+
+    /**
+     * Return an integer containing the encoding of an unconditional branch to
+     * label (address) instruction.
+     * @param imm28 -- the branch target displacement
+     * @return
+     */
+    public static int blImmHelper(int imm28) {
+        return Instruction.BL.encoding | UnconditionalBranchImmOp | imm28;
+    }
+
+
+    /**
+     * Mask for the displacement bits of a branch immediate.
+     */
+    private static final int B_IMM_ADDRESS_MASK = 0x3FFFFFF;
+
+    /**
+     * Return the displacement of the target of a branch immediate instruction.
+     * @param instruction
+     * @return
+     */
+    public static int bImmExtractDisplacement(int instruction) {
+        assert (UnconditionalBranchImmOp & instruction) != 0 : "Not a branch immediate instruction.";
+        int displacement = B_IMM_ADDRESS_MASK & instruction;
+
+        // check the sign bit
+        if (((1 << 25) & displacement) == 0) {
+            return displacement << 2;
+        }
+        // negative number -- sign extend.
+        return (displacement << 2) | 0xF0000000;
+    }
+
+    /**
+     * Load Pair of Registers calculates an address from a base register value and an immediate
+     * offset, and stores two 32-bit words or two 64-bit doublewords to the calculated address, from
+     * two registers.
+     */
+    public void ldp(int size, CiRegister rt, CiRegister rt2, Aarch64Address address) {
+        assert size == 32 || size == 64;
+        loadStorePairInstruction(Instruction.LDP, rt, rt2, address, generalFromSize(size));
+    }
+
+    /**
+     * Store Pair of Registers calculates an address from a base register value and an immediate
+     * offset, and stores two 32-bit words or two 64-bit doublewords to the calculated address, from
+     * two registers.
+     */
+    public void stp(int size, CiRegister rt, CiRegister rt2, Aarch64Address address) {
+        assert size == 32 || size == 64;
+        loadStorePairInstruction(Instruction.STP, rt, rt2, address, generalFromSize(size));
+    }
+
+    private void loadStorePairInstruction(Instruction instr, CiRegister rt, CiRegister rt2, Aarch64Address address, InstructionType type) {
+        int scaledOffset = NumUtil.getNbitNumberInt(7) & address.getImmediateRaw();  // LDP/STP use a 7-bit scaled
+                                                                     // offset
+        int memop = type.encoding | instr.encoding | scaledOffset << LoadStorePairImm7Offset | rt2(rt2) | rn(address.getBase()) | rt(rt);
+        switch (address.getAddressingMode()) {
+            case IMMEDIATE_SCALED:
+                emitInt(memop | LoadStorePairOp | (0b010 << 23));
+                break;
+            case IMMEDIATE_POST_INDEXED:
+                emitInt(memop | LoadStorePairOp | (0b001 << 23));
+                break;
+            case IMMEDIATE_PRE_INDEXED:
+                emitInt(memop | LoadStorePairOp | (0b011 << 23));
+                break;
+            default:
+                throw new Error("Unhandled addressing mode: " + address.getAddressingMode());
+        }
+    }
+
+    /**
+     * Patch the address part of a branch immediate instruction. Returns the
+     * patched instruction.
+     * @param instruction -- the instruction to be patched
+     * @param displacement -- the targets displacement
+     * @return
+     */
+    public static int bImmPatch(int instruction, int displacement) {
+        assert (UnconditionalBranchImmOp & instruction) != 0 : "Not a branch immediate instruction.";
+        assert NumUtil.isSignedNbit(28, displacement) && (displacement & 0x3) == 0
+                        : "Immediate has to be 28bit signed number and word aligned";
+        return (instruction & ~B_IMM_ADDRESS_MASK) | (displacement >> 2);
     }
 
     private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
@@ -747,6 +863,20 @@ public class Aarch64Assembler extends AbstractAssembler {
         int transferSize = NumUtil.log2Ceil(srcSize / 8);
         loadStoreInstruction(rt, address, generalFromSize(targetSize), Instruction.LDRS, transferSize);
     }
+
+// Might be same with ldrs from above
+// public void ldrshw(CiRegister dest, Aarch64Address address) {
+// if (address.getAddressingMode() == address.getAddressingMode().IMMEDIATE_UNSCALED) {
+// int instruction = 0x2e6 << 22;
+// instruction |= dest.getEncoding();
+// instruction |= address.base().getEncoding() << 5;
+// instruction |= address.getImmediate() << 10;
+// System.out.println("instruction is " + instruction);
+// emitInt(instruction);
+// } else {
+// throw new Error("unimplemented");
+// }
+// }
 
     /**
      * Stores register rt into memory pointed by address.
@@ -1239,6 +1369,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         moveWideImmInstruction(dst, uimm16, shiftAmt, generalFromSize(size), Instruction.MOVZ);
     }
 
+    public static int movzHelper(int size, CiRegister dst, int uimm16, int shiftAmt) {
+        return moveWideImmInstructionHelper(dst, uimm16, shiftAmt, generalFromSize(size), Instruction.MOVZ);
+    }
+
     /**
      * dst = ~(uimm16 << shiftAmt).
      *
@@ -1264,6 +1398,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         moveWideImmInstruction(dst, uimm16, pos, generalFromSize(size), Instruction.MOVK);
     }
 
+    public static int movkHelper(int size, CiRegister dst, int uimm16, int pos) {
+        return moveWideImmInstructionHelper(dst, uimm16, pos, generalFromSize(size), Instruction.MOVK);
+    }
+
     private void moveWideImmInstruction(CiRegister dst, int uimm16, int shiftAmt,
                                         InstructionType type, Instruction instr) {
         assert Aarch64.isGeneralPurposeReg(dst);
@@ -1278,6 +1416,22 @@ public class Aarch64Assembler extends AbstractAssembler {
                 rd(dst) |
                 uimm16 << MoveWideImmOffset |
                 shiftAmt << MoveWideShiftOffset);
+    }
+
+    private static int moveWideImmInstructionHelper(CiRegister dst, int uimm16, int shiftAmt,
+                                        InstructionType type, Instruction instr) {
+        assert Aarch64.isGeneralPurposeReg(dst);
+        assert NumUtil.isUnsignedNbit(16, uimm16) : "Immediate has to be unsigned 16bit";
+        assert shiftAmt == 0 || shiftAmt == 16 ||
+                (type == InstructionType.General64 && (shiftAmt == 32 || shiftAmt == 48)) :
+                "Invalid shift amount: " + shiftAmt;
+        shiftAmt >>= 4;
+        int instrEncoding = instr.encoding | MoveWideImmOp;
+        return type.encoding |
+                instrEncoding |
+                rd(dst) |
+                uimm16 << MoveWideImmOffset |
+                shiftAmt << MoveWideShiftOffset;
     }
 
     /**
@@ -1510,6 +1664,22 @@ public class Aarch64Assembler extends AbstractAssembler {
         addSubExtendedInstruction(dst, src1, src2, extendType, shiftAmt, generalFromSize(size), Instruction.ADDS);
     }
 
+    protected void checkConstraint(boolean passed, String expression) {
+        if (!passed) {
+            throw new IllegalArgumentException(expression);
+        }
+    }
+
+    public void addlsl(final CiRegister rd, final CiRegister rn, final CiRegister rm, final int shiftImm) {
+        int instruction = 0x8b000000;
+        checkConstraint(0 <= shiftImm && shiftImm <= 31, "0 <= shitImm && shitImm <= 31");
+        instruction |= rd.getEncoding();
+        instruction |= rn.getEncoding() << 5;
+        instruction |= shiftImm << 10;
+        instruction |= rm.getEncoding() << 16;
+        emitInt(instruction);
+    }
+
     /**
      * dst = src1 - extendType(src2) << imm.
      *
@@ -1683,7 +1853,7 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     /* Variable Shift (5.5.4) */
     /**
-     * dst = src1 >> (src2 & log2(size)).
+     * dst = src1 >> src2.
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null or stackpointer.
@@ -1695,7 +1865,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /**
-     * dst = src1 << (src2 & log2(size)).
+     * dst = src1 << src2.
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null or stackpointer.
@@ -1707,7 +1877,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /**
-     * dst = src1 >>> (src2 & log2(size)).
+     * dst = src1 >>> src2.
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null or stackpointer.
@@ -2492,12 +2662,11 @@ public class Aarch64Assembler extends AbstractAssembler {
                 uimm16 << SystemImmediateOffset);
     }
 
-
     /**
      * Clear Exclusive: clears the local record of the executing processor that an address has had a request for
      * an exclusive access.
      */
-    public void clrex() {
+    public void clearex() {
         emitInt(Instruction.CLREX.encoding);
     }
 
@@ -2511,7 +2680,8 @@ public class Aarch64Assembler extends AbstractAssembler {
         LOAD_STORE(0x9, "ISHLD"),
         STORE_STORE(0xA, "ISHST"),
         STORE_LOAD(0xA, "ISHST"), /* not too sure about this */
-        ANY_ANY(0xB, "ISH");
+        ANY_ANY(0xB, "ISH"),
+        SY(0xF, "SY");
 
         public final int encoding;
         public final String optionName;
@@ -2607,6 +2777,15 @@ public class Aarch64Assembler extends AbstractAssembler {
     private static int rt(CiRegister reg) {
         return reg.getEncoding() << RtOffset;
     }
+
+    private static int rt2(CiRegister reg) {
+        return reg.getEncoding() << Rt2Offset;
+    }
+
+    private static int rn(CiRegister reg) {
+        return reg.getEncoding() << RnOffset;
+    }
+
 
     private static final Predicate<CiRegister> IS_GENERAL_PURPOSE_REG = new Predicate<CiRegister>() {
         @Override

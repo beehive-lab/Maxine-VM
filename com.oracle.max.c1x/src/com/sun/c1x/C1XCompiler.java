@@ -158,9 +158,13 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
      * @return true if the stub is omitted.
      */
     private boolean omitStub(CompilerStub.Id id) {
-        if (Platform.target().arch.is32bit() && (id == CompilerStub.Id.fneg || id == CompilerStub.Id.dneg || id == CompilerStub.Id.d2l || id == CompilerStub.Id.f2l)) {
+        if (Platform.target().arch.isARM() && (id == CompilerStub.Id.fneg || id == CompilerStub.Id.dneg || id == CompilerStub.Id.d2l || id == CompilerStub.Id.f2l)) {
             return true;
         }
+        if (Platform.target().arch.isAarch64() && (id == CompilerStub.Id.fneg || id == CompilerStub.Id.dneg)) {
+            return true;
+        }
+
         return false;
     }
 

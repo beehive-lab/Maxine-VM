@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -17,15 +17,15 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.crossisa.armv7.t1x;
+package com.oracle.max.vm.ext.t1x.aarch64;
 
-public class ByteCodeTests {
+import com.oracle.max.vm.ext.t1x.*;
 
-    public int run() {
-        int mycounter = 0;
-        for (int i = 0; i < 20; i++) {
-            mycounter++;
-        }
-        return mycounter;
+
+public class Aarch64T1XCompilationTest extends Aarch64T1XCompilation {
+
+    public Aarch64T1XCompilationTest(T1X compiler) {
+        super(compiler);
     }
+
 }

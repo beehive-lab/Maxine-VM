@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,7 +32,6 @@ import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.option.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -140,6 +139,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
             testValues[i] = false;
         }
     }
+
     private long[] generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
         Aarch64CodeWriter code = new Aarch64CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
@@ -149,12 +149,9 @@ public class Aarch64T1XpTest extends MaxTestCase {
         r.assembleStartup();
         r.compile();
         r.link();
-        long[] simulatedRegisters = r.runRegisteredSimulation();
-        r.cleanProcesses();
-        if (POST_CLEAN_FILES) {
-            r.cleanFiles();
-        }
-        return simulatedRegisters;
+        r.runSimulation();
+        r.reset();
+        return r.getSimulatedLongRegisters();
     }
 
     public Aarch64T1XpTest() {
@@ -1026,52 +1023,6 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
 
     }
-    static final class BranchInfo {
-
-        private int bc;
-        private int start;
-        private int end;
-        private int expected;
-        private int step;
-
-        private BranchInfo(int bc, int start, int end, int expected, int step) {
-            this.bc = bc;
-            this.end = end;
-            this.start = start;
-            this.expected = expected;
-            this.step = step;
-        }
-
-        public int getBytecode() {
-            return bc;
-        }
-
-        public int getStart() {
-            return start;
-        }
-
-        public int getEnd() {
-            return end;
-        }
-
-        public int getExpected() {
-            return expected;
-        }
-
-        public int getStep() {
-            return step;
-        }
-    }
-
-    private static final List<BranchInfo> branches = new LinkedList<>();
-    static {
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10, 1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11, 1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPGT, 5, 0, 0, -1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPGE, 5, 0, -1, -1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPNE, 5, 6, 6, 1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 0, 2, 2));
-    }
 
     public void work_emitPrologueTests() throws Exception {
         initialiseFrameForCompilation();
@@ -1102,278 +1053,4 @@ public class Aarch64T1XpTest extends MaxTestCase {
         long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
     }
 
-    public void work_BranchBytecodes() throws Exception {
-        /*
-         * Based on pg41 JVMSv1.7 ... iconst_0 istore_1 goto 8 wrong it needs to be 6 iinc 1 1 iload_1 bipush 100
-         * if_icmplt 5 this is WRONG it needs to be -6 // no return. corresponding to int i; for(i = 0; i < 100;i++) { ;
-         * // empty loop body } return;
-         */
-        boolean [] testvalues = {true};
-        for (BranchInfo bi : branches) {
-            expectedValues[0] = bi.getExpected();
-            testValues[0] = true;
-            byte[] instructions = new byte[16];
-            if (bi.getStart() == 0) {
-                instructions[0] = (byte) Bytecodes.ICONST_0;
-            } else {
-                instructions[0] = (byte) Bytecodes.ICONST_5;
-            }
-            instructions[1] = (byte) Bytecodes.ISTORE_1;
-            instructions[2] = (byte) Bytecodes.GOTO;
-            instructions[3] = (byte) 0;
-            instructions[4] = (byte) 6;
-            instructions[5] = (byte) Bytecodes.IINC;
-            instructions[6] = (byte) 1;
-            instructions[7] = (byte) bi.getStep();
-            instructions[8] = (byte) Bytecodes.ILOAD_1;
-            instructions[9] = (byte) Bytecodes.BIPUSH;
-            instructions[10] = (byte) bi.getEnd();
-            instructions[11] = (byte) bi.getBytecode();
-            instructions[12] = (byte) 0xff;
-            instructions[13] = (byte) 0xfa;
-            instructions[14] = (byte) Bytecodes.ILOAD_1;
-            instructions[15] = (byte) Bytecodes.NOP;
-
-            // instructions[14] = (byte) Bytecodes.RETURN;
-            initialiseFrameForCompilation(instructions, "(II)I");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 15);
-            Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-            //masm.pop(Aarch64Assembler.ConditionFlag.AL, 1);
-            masm.pop(32, Aarch64.r0);
-            long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-            assert registerValues[0] == (expectedValues[0] & 0xFFFFFFFFL) : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
-            theCompiler.cleanup();
-        }
-    }
-
-    public void work_SwitchTable() throws Exception {
-        // int i = 1;
-        // int j, k , l, m;
-        // switch(i) {
-        // case 0: j=10;
-        // case 1: k=20;
-        // case 2: l=30;
-        // default: m=40;
-        // }
-
-        // int chooseNear(int i) {
-        // switch (i) {
-        // } }
-        // compiles to:
-        // case 0: return 0;
-        // case 1: return 1;
-        // case 2: return 2;
-        // default: return -1;
-        // Method int chooseNear(int)
-        // 0 iload_1 // Push local variable 1 (argument i)
-        // 1 tableswitch 0 to 2: // Valid indices are 0 through 2
-        // 0: 28
-        // 1: 30
-        // 2: 32
-        // default:34
-        // 28 iconst_0
-        // 29 ireturn
-        // 30 iconst_1
-        // 31 ireturn
-        // 32 iconst_2
-        // 33 ireturn
-        // 34 iconst_m1
-        // 35 ireturn
-
-        int[] values = new int[] {10, 20, 30, 40};
-        for (int i = 0; i < values.length; i++) {
-            for (int j = 0; j < values.length; j++) {
-                if (i > j) {
-                    expectedValues[j] = 0;
-                } else {
-                    expectedValues[j] = values[j];
-                }
-            }
-
-            byte[] instructions = new byte[36];
-            if (i == 0) {
-                instructions[0] = (byte) Bytecodes.ICONST_0;
-            } else if (i == 1) {
-                instructions[0] = (byte) Bytecodes.ICONST_1;
-            } else if (i == 2) {
-                instructions[0] = (byte) Bytecodes.ICONST_2;
-            } else {
-                instructions[0] = (byte) Bytecodes.ICONST_3;
-            }
-            instructions[1] = (byte) Bytecodes.ISTORE_1;
-            instructions[2] = (byte) Bytecodes.ILOAD_1;
-
-            instructions[3] = (byte) Bytecodes.TABLESWITCH;
-            instructions[4] = (byte) 0;
-            instructions[5] = (byte) 0;
-            instructions[6] = (byte) 0;
-            instructions[7] = (byte) 0x1f; //31
-
-            instructions[8] = (byte) 0;
-            instructions[9] = (byte) 0;
-            instructions[10] = (byte) 0;
-            instructions[11] = (byte) 0;
-
-            instructions[12] = (byte) 0;
-            instructions[13] = (byte) 0;
-            instructions[14] = (byte) 0;
-            instructions[15] = (byte) 0x2;  //2
-
-            instructions[16] = (byte) 0;
-            instructions[17] = (byte) 0;
-            instructions[18] = (byte) 0;
-            instructions[19] = (byte) 0x19; // 25
-
-            instructions[20] = (byte) 0;
-            instructions[21] = (byte) 0;
-            instructions[22] = (byte) 0;
-            instructions[23] = (byte) 0x1b; // 27
-
-            instructions[24] = (byte) 0;
-            instructions[25] = (byte) 0;
-            instructions[26] = (byte) 0;
-            instructions[27] = (byte) 0x1d; // 29
-
-            instructions[28] = (byte) Bytecodes.BIPUSH;
-            instructions[29] = (byte) values[0];
-
-            instructions[30] = (byte) Bytecodes.BIPUSH;
-            instructions[31] = (byte) values[1];
-
-            instructions[32] = (byte) Bytecodes.BIPUSH;
-            instructions[33] = (byte) values[2];
-
-            instructions[34] = (byte) Bytecodes.BIPUSH;
-            instructions[35] = (byte) values[3];
-
-            initialiseFrameForCompilation(instructions, "(II)I");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 36);
-            Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-            theCompiler.peekInt(Aarch64.r3, 0);
-            theCompiler.peekInt(Aarch64.r2, 1);
-            theCompiler.peekInt(Aarch64.r1, 2);
-            theCompiler.peekInt(Aarch64.r0, 3);
-
-            long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
-            assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
-            assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
-            assert registerValues[3] == expectedValues[3] : "Failed incorrect value " + registerValues[3] + " " + expectedValues[3];
-            theCompiler.cleanup();
-        }
-    }
-
-    public void test_LookupTable() throws Exception {
-        // int ii = 1;
-        // int o, k, l, m;
-        // switch (ii) {
-        // case -100:
-        // o = 10;
-        // case 0:
-        // k = 20;
-        // case 100:
-        // l = 30;
-        // default:
-        // m = 40;
-        // }
-        int[] values = new int[] {10, 20, 30, 40};
-        for (int i = 0; i < values.length; i++) {
-            for (int j = 0; j < values.length; j++) {
-                if (i > j) {
-                    expectedValues[j] = 0;
-                } else {
-                    expectedValues[j] = values[j];
-                }
-            }
-
-            byte[] instructions = new byte[48];
-            if (i == 0) {
-                instructions[0] = (byte) Bytecodes.BIPUSH;
-                instructions[1] = (byte) -100;
-            } else if (i == 1) {
-                instructions[0] = (byte) Bytecodes.BIPUSH;
-                instructions[1] = (byte) 0;
-            } else if (i == 2) {
-                instructions[0] = (byte) Bytecodes.BIPUSH;
-                instructions[1] = (byte) 100;
-            } else {
-                instructions[0] = (byte) Bytecodes.BIPUSH;
-                instructions[1] = (byte) 1;
-            }
-            instructions[2] = (byte) Bytecodes.ISTORE_1;
-            instructions[3] = (byte) Bytecodes.ILOAD_1;
-
-            instructions[4] = (byte) Bytecodes.LOOKUPSWITCH;
-            instructions[5] = (byte) 0;
-            instructions[6] = (byte) 0;
-            instructions[7] = (byte) 0;
-
-            instructions[8] = (byte) 0;
-            instructions[9] = (byte) 0;
-            instructions[10] = (byte) 0;
-            instructions[11] = (byte) 0x2A;
-
-            instructions[12] = (byte) 0;
-            instructions[13] = (byte) 0;
-            instructions[14] = (byte) 0;
-            instructions[15] = (byte) 3;
-
-            instructions[16] = (byte) 0xff;
-            instructions[17] = (byte) 0xff;
-            instructions[18] = (byte) 0xff;
-            instructions[19] = (byte) 0x9c;
-
-            instructions[20] = (byte) 0;
-            instructions[21] = (byte) 0;
-            instructions[22] = (byte) 0;
-            instructions[23] = (byte) 0x24;
-
-            instructions[24] = (byte) 0;
-            instructions[25] = (byte) 0;
-            instructions[26] = (byte) 0;
-            instructions[27] = (byte) 0;
-
-            instructions[28] = (byte) 0;
-            instructions[29] = (byte) 0;
-            instructions[30] = (byte) 0;
-            instructions[31] = (byte) 0x26;
-
-            instructions[32] = (byte) 0;
-            instructions[33] = (byte) 0;
-            instructions[34] = (byte) 0;
-            instructions[35] = (byte) 0x64;
-
-            instructions[36] = (byte) 0;
-            instructions[37] = (byte) 0;
-            instructions[38] = (byte) 0;
-            instructions[39] = (byte) 0x28;
-
-            instructions[40] = (byte) Bytecodes.BIPUSH;
-            instructions[41] = (byte) values[0];
-
-            instructions[42] = (byte) Bytecodes.BIPUSH;
-            instructions[43] = (byte) values[1];
-
-            instructions[44] = (byte) Bytecodes.BIPUSH;
-            instructions[45] = (byte) values[2];
-
-            instructions[46] = (byte) Bytecodes.BIPUSH;
-            instructions[47] = (byte) values[3];
-
-            initialiseFrameForCompilation(instructions, "(II)I");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 48);
-            Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-            theCompiler.peekInt(Aarch64.r3, 0);
-            theCompiler.peekInt(Aarch64.r2, 1);
-            theCompiler.peekInt(Aarch64.r1, 2);
-            theCompiler.peekInt(Aarch64.r0, 3);
-
-            long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
-            assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
-            assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
-            assert registerValues[3] == expectedValues[3] : "Failed incorrect value " + registerValues[3] + " " + expectedValues[3];
-            theCompiler.cleanup();
-        }
-    }
 }

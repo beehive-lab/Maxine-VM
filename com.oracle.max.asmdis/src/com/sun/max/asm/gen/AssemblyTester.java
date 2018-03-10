@@ -310,6 +310,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
 
     private File createExternalSourceFile(Template_Type template, Iterator<List<Argument>> argumentLists) throws IOException {
         final File sourceFile = File.createTempFile(tmpFilePrefix + template.internalName(), SOURCE_EXTENSION);
+        sourceFile.deleteOnExit();
         final IndentWriter stream = new IndentWriter(new PrintWriter(new BufferedWriter(new FileWriter(sourceFile))));
         stream.indent();
         for (int i = 0; i < nNOPs; i++) {
@@ -437,6 +438,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
     private File createExternalBinaryFile(File sourceFile) throws IOException {
         try {
             final File binaryFile = new File(sourceFile.getPath().substring(0, sourceFile.getPath().length() - SOURCE_EXTENSION.length()) + BINARY_EXTENSION);
+            binaryFile.deleteOnExit();
             if (remoteUserAndHost != null) {
 
                 // Copy input source to remote machine

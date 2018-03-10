@@ -30,6 +30,7 @@ import java.util.regex.*;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.riscv.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -167,6 +168,24 @@ public final class Platform {
             }
         } else if (isa == ISA.Aarch64) {
             arch = new Aarch64();
+            if (os == OS.LINUX) {
+                // Linux apparently also requires it for functions that pass floating point functions on the stack.
+                // One such function in the Maxine code base is log_print_float() in log.c which passes a float
+                // value to fprintf on the stack. However, gcc doesn't fix the alignment itself so we simply
+                // adopt the global convention on Linux of 16-byte alignment for stacks. If this is a performance issue,
+                // this can later be refined to only be for JNI stubs that pass a float or double to native code.
+
+                // Solaris has the same issues.
+                stackAlignment = 16;
+            } else {
+                throw FatalError.unexpected("Unimplemented stack alignment: " + os);
+            }
+        } else if (isa == ISA.RISCV) {
+            if (cpu == CPU.RISCV32) {
+                arch = new RISCV32();
+            } else {
+                arch = new RISCV64();
+            }
             if (os == OS.LINUX) {
                 // Linux apparently also requires it for functions that pass floating point functions on the stack.
                 // One such function in the Maxine code base is log_print_float() in log.c which passes a float
@@ -548,6 +567,8 @@ public final class Platform {
         map.put("linux-arm", new Platform(CPU.ARMV7, OS.LINUX, Ints.K * 4, 32));
         map.put("darwin-arm", new Platform(CPU.ARMV7, OS.DARWIN, Ints.K * 4, 32));
         map.put("linux-aarch64", new Platform(CPU.Aarch64, OS.LINUX, Ints.K * 8, 32));
+        map.put("linux-riscv32", new Platform(CPU.RISCV32, OS.LINUX, Ints.K * 4, 32));
+        map.put("linux-riscv64", new Platform(CPU.RISCV64, OS.LINUX, Ints.K * 8, 32));
         Supported = Collections.unmodifiableMap(map);
         Default = map.get("linux-amd64");
     }

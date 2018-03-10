@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -371,8 +371,18 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         // XXX Implement me
     }
 
+    /**
+     * Return the displacement which when subtracted from the stack pointer address
+     * will position the frame pointer between the non-parameter java locals and the
+     * Maxine T1X template slots (see frame layout).
+     *
+     * @return
+     */
     private int framePointerAdjustment() {
-        final int enterSize = frame.frameSize() - Word.size();
+        /*
+         * Frame size minus the slot used for the callers frame pointer.
+         */
+        final int enterSize = frame.frameSize() - JVMS_SLOT_SIZE;
         return enterSize - frame.sizeOfNonParameterLocals();
     }
 
@@ -384,12 +394,19 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         }
 
         int frameSize = frame.frameSize();
-        // TODO implement asm.stp/ldp and change these pushes
+        /*
+         * We could <?> use STP here to stack the LR and FP (and LDP later to unstack). That may however affect some
+         * of the other machinery e.g. stack walking if there is the assumption that the caller's FP lives
+         * in a single JVMS_STACK_SLOT.
+         */
         asm.push(64, Aarch64.linkRegister);
         asm.push(64, Aarch64.fp);
         asm.sub(64, Aarch64.fp, Aarch64.sp, framePointerAdjustment()); // fp set relative to sp
-        // TODO check alignment constraints here
-        asm.sub(64, Aarch64.sp, Aarch64.sp, frame.frameSize() - Word.size());
+        /*
+         * Extend the stack pointer past the frame size minus the slot used for the callers
+         * frame pointer.
+         */
+        asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize - JVMS_SLOT_SIZE);
 
 
         if (Trap.STACK_BANGING) {
@@ -426,9 +443,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         asm.add(64, Aarch64.sp, Aarch64.fp, framePointerAdjustment());
         asm.pop(64, Aarch64.fp);
         asm.pop(64, Aarch64.linkRegister);
-        // XXX ret messes up the unit test framework - not sure if we need
-        // to call ret here anyways.
-        //asm.ret(Aarch64.linkRegister);
+        asm.ret(Aarch64.linkRegister);
     }
 
     /*
@@ -466,17 +481,23 @@ public class Aarch64T1XCompilation extends T1XCompilation {
             throw verifyError("Low must be less than or equal to high in TABLESWITCH");
         }
 
-        asm.pop(32, scratch);
+        asm.pop(32, scratch); // Pop index from stack
 
+        // Jump to default target if index is not within the jump table
+        asm.cmp(32, scratch, lowMatch); // Check if index is lower than lowMatch
+        startBlock(ts.defaultTarget());
+        int pos = buf.position();
+        patchInfo.addJCC(ConditionFlag.LT, pos, ts.defaultTarget());
+        jcc(ConditionFlag.LT, 0);
+
+        // Check if index is higher than highMatch
         if (lowMatch == 0) {
             asm.cmp(32, scratch, highMatch);
         } else {
             asm.sub(32, scratch, scratch, lowMatch);
             asm.cmp(32, scratch, highMatch - lowMatch);
         }
-        startBlock(ts.defaultTarget());
-        int pos = buf.position();
-        // Jump to default target if index is not within the jump table
+        pos = buf.position();
         patchInfo.addJCC(ConditionFlag.GT, pos, ts.defaultTarget());
         jcc(ConditionFlag.GT, 0);
         pos = buf.position();
@@ -974,11 +995,23 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     }
 
     public void do_iaddTests() {
-
+        peekInt(Aarch64.r0, 0);
+        decStack(1);
+        peekInt(Aarch64.r1, 0);
+        decStack(1);
+        asm.add(64, Aarch64.r0, Aarch64.r0, Aarch64.r1);
+        incStack(1);
+        pokeInt(Aarch64.r0, 0);
     }
 
     public void do_imulTests() {
-
+        peekInt(Aarch64.r0, 0);
+        decStack(1);
+        peekInt(Aarch64.r1, 0);
+        decStack(1);
+        asm.mul(64, Aarch64.r0, Aarch64.r0, Aarch64.r1);
+        incStack(1);
+        pokeInt(Aarch64.r0, 0);
     }
 
     public void do_initFrameTests(ClassMethodActor method, CodeAttribute codeAttribute) {

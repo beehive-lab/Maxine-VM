@@ -1,0 +1,117 @@
+/*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+package com.oracle.max.asm.target.aarch64;
+
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
+
+/**
+ * Handles validations for all immediate operands in Aarch64 instructions.
+ *
+ */
+
+public final class Aarch64Immediates {
+    private Aarch64Immediates() {
+    }
+
+    public static boolean isAarch64Immediate(CiAddress address) {
+        if ((address.format() != Format.BASE_DISP) || (address.format() != Format.BASE)) {
+            return false;
+        }
+        return isValidDisp(address.displacement, address.kind);
+    }
+
+    public static boolean isValidDisp(int value, CiKind kind) {
+        switch (kind) {
+            case Boolean:
+            case Byte:
+            case Char:
+            case Short:
+            case Jsr:
+            case Int:
+            case Object:
+                return value >= -4095 && value <= 4095;
+            case Long:
+                return value >= -255 && value <= 255;
+            case Float:
+            case Double:
+                return value >= -1020 && value <= 1020;
+            default:
+                assert false : "Unknown state!";
+        }
+        return false;
+    }
+
+    /**
+     * Finds out legitimate 8 bit immediate value and 4 bit rotate value for the given 32 bit value. Throws an
+     * exception if there doesn't exist any such combination, as such a value is an invalid operand.
+     *
+     * @param value
+     *            32 bit immediate operand
+     * @return 12 bit shifter operand
+     */
+    public static int calculateShifter(int value) {
+        int immed;
+        for (int i = 0; i < 32; i += 2) {
+            immed = Integer.rotateLeft(value, i);
+            if (immed >= 0 && immed <= 255) {
+                return immed | i << 7;
+            }
+        }
+        throw new IllegalArgumentException("Invalid immediate operand value");
+    }
+
+    /**
+     * Tests if rotate amount is even, hence valid.
+     *
+     * @param value
+     *            rotate amount specified as operand
+     */
+    public static boolean isValidRotate(int value) {
+        return value % 2 == 0;
+    }
+
+    /**
+     * Tests if 32 bit immediate value is valid for 4 bit rotate and 8 bit immediate value representation.
+     *
+     * @param value
+     *            32 bit immediate operand value
+     */
+    public static boolean isValidImmediate(int value) {
+        int a;
+        for (int i = 0; i < 32; i += 2) {
+            a = Integer.rotateLeft(value, i);
+            if (a >= 0 && a <= 255) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Tests if immediate shift value is between 0 and 32.
+     *
+     * @param value
+     *            6 bit number with only 0 to 32 allowed
+     */
+    public static boolean isValidShiftImm(int value) {
+        return value >= 0 && value <= 32;
+    }
+}

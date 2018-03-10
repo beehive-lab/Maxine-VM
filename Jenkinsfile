@@ -11,7 +11,7 @@ pipeline {
         MAXINE_HOME="$WORKSPACE/maxine"
         GRAAL_HOME="$WORKSPACE/graal"
         MX="$GRAAL_HOME/mxtool/mx"
-        PATH="/localhome/regression/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin:/localhome/regression/gcc-arm-none-eabi-7-2017-q4-major/bin:/localhome/regression/qemu-2.10.1/build/aarch64-softmmu:/localhome/regression/qemu-2.10.1/build/arm-softmmu:$PATH"
+        PATH="/localhome/regression/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin:/localhome/regression/gcc-arm-none-eabi-7-2017-q4-major/bin:/localhome/regression/qemu-2.10.1/build/aarch64-softmmu:/localhome/regression/qemu-2.10.1/build/arm-softmmu:/localhome/regression/riscv/bin:$PATH"
     }
 
     stages {
@@ -66,8 +66,9 @@ pipeline {
                     }
                 }, 'crossisa': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX --J @"-Dmax.platform=linux-aarch64 -Dmax.arm.qemu=1 -ea" test -s=t -tests=junit:aarch64.asm'
-                        sh '$MX --J @"-Dmax.platform=linux-arm -Dmax.arm.qemu=1 -ea" test -s=t -tests=junit:armv7.asm'
+                        sh '$MX --J @"-Dmax.platform=linux-aarch64 -Dtest.crossisa.qemu=1 -ea" test -s=t -tests=junit:aarch64.asm+Aarch64T1XTest+Aarch64JTTT1XTest'
+                        sh '$MX --J @"-Dmax.platform=linux-arm -Dtest.crossisa.qemu=1 -ea" test -s=t -tests=junit:armv7.asm'
+                        sh '$MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" test -s=t -tests=junit:riscv64.asm'
                     }
                 }
             }

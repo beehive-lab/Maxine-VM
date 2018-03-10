@@ -59,3 +59,8 @@ lib/checkstyle-6.11.2-all.jar
 
 .metadata/*
 .recommenders/*
+
+maxine-tester/junit-tests/FileReader.input
+maxine-tester/junit-tests/GetResource.input
+maxine-tester/junit-tests/ZipFileReader.input
+        

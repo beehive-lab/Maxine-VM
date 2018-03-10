@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,10 +27,8 @@ package com.sun.max.vm.stack.aarch64;
 import static com.sun.max.platform.Platform.*;
 
 import com.oracle.max.asm.target.aarch64.*;
-import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.target.*;
@@ -88,10 +88,27 @@ public class AARCH64JVMSFrameLayout extends JVMSFrameLayout {
      */
     public static final int CALL_SAVE_AREA_SLOTS = 2;
 
+    /**
+     * Callers frame pointer is pushed with 16 byte alignment.
+     */
+    private static final int CALLERS_FP_SIZE = JVMS_SLOT_SIZE;
+
+    /**
+     * Callers link register is pushed with 16 byte alignment.
+     */
+    private static final int CALLERS_LR_SIZE = JVMS_SLOT_SIZE;
+
     private final int numberOfTemplateSlots;
 
     public AARCH64JVMSFrameLayout(TargetMethod targetMethod) {
         super(targetMethod.classMethodActor());
+        /*
+         * The use of STACK_SLOT_SIZE (set to Word.size() in VMFrameLayout) is a little misleading.
+         * Recall that the SP in aarch64 must be 16 byte aligned at external interfaces and to
+         * use as a base in addresses.
+         * Java locals and Maxine T1X template parameters are addressed relative to the frame pointer.
+         * It is only in this context that STACK_SLOT_SIZE alignment can be used safely.
+         */
         final int frameSlots = UnsignedMath.divide(targetMethod.frameSize(), STACK_SLOT_SIZE);
         final int nonTemplateSlots = 1 + UnsignedMath.divide(sizeOfNonParameterLocals(), STACK_SLOT_SIZE);
         numberOfTemplateSlots = frameSlots - nonTemplateSlots;
@@ -115,10 +132,10 @@ public class AARCH64JVMSFrameLayout extends JVMSFrameLayout {
 
     @Override
     public int frameSize() {
-        final int numberOfSlots = 1 + numberOfTemplateSlots; // one extra word for the caller RBP
-        final int unalignedSize = numberOfSlots * STACK_SLOT_SIZE + sizeOfNonParameterLocals();
+        final int unalignedSize = numberOfTemplateSlots * STACK_SLOT_SIZE + sizeOfNonParameterLocals() + CALLERS_FP_SIZE;
         return target().alignFrameSize(unalignedSize);
     }
+
 
     @Override
     public int localVariableOffset(int localVariableIndex) {
@@ -127,7 +144,7 @@ public class AARCH64JVMSFrameLayout extends JVMSFrameLayout {
             // | non-parameter locals | template slots | caller FP | return address | parameters |
             // | <-------------------- frameSize() --------------> |
             //                        ^ RBP                                         ^ parameterStart
-            final int parameterStart = returnAddressOffset() + Word.size();
+            final int parameterStart = returnAddressOffset() + CALLERS_LR_SIZE;
             return parameterStart + JVMS_SLOT_SIZE * (numberOfParameterSlots - 1 - localVariableIndex);
         }
         // The slot index is at a negative offset from RBP.
@@ -147,9 +164,10 @@ public class AARCH64JVMSFrameLayout extends JVMSFrameLayout {
     }
 
     public int callersRBPOffset() {
-        return returnAddressOffset() - STACK_SLOT_SIZE;
+        return returnAddressOffset() - JVMS_SLOT_SIZE;
     }
 
+    // TODO check the alignments
     @Override
     public int maximumSlotOffset() {
         if (numberOfParameterSlots == 0) {

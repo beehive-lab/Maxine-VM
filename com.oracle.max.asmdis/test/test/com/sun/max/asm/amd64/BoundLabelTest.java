@@ -90,7 +90,7 @@ public class BoundLabelTest extends MaxTestCase {
             final List<Argument> arguments = new ArrayList<Argument>(template.parameters().size());
             for (int parameterIndex = 0; parameterIndex < template.parameters().size(); parameterIndex++) {
                 if (parameterIndex == template.labelParameterIndex()) {
-                    arguments.set(parameterIndex, labels[labelIndex]);
+                    arguments.add(labels[labelIndex]);
                 } else {
                     final Parameter parameter = template.parameters().get(parameterIndex);
                     final Iterator<? extends Argument> testArguments = parameter.getLegalTestArguments().iterator();
@@ -101,7 +101,7 @@ public class BoundLabelTest extends MaxTestCase {
                             argument = testArguments.next();
                         }
                     }
-                    arguments.set(parameterIndex, argument);
+                    arguments.add(argument);
                 }
             }
             AMD64Assembly.ASSEMBLY.assemble(assembler, template, arguments);

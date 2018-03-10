@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -44,8 +44,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         junit.textui.TestRunner.run(Aarch64AssemblerTest.class);
     }
 
-    private static final long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff,
-                                                  0xffffffffffffL, 0x7fffffffffffffffL};
+    private static final long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff, 0xffffffffffffL, 0x7fffffffffffffffL};
     private static final boolean[] testValues = new boolean[MaxineAarch64Tester.NUM_REGS];
 
     // Each test should set the contents of this array appropriately,
@@ -54,7 +53,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     // and for ignoring specific bits in the status register etc
     // concerning whether a carry has been set
     private static final MaxineAarch64Tester.BitsFlag[] bitmasks =
-            new MaxineAarch64Tester.BitsFlag[MaxineAarch64Tester.NUM_REGS];
+                    new MaxineAarch64Tester.BitsFlag[MaxineAarch64Tester.NUM_REGS];
     static {
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
     }
@@ -98,12 +97,16 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
         if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
-            return;
+            System.exit(1);
         }
         r.assembleStartup();
         r.compile();
         r.link();
         r.runSimulation();
+        if (!r.validateLongRegisters()) {
+            r.reset();
+            assert false : "Error while validating long registers";
+        }
         r.reset();
     }
 
@@ -542,7 +545,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /* Integer Multiply/Divide (5.6). */
 
-   /* Floating-point Move (register) (5.7.2) */
+    /* Floating-point Move (register) (5.7.2) */
 
     public void test_float0() throws Exception {
         initialiseExpectedValues();
@@ -1212,6 +1215,23 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
+    public void test_stp_ldp() throws Exception {
+        initialiseExpectedValues();
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        expectedValues[0] = expectedValues[2] = 0x00001;
+        expectedValues[1] = expectedValues[3] = 0xFFFFF;
+
+        testValues[0] = testValues[1] = testValues[2] = testValues[3] = true;
+        asm.mov64BitConstant(Aarch64.r0, expectedValues[0]);
+        asm.mov64BitConstant(Aarch64.r1, expectedValues[1]);
+        asm.stp(64, Aarch64.r0, Aarch64.r1, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -2));
+        asm.ldp(64, Aarch64.r2, Aarch64.r3, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 2));
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
     public void test_Ldr() throws Exception {
         initialiseExpectedValues();
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
@@ -1223,9 +1243,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
         masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
         Aarch64Address address = Aarch64Address.createRegisterOffsetAddress(Aarch64.sp, Aarch64.cpuRegisters[12], false);
-        for (int i = 9; i < -1; i++) {
+        for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[12], 16 * i);
-            masm.ldr(VARIANT_64, Aarch64.cpuRegisters[i], address);
+            masm.ldr(VARIANT_64, Aarch64.cpuRegisters[9 - i], address);
         }
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
@@ -1419,54 +1439,29 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         }
 //         generateAndTest(expectedLongValues, testValues, bitmasks);
 //     }
-//
-//     public void test_casInt() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
-//         initializeTestValues();
-//         masm.codeBuffer.reset();
-//         CiRegister cmpReg = Aarch64.r0;
-//         CiRegister newReg = Aarch64.r1;
-//
-//         // r0=10, r1=20, r2=30, r3=40, r4=50
-//         for (int i = 1; i < 5; i++) {
-//             masm.mov32BitConstant(Aarch64.cpuRegisters[i], (i + 1) * 10);
-//         }
-//         masm.mov32BitConstant(Aarch64.cpuRegisters[0], 50);
-//         masm.push(Aarch64Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16);
-//         CiAddress addr = new CiAddress(CiKind.Int, Aarch64.r13.asValue(), 20);
-//         masm.casIntAsmTest(newReg, cmpReg, addr);
-//         expectedValues[1] = 20;
-//         testValues[1] = true;
-//         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
-//     }
-//
-//     public void test_casLong() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
-//         initializeTestValues();
-//         masm.codeBuffer.reset();
-//         CiRegister cmpReg = Aarch64.r0;
-//         CiRegister newReg = Aarch64.r2;
-//
-//         // r0=10, r1=0
-//         // r2=30, r3=0
-//         // r4=50, r5=0
-//         // r6=70, r7=0
-//         // r8=90, r9=0
-//         for (int i = 2; i < 10; i += 2) {
-//             masm.mov64BitConstant(Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i + 1], (i + 1) * 10);
-//         }
-//         masm.mov64BitConstant(Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[1], 90);
-//         masm.push(Aarch64Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-//         CiAddress addr = new CiAddress(CiKind.Int, Aarch64.r13.asValue(), 32);
-//         masm.casLongAsmTest(newReg, cmpReg, addr);
-//         expectedValues[0] = 30;
-//         testValues[0] = true;
-//         expectedValues[1] = 0;
-//         testValues[1] = true;
-//         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
-//     }
+
+    public void test_casInt() throws Exception {
+        initialiseExpectedValues();
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        masm.codeBuffer.reset();
+        CiRegister cmpReg = Aarch64.r0;
+        CiRegister newReg = Aarch64.r1;
+
+        // r0=50, r1=10, r2=20, r3=30, r4=40
+        masm.mov64BitConstant(Aarch64.cpuRegisters[0], 50);
+        for (int i = 1; i < 5; i++) {
+            masm.mov64BitConstant(Aarch64.cpuRegisters[i], i * 10);
+        }
+
+        masm.push(1 | 2 | 4 | 8 | 16);
+        masm.mov(64, Aarch64.r5, Aarch64.sp); // Copy sp in r5 to avoid using sp directly
+        CiAddress addr = new CiAddress(CiKind.Int, Aarch64.r5.asValue(), 20);
+        masm.casIntAsmTest(newReg, cmpReg, addr);
+        expectedValues[1] = 10;
+        testValues[1] = true;
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
 
     public void test_decrementl() throws Exception {
         initialiseExpectedValues();

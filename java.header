@@ -1,6 +1,6 @@
 ^/\*$
-^ \* Copyright \(c\) (20\d\d, )+[A-Z][a-z]+ [A-Z][a-z]+\. All rights reserved\.$
-^ \* Copyright \(c\) (20\d\d, )+APT Group, School of Computer Science,$
+^ \* Copyright \(c\) (20\d\d(-20\d\d)?, )+[A-Z][a-z]+ [A-Z][a-z]+\. All rights reserved\.$
+^ \* Copyright \(c\) (20\d\d(-20\d\d)?, )+APT Group, School of Computer Science,$
 ^ \* The University of Manchester\. All rights reserved\.$
 ^ \* Copyright \(c\) (20\d\d, )+[A-Z][a-z]+ [A-Z][a-z]+\. All rights reserved\.$
 ^ \* Copyright \(c\) (\d\d\d\d, )+Oracle and/or its affiliates\. All rights reserved\.$

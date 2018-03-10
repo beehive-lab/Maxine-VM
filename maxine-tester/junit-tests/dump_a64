@@ -1,0 +1,7 @@
+#!/bin/bash
+#
+# Produce an assembly listing of the unit test code buffer
+#
+gcc -o dump dump.c
+./dump > dump.out
+aarch64-elf-objdump --target=binary -m aarch64 -D dump.out

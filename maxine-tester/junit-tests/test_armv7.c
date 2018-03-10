@@ -8,8 +8,3 @@ void print_uart0(const char *s) {
 }
 
 #include "./codebuffer.c"
-
-void (*pf)(int) = (void (*))(code);
-print_uart0("OK\n");
-(*pf)(1);
-}

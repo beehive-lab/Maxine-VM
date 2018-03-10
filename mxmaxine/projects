@@ -17,7 +17,8 @@ library@CHECKSTYLE@urls=https://downloads.sourceforge.net/project/checkstyle/che
 
 library@JLF_ICONS@path=com.oracle.max.tele.ins/jlfgr-1_0.jar
 
-library@ASM@path=lib/asm-5.0.3-maxine.jar
+library@ASM@path=lib/asm-6.0-maxine.jar
+library@ASMUTIL@path=lib/asm-util-6.0-maxine.jar
 
 library@NB3_BUTTONS@path=com.oracle.max.tele.ins/NB3B.jar
 
@@ -122,7 +123,7 @@ project@com.oracle.max.vm@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm@javaCompliance=1.7
 
 project@com.oracle.max.vm.tests@sourceDirs=src
-project@com.oracle.max.vm.tests@dependencies=com.oracle.max.vm,com.oracle.max.tests,ASM,uk.ac.manchester.tests.jdk8
+project@com.oracle.max.vm.tests@dependencies=com.oracle.max.vm,com.oracle.max.tests,ASM,ASMUTIL,uk.ac.manchester.tests.jdk8
 project@com.oracle.max.vm.tests@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.tests@javaCompliance=1.7
 

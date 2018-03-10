@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
@@ -501,6 +501,12 @@ public abstract class T1XCompilation {
      * properly.
      */
     public void offlineT1XCompile(ClassMethodActor method, CodeAttribute codeAttribute, byte[] fakeBytes, int hardStop) {
+        offlineT1XCompileNoEpilogue(method, codeAttribute, fakeBytes);
+        emitEpilogue();
+    }
+
+    public void offlineT1XCompileNoEpilogue(ClassMethodActor method, CodeAttribute codeAttribute, byte[] fakeBytes) {
+        int hardStop;
         assert this.method == null;
         assert objectLiterals.isEmpty();
         this.method = method;
@@ -534,7 +540,6 @@ public abstract class T1XCompilation {
         int endPos = buf.position();
         fixup();
         buf.setPosition(endPos);
-        emitEpilogue();
     }
 
     /**

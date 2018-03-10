@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -29,6 +29,7 @@ import java.util.concurrent.*;
 import java.util.regex.*;
 
 import org.junit.runner.*;
+import org.junit.runner.manipulation.*;
 import org.junit.runner.notification.*;
 
 import com.oracle.max.vm.ext.c1x.*;
@@ -106,7 +107,7 @@ public class MaxineTester {
                     "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo-bach benchmarks.\n\n" +
                     "Compiler tests: " + MaxineTesterConfiguration.zeeC1XTests.keySet().toString() + "\n\n" +
                     "JUnit tests: " + MaxineTesterConfiguration.zeeJUnitTests + "\n\n" +
-                    "JSR292 tests: " + MaxineTesterConfiguration.zeeJSR292Tests + "\n\n" +
+                    "JSR292 tests: " + MaxineTesterConfiguration.zeeJSR292Tests.toString().replace("class ", "") + "\n\n" +
                     "Output tests: " + MaxineTesterConfiguration.zeeOutputTests.toString().replace("class ", "") + "\n\n" +
                     "Dacapo-2006 tests: " + MaxineTesterConfiguration.zeeDacapo2006Tests + "\n\n" +
                     "Dacapo-bach tests: " + MaxineTesterConfiguration.zeeDacapoBachTests + "\n\n" +
@@ -144,6 +145,8 @@ public class MaxineTester {
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
                     "Show help message and exit.");
     private static final Option<String> graalJarOption = options.newStringOption("graal-jar", null, "location of graal.jar");
+    private static final Option<Boolean> runOnlyFailed = options.newBooleanOption("run-only-failed", false,
+                    "Only run tests that failed in the last run and thus are listed in the *.failed file.");
 
     private static String[] imageConfigs = null;
     private static Date startDate;
@@ -502,12 +505,12 @@ public class MaxineTester {
             }
         }
 
-        int failedAutoTests = 0;
+        int failedTests = 0;
         for (String junitTest : junitTestsWithExceptions) {
             if (out != null) {
                 out.println("Non-zero exit status for '" + junitTest + "'");
             }
-            failedAutoTests++;
+            failedTests++;
         }
 
         if (out != null) {
@@ -525,7 +528,7 @@ public class MaxineTester {
             }
         }
 
-        final int exitCode = unexpectedFailures.size() + unexpectedPasses.size() + failedImages + failedAutoTests;
+        final int exitCode = unexpectedFailures.size() + unexpectedPasses.size() + failedImages + failedTests;
         if (out != null) {
             final Date endDate = new Date();
             final long total = endDate.getTime() - startDate.getTime();
@@ -557,11 +560,21 @@ public class MaxineTester {
         public static void main(String[] args) throws Throwable {
             System.setErr(System.out);
 
-            final String testClassName = args[0];
-            final File passedFile = new File(args[1]);
-            final File failedFile = new File(args[2]);
+            final String  testClassName = args[0];
+            final File    passedFile    = new File(args[1]);
+            final File    failedFile    = new File(args[2]);
+            final boolean runOnlyFailed = Boolean.parseBoolean(args[3]);
 
             final Class<?> testClass = Class.forName(testClassName);
+
+            final ArrayList<String> failingTests = new ArrayList<>();
+            if (failedFile.exists()) {
+                BufferedReader in   = new BufferedReader(new FileReader(failedFile));
+                String line;
+                while ((line = in.readLine()) != null) {
+                    failingTests.add(line);
+                }
+            }
 
             final PrintStream passed = new PrintStream(new FileOutputStream(passedFile));
             final PrintStream failed = new PrintStream(new FileOutputStream(failedFile));
@@ -599,9 +612,41 @@ public class MaxineTester {
                 }
             });
 
-            junit.run(testClass);
+            junit.run(generateJUnitRequest(testClass, failingTests, runOnlyFailed));
             passed.close();
             failed.close();
+        }
+
+        private static Request generateJUnitRequest(Class<?> testClass, final ArrayList<String> failingTests,
+                                                    boolean runOnlyFailed) {
+            Request request = Request.aClass(testClass);
+            if (runOnlyFailed && !failingTests.isEmpty()) {
+                Filter failedFilter = new Filter() {
+
+                    @Override
+                    public boolean shouldRun(Description description) {
+                        if (!description.isTest()) {
+                            return false;
+                        }
+                        for (String line : failingTests) {
+                            String methodName = description.getMethodName();
+                            if (methodName != null && line.startsWith(methodName)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public String describe() {
+                        return "Filters out all tests not included in the file containing the failed tests" +
+                                "(unless it is empty)";
+                    }
+                };
+
+                request = request.filterWith(failedFilter);
+            }
+            return request;
         }
     }
 
@@ -628,7 +673,7 @@ public class MaxineTester {
         final String basePath = new File(outputDirOption.getValue()).getAbsolutePath() + File.separator;
         final String path = file.getAbsolutePath();
         if (path.startsWith(basePath)) {
-            return "file:" + path.substring(basePath.length());
+            return "file:" + outputDirOption.getValue() + "/" + path.substring(basePath.length());
         }
         return file.getAbsolutePath();
     }
@@ -1134,20 +1179,21 @@ public class MaxineTester {
             javaCommand.addArgument(junitTest);
             javaCommand.addArgument(passedFile.getName());
             javaCommand.addArgument(failedFile.getName());
+            javaCommand.addArgument(runOnlyFailed.getString());
 
             final String[] command = javaCommand.getExecArgs(javaExecutableOption.getValue());
 
             final PrintStream out = out();
 
-            out.println("JUnit auto-test: Started " + junitTest);
+            out.println("JUnit test: Started " + junitTest);
             out.flush();
             final long start = System.currentTimeMillis();
             final int exitValue = exec(outputDir, command, null, logs, junitTest, junitTestTimeOutOption.getValue());
-            out.print("JUnit auto-test: Stopped " + junitTest);
+            out.print("JUnit test: Stopped " + junitTest);
 
             final Set<String> results = new HashSet<>();
-            parseAutoTestResults(passedFile, true, results, junitTest);
-            parseAutoTestResults(failedFile, false, results, junitTest);
+            parseTestResults(passedFile, true, results, junitTest);
+            parseTestResults(failedFile, false, results, junitTest);
 
             int errors = 0;
             final long runTime = System.currentTimeMillis() - start;
@@ -1181,9 +1227,9 @@ public class MaxineTester {
          * @param resultsFile the file to parse
          * @param passed specifies if the file list tests that passed or failed
          * @param results if non-null, then all unexpected test results are added to this set
-         * @param jUnitTest the name of the AutoTest class generating the unit tests at hand
+         * @param jUnitTest the name of the Test class generating the unit tests at hand
          */
-        void parseAutoTestResults(File resultsFile, boolean passed, Set<String> results, String jUnitTest) {
+        void parseTestResults(File resultsFile, boolean passed, Set<String> results, String jUnitTest) {
             try {
                 final List<String> lines = Files.readLines(resultsFile);
                 for (String testName : lines) {

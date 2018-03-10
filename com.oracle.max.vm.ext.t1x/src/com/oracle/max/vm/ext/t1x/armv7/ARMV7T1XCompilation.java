@@ -248,7 +248,27 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void loadInt(CiRegister dst, int index) {
-        CiAddress address = localSlot(localSlotOffset(index, Kind.INT));
+        loadGeneric(dst, index, Kind.INT);
+    }
+
+    @Override
+    protected void loadLong(CiRegister dst, int index) {
+        assert dst.number < 10;
+        asm.load(dst, localSlot(localSlotOffset(index, Kind.LONG)), CiKind.Long);
+    }
+
+    @Override
+    protected void loadWord(CiRegister dst, int index) {
+        loadGeneric(dst, index, Kind.WORD);
+    }
+
+    @Override
+    protected void loadObject(CiRegister dst, int index) {
+        loadGeneric(dst, index, Kind.REFERENCE);
+    }
+
+    private void loadGeneric(CiRegister dst, int index, Kind kind) {
+        CiAddress address = localSlot(localSlotOffset(index, kind));
         if (ARMImmediates.isARMV7Immediate(address)) {
             CiRegister register = address.base();
             if (register == CiRegister.Frame) {
@@ -262,90 +282,28 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     @Override
-    protected void loadLong(CiRegister dst, int index) {
-        assert dst.number < 10;
-        asm.load(dst, localSlot(localSlotOffset(index, Kind.LONG)), CiKind.Long);
-    }
-
-    @Override
-    protected void loadWord(CiRegister dst, int index) {
-        CiAddress address = localSlot(localSlotOffset(index, Kind.WORD));
-        if (ARMImmediates.isARMV7Immediate(address)) {
-            CiRegister register = address.base();
-            if (register == CiRegister.Frame) {
-                register = asm.frameRegister;
-            }
-            asm.ldrImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, dst, register, address.displacement);
-            return;
-        }
-        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
-        asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
-    }
-
-    @Override
-    protected void loadObject(CiRegister dst, int index) {
-        CiAddress address = localSlot(localSlotOffset(index, Kind.REFERENCE));
-        if (ARMImmediates.isARMV7Immediate(address)) {
-            CiRegister register = address.base();
-            if (register == CiRegister.Frame) {
-                register = asm.frameRegister;
-            }
-            asm.ldrImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, dst, register, address.displacement);
-            return;
-        }
-        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
-        asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
-    }
-
-    @Override
     protected void storeInt(CiRegister src, int index) {
-        CiAddress address = localSlot(localSlotOffset(index, Kind.INT));
-        if (ARMImmediates.isARMV7Immediate(address)) {
-            CiRegister register = address.base();
-            if (register == CiRegister.Frame) {
-                register = asm.frameRegister;
-            }
-            asm.strImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, src, register, address.displacement);
-            return;
-        }
-        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
-        asm.str(ConditionFlag.Always, src, scratch, 0);
+        storeGeneric(src, index, Kind.INT);
     }
 
     @Override
     protected void storeLong(CiRegister src, int index) {
         assert src.number < 10;
-        CiAddress address = localSlot(localSlotOffset(index, Kind.LONG));
-        if (ARMImmediates.isARMV7Immediate(address)) {
-            CiRegister register = address.base();
-            if (register == CiRegister.Frame) {
-                register = asm.frameRegister;
-            }
-            asm.strImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, src, register, address.displacement);
-            return;
-        }
-        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
-        asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
+        asm.store(src, localSlot(localSlotOffset(index, Kind.LONG)), CiKind.Long);
     }
 
     @Override
     protected void storeWord(CiRegister src, int index) {
-        CiAddress address = localSlot(localSlotOffset(index, Kind.WORD));
-        if (ARMImmediates.isARMV7Immediate(address)) {
-            CiRegister register = address.base();
-            if (register == CiRegister.Frame) {
-                register = asm.frameRegister;
-            }
-            asm.strImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, src, register, address.displacement);
-            return;
-        }
-        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
-        asm.str(ConditionFlag.Always, src, scratch, 0);
+        storeGeneric(src, index, Kind.WORD);
     }
 
     @Override
     protected void storeObject(CiRegister src, int index) {
-        CiAddress address = localSlot(localSlotOffset(index, Kind.REFERENCE));
+        storeGeneric(src, index, Kind.REFERENCE);
+    }
+
+    private void storeGeneric(CiRegister src, int index, Kind kind) {
+        CiAddress address = localSlot(localSlotOffset(index, kind));
         if (ARMImmediates.isARMV7Immediate(address)) {
             CiRegister register = address.base();
             if (register == CiRegister.Frame) {
@@ -354,8 +312,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             asm.strImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, src, register, address.displacement);
             return;
         }
-        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
-        asm.str(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
+        asm.setUpScratch(address);
+        asm.str(ConditionFlag.Always, src, scratch, 0);
     }
 
     @Override
@@ -541,8 +499,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         }
 
         int frameSize = frame.frameSize();
-        asm.push(ConditionFlag.Always, asm.getRegisterList(ARMV7.LR), true);
-        asm.push(ConditionFlag.Always, asm.getRegisterList(ARMV7.FP), true);
+        asm.push(ConditionFlag.Always, asm.getRegisterList(ARMV7.LR, ARMV7.FP), true);
         asm.mov(ConditionFlag.Always, false, ARMV7.FP, ARMV7.rsp);
         asm.subq(ARMV7.rsp, frameSize - Word.size());
         asm.subq(ARMV7.FP, framePointerAdjustment());

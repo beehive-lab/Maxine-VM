@@ -985,32 +985,26 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public int getRegisterList(CiRegister... regs) {
+    public int getRegisterList(CiRegister... registers) {
         int regList = 0;
-        for (CiRegister reg : regs) {
+        for (CiRegister reg : registers) {
             regList |= 1 << reg.getEncoding();
         }
         return regList;
+    }
+
+    public void push(final ConditionFlag flag, CiRegister... registers) {
+        push(flag, getRegisterList(registers), false);
     }
 
     public void push(final ConditionFlag flag, final int registerList) {
         push(flag, registerList, false);
     }
 
-    private boolean evenParity(int registerList) {
-        registerList ^= registerList >> 16;
-        registerList ^= registerList >> 8;
-        registerList ^= registerList >> 4;
-        registerList ^= registerList >> 2;
-        registerList ^= registerList >> 1;
-        return (~registerList & 1) == 1;
-    }
-
     public void push(final ConditionFlag flag, final int registerList, boolean instrument) {
         int instruction;
         assert registerList > 0;
         assert registerList < 0x10000;
-        assert evenParity(registerList) : "odd number of pushes break the 8byte-alignment of the stack";
         instruction = (flag.value() & 0xf) << 28;
         instruction |= 0x9 << 24;
         instruction |= 0x2 << 20;
@@ -1046,6 +1040,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         pop(ConditionFlag.Always, (1 << reg) | (1 << reg2), true);
     }
 
+    public void pop(final ConditionFlag flag, CiRegister... registers) {
+        pop(flag, getRegisterList(registers), false);
+    }
+
     public void pop(final ConditionFlag flag, final int registerList) {
         pop(flag, registerList, false);
     }
@@ -1053,7 +1051,6 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void pop(final ConditionFlag flag, final int registerList, boolean instrument) {
         assert registerList > 0;
         assert registerList < 0x10000;
-        assert evenParity(registerList) : "odd number of pops break the 8byte-alignment of the stack";
         int instruction = (flag.value() & 0xf) << 28;
         instruction |= 0x8 << 24;
         instruction |= 0xb << 20;
@@ -1796,6 +1793,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
     }
 
+    // mrs r0, CPSR
     public final void mrsReadAPSR(ConditionFlag cond, CiRegister reg) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x10f0000;
@@ -1803,6 +1801,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    // msr CPSR_fs, r0, lsl r0
     public void msrWriteAPSR(ConditionFlag cond, CiRegister reg) {
         int bits = 3;
         int instruction = (cond.value() & 0xf) << 28;
@@ -1812,6 +1811,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    //  vmrs dest, fpscr
     public final void vmrs(ConditionFlag cond, CiRegister dest) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0ef10a10;

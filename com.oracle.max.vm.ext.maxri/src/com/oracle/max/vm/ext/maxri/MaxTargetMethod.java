@@ -49,6 +49,7 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.object.*;
@@ -239,6 +240,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.isPatchableCallSite(callSite);
+        } else if (platform().target.arch.isAarch64()) {
+            return Aarch64TargetMethodUtil.isPatchableCallSite(callSite);
         } else {
             throw FatalError.unimplemented();
         }
@@ -250,6 +253,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (platform().target.arch.isAarch64()) {
+            return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
             throw FatalError.unimplemented();
         }
