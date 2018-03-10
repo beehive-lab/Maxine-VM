@@ -27,6 +27,7 @@ import java.util.*;
 
 import com.sun.max.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 
 /**
  * Utility for printing a textual listing from a set of {@link DisassembledObject}s.
@@ -49,6 +50,11 @@ public class DisassemblyPrinter {
      * @param disassembledObjects the disassembled objects to be printed
      */
     public void print(Disassembler disassembler, OutputStream outputStream, List<DisassembledObject> disassembledObjects) throws IOException {
+        // The check below is a work-around for ISAs that do not have disassemblers yet.
+        if (disassembledObjects.isEmpty()) {
+            ProgramWarning.message("Disassembled object list is empty!");
+            return;
+        }
         final PrintStream stream = outputStream instanceof PrintStream ? (PrintStream) outputStream : new PrintStream(outputStream);
         final int nOffsetChars = Integer.toString(Utils.last(disassembledObjects).startPosition()).length();
         final int nLabelChars = disassembler.addressMapper().maximumLabelNameLength();
