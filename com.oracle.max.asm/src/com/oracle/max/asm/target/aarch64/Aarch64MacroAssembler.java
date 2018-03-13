@@ -293,7 +293,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
         bind(atomicFail);
         membar(-1);
-        setUpScratch(address); // r12 has the address to CAS
+        setUpScratch(address); // scratch register has the address to CAS
         Aarch64Address scratchAddress = Aarch64Address.createRegisterOffsetAddress(scratchRegister, Aarch64.zr, false);
         ldxr(64, Aarch64.r8, scratchAddress); // r8 has the current Value
         cmp(64, cmpValue, Aarch64.r8); // compare r8 with cmpValue
@@ -303,9 +303,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
         // If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
 
-        mov64BitConstant(Aarch64.r12, 1); // r12 has value 1
-        cmp(64, Aarch64.r8, Aarch64.r12);
-        // If r8 is equal to r12 then there was an issue with atomicity so do the operation again
+        mov64BitConstant(scratchRegister, 1); // r16 has value 1
+        cmp(64, Aarch64.r8, scratchRegister);
+        // If r8 is equal to scratch register then there was an issue with atomicity so do the operation again
         branchConditionally(ConditionFlag.EQ, atomicFail);
         mov(64, cmpValue, newValue); // differing from the real CAS we return the value we
                                                                // stored
@@ -592,9 +592,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param delta
      */
     public void increment32(CiRegister reg, int delta) {
-        assert reg != Aarch64.r16;
-        mov32BitConstant(Aarch64.r16, delta);
-        add(32, reg, reg, Aarch64.r16, ShiftType.LSL, 0);
+        assert reg != scratchRegister;
+        mov32BitConstant(scratchRegister, delta);
+        add(32, reg, reg, scratchRegister, ShiftType.LSL, 0);
     }
 
     /**
@@ -606,9 +606,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         if (value == 0) {
             return;
         }
-        ldr(64, Aarch64.r12, dst);
+        ldr(64, scratchRegister, dst);
         mov(Aarch64.r8, value);
-        add(64, Aarch64.r8, Aarch64.r12, Aarch64.r8);
+        add(64, Aarch64.r8, scratchRegister, Aarch64.r8);
         str(64, Aarch64.r8, dst);
     }
 
@@ -621,9 +621,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         if (value == 0) {
             return;
         }
-        ldr(64, Aarch64.r12, dst);
+        ldr(64, scratchRegister, dst);
         mov(Aarch64.r8, value);
-        sub(64, Aarch64.r8, Aarch64.r12, Aarch64.r8);
+        sub(64, Aarch64.r8, scratchRegister, Aarch64.r8);
         str(64, Aarch64.r8, dst);
     }
 
@@ -688,9 +688,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             } else {
                 setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
                 if (r.isCpu()) {
-                    ldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+                    ldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
                 } else if (r.isFpu()) {
-                    fldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+                    fldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
                 }
             }
         }
@@ -1460,7 +1460,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public final void ret() {
-        pop(1 << 15);
+        pop(Aarch64.linkRegister);
+        ret(Aarch64.linkRegister);
     }
 
     public final void ret(int imm16) {
@@ -1477,7 +1478,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             nop(4);
         } else {
             setUpScratch(addr);
-            mov(64, dest, Aarch64.r12);
+            mov(64, dest, scratchRegister);
         }
     }
 
@@ -1495,9 +1496,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public final void crashme() {
-        eor(64, Aarch64.r12, Aarch64.r12, Aarch64.r12);
+        eor(64, scratchRegister, scratchRegister, scratchRegister);
         insertForeverLoop();
-        ldr(64, Aarch64.r12, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+        ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
     }
 
     public void insertForeverLoop() {
@@ -1563,10 +1564,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
-    public final void ucomisd(CiRegister dst, CiRegister src, CiKind destKind, CiKind srcKind) {
+    public final void ucomisd(int size, CiRegister dst, CiRegister src, CiKind destKind, CiKind srcKind) {
         assert destKind.isFloatOrDouble();
         assert srcKind.isFloatOrDouble();
-        fcmp(64, dst, src);
+        fcmp(size, dst, src);
         mrs(Aarch64.r15, SystemRegister.SPSR_EL1);
     }
 

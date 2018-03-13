@@ -113,7 +113,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitMonitorAddress(int monitor, CiValue dst) {
         CiStackSlot slot = frameMap.toMonitorBaseStackAddress(monitor);
-        masm.leaq(dst.asRegister(), new CiAddress(slot.kind, Aarch64.r13.asValue(), slot.index() * target.arch.wordSize));
+        masm.leaq(dst.asRegister(), new CiAddress(slot.kind, Aarch64.sp.asValue(), slot.index() * target.arch.wordSize));
     }
 
     @Override
@@ -190,8 +190,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             masm.mov64BitConstant(dst, 0xDEADDEAD);
         } else {
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
-//            masm.addRegisters(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r15, 0, 0);
-//            masm.ldr(ConditionFlag.Always, dst, Aarch64.r12, 0);
+//            masm.addRegisters(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r15, 0, 0);
+//            masm.ldr(ConditionFlag.Always, dst, Aarch64.r16, 0);
         }
     }
 
@@ -434,7 +434,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 if (info != null) {
                     tasm.recordImplicitException(codePos(), info);
                 }
-//                masm.strHImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), Aarch64.r12, 0);
+//                masm.strHImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), Aarch64.r16, 0);
                 break;
             case Byte:
             case Boolean:
@@ -442,7 +442,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 if (info != null) {
                     tasm.recordImplicitException(codePos(), info);
                 }
-//                masm.strbImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), Aarch64.r12, 0);
+//                masm.strbImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), Aarch64.r16, 0);
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -484,8 +484,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     @Override
     protected void mem2mem(CiValue src, CiValue dest, CiKind kind) {
         if (dest.kind.isInt()) {
-            masm.load(Aarch64.r12, (CiAddress) src, CiKind.Int);
-            masm.store(Aarch64.r12, (CiAddress) dest, CiKind.Int);
+            masm.load(Aarch64.r16, (CiAddress) src, CiKind.Int);
+            masm.store(Aarch64.r16, (CiAddress) dest, CiKind.Int);
         } else {
             assert false : "Not implemented yet";
         }
@@ -537,7 +537,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 //                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, dest.asRegister(), Aarch64.LATCH_REGISTER, 0);
                 } else {
                     masm.setUpScratch(addr);
-//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, dest.asRegister(), safepoint ? Aarch64.LATCH_REGISTER : Aarch64.r12, 0);
+//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, dest.asRegister(), safepoint ? Aarch64.LATCH_REGISTER : Aarch64.r16, 0);
                     if (info != null) {
                         tasm.recordImplicitException(codePos() - 4, info);
                     }
@@ -950,8 +950,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 assert other.isStackSlot();
                 CiStackSlot otherSlot = (CiStackSlot) other;
                 masm.setUpScratch(frameMap.toStackAddress(otherSlot));
-//                masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r12, Aarch64.r12, 0);
-//                masm.mov(64, ncond, false, result.asRegister(), Aarch64.r12);
+//                masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r16, Aarch64.r16, 0);
+//                masm.mov(64, ncond, false, result.asRegister(), Aarch64.r16);
             }
         } else {
             // conditional move not available, use emit a branch and move
@@ -1090,8 +1090,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                         masm.setUpScratch(raddr);
-//                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r15, 0, 0);
-//                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r12, 0, CiKind.Float, CiKind.Int);
+//                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r15, 0, 0);
+//                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r16, 0, CiKind.Float, CiKind.Int);
                     }
                     switch (code) {
                         case Add:
@@ -1119,8 +1119,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                         masm.setUpScratch(raddr);
-                        masm.add(64, Aarch64.r12, Aarch64.r12, Aarch64.r15);
-//                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r12, 0, CiKind.Double, CiKind.Int);
+                        masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r15);
+//                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r16, 0, CiKind.Double, CiKind.Int);
                     }
                     switch (code) {
                         case Add:
@@ -1229,9 +1229,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 //                    masm.vmov(ConditionFlag.Always, dest.asRegister(), value.asRegister(), null, CiKind.Double, CiKind.Double);
                 }
 //                masm.vmov(ConditionFlag.Always, Aarch64.d30, Aarch64.r9, null, CiKind.Float, CiKind.Int);
-                masm.mov64BitConstant(Aarch64.r12, 0x7fffffff);
+                masm.mov64BitConstant(Aarch64.r16, 0x7fffffff);
 //                masm.vmov(ConditionFlag.Always, Aarch64.r8, dest.asRegister(), null, CiKind.Long, CiKind.Double);
-//                masm.and(ConditionFlag.Always, false, Aarch64.r9, Aarch64.r9, Aarch64.r12, 0, 0);
+//                masm.and(ConditionFlag.Always, false, Aarch64.r9, Aarch64.r9, Aarch64.r16, 0, 0);
 //                masm.vmov(ConditionFlag.Always, dest.asRegister(), Aarch64.r8, Aarch64.r9, CiKind.Double, CiKind.Long);
 //                masm.vmov(ConditionFlag.Always, Aarch64.r9, Aarch64.d30, null, CiKind.Int, CiKind.Float);
                 break;
@@ -1271,8 +1271,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 // added support for stack operands
                 CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                 masm.setUpScratch(raddr);
-//                masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r8, Aarch64.r12, 0);
-                assert reg != Aarch64.r12;
+//                masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r8, Aarch64.r16, 0);
+                assert reg != Aarch64.r16;
                 switch (code) {
                     case LogicAnd:
 //                        masm.iand(reg, reg, Aarch64.r8);
@@ -1360,23 +1360,23 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             Aarch64Label continuation = new Aarch64Label();
             if (C1XOptions.GenSpecialDivChecks) {
                 Aarch64Label normalCase = new Aarch64Label();
-                masm.mov64BitConstant(Aarch64.r12, Integer.MIN_VALUE);
-//                masm.cmp(ConditionFlag.Always, lreg, Aarch64.r12, 0, 0);
+                masm.mov64BitConstant(Aarch64.r16, Integer.MIN_VALUE);
+//                masm.cmp(ConditionFlag.Always, lreg, Aarch64.r16, 0, 0);
 //                masm.jcc(ConditionFlag.NotEqual, normalCase);
                 if (code == LIROpcode.Irem) {
 //                    masm.eor(ConditionFlag.Always, false, Aarch64.r8, Aarch64.r8, Aarch64.r8, 0, 0);
                 }
-                masm.mov64BitConstant(Aarch64.r12, -1);
-//                masm.cmp(ConditionFlag.Always, rreg, Aarch64.r12, 0, 0);
+                masm.mov64BitConstant(Aarch64.r16, -1);
+//                masm.cmp(ConditionFlag.Always, rreg, Aarch64.r16, 0, 0);
 //                masm.jcc(ConditionFlag.Equal, continuation);
                 masm.bind(normalCase);
             }
             masm.mov(64, Aarch64.r8, lreg);
-//            masm.eor(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r12, 0, 0);
-//            masm.cmp(ConditionFlag.Always, Aarch64.r12, rreg, 0, 0);
+//            masm.eor(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r16, 0, 0);
+//            masm.cmp(ConditionFlag.Always, Aarch64.r16, rreg, 0, 0);
 //            masm.insertDivZeroCheck();
             int offset = masm.codeBuffer.position();
-//            masm.vldr(ConditionFlag.Equal, Aarch64.d30, Aarch64.r12, 0, CiKind.Float, CiKind.Int);
+//            masm.vldr(ConditionFlag.Equal, Aarch64.d30, Aarch64.r16, 0, CiKind.Float, CiKind.Int);
 //            masm.sdiv(ConditionFlag.Always, dreg, lreg, rreg);
             masm.bind(continuation);
             tasm.recordImplicitException(offset, info);
@@ -1396,12 +1396,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
         assert divisor.isRegister() : "the divisor needs to be a register LDIVE exception checks";
         CiRegister denominator = divisor.asRegister();
-//        masm.eor(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r12, 0, 0);
-//        masm.cmp(ConditionFlag.Always, Aarch64.r12, denominator, 0, 0);
-//        masm.cmp(ConditionFlag.Equal, Aarch64.r12, Aarch64.cpuRegisters[denominator.getEncoding() + 1], 0, 0);
+//        masm.eor(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r16, 0, 0);
+//        masm.cmp(ConditionFlag.Always, Aarch64.r16, denominator, 0, 0);
+//        masm.cmp(ConditionFlag.Equal, Aarch64.r16, Aarch64.cpuRegisters[denominator.getEncoding() + 1], 0, 0);
 //        masm.insertDivZeroCheck();
         int offset = masm.codeBuffer.position();
-//        masm.vldr(ConditionFlag.Equal, Aarch64.d30, Aarch64.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
+//        masm.vldr(ConditionFlag.Equal, Aarch64.d30, Aarch64.r16, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
         tasm.recordImplicitException(offset, info);
     }
 
@@ -1418,11 +1418,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         CiRegister rreg = right.asRegister();
 
         masm.mov(64, Aarch64.r8, lreg);
-//        masm.eor(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r12, 0, 0);
-//        masm.cmp(ConditionFlag.Always, Aarch64.r12, rreg, 0, 0);
+//        masm.eor(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r16, 0, 0);
+//        masm.cmp(ConditionFlag.Always, Aarch64.r16, rreg, 0, 0);
 //        masm.insertDivZeroCheck();
         int offset = masm.codeBuffer.position();
-//        masm.vldr(ConditionFlag.Equal, Aarch64.d30, Aarch64.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
+//        masm.vldr(ConditionFlag.Equal, Aarch64.d30, Aarch64.r16, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
 //        masm.udiv(ConditionFlag.Always, dreg, lreg, rreg);
         tasm.recordImplicitException(offset, info);
 
@@ -1464,8 +1464,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         masm.bind(continuation);
         tasm.recordImplicitException(offset, info);
         assert code == LIROpcode.Ldiv || code == LIROpcode.Lrem;
-        masm.mov64BitConstant(Aarch64.r12, 4);
-//        masm.blx(Aarch64.r12);
+        masm.mov64BitConstant(Aarch64.r16, 4);
+//        masm.blx(Aarch64.r16);
     }
 
     void arithmeticLudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
@@ -1480,8 +1480,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         int offset = masm.codeBuffer.position();
         tasm.recordImplicitException(offset, info);
         assert code == LIROpcode.Ludiv || code == LIROpcode.Lurem;
-        masm.mov64BitConstant(Aarch64.r12, 12);
-//        masm.blx(Aarch64.r12);
+        masm.mov64BitConstant(Aarch64.r16, 12);
+//        masm.blx(Aarch64.r16);
     }
 
     private ConditionFlag convertCondition(Condition condition) {
@@ -1558,14 +1558,14 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         masm.cmp(32, reg1, opr2.asRegister());
                         break;
                     case Long:
-                        assert (reg1 != Aarch64.r12);
+                        assert (reg1 != Aarch64.r16);
                         masm.cmp(64, reg1, opr2.asRegister());
                         break;
                     case Float:
-                        masm.ucomisd(opr1.asRegister(), opr2.asRegister(), opr1.kind, opr2.kind);
+                        masm.ucomisd(32, reg1, opr2.asRegister(), opr1.kind, opr2.kind);
                         break;
                     case Double:
-                        masm.ucomisd(reg1, opr2.asRegister(), opr1.kind, opr2.kind);
+                        masm.ucomisd(64, reg1, opr2.asRegister(), opr1.kind, opr2.kind);
                         break;
                     default:
                         throw Util.shouldNotReachHere(opr1.kind.toString());
@@ -1592,7 +1592,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
                         //                        masm.vmov(ConditionFlag.Always, Aarch64.d30, Aarch64.r9, null, CiKind.Float, CiKind.Int);
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-//                        masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r12, 0);
+//                        masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r16, 0);
 //                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r8);
 //                        masm.vmov(ConditionFlag.Always, Aarch64.r9, Aarch64.d30, null, CiKind.Int, CiKind.Float);
                         break;
@@ -1609,7 +1609,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         }
 
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-//                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r12, 0, CiKind.Float, CiKind.Int);
+//                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r16, 0, CiKind.Float, CiKind.Int);
 //                        masm.ucomisd(reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
                     case Double:
@@ -1618,7 +1618,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         }
 
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-//                        masm.vldr(ConditionFlag.Always, Aarch64.d15, Aarch64.r12, 0, CiKind.Double, CiKind.Int);
+//                        masm.vldr(ConditionFlag.Always, Aarch64.d15, Aarch64.r16, 0, CiKind.Double, CiKind.Int);
 //                        masm.ucomisd(reg1, Aarch64.d15, opr1.kind, CiKind.Double);
                         break;
                     default:
@@ -1637,9 +1637,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         break;
                     case Float:
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
-                        masm.add(32, Aarch64.r12, Aarch64.r12, Aarch64.r15);
-                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
-                        masm.ucomisd(reg1, Aarch64.d30, opr1.kind, CiKind.Float);
+                        masm.add(32, Aarch64.r16, Aarch64.r16, Aarch64.r15);
+                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
+                        masm.ucomisd(32, reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
                     case Double:
                         if (true) {
@@ -1647,8 +1647,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         }
 
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
-//                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r15, 0, 0);
-//                        masm.vldr(ConditionFlag.Always, Aarch64.d15, Aarch64.r12, 0, CiKind.Double, CiKind.Int);
+//                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r15, 0, 0);
+//                        masm.vldr(ConditionFlag.Always, Aarch64.d15, Aarch64.r16, 0, CiKind.Double, CiKind.Int);
 //                        masm.ucomisd(reg1, Aarch64.d15, opr1.kind, CiKind.Double);
                         break;
                     case Long: {
@@ -1808,7 +1808,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert left == dest : "left and dest must be equal";
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
-        assert count.asRegister() != Aarch64.r12 : "count register must not be scratch";
+        assert count.asRegister() != Aarch64.r16 : "count register must not be scratch";
         CiRegister register = left.asRegister();
         assert register != SHIFTCount : "left cannot be r8";
         int size = left.kind.isInt() ? 32 : 64;
@@ -1874,11 +1874,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 //                    masm.movImmediate(ConditionFlag.Equal, result, -1);
 //                    masm.jcc(ConditionFlag.Equal, exit);
                     masm.bind(normal);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r12, value1);
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r12, 32);
+//                    masm.clz(ConditionFlag.Always, Aarch64.r16, value1);
+//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 32);
 //                    masm.jcc(ConditionFlag.Equal, normal2);
                     masm.mov64BitConstant(Aarch64.r8, 63);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r12, 0, 0);
+//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r16, 0, 0);
 //                    masm.jcc(ConditionFlag.Always, exit);
                     masm.bind(normal2);
                     masm.mov64BitConstant(Aarch64.r8, 31);
@@ -1889,9 +1889,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 //                    masm.cmpImmediate(ConditionFlag.Always, value, 0);
 //                    masm.movImmediate(ConditionFlag.Equal, result, -1);
 //                    masm.jcc(ConditionFlag.Equal, exit);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r12, value);
+//                    masm.clz(ConditionFlag.Always, Aarch64.r16, value);
                     masm.mov64BitConstant(Aarch64.r8, 31);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r12, 0, 0);
+//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r16, 0, 0);
                     masm.bind(exit);
                 }
             } else {
@@ -1905,16 +1905,16 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 //                    masm.movImmediate(ConditionFlag.Equal, result, -1);
 //                    masm.jcc(ConditionFlag.Equal, exit);
                     masm.bind(normal);
-//                    masm.rbit(ConditionFlag.Always, Aarch64.r12, value);
+//                    masm.rbit(ConditionFlag.Always, Aarch64.r16, value);
 //                    masm.rbit(ConditionFlag.Always, value, value1);
-                    masm.mov(64, value1, Aarch64.r12);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r12, value1);
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r12, 32);
-//                    masm.mov(64, ConditionFlag.NotEqual, false, result, Aarch64.r12);
+                    masm.mov(64, value1, Aarch64.r16);
+//                    masm.clz(ConditionFlag.Always, Aarch64.r16, value1);
+//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 32);
+//                    masm.mov(64, ConditionFlag.NotEqual, false, result, Aarch64.r16);
 //                    masm.jcc(ConditionFlag.NotEqual, exit);
-                    masm.mov64BitConstant(Aarch64.r12, 32);
+                    masm.mov64BitConstant(Aarch64.r16, 32);
 //                    masm.clz(ConditionFlag.Always, value1, value);
-//                    masm.addRegisters(ConditionFlag.Always, false, result, Aarch64.r12, value1, 0, 0);
+//                    masm.addRegisters(ConditionFlag.Always, false, result, Aarch64.r16, value1, 0, 0);
                     masm.bind(exit);
                 } else {
                     Aarch64Label exit = new Aarch64Label();
@@ -1932,7 +1932,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             if (most) {
                 if (src.kind.isLong()) {
                     assert !Platform.target().arch.is32bit();
-//                    masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r12, 0);
+//                    masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r16, 0);
                     Aarch64Label normal = new Aarch64Label();
                     Aarch64Label normal2 = new Aarch64Label();
                     Aarch64Label exit = new Aarch64Label();
@@ -1942,31 +1942,31 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 //                    masm.movImmediate(ConditionFlag.Equal, result, -1);
 //                    masm.jcc(ConditionFlag.Equal, exit);
                     masm.bind(normal);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r12, Aarch64.r9);
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r12, 32);
+//                    masm.clz(ConditionFlag.Always, Aarch64.r16, Aarch64.r9);
+//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 32);
 //                    masm.jcc(ConditionFlag.Equal, normal2);
                     masm.mov64BitConstant(Aarch64.r8, 63);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r12, 0, 0);
+//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r16, 0, 0);
 //                    masm.jcc(ConditionFlag.Always, exit);
                     masm.bind(normal2);
                     masm.mov64BitConstant(Aarch64.r8, 31);
 //                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r9, 0, 0);
                     masm.bind(exit);
                 } else {
-//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r12, Aarch64.r12, 0);
+//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r16, Aarch64.r16, 0);
                     Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r12, 0);
+//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 0);
 //                    masm.movImmediate(ConditionFlag.Equal, result, -1);
 //                    masm.jcc(ConditionFlag.Equal, exit);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r8, Aarch64.r12);
-                    masm.mov64BitConstant(Aarch64.r12, 31);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r12, Aarch64.r8, 0, 0);
+//                    masm.clz(ConditionFlag.Always, Aarch64.r8, Aarch64.r16);
+                    masm.mov64BitConstant(Aarch64.r16, 31);
+//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r16, Aarch64.r8, 0, 0);
                     masm.bind(exit);
                 }
             } else {
                 if (src.kind.isLong()) {
                     assert !Platform.target().arch.is32bit();
-//                    masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r12, 0);
+//                    masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r16, 0);
                     Aarch64Label normal = new Aarch64Label();
                     Aarch64Label exit = new Aarch64Label();
 //                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r9, 0);
@@ -1975,24 +1975,24 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 //                    masm.movImmediate(ConditionFlag.Equal, result, -1);
 //                    masm.jcc(ConditionFlag.Equal, exit);
                     masm.bind(normal);
-//                    masm.rbit(ConditionFlag.Always, Aarch64.r12, Aarch64.r8);
+//                    masm.rbit(ConditionFlag.Always, Aarch64.r16, Aarch64.r8);
 //                    masm.rbit(ConditionFlag.Always, Aarch64.r8, Aarch64.r9);
-                    masm.mov(64, Aarch64.r9, Aarch64.r12);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r12, Aarch64.r9);
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r12, 32);
-//                    masm.mov(64, ConditionFlag.NotEqual, false, result, Aarch64.r12);
+                    masm.mov(64, Aarch64.r9, Aarch64.r16);
+//                    masm.clz(ConditionFlag.Always, Aarch64.r16, Aarch64.r9);
+//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 32);
+//                    masm.mov(64, ConditionFlag.NotEqual, false, result, Aarch64.r16);
 //                    masm.jcc(ConditionFlag.NotEqual, exit);
 //                    masm.clz(ConditionFlag.Always, Aarch64.r9, Aarch64.r8);
 //                    masm.add12BitImmediate(ConditionFlag.Always, false, result, Aarch64.r9, 32);
                     masm.bind(exit);
                 } else {
-//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r12, Aarch64.r12, 0);
+//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r16, Aarch64.r16, 0);
                     Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r12, 0);
+//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 0);
 //                    masm.movImmediate(ConditionFlag.Equal, result, -1);
 //                    masm.jcc(ConditionFlag.Equal, exit);
-//                    masm.rbit(ConditionFlag.Always, Aarch64.r12, Aarch64.r12);
-//                    masm.clz(ConditionFlag.Always, result, Aarch64.r12);
+//                    masm.rbit(ConditionFlag.Always, Aarch64.r16, Aarch64.r16);
+//                    masm.clz(ConditionFlag.Always, result, Aarch64.r16);
                     masm.bind(exit);
                 }
             }
@@ -2431,16 +2431,15 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         masm.nop(4);
                     }
 
-                    masm.push(1 << 14);
-                    masm.mov64BitConstant(Aarch64.r12, frameSize);
+                    masm.push(Aarch64.linkRegister);
 
-                    masm.sub(64, Aarch64.r13, Aarch64.r13, Aarch64.r12);
+                    masm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
                         for (int i = 0; i < frameSize / intSize; ++i) {
-                            masm.setUpScratch(new CiAddress(CiKind.Int, Aarch64.r13.asValue(), i * intSize));
+                            masm.setUpScratch(new CiAddress(CiKind.Int, Aarch64.sp.asValue(), i * intSize));
                             masm.mov64BitConstant(Aarch64.r8, 0xC1C1C1C1);
-                            masm.str(64, Aarch64.r8, Aarch64Address.createRegisterOffsetAddress(Aarch64.r12, Aarch64.r0, false));
+                            masm.str(64, Aarch64.r8, Aarch64Address.createRegisterOffsetAddress(Aarch64.r16, Aarch64.r0, false));
                         }
                     }
 
@@ -2452,7 +2451,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     }
 
                     if (C1XOptions.DebugMethods) {
-                        masm.mov64BitConstant(Aarch64.r12, methodID);
+                        masm.mov64BitConstant(Aarch64.r16, methodID);
                         debugMethodWriter.appendDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
                     }
                     break;
@@ -2467,7 +2466,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csl, frameToCSA);
                     }
-                    masm.incrementq(Aarch64.r13, frameSize);
+                    masm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
                     break;
                 }
                 case Push: {
@@ -2652,15 +2651,15 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             if (target.inlineObjects) {
                 assert false : "Not implemented yet!";
                 masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
-                masm.mov64BitConstant(Aarch64.r12, 0xdeaddead); // patched?
-                masm.mov(64, dst, Aarch64.r12);
+                masm.mov64BitConstant(Aarch64.r16, 0xdeaddead); // patched?
+                masm.mov(64, dst, Aarch64.r16);
             } else {
                 masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
                 if (true) {
                     throw Util.unimplemented();
                 }
-                // masm.addRegisters(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r15, 0, 0);
-                // masm.ldr(ConditionFlag.Always, dst, Aarch64.r12, 0);
+                // masm.addRegisters(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r15, 0, 0);
+                // masm.ldr(ConditionFlag.Always, dst, Aarch64.r16, 0);
             }
         }
     }

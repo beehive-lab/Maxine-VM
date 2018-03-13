@@ -1738,9 +1738,9 @@ public class Stubs {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
             int disp = runtimeRoutine.address().toInt();
 
-            int instruction = Aarch64MacroAssembler.movzHelper(64, Aarch64.r12, disp & 0xffff, 0);
+            int instruction = Aarch64MacroAssembler.movzHelper(64, Aarch64.r16, disp & 0xffff, 0);
             patchAddr.writeInt(0, instruction);
-            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r12, (disp >> 16) & 0xffff, 16);
+            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (disp >> 16) & 0xffff, 16);
             patchAddr.writeInt(4, instruction);
 
             Aarch64TargetMethodUtil.maxine_cache_flush(patchAddr, 8);

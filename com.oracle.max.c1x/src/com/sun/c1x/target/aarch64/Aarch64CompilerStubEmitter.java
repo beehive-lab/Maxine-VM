@@ -149,9 +149,9 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
             // pad to normal code entry point
             asm.nop(entryCodeOffset);
         }
-        asm.push(1 << 14);
+        asm.push(Aarch64.linkRegister);
         final int frameSize = frameSize();
-        asm.subq(Aarch64.r13, frameSize);
+        asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
         tasm.setFrameSize(frameSize);
         comp.frameMap().setFrameSize(frameSize);
         asm.save(csl, csl.frameOffsetToCSA);
@@ -174,11 +174,12 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
     @Override
     protected void forwardRuntimeCall(CiRuntimeCall call) {
         // Load arguments
+        CiRegister scratchRegister = comp.registerConfig.getScratchRegister();
         CiCallingConvention cc = comp.registerConfig.getCallingConvention(RuntimeCall, call.arguments, comp.target, false);
         for (int i = 0; i < cc.locations.length; ++i) {
             CiValue location = cc.locations[i];
             asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[i]));
-            asm.ldr(64, location.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+            asm.ldr(64, location.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
         }
 
         if (C1XOptions.AlignDirectCallsForPatching) {
@@ -197,9 +198,9 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
             asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
             if (returnRegister.number <= 15) {
-                asm.str(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+                asm.str(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
             } else {
-                asm.fstr(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+                asm.fstr(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
             }
         }
     }
