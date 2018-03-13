@@ -281,8 +281,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         emitInt(instruction);
     }
 
-    // The same as casInt except the last conditional move since it is added implicitly by the LIR generator.
-    public final void casIntAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
+    public void cas(int size, CiRegister newValue, CiRegister cmpValue, Aarch64Address address) {
         assert Aarch64.r8 != cmpValue;
         assert Aarch64.r8 != newValue;
         assert newValue != cmpValue;
@@ -293,24 +292,18 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
         bind(atomicFail);
         membar(-1);
-        setUpScratch(address); // scratch register has the address to CAS
-        Aarch64Address scratchAddress = Aarch64Address.createRegisterOffsetAddress(scratchRegister, Aarch64.zr, false);
-        ldxr(64, Aarch64.r8, scratchAddress); // r8 has the current Value
-        cmp(64, cmpValue, Aarch64.r8); // compare r8 with cmpValue
-        stxr(64, Aarch64.r8, newValue, scratchAddress); // if equal, store newValue to address and
-                                                                         // result to r8
+        ldxr(size, scratchRegister, address); // scratch has the current Value
+        cmp(size, cmpValue, scratchRegister); // compare scratch with cmpValue
+        mov64BitConstant(scratchRegister, 1); // store 1 to r0/cmpValue to indicate failure (in case the branch is taken)
         branchConditionally(ConditionFlag.NE, notEqualTocmpValue); // we were not equal to the cmpValue
+        stxr(size, scratchRegister, newValue, address); // store newValue to address and result to scratch register
 
         // If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
-
-        mov64BitConstant(scratchRegister, 1); // r16 has value 1
-        cmp(64, Aarch64.r8, scratchRegister);
-        // If r8 is equal to scratch register then there was an issue with atomicity so do the operation again
-        branchConditionally(ConditionFlag.EQ, atomicFail);
-        mov(64, cmpValue, newValue); // differing from the real CAS we return the value we
-                                                               // stored
+        cmp(64, scratchRegister, Aarch64.zr);
+        // If the scratch register is not 0 then there was an issue with atomicity so do the operation again
+        branchConditionally(ConditionFlag.NE, atomicFail);
+        mov(64, cmpValue, Aarch64.zr); // store 0 to r0/cmpValue to indicate success
         bind(notEqualTocmpValue);
-        cmp(64, newValue, cmpValue);
         dmb(BarrierKind.SY);
     }
 
