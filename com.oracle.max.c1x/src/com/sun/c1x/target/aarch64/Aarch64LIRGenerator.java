@@ -39,8 +39,8 @@ public class Aarch64LIRGenerator extends LIRGenerator {
     // TODO: (ck) We have to change those to ARM register terminology
     private static final CiRegisterValue RAX_I = Aarch64.r0.asValue(CiKind.Int);
     private static final CiRegisterValue RAX_L = Aarch64.r0.asValue(CiKind.Long);
-    private static final CiRegisterValue RDX_I = Aarch64.r2.asValue(CiKind.Int);
-    private static final CiRegisterValue RDX_L = Aarch64.r2.asValue(CiKind.Long);
+    private static final CiRegisterValue RDX_I = Aarch64.r1.asValue(CiKind.Int);
+    private static final CiRegisterValue RDX_L = Aarch64.r1.asValue(CiKind.Long);
     private static final CiRegisterValue RETURNREG_L = Aarch64.r0.asValue(CiKind.Long);
     private static final CiRegisterValue RETURNREG_I = Aarch64.r0.asValue(CiKind.Int);
 
