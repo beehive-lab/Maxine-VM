@@ -1154,13 +1154,11 @@ public class Stubs {
             // store the value of the latch register from the thread locals into the trap frame
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
             asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameToCSA + csl.offsetOf(latch)));
+            asm.add(64, asm.scratchRegister, Aarch64.sp, frameToCSA + csl.offsetOf(latch));
             asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize));
+            asm.add(64, asm.scratchRegister, Aarch64.sp, frameSize);
             asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // load the trap number from the thread locals into the first parameter register
@@ -1168,8 +1166,7 @@ public class Stubs {
             asm.ldr(64, args[0].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // also save the trap number into the trap frame
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET));
+            asm.add(64, asm.scratchRegister, Aarch64.sp, frameToCSA + Aarch64TrapFrameAccess.TRAP_NUMBER_OFFSET);
             asm.str(64, args[0].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // load the trap frame pointer into the second parameter register

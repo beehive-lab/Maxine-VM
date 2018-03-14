@@ -29,6 +29,8 @@ import com.sun.max.vm.runtime.*;
 
 public class Aarch64TrapFrameAccess extends TrapFrameAccess {
 
+    public static final int TRAP_NUMBER_OFFSET = 0;
+
     @Override
     public Pointer getPCPointer(Pointer trapFrame) {
         // TODO Auto-generated method stub
