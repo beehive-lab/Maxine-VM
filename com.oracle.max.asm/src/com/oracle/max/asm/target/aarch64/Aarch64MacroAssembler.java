@@ -1651,10 +1651,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 }
                 break;
             case BASE_INDEX:
-                if (true) {
-                    throw new Error("unimplemented");
-                }
-//                addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+                addlsl(scratchRegister, base, index, scale.log2);
                 base = scratchRegister;
                 disp = 0;
                 break;
