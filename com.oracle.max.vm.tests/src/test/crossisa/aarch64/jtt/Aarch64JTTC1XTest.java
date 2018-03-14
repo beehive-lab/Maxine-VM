@@ -259,7 +259,6 @@ public class Aarch64JTTC1XTest {
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp02.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer = BC_dcmp02.test(argOne[i]);
@@ -273,11 +272,9 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_dcmp04() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp04.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp04.test(argOne[i]);
@@ -291,11 +288,9 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_dcmp07() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp07");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp07.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp07.test(argOne[i]);
@@ -309,11 +304,9 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_dcmp09() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp09");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp09.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp09.test(argOne[i]);
@@ -347,7 +340,6 @@ public class Aarch64JTTC1XTest {
         double[] argsTwo = {0.0D, 1.0D, 54.43D};
         String klassName = getKlassName("jtt.bytecode.BC_dadd");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dadd.java", "double test(double, double)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -366,7 +358,6 @@ public class Aarch64JTTC1XTest {
         int[] argsTwo = {12, -1, 67, -1, 1, -1, -1};
         String klassName = getKlassName("jtt.bytecode.BC_imul");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_imul.java", "int test(int, int)");
         int expectedValue;
         for (int i = 0; i < argsOne.length; i++) {
@@ -380,10 +371,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_iand() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_iand");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 2));
         pairs.add(new Args(0, -1));
@@ -404,10 +393,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_ishl() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_ishl");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 2));
         pairs.add(new Args(0, -1));
@@ -429,10 +416,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_ishr() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_ishr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 2));
         pairs.add(new Args(0, -1));
@@ -454,10 +439,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_iushr() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_iushr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 2));
         pairs.add(new Args(0, -1));
@@ -481,13 +464,11 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_i2b() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         int[] argsOne = {0, -1, 2, 255, 128, Byte.MIN_VALUE, Byte.MAX_VALUE};
         String klassName = getKlassName("jtt.bytecode.BC_i2b");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         CompilationBroker.singleton.setSimulateAdapter(true);
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_i2b.java", "byte test(int)");
         byte expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
@@ -501,13 +482,11 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_i2c() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         int[] argsOne = {0, -1, 2, 255, 128, Character.MAX_VALUE};
         String klassName = getKlassName("jtt.bytecode.BC_i2c");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         CompilationBroker.singleton.setSimulateAdapter(true);
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_i2c.java", "char test(int)");
         char expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
@@ -521,11 +500,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_ireturn() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {0, 1, -1, 256};
         String klassName = getKlassName("jtt.bytecode.BC_ireturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_ireturn.java", "int test(int)");
 
         int expectedValue = 0;
@@ -540,11 +517,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_lookupswitch01() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {0, 1, 44, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213};
         String klassName = getKlassName("jtt.bytecode.BC_lookupswitch01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_lookupswitch01.java", "int test(int)");
 
         int expectedValue = 0;
@@ -559,11 +534,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_lookupswitch02() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {0, 1, 44, 66, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213, -121, -122, -123};
         String klassName = getKlassName("jtt.bytecode.BC_lookupswitch02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_lookupswitch02.java", "int test(int)");
 
         int expectedValue = 0;
@@ -578,11 +551,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_lookupswitch03() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {0, 1, 44, 66, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213, -121, -122, -123};
         String klassName = getKlassName("jtt.bytecode.BC_lookupswitch03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_lookupswitch03.java", "int test(int)");
 
         int expectedValue = 0;
@@ -597,11 +568,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_lookupswitch04() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {0, 1, 44, 66, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213, -121, -122, -123};
         String klassName = getKlassName("jtt.bytecode.BC_lookupswitch04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_lookupswitch04.java", "int test(int)");
 
         int expectedValue = 0;
@@ -616,11 +585,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_tableswitch() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {7, -1, 0, 1, 2, 3, 4, 5, 6, 0};
         String klassName = getKlassName("jtt.bytecode.BC_tableswitch");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_tableswitch.java", "int test(int)");
 
         int expectedValue = 0;
@@ -635,11 +602,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_tableswitch2() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {7, -1, 0, 1, 2, 3, 4, 5, 6, 0};
         String klassName = getKlassName("jtt.bytecode.BC_tableswitch2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_tableswitch2.java", "int test(int)");
 
         int expectedValue = 0;
@@ -654,11 +619,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_tableswitch3() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {01, -2, -3, 0, -4, 3, 1, 2, 10};
         String klassName = getKlassName("jtt.bytecode.BC_tableswitch3");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_tableswitch3.java", "int test(int)");
 
         int expectedValue = 0;
@@ -673,11 +636,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_tableswitch4() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {-1, 11, 0, 1, -5, -4, -3, -8};
         String klassName = getKlassName("jtt.bytecode.BC_tableswitch4");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_tableswitch4.java", "int test(int)");
 
         int expectedValue = 0;
@@ -692,10 +653,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_iconst() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_iconst");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(2, 2));
@@ -716,11 +675,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_invokestatic() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         List<Args> pairs = new LinkedList<Args>();
         String klassName = getKlassName("jtt.bytecode.BC_invokestatic");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_invokestatic.java", "int test(int)");
         pairs.add(new Args(1, 1));
         pairs.add(new Args(2, 2));
@@ -770,12 +727,10 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_f2b() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_f2b");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         CompilationBroker.singleton.setSimulateAdapter(true);
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_f2b.java", "byte test(float)");
         float[] arguments = {-2.2f, 0.0f, 1.0f, 100.06f};
         byte expectedByte;
@@ -790,12 +745,10 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_b2f() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_b2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         CompilationBroker.singleton.setSimulateAdapter(true);
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_b2f.java", "float test(byte)");
         byte[] arguments = {-100, 0, 100};
         float expectedFloat;
@@ -889,12 +842,10 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_ifge_2() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         int[] argOne = {0, 1, 6, 7};
         int[] argTwo = {2, -2, 375, 50};
         String klassName = getKlassName("jtt.bytecode.BC_ifge_2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_ifge_2.java", "boolean test(int, int)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer = BC_ifge_2.test(argOne[i], argTwo[i]);
@@ -908,12 +859,10 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_dcmp01() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         double[] argOne = {5.0d, -3.1d, 5.0d, -5.0d, 0d, -0.1d, -5.0d, 25.5d, 0.5d};
         double[] argTwo = {78.00d, 78.01d, 3.3d, -7.2d, 78.00d, 78.001d, -3.2d, 25.5d, 1.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp01.java", "boolean test(double, double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp01.test(argOne[i], argTwo[i]);
@@ -932,7 +881,6 @@ public class Aarch64JTTC1XTest {
 
         String klassName = getKlassName("jtt.max.MostSignificantBit32");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "MostSignificantBit32.java", "int test(long)");
         for (int i = 0; i < input.length; i++) {
             @SuppressWarnings("unused")
@@ -951,7 +899,6 @@ public class Aarch64JTTC1XTest {
         int[] output = new int[] {0, 1, -1, 0, 12};
         String klassName = getKlassName("jtt.max.LeastSignificantBit32");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "LeastSignificantBit32.java", "int test(long)");
         for (int i = 0; i < input.length; i++) {
             @SuppressWarnings("unused")
@@ -966,11 +913,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_dcmp03() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp03.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp03.test(argOne[i]);
@@ -984,11 +929,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_dcmp05() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp05");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp05.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp05.test(argOne[i]);
@@ -1002,11 +945,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_dcmp06() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp06");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp06.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp06.test(argOne[i]);
@@ -1020,11 +961,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_dcmp08() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp08");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp08.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp08.test(argOne[i]);
@@ -1038,10 +977,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_dcmp10() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_dcmp10");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp10.java", "boolean test(int)");
         for (int i = 0; i < 9; i++) {
             boolean answer            = BC_dcmp10.test(i);
@@ -1055,12 +992,10 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_fcmp01() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         float[] argOne = {5.0f, -3.0f, 5.0f, -5.0f, 0f, -0.1f, 0.75f};
         float[] argTwo = {78.00f, 78.01f, 3.3f, -7.2f, 78.00f, 78.001f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp01.java", "boolean test(float, float)");
         for (int i = 0; i < argOne.length; i++) {
             if (i == argOne.length - 1) {
@@ -1083,11 +1018,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_fcmp02() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp02.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp02.test(argOne[i]);
@@ -1101,11 +1034,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_fcmp03() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp03.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp03.test(argOne[i]);
@@ -1119,11 +1050,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_fcmp04() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp04.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp04.test(argOne[i]);
@@ -1137,11 +1066,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_fcmp05() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp05");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp05.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp05.test(argOne[i]);
@@ -1155,11 +1082,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_fcmp06() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp06");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp06.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp06.test(argOne[i]);
@@ -1173,11 +1098,9 @@ public class Aarch64JTTC1XTest {
     // // @Test
     public void C1X_jtt_BC_fcmp07() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp07");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp07.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp07.test(argOne[i]);
@@ -1191,11 +1114,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_fcmp08() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp08");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp08.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp08.test(argOne[i]);
@@ -1209,11 +1130,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_fcmp09() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp09");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp09.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp09.test(argOne[i]);
@@ -1227,10 +1146,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_fcmp10() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_fcmp10");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fcmp10.java", "boolean test(int)");
         for (int i = 0; i < 9; i++) {
             boolean answer            = BC_fcmp10.test(i);
@@ -1248,7 +1165,6 @@ public class Aarch64JTTC1XTest {
         float[] argsTwo = {10f, 20.1f, -6.01f};
         String klassName = getKlassName("jtt.bytecode.BC_fmul");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fmul.java", "float test(float, float)");
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fmul.test(argsOne[i], argsTwo[i]);
@@ -1266,7 +1182,6 @@ public class Aarch64JTTC1XTest {
         float[] argsTwo = {10f, 20.1f, -6.01f, 0.0f, 1.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fadd");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fadd.java", "float test(float, float)");
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fadd.test(argsOne[i], argsTwo[i]);
@@ -1284,7 +1199,6 @@ public class Aarch64JTTC1XTest {
         float[] argsTwo = {10f, 20.1f, -6.01f};
         String klassName = getKlassName("jtt.bytecode.BC_fsub");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fsub.java", "float test(float, float)");
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fsub.test(argsOne[i], argsTwo[i]);
@@ -1302,7 +1216,6 @@ public class Aarch64JTTC1XTest {
         float[] argsTwo = {10f, 20.1f};
         String klassName = getKlassName("jtt.bytecode.BC_fdiv");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fdiv.java", "float test(float, float)");
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fdiv.test(argsOne[i], argsTwo[i]);
@@ -1321,7 +1234,6 @@ public class Aarch64JTTC1XTest {
         float[] argsTwo = {10f, 20.1f};
         String klassName = getKlassName("jtt.bytecode.BC_frem");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_frem.java", "float test(float, float)");
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_frem.test(argsOne[i], argsTwo[i]);
@@ -1339,7 +1251,6 @@ public class Aarch64JTTC1XTest {
         int[] argsTwo = {2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
         String klassName = getKlassName("jtt.bytecode.BC_irem");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_irem.java", "int test(int, int)");
 
         int expectedValue = 0;
@@ -1359,7 +1270,6 @@ public class Aarch64JTTC1XTest {
         double[] argsTwo = {10D, 20.1D};
         String klassName = getKlassName("jtt.bytecode.BC_drem");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_drem.java", "double test(double, double)");
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_drem.test(argsOne[i], argsTwo[i]);
@@ -1377,7 +1287,6 @@ public class Aarch64JTTC1XTest {
         double[] argsTwo = {10D, 20.1D, 5.0D};
         String klassName = getKlassName("jtt.bytecode.BC_ddiv");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_ddiv.java", "double test(double, double)");
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_ddiv.test(argsOne[i], argsTwo[i]);
@@ -1391,11 +1300,9 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_ldiv() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_ldiv");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2L));
         pairs.add(new Args(0L, -1L));
@@ -1423,13 +1330,11 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_idiv() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         int[] argsOne = {1, 2, 256, 135, -2147483648, -2147483648};
         int[] argsTwo = {2, -1, 4, 7, -1, 1};
         String klassName = getKlassName("jtt.bytecode.BC_idiv");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         CompilationBroker.singleton.setSimulateAdapter(false);
         initializeCodeBuffers(methods, "BC_idiv.java", "int test(int, int)");
         int expectedValue = 0;
@@ -1449,7 +1354,6 @@ public class Aarch64JTTC1XTest {
         short[] argsTwo = {2, -1, 67, -1, 1, 1, 1, 1};
         String klassName = getKlassName("jtt.bytecode.BC_iadd3");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_iadd3.java", "int test(short, short)");
         int expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
@@ -1466,7 +1370,6 @@ public class Aarch64JTTC1XTest {
         int[] argsOne = {1, -1, 34, 1, 65535, 32768, -32768};
         String klassName = getKlassName("jtt.bytecode.BC_i2s");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_i2s.java", "short test(int)");
         short expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
@@ -1484,7 +1387,6 @@ public class Aarch64JTTC1XTest {
         int[] argsTwo = {2, -1, 67, -1, 1, -2, 1, 134217728};
         String klassName = getKlassName("jtt.bytecode.BC_iadd");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_iadd.java", "int test(int, int)");
         int expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
@@ -1502,7 +1404,6 @@ public class Aarch64JTTC1XTest {
         byte[] argsTwo = {2, -1, 67, -1, 1, 1};
         String klassName = getKlassName("jtt.bytecode.BC_iadd2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_iadd2.java", "int test(byte, byte)");
 
         int expectedValue = 0;
@@ -1520,7 +1421,6 @@ public class Aarch64JTTC1XTest {
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
         String klassName = getKlassName("jtt.bytecode.BC_fload");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fload.java", "float test(float)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -1539,7 +1439,6 @@ public class Aarch64JTTC1XTest {
         float[] argsTwo = {17.1f, 2.5f, 45.32f, -44.5f, -990.9f};
         String klassName = getKlassName("jtt.bytecode.BC_fload_2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fload_2.java", "float test(float, float)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -1557,7 +1456,6 @@ public class Aarch64JTTC1XTest {
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
         String klassName = getKlassName("jtt.bytecode.BC_freturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_freturn.java", "float test(float)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -1575,7 +1473,6 @@ public class Aarch64JTTC1XTest {
         double[] argsOne = {0.0D, 1.1D, -1.4d, 256.33d, 1000.001d};
         String klassName = getKlassName("jtt.bytecode.BC_dreturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dreturn.java", "double test(double)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -1594,7 +1491,6 @@ public class Aarch64JTTC1XTest {
         double[] argsTwo = {10D, 2.0D};
         String klassName = getKlassName("jtt.bytecode.BC_dmul");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dmul.java", "double test(double, double)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -1613,7 +1509,6 @@ public class Aarch64JTTC1XTest {
         double[] argsTwo = {0.0D, 1.0D, 54.43d, 1.0D};
         String klassName = getKlassName("jtt.bytecode.BC_dsub");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dsub.java", "double test(double, double)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -1631,7 +1526,6 @@ public class Aarch64JTTC1XTest {
         double[] argsOne = {1.0D, 2.0d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dsub2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dsub2.java", "double test(double)");
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dsub2.test(argsOne[i]);
@@ -1648,7 +1542,6 @@ public class Aarch64JTTC1XTest {
         float[] argsOne = {0.0f, -1.01f, 7263.8734f, 0.0f, 7263.8743f};
         String klassName = getKlassName("jtt.bytecode.BC_fneg");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fneg.java", "float test(float)");
         assert entryPoint != -1;
 
@@ -1667,7 +1560,6 @@ public class Aarch64JTTC1XTest {
         double[] argsOne = {1.0d, -1.0d, -0.0D, 0.0d, -2.0d, 2.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dneg2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dneg2.java", "double test(double)");
         assert entryPoint != -1;
 
@@ -1688,7 +1580,6 @@ public class Aarch64JTTC1XTest {
         int[] argsThree = {0, 0, 0, 1, 1, 1, 0};
         String klassName = getKlassName("jtt.bytecode.BC_dneg");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dneg.java", "double test(double, double, int)");
         assert entryPoint != -1;
 
@@ -1704,10 +1595,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lload_0() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_0");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 1L));
         pairs.add(new Args(-3L, -3L));
@@ -1727,10 +1616,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lload_4() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_4");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 1));
         pairs.add(new Args(-3L, 1));
@@ -1750,10 +1637,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lload_1() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_1");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 1L));
         pairs.add(new Args(1, -3L));
@@ -1772,10 +1657,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lload_2() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 1, 1L));
         pairs.add(new Args(1, 1, -3L));
@@ -1795,10 +1678,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lload_3() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_3");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 1, 1, 1L));
         pairs.add(new Args(1, 1, 1, -3L));
@@ -1818,10 +1699,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_ladd() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_ladd");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2L));
         pairs.add(new Args(0L, -1L));
@@ -1845,10 +1724,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lor() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lor");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2L));
         pairs.add(new Args(0L, -1L));
@@ -1879,10 +1756,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lxor() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lxor");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2L));
         pairs.add(new Args(0L, -1L));
@@ -1905,10 +1780,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_land() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_land");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2L));
         pairs.add(new Args(0L, -1L));
@@ -1932,10 +1805,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_land_const() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_land_const");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 1));
         pairs.add(new Args(0, 0));
@@ -1955,10 +1826,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lshl() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lshl");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2));
         pairs.add(new Args(1L, 0));
@@ -1984,10 +1853,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lshr() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lshr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2));
         pairs.add(new Args(1L, 0));
@@ -2011,11 +1878,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_loop01() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.Loop01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
@@ -2037,11 +1902,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_charcomp() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_charcomp");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         CompilationBroker.singleton.setSimulateAdapter(false);
         char argOne = 'c';
         char[] argTwo = {'a', 'c', 'd'};
@@ -2063,11 +1926,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_loop02() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.Loop02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
@@ -2089,10 +1950,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_loop03() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.Loop03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
         pairs.add(new Args(0, 0));
@@ -2113,10 +1972,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_loop04() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.Loop04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
         pairs.add(new Args(0, 0));
@@ -2136,10 +1993,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_loop11() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.Loop11");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
         pairs.add(new Args(0, 0));
@@ -2159,11 +2014,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void infinite_C1X_jtt_loopPHI() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.LoopPhi");
         CompilationBroker.singleton.setSimulateAdapter(true);
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         // pairs.add(new Args(5000, 2));
@@ -2192,11 +2045,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_irem2() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_irem");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 2));
@@ -2223,11 +2074,9 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_loopInline() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.LoopInline");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
@@ -2259,10 +2108,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_long_tests() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2));
         pairs.add(new Args(-1L, 1));
@@ -2291,10 +2138,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_long_le() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1L, 1L));
         pairs.add(new Args(0L, 0L));
@@ -2316,10 +2161,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_long_ge() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 1L));
         pairs.add(new Args(-1L, 1L));
@@ -2341,10 +2184,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_long_eq() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1L, 1L));
         pairs.add(new Args(0L, 0L));
@@ -2366,10 +2207,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_long_ne() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1L, 1L));
         pairs.add(new Args(0L, 0L));
@@ -2391,10 +2230,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_long_gt() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1L, 1L));
         pairs.add(new Args(0L, 0L));
@@ -2416,10 +2253,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_long_lt() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1L, 1L));
         pairs.add(new Args(0L, 0L));
@@ -2441,10 +2276,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lushr() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lushr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2));
         pairs.add(new Args(67L, 2));
@@ -2466,10 +2299,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lcmp() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lcmp");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0L, -1L));
         pairs.add(new Args(77L, 78L));
@@ -2490,10 +2321,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lmul() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lmul");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2L));
         pairs.add(new Args(0L, -1L));
@@ -2517,10 +2346,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lneg() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lneg");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0L, 0L));
         pairs.add(new Args(-1L, 1L));
@@ -2540,10 +2367,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lreturn() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lreturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0L, 0L));
         pairs.add(new Args(1L, 1L));
@@ -2564,10 +2389,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_lsub() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lsub");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, -2L));
         pairs.add(new Args(0L, 1L));
@@ -2593,10 +2416,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void C1X_jtt_BC_i2l() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_i2l");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(Integer.MIN_VALUE, (long) Integer.MIN_VALUE));
         pairs.add(new Args(1, 1L));
@@ -2619,10 +2440,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void C1X_jtt_BC_l2i() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_l2i");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 1));
         pairs.add(new Args(2L, 2));
@@ -2650,10 +2469,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void broken_C1X_jtt_BC_l2f() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_l2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0L, 0.0f));
         pairs.add(new Args(1L, 1.0f));
@@ -2677,10 +2494,8 @@ public class Aarch64JTTC1XTest {
     // @Test
     public void broken_C1X_jtt_BC_l2d() throws Exception {
         Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_l2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         List<Args> pairs = new ArrayList<>(8);
         pairs.add(new Args(0L, 0.0f));
         pairs.add(new Args(1L, 1.0f));
@@ -2702,12 +2517,9 @@ public class Aarch64JTTC1XTest {
 
     // @Test
     public void C1X_jtt_generic_compilation() throws Exception {
-        Code.resetBootCodeRegion();
-        vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("com.sun.max.vm.MaxineVM");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "MaxineVM.java", "int run(Pointer, int," + " Pointer, Word, Word, Word, Pointer, Pointer, Pointer, Pointer, int, Pointer)");
-        vm().compilationBroker.setOffline(true);
     }
 
     // @Test
@@ -2720,7 +2532,6 @@ public class Aarch64JTTC1XTest {
         float[] argsFive = {0.0f, 1.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fload_5");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_fload_5.java", "boolean test(float, float, float, float, float)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -2747,7 +2558,6 @@ public class Aarch64JTTC1XTest {
         double[] argsNine = {0.0D, 1.0D};
         String klassName = getKlassName("jtt.bytecode.BC_dload_9");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dload_9.java", "boolean test(double, double, double, double, double, double, double, double, double)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -2778,7 +2588,6 @@ public class Aarch64JTTC1XTest {
 
         String klassName = getKlassName("jtt.bytecode.BC_dload_10");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dload_10.java", "boolean test(double, double, double, double, double, double, double, double, double, float)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -2800,7 +2609,6 @@ public class Aarch64JTTC1XTest {
         double[] argsOne = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
         String klassName = getKlassName("jtt.bytecode.BC_dload");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dload.java", "double test(double)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -2819,7 +2627,6 @@ public class Aarch64JTTC1XTest {
         double[] argsTwo = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
         String klassName = getKlassName("jtt.bytecode.BC_dload_2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dload_2.java", "double test(double, double)");
 
         for (int i = 0; i < argsOne.length; i++) {
@@ -2842,8 +2649,6 @@ public class Aarch64JTTC1XTest {
 
         String klassName = getKlassName("jtt.bytecode.BC_fdload");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
-
         initializeCodeBuffers(methods, "BC_fdload.java", "boolean test(double, float, double, float, float)");
 
         for (int i = 0; i < argsOne.length; i++) {
