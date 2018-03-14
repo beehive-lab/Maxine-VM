@@ -810,52 +810,48 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitConditionalMove(Condition condition, CiValue opr1, CiValue opr2, CiValue result) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         ConditionFlag acond;
         ConditionFlag ncond;
         switch (condition) {
             case EQ:
-//                acond = ConditionFlag.Equal;
-//                ncond = ConditionFlag.NotEqual;
+                acond = ConditionFlag.EQ;
+                ncond = ConditionFlag.NE;
                 break;
             case NE:
-//                ncond = ConditionFlag.Equal;
-//                acond = ConditionFlag.NotEqual;
+                ncond = ConditionFlag.EQ;
+                acond = ConditionFlag.NE;
                 break;
             case LT:
-//                acond = ConditionFlag.SignedLesser;
-//                ncond = ConditionFlag.SignedGreaterOrEqual;
+                acond = ConditionFlag.LT;
+                ncond = ConditionFlag.GE;
                 break;
             case LE:
-//                acond = ConditionFlag.SignedLowerOrEqual;
-//                ncond = ConditionFlag.SignedGreater;
+                acond = ConditionFlag.LE;
+                ncond = ConditionFlag.GT;
                 break;
             case GE:
-//                acond = ConditionFlag.SignedGreaterOrEqual;
-//                ncond = ConditionFlag.SignedLesser;
+                acond = ConditionFlag.GE;
+                ncond = ConditionFlag.LT;
                 break;
             case GT:
-//                acond = ConditionFlag.SignedGreater;
-//                ncond = ConditionFlag.SignedLowerOrEqual;
+                acond = ConditionFlag.GT;
+                ncond = ConditionFlag.LE;
                 break;
             case BE:
-//                acond = ConditionFlag.UnsignedLowerOrEqual;
-//                ncond = ConditionFlag.UnsignedHigher;
+                acond = ConditionFlag.LS;
+                ncond = ConditionFlag.HI;
                 break;
             case BT:
-//                acond = ConditionFlag.CarryClearUnsignedLower;
-//                ncond = ConditionFlag.CarrySetUnsignedHigherEqual;
+                acond = ConditionFlag.LO;
+                ncond = ConditionFlag.HS;
                 break;
             case AE:
-//                acond = ConditionFlag.CarrySetUnsignedHigherEqual;
-//                ncond = ConditionFlag.CarryClearUnsignedLower;
+                acond = ConditionFlag.HS;
+                ncond = ConditionFlag.LO;
                 break;
             case AT:
-//                acond = ConditionFlag.UnsignedHigher;
-//                ncond = ConditionFlag.UnsignedLowerOrEqual;
+                acond = ConditionFlag.HI;
+                ncond = ConditionFlag.LS;
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -869,9 +865,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             def = opr2;
             other = opr1;
             // and flip the condition
-//            ConditionFlag tcond = acond;
-//            acond = ncond;
-//            ncond = tcond;
+            ConditionFlag tcond = acond;
+            acond = ncond;
+            ncond = tcond;
         }
 
         if (def.isRegister()) {
@@ -888,21 +884,21 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             if (other.isRegister()) {
                 assert other.asRegister() != result.asRegister() : "other already overwritten by previous move";
                 if (other.kind.isInt()) {
-//                    masm.mov(64, ncond, false, result.asRegister(), other.asRegister());
+                    masm.cmov(32, result.asRegister(), other.asRegister(), result.asRegister(), ncond);
                 } else {
-//                    masm.mov(64, ncond, false, result.asRegister(), other.asRegister());
+                    masm.cmov(64, result.asRegister(), other.asRegister(), result.asRegister(), ncond);
                 }
             } else {
                 assert other.isStackSlot();
                 CiStackSlot otherSlot = (CiStackSlot) other;
                 masm.setUpScratch(frameMap.toStackAddress(otherSlot));
-//                masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r16, Aarch64.r16, 0);
-//                masm.mov(64, ncond, false, result.asRegister(), Aarch64.r16);
+                masm.ldr(64, rscratch1, Aarch64Address.createBaseRegisterOnlyAddress(rscratch1));
+                masm.cmov(64, result.asRegister(), rscratch1, result.asRegister(), ncond);
             }
         } else {
             // conditional move not available, use emit a branch and move
             Aarch64Label skip = new Aarch64Label();
-//            masm.jcc(acond, skip);
+            masm.branchConditionally(acond, skip);
             if (other.isRegister()) {
                 reg2reg(other, result);
             } else if (other.isStackSlot()) {
