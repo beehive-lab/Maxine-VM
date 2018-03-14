@@ -2094,7 +2094,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lshl() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lshl");
@@ -2117,13 +2117,13 @@ public class Aarch64JTTC1XTest {
             long   expectedValue     = BC_lshl.test(pair.lfirst, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, int", Long.toString(pair.lfirst) + "LL," + Integer.toString(pair.second));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            long   returnValue       = registerValues[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lshr() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lshr");
@@ -2144,8 +2144,8 @@ public class Aarch64JTTC1XTest {
             long   expectedValue     = BC_lshr.test(pair.lfirst, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, int", Long.toString(pair.lfirst) + "LL," + Integer.toString(pair.second));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            long   returnValue       = registerValues[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
