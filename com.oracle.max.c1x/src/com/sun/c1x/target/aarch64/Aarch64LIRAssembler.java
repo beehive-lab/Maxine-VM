@@ -538,7 +538,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 break;
             case Iudiv:
             case Iurem:
-                arithmeticIudiv(op.code, op.opr1(), op.opr2(), op.result(), op.info);
+                arithmeticUdiv(32, op.code, op.opr1(), op.opr2(), op.result(), op.info);
                 break;
             case Ldiv:
             case Lrem:
@@ -546,10 +546,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 break;
             case Ludiv:
             case Lurem:
-                arithmeticLudiv(op.code, op.opr1(), op.opr2(), op.result(), op.info);
-                break;
-            case LDivExceptionCheck:
-                arithmeticLDivExceptionCheck(op.opr1(), op.opr2(), op.result(), op.info);
+                arithmeticUdiv(64, op.code, op.opr1(), op.opr2(), op.result(), op.info);
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -1338,48 +1335,22 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         }
     }
 
-    void arithmeticLDivExceptionCheck(CiValue dividend, CiValue divisor, CiValue result, LIRDebugInfo info) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-        assert divisor.isRegister() : "the divisor needs to be a register LDIVE exception checks";
-        CiRegister denominator = divisor.asRegister();
-//        masm.eor(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r16, 0, 0);
-//        masm.cmp(ConditionFlag.Always, Aarch64.r16, denominator, 0, 0);
-//        masm.cmp(ConditionFlag.Equal, Aarch64.r16, Aarch64.cpuRegisters[denominator.getEncoding() + 1], 0, 0);
-//        masm.insertDivZeroCheck();
-        int offset = masm.codeBuffer.position();
-//        masm.vldr(ConditionFlag.Equal, Aarch64.d30, Aarch64.r16, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
-        tasm.recordImplicitException(offset, info);
-    }
-
-    void arithmeticIudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
+    void arithmeticUdiv(int size, LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
-        CiRegister lreg = left.asRegister();
-        CiRegister dreg = result.asRegister();
-        CiRegister rreg = right.asRegister();
+        assert size == 32 || size == 64 : "size must be 32 or 64";
+        CiRegister numerator   = left.asRegister();
+        CiRegister quotient    = result.asRegister();
+        CiRegister denominator = right.asRegister();
 
-        masm.mov(64, Aarch64.r8, lreg);
-//        masm.eor(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r16, 0, 0);
-//        masm.cmp(ConditionFlag.Always, Aarch64.r16, rreg, 0, 0);
-//        masm.insertDivZeroCheck();
         int offset = masm.codeBuffer.position();
-//        masm.vldr(ConditionFlag.Equal, Aarch64.d30, Aarch64.r16, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
-//        masm.udiv(ConditionFlag.Always, dreg, lreg, rreg);
         tasm.recordImplicitException(offset, info);
-
-        if (code == LIROpcode.Iurem) {
-//            masm.mul(ConditionFlag.Always, false, lreg, dreg, rreg);
-//            masm.sub(ConditionFlag.Always, false, dreg, Aarch64.r8, lreg, 0, 0);
+        masm.udiv(size, quotient, numerator, denominator);
+        if (code == LIROpcode.Iurem || code == LIROpcode.Lurem) {
+            masm.msub(size, quotient, quotient, denominator, numerator);
         } else {
-            assert code == LIROpcode.Iudiv;
+            assert code == LIROpcode.Iudiv || code == LIROpcode.Ludiv;
         }
     }
 
@@ -1414,22 +1385,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         tasm.recordImplicitException(offset, info);
         assert code == LIROpcode.Ldiv || code == LIROpcode.Lrem;
         masm.mov64BitConstant(Aarch64.r16, 4);
-//        masm.blx(Aarch64.r16);
-    }
-
-    void arithmeticLudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-        assert left.isRegister() : "left must be register";
-        assert right.isRegister() : "right must be register";
-        assert result.isRegister() : "result must be register";
-        assert false : "ArithmeticLudiv not implemented";
-        int offset = masm.codeBuffer.position();
-        tasm.recordImplicitException(offset, info);
-        assert code == LIROpcode.Ludiv || code == LIROpcode.Lurem;
-        masm.mov64BitConstant(Aarch64.r16, 12);
 //        masm.blx(Aarch64.r16);
     }
 
