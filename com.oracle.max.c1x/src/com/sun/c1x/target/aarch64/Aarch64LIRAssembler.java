@@ -392,61 +392,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         CiAddress destAddress = (CiAddress) dest;
-        // Checkstyle: off
-        CiRegister tmpRegister = destAddress.base();
-        if (tmpRegister == CiRegister.Frame) {
-            tmpRegister = masm.frameRegister;
+        masm.store(src.asRegister(), destAddress, kind);
+        if (info != null) {
+            tasm.recordImplicitException(codePos() - 4, info);
         }
-        switch (kind) {
-            case Float:
-                masm.store(src.asRegister(), destAddress, CiKind.Float);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos() - 4, info);
-                }
-                break;
-            case Double:
-                masm.store(src.asRegister(), destAddress, CiKind.Double);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos() - 4, info);
-                }
-                break;
-            case Jsr:
-            case Object:
-            case Int:
-                masm.store(src.asRegister(), destAddress, CiKind.Int);
-                tasm.recordImplicitException(codePos() - 4, info);
-                break;
-            case Long:
-                masm.store(src.asRegister(), destAddress, CiKind.Long);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos() - 4, info);
-                }
-                break;
-            case Char:
-            case Short:
-                masm.setUpScratch(destAddress);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos(), info);
-                }
-//                masm.strHImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), Aarch64.r16, 0);
-                break;
-            case Byte:
-            case Boolean:
-                masm.setUpScratch(destAddress);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos(), info);
-                }
-//                masm.strbImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), Aarch64.r16, 0);
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
     }
 
     @Override
