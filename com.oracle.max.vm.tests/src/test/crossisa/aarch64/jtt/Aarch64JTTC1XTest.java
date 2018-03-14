@@ -2750,7 +2750,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_i2l() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_i2l");
@@ -2770,8 +2770,8 @@ public class Aarch64JTTC1XTest {
             long   expectedValue     = BC_i2l.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            long   returnValue       = registerValues[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }

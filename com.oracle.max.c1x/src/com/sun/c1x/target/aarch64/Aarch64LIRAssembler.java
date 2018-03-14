@@ -698,7 +698,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         CiValue dest = op.result();
         switch (op.opcode) {
             case I2L:
-                moveRegs(src.asRegister(), dest.asRegister());
+                masm.sxt(64, 32, dest.asRegister(), src.asRegister());
                 break;
             case L2I:
                 masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFFFFF);
