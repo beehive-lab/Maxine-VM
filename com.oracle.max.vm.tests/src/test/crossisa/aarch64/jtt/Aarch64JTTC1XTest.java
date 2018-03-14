@@ -585,12 +585,12 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_i2b() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         initTests();
-        int[] argsOne = {0, /*-1, 2, 255, 128*/};
+        int[] argsOne = {0, -1, 2, 255, 128, Byte.MIN_VALUE, Byte.MAX_VALUE};
         String klassName = getKlassName("jtt.bytecode.BC_i2b");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -601,7 +601,7 @@ public class Aarch64JTTC1XTest {
             expectedValue = BC_i2b.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("char", "int", Integer.toString(argsOne[i]));
             long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            assert ((byte) registerValues[0]) == expectedValue : "Failed incorrect value " + ((byte) registerValues[0]) + " " + expectedValue;
             theCompiler.cleanup();
         }
     }
