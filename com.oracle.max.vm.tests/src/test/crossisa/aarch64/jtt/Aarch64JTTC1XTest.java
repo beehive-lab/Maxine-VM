@@ -606,6 +606,27 @@ public class Aarch64JTTC1XTest {
         }
     }
 
+    @Test
+    public void C1X_jtt_BC_i2c() throws Exception {
+        vm().compilationBroker.setOffline(initialised);
+        CompilationBroker.singleton.setSimulateAdapter(true);
+        initTests();
+        int[] argsOne = {0, -1, 2, 255, 128, Character.MAX_VALUE};
+        String klassName = getKlassName("jtt.bytecode.BC_i2c");
+        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
+        CompilationBroker.singleton.setSimulateAdapter(true);
+        vm().compilationBroker.setOffline(true);
+        initializeCodeBuffers(methods, "BC_i2c.java", "char test(int)");
+        char expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            expectedValue = BC_i2c.test(argsOne[i]);
+            String functionPrototype = Aarch64CodeWriter.preAmble("char", "int", Integer.toString(argsOne[i]));
+            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            assert ((char) registerValues[0]) == expectedValue : "Failed incorrect value " + ((char) registerValues[0]) + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+
     // @Test
     public void C1X_jtt_BC_ireturn() throws Exception {
         initTests();
