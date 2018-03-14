@@ -513,7 +513,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         switch (op.code) {
             case Idiv:
             case Irem:
-                arithmeticIdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info);
+                arithmeticDiv(32, op.code, op.opr1(), op.opr2(), op.result(), op.info);
                 break;
             case Iudiv:
             case Iurem:
@@ -521,7 +521,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 break;
             case Ldiv:
             case Lrem:
-                arithmeticLdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info);
+                arithmeticDiv(64, op.code, op.opr1(), op.opr2(), op.result(), op.info);
                 break;
             case Ludiv:
             case Lurem:
@@ -1253,49 +1253,45 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         }
     }
 
-    void arithmeticIdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
+    void arithmeticDiv(int size, LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() || right.isConstant() : "right must be register or constant";
         assert result.isRegister() : "result must be register";
-        CiRegister lreg = left.asRegister();
-        CiRegister dreg = result.asRegister();
+        assert size == 32 || size == 64 : "size must be 32 or 64";
+
+        CiRegister numerator = left.asRegister();
+        CiRegister quotient = result.asRegister();
 
         if (right.isConstant()) {
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
         } else {
-            CiRegister rreg = right.asRegister();
+            CiRegister denominator = right.asRegister();
             Aarch64Label continuation = new Aarch64Label();
             if (C1XOptions.GenSpecialDivChecks) {
+                // check for special case of MIN_VALUE / -1
                 Aarch64Label normalCase = new Aarch64Label();
-                masm.mov64BitConstant(Aarch64.r16, Integer.MIN_VALUE);
-//                masm.cmp(ConditionFlag.Always, lreg, Aarch64.r16, 0, 0);
-//                masm.jcc(ConditionFlag.NotEqual, normalCase);
-                if (code == LIROpcode.Irem) {
-//                    masm.eor(ConditionFlag.Always, false, Aarch64.r8, Aarch64.r8, Aarch64.r8, 0, 0);
+                masm.mov64BitConstant(rscratch1, size == 32 ? Integer.MIN_VALUE : Long.MIN_VALUE);
+                masm.cmp(size, numerator, rscratch1);
+                masm.branchConditionally(ConditionFlag.NE, normalCase);
+                masm.cmp(size, denominator, -1);
+                if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
+                    // prepare scratch for possible special case where remainder = 0
+                    masm.mov(size, rscratch1, Aarch64.zr);
                 }
-                masm.mov64BitConstant(Aarch64.r16, -1);
-//                masm.cmp(ConditionFlag.Always, rreg, Aarch64.r16, 0, 0);
-//                masm.jcc(ConditionFlag.Equal, continuation);
+                masm.branchConditionally(ConditionFlag.EQ, continuation);
                 masm.bind(normalCase);
             }
-            masm.mov(64, Aarch64.r8, lreg);
-//            masm.eor(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r16, 0, 0);
-//            masm.cmp(ConditionFlag.Always, Aarch64.r16, rreg, 0, 0);
-//            masm.insertDivZeroCheck();
             int offset = masm.codeBuffer.position();
-//            masm.vldr(ConditionFlag.Equal, Aarch64.d30, Aarch64.r16, 0, CiKind.Float, CiKind.Int);
-//            masm.sdiv(ConditionFlag.Always, dreg, lreg, rreg);
+            masm.sdiv(size, quotient, numerator, denominator);
+            if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
+                masm.msub(size, rscratch1, quotient, denominator, numerator);
+            }
             masm.bind(continuation);
             tasm.recordImplicitException(offset, info);
-            if (code == LIROpcode.Irem) {
-//                masm.mul(ConditionFlag.Always, false, lreg, dreg, rreg);
-//                masm.sub(ConditionFlag.Always, false, dreg, Aarch64.r8, lreg, 0, 0);
+            if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
+                masm.mov(size, quotient, rscratch1);
             } else {
-                assert code == LIROpcode.Idiv;
+                assert code == LIROpcode.Idiv || code == LIROpcode.Ldiv;
             }
         }
     }
@@ -1317,40 +1313,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         } else {
             assert code == LIROpcode.Iudiv || code == LIROpcode.Ludiv;
         }
-    }
-
-    void arithmeticLdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-        assert left.isRegister() : "left must be register";
-        assert right.isRegister() : "right must be register";
-        assert result.isRegister() : "result must be register";
-        assert result.kind.isLong();
-        CiRegister rreg = right.asRegister();
-        Aarch64Label continuation = new Aarch64Label();
-        if (C1XOptions.GenSpecialDivChecks) {
-            // check for special case of Long.MIN_VALUE / -1
-            Aarch64Label normalCase = new Aarch64Label();
-            masm.movlong(rreg, java.lang.Long.MIN_VALUE, CiKind.Long);
-//            masm.jcc(ConditionFlag.NotEqual, normalCase);
-            if (code == LIROpcode.Lrem) {
-//                masm.eor(ConditionFlag.Always, false, rreg, rreg, rreg, 0, 0);
-//                masm.eor(ConditionFlag.Always, false, Aarch64.cpuRegisters[rreg.getEncoding() + 1], Aarch64.cpuRegisters[rreg.getEncoding() + 1], Aarch64.cpuRegisters[rreg.getEncoding() + 1], 0, 0);
-            }
-//            masm.cmpl(rreg, -1);
-//            masm.jcc(ConditionFlag.Equal, continuation);
-            // handle normal case
-            masm.bind(normalCase);
-        }
-        int offset = masm.codeBuffer.position();
-        // normal and special case exit
-        masm.bind(continuation);
-        tasm.recordImplicitException(offset, info);
-        assert code == LIROpcode.Ldiv || code == LIROpcode.Lrem;
-        masm.mov64BitConstant(Aarch64.r16, 4);
-//        masm.blx(Aarch64.r16);
     }
 
     private ConditionFlag convertCondition(Condition condition) {
@@ -1864,7 +1826,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     break;
                 case Div:
                     if (inst.kind == CiKind.Int) {
-                        arithmeticIdiv(LIROpcode.Idiv, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
+                        arithmeticDiv(32, LIROpcode.Idiv, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     } else {
                         emitArithOp(LIROpcode.Div, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     }
@@ -1874,7 +1836,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     break;
                 case Mod:
                     if (inst.kind == CiKind.Int) {
-                        arithmeticIdiv(LIROpcode.Irem, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
+                        arithmeticDiv(32, LIROpcode.Irem, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     } else {
                         emitArithOp(LIROpcode.Rem, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     }
