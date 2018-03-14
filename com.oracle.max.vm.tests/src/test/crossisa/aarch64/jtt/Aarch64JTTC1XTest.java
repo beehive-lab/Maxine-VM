@@ -1839,7 +1839,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lload_0() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_0");
@@ -1856,9 +1856,8 @@ public class Aarch64JTTC1XTest {
             long   expectedValue     = BC_lload_0.test(pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long   returnValue       = 0xffffffffL & registerValues[0];
-            returnValue |= (0xffffffffL & registerValues[1]) << 32;
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
+            long   returnValue       = registerValues[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " " + expectedValue;
             theCompiler.cleanup();
         }
     }
@@ -1881,12 +1880,12 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long, int", Long.toString(pair.lfirst) + "," + Long.toString(pair.second));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
+            assert returnValue == expectedValue : "Failed incorrect value " +returnValue + " " + expectedValue;
             theCompiler.cleanup();
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lload_1() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_1");
@@ -1902,14 +1901,13 @@ public class Aarch64JTTC1XTest {
             long   expectedValue     = BC_lload_1.test(pair.first, pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "int, long long", Integer.toString(pair.first) + "," + Long.toString(pair.lfirst));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long   returnValue       = 0xffffffffL & registerValues[0];
-            returnValue |= (0xffffffffL & registerValues[1]) << 32;
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " r2 " + registerValues[2] + " " + expectedValue;
+            long   returnValue       = registerValues[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " " + expectedValue;
             theCompiler.cleanup();
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lload_2() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_2");
@@ -1926,14 +1924,13 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "int, int, long long",
                     Integer.toString(pair.first) + "," + Integer.toString(pair.second) + "," + Long.toString(pair.lfirst));
             long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long   returnValue    = 0xffffffffL & registerValues[0];
-            returnValue |= (0xffffffffL & registerValues[1]) << 32;
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
+            long   returnValue    = registerValues[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " " + expectedValue;
             theCompiler.cleanup();
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lload_3() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_3");
@@ -1950,9 +1947,8 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "int, int, int, long long",
                     Integer.toString(pair.first) + "," + Integer.toString(pair.second) + "," + Integer.toString(pair.third) + "," + Long.toString(pair.lfirst));
             long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long   returnValue    = 0xffffffffL & registerValues[0];
-            returnValue |= (0xffffffffL & registerValues[1]) << 32;
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
+            long   returnValue    = registerValues[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " " + expectedValue;
             theCompiler.cleanup();
         }
     }
