@@ -2306,8 +2306,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
      *            RSP).
      */
     private void bangStackWithOffset(int offset) {
-        masm.mov(64, Aarch64.r0, Aarch64.sp);
-        masm.setUpScratch(new CiAddress(target.wordKind, Aarch64.r0.asValue(), -offset));
+        masm.mov32BitConstant(rscratch1, offset);
+        masm.sub(64, rscratch1, Aarch64.sp, rscratch1, ExtendType.UXTX, 0);
         masm.str(64, Aarch64.r0, Aarch64Address.createBaseRegisterOnlyAddress(rscratch1));
     }
 
