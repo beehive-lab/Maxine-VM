@@ -503,7 +503,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
             long[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -528,7 +528,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -553,7 +553,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -580,7 +580,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -826,7 +826,7 @@ public class Aarch64JTTC1XTest {
             int    expectedValue     = BC_iconst.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
     }
@@ -1559,7 +1559,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -1996,7 +1996,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2030,7 +2030,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2188,7 +2188,7 @@ public class Aarch64JTTC1XTest {
             String  functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long    returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2213,7 +2213,7 @@ public class Aarch64JTTC1XTest {
                         Integer.toString(i) + ", " + "'" + Character.toString(argOne) + "'" + ", " + "'" + Character.toString(argTwo[j]) + "'");
                 long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
                 long   returnValue    = registerValues[0];
-                assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+                assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
                 theCompiler.cleanup();
             }
         }
@@ -2240,7 +2240,7 @@ public class Aarch64JTTC1XTest {
             String  functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long    returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2264,7 +2264,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2287,7 +2287,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2310,7 +2310,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2343,7 +2343,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2374,7 +2374,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int, int ", Integer.toString(pair.first) + ", " + Integer.toString(pair.second));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2400,7 +2400,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -2822,7 +2822,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long", Long.toString(pair.lfirst) + "LL");
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
