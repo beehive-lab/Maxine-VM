@@ -1304,6 +1304,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_iconst() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -1316,7 +1317,6 @@ public class Aarch64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "putfieldLong");
-        t1x.createOfflineIntrinsicTemplate(c1x, T1XIntrinsicTemplateSource.class, t1x.intrinsicTemplates, "com_sun_max_unsafe_Pointer$setLong$IIJ");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iconst.test(pair.first);
             setExpectedValue(r0, answer);
