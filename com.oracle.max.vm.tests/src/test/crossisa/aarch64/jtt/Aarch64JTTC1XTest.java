@@ -2415,28 +2415,6 @@ public class Aarch64JTTC1XTest {
         return b.toString();
     }
 
-    public long connectRegs(long reg0, long reg1) {
-        long returnVal;
-        if (reg1 < 0) {
-            returnVal = reg1 << 32;
-            if (reg0 < 0) {
-                returnVal += 1L << 31;
-                returnVal += reg0 + (1L << 31);
-            } else {
-                returnVal += reg0;
-            }
-        } else {
-            returnVal = reg1 << 32;
-            if (reg0 < 0) {
-                returnVal += 1L << 31;
-                returnVal += reg0 + (1L << 31);
-            } else {
-                returnVal += reg0;
-            }
-        }
-        return returnVal;
-    }
-
     @Test
     public void C1X_jtt_BC_long_tests() throws Exception {
         vm().compilationBroker.setOffline(initialised);
