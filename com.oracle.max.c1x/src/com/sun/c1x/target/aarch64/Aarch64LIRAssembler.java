@@ -94,10 +94,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             case HERE:
                 tasm.recordSafepoint(codePos(), info);
                 int beforeLea = masm.codeBuffer.position();
-                masm.leaq(dst.asRegister(), CiAddress.Placeholder);
+                masm.adr(dst.asRegister(), 0);
                 int afterLea = masm.codeBuffer.position();
-                masm.codeBuffer.setPosition(beforeLea);
-                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, Aarch64.rip.asValue(), beforeLea - afterLea));
+                masm.adr(dst.asRegister(), beforeLea - afterLea, beforeLea);
                 break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
@@ -2205,10 +2204,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     CiValue result = operands[inst.result.index];
                     CiRegister dst = result.asRegister();
                     int beforeLea = masm.codeBuffer.position();
-                    masm.leaq(dst, CiAddress.Placeholder);
+                    masm.adr(dst, 0);
                     int afterLea = masm.codeBuffer.position();
-                    masm.codeBuffer.setPosition(beforeLea);
-                    masm.leaq(dst, new CiAddress(target.wordKind, Aarch64.rip.asValue(), beforeLea - afterLea));
+                    masm.adr(dst, beforeLea - afterLea, beforeLea);
                     break;
                 }
                 case LoadEffectiveAddress: {

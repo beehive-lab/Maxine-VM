@@ -86,7 +86,6 @@ public class Aarch64 extends CiArchitecture {
     // see definition in sharedRuntime_aarch64.cpp:gen_c2i_adapter
     public static final CiRegister metaspaceMethodRegister = r12;
     public static final CiRegister LATCH_REGISTER = r10;
-    public static final CiRegister rip = new CiRegister(48, -1, 0, "rip"); // TODO: see if this works
 /********************************************************************************************************/
 
     // Floating point and SIMD registers
