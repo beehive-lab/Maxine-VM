@@ -333,7 +333,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dadd() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, 1.0D, 253.11d};
@@ -368,7 +368,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_iand() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_iand");
@@ -436,7 +436,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_iushr() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_iushr");
@@ -514,7 +514,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lookupswitch01() throws Exception {
         Code.resetBootCodeRegion();
         int[] argOne = {0, 1, 44, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213};
@@ -531,7 +531,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lookupswitch02() throws Exception {
         Code.resetBootCodeRegion();
         int[] argOne = {0, 1, 44, 66, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213, -121, -122, -123};
@@ -599,7 +599,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_tableswitch2() throws Exception {
         Code.resetBootCodeRegion();
         int[] argOne = {7, -1, 0, 1, 2, 3, 4, 5, 6, 0};
@@ -616,7 +616,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_tableswitch3() throws Exception {
         Code.resetBootCodeRegion();
         int[] argOne = {01, -2, -3, 0, -4, 3, 1, 2, 10};
@@ -633,7 +633,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_tableswitch4() throws Exception {
         Code.resetBootCodeRegion();
         int[] argOne = {-1, 11, 0, 1, -5, -4, -3, -8};
@@ -650,7 +650,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_iconst() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_iconst");
@@ -690,7 +690,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_f2d() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_f2d");
@@ -707,7 +707,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_i2f() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_i2f");
@@ -742,7 +742,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_b2f() throws Exception {
         Code.resetBootCodeRegion();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -761,7 +761,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_d2f() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_d2f");
@@ -808,7 +808,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_f2i01() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_f2i01");
@@ -823,7 +823,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_i2d() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_i2d");
@@ -839,7 +839,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_ifge_2() throws Exception {
         Code.resetBootCodeRegion();
         int[] argOne = {0, 1, 6, 7};
@@ -856,7 +856,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dcmp01() throws Exception {
         Code.resetBootCodeRegion();
         double[] argOne = {5.0d, -3.1d, 5.0d, -5.0d, 0d, -0.1d, -5.0d, 25.5d, 0.5d};
@@ -910,7 +910,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dcmp03() throws Exception {
         Code.resetBootCodeRegion();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -926,7 +926,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dcmp05() throws Exception {
         Code.resetBootCodeRegion();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -942,7 +942,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dcmp06() throws Exception {
         Code.resetBootCodeRegion();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -958,7 +958,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dcmp08() throws Exception {
         Code.resetBootCodeRegion();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -989,7 +989,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fcmp01() throws Exception {
         Code.resetBootCodeRegion();
         float[] argOne = {5.0f, -3.0f, 5.0f, -5.0f, 0f, -0.1f, 0.75f};
@@ -1015,7 +1015,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fcmp02() throws Exception {
         Code.resetBootCodeRegion();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -1031,7 +1031,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fcmp03() throws Exception {
         Code.resetBootCodeRegion();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -1047,7 +1047,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fcmp04() throws Exception {
         Code.resetBootCodeRegion();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -1063,7 +1063,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fcmp05() throws Exception {
         Code.resetBootCodeRegion();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -1079,7 +1079,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fcmp06() throws Exception {
         Code.resetBootCodeRegion();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -1095,7 +1095,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // // @Test
+    @Test
     public void C1X_jtt_BC_fcmp07() throws Exception {
         Code.resetBootCodeRegion();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -1111,7 +1111,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fcmp08() throws Exception {
         Code.resetBootCodeRegion();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -1127,7 +1127,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fcmp09() throws Exception {
         Code.resetBootCodeRegion();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -1158,7 +1158,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fmul() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {311.0f, 2f, -2.5f};
@@ -1175,7 +1175,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fadd() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {311.0f, 2f, -2.5f, 0.0f, 1.0f};
@@ -1192,7 +1192,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fsub() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {311.0f, 2f, -2.5f};
@@ -1209,7 +1209,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fdiv() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {311.0f, 2f};
@@ -1244,7 +1244,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_irem() throws Exception {
         Code.resetBootCodeRegion();
         int[] argsOne = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -1280,7 +1280,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_ddiv() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {311.0D, 2D, -10.0D};
@@ -1415,7 +1415,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fload() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
@@ -1432,7 +1432,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fload2() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
@@ -1450,7 +1450,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_freturn() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
@@ -1467,7 +1467,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dreturn() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, 1.1D, -1.4d, 256.33d, 1000.001d};
@@ -1484,7 +1484,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dmul() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {311.0D, 11.2D};
@@ -1502,7 +1502,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dsub() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, 1.0D, 253.11d, 0.0D};
@@ -1520,7 +1520,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dsub2() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {1.0D, 2.0d, 0.0d};
@@ -1536,7 +1536,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fneg() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {0.0f, -1.01f, 7263.8734f, 0.0f, 7263.8743f};
@@ -1554,7 +1554,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dneg2() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {1.0d, -1.0d, -0.0D, 0.0d, -2.0d, 2.0d};
@@ -1572,7 +1572,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dneg() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, -1.01D, 7263.8734d, 0.0d, -1.01d, 7263.8743d, 0.0d};
@@ -1899,7 +1899,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_charcomp() throws Exception {
         Code.resetBootCodeRegion();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -2042,7 +2042,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_irem2() throws Exception {
         Code.resetBootCodeRegion();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -2522,7 +2522,7 @@ public class Aarch64JTTC1XTest {
         initializeCodeBuffers(methods, "MaxineVM.java", "int run(Pointer, int," + " Pointer, Word, Word, Word, Pointer, Pointer, Pointer, Pointer, int, Pointer)");
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fload_5() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {0.0f, 1.1f};
@@ -2544,8 +2544,8 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
-    public void wrong_C1X_jtt_BC_dload_9() throws Exception {
+    @Test
+    public void C1X_jtt_BC_dload_9() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
@@ -2572,8 +2572,8 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
-    public void wrong_C1X_jtt_BC_dload_10() throws Exception {
+    @Test
+    public void C1X_jtt_BC_dload_10() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
@@ -2603,7 +2603,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dload() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
@@ -2620,7 +2620,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dload_2() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
@@ -2638,7 +2638,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fdload() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {Double.MAX_VALUE, Double.MIN_VALUE};
