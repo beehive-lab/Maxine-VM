@@ -1525,32 +1525,29 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
-    // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
     public void store(CiRegister src, CiAddress addr, CiKind kind) {
         CiAddress address = calculateAddress(addr, kind);
         switch (kind) {
+            case Char:
             case Short:
-                str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-//                strHImmediate(ConditionFlag.Always, 1, 0, 0, src, address.base(), address.displacement);
+                str(16, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
                 break;
+            case Object:
             case Long:
                 str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-//                strd(ConditionFlag.Always, src, address.base(), address.displacement);
                 break;
             case Double:
                 fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-//                vstr(ConditionFlag.Always, src, address.base(), address.displacement, CiKind.Double, CiKind.Int);
                 break;
             case Float:
-                fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-//                vstr(ConditionFlag.Always, src, address.base(), address.displacement, CiKind.Float, CiKind.Int);
+                fstr(32, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
                 break;
             case Int:
-            case Object:
-                str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-//                str(ConditionFlag.Always, src, address.base(), address.displacement);
+                str(32, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
                 break;
             case Byte:
+            case Boolean:
+                str(8, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
                 break;
             default:
                 assert false : "Unknown kind!";
