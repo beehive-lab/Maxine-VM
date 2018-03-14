@@ -780,11 +780,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompareAndSwap(LIRCompareAndSwap op) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-        CiAddress address = new CiAddress(CiKind.Object, op.address(), 0);
+        Aarch64Address address = Aarch64Address.createBaseRegisterOnlyAddress(op.address().asRegister());
         CiRegister newval = op.newValue().asRegister();
         CiRegister cmpval = op.expectedValue().asRegister();
         assert newval != null : "new val must be register";
@@ -793,18 +789,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert newval != address.base() : "new value and addr must be in different registers";
         assert cmpval != address.index() : "cmp and addr must be in different registers";
         assert newval != address.index() : "new value and addr must be in different registers";
-        if (compilation.target.isMP) {
-            masm.membar(-1);
-        }
-        if (op.code == LIROpcode.CasInt || op.code == LIROpcode.CasObj) {
-//            masm.casInt(newval, cmpval, address);
-        } else {
-            assert op.code == LIROpcode.CasLong;
-//            masm.casLong(newval, cmpval, address);
-        }
-        if (compilation.target.isMP) {
 
-            masm.membar(-1);
+        if (op.code == LIROpcode.CasInt) {
+            masm.cas(32, newval, cmpval, address);
+        } else {
+            assert op.code == LIROpcode.CasLong || op.code == LIROpcode.CasObj;
+            masm.cas(64, newval, cmpval, address);
         }
     }
 
