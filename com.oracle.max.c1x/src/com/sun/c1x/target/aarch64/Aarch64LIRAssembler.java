@@ -1754,152 +1754,26 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitSignificantBitOp(boolean most, CiValue src, CiValue dst) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert dst.isRegister();
         CiRegister result = dst.asRegister();
-        assert src.asRegister().isCpu();
+        masm.eor(64, result, result, result);
+        masm.not(64, result, result);
+        CiRegister value;
         if (src.isRegister()) {
-            CiRegister value = src.asRegister();
-            assert value != Aarch64.r8;
-            CiRegister value1 = Aarch64.cpuRegisters[value.getEncoding() + 1];
-            assert value != result;
-            if (most) {
-                if (src.kind.isLong()) {
-                    assert !Platform.target().arch.is32bit();
-                    Aarch64Label normal = new Aarch64Label();
-                    Aarch64Label normal2 = new Aarch64Label();
-                    Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, value1, 0);
-//                    masm.jcc(ConditionFlag.NotEqual, normal);
-//                    masm.cmpImmediate(ConditionFlag.Equal, value, 0);
-//                    masm.movImmediate(ConditionFlag.Equal, result, -1);
-//                    masm.jcc(ConditionFlag.Equal, exit);
-                    masm.bind(normal);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r16, value1);
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 32);
-//                    masm.jcc(ConditionFlag.Equal, normal2);
-                    masm.mov64BitConstant(Aarch64.r8, 63);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r16, 0, 0);
-//                    masm.jcc(ConditionFlag.Always, exit);
-                    masm.bind(normal2);
-                    masm.mov64BitConstant(Aarch64.r8, 31);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, value1, 0, 0);
-                    masm.bind(exit);
-                } else {
-                    Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, value, 0);
-//                    masm.movImmediate(ConditionFlag.Equal, result, -1);
-//                    masm.jcc(ConditionFlag.Equal, exit);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r16, value);
-                    masm.mov64BitConstant(Aarch64.r8, 31);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r16, 0, 0);
-                    masm.bind(exit);
-                }
-            } else {
-                if (src.kind.isLong()) {
-                    assert !Platform.target().arch.is32bit();
-                    Aarch64Label normal = new Aarch64Label();
-                    Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, value1, 0);
-//                    masm.jcc(ConditionFlag.NotEqual, normal);
-//                    masm.cmpImmediate(ConditionFlag.Always, value, 0);
-//                    masm.movImmediate(ConditionFlag.Equal, result, -1);
-//                    masm.jcc(ConditionFlag.Equal, exit);
-                    masm.bind(normal);
-//                    masm.rbit(ConditionFlag.Always, Aarch64.r16, value);
-//                    masm.rbit(ConditionFlag.Always, value, value1);
-                    masm.mov(64, value1, Aarch64.r16);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r16, value1);
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 32);
-//                    masm.mov(64, ConditionFlag.NotEqual, false, result, Aarch64.r16);
-//                    masm.jcc(ConditionFlag.NotEqual, exit);
-                    masm.mov64BitConstant(Aarch64.r16, 32);
-//                    masm.clz(ConditionFlag.Always, value1, value);
-//                    masm.addRegisters(ConditionFlag.Always, false, result, Aarch64.r16, value1, 0, 0);
-                    masm.bind(exit);
-                } else {
-                    Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, value, 0);
-//                    masm.movImmediate(ConditionFlag.Equal, result, -1);
-//                    masm.jcc(ConditionFlag.Equal, exit);
-//                    masm.rbit(ConditionFlag.Always, Aarch64.r8, value);
-//                    masm.clz(ConditionFlag.Always, result, Aarch64.r8);
-                    masm.bind(exit);
-                }
-            }
+            value = src.asRegister();
         } else {
             CiAddress laddr = asAddress(src);
             masm.setUpScratch(laddr);
-            if (most) {
-                if (src.kind.isLong()) {
-                    assert !Platform.target().arch.is32bit();
-//                    masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r16, 0);
-                    Aarch64Label normal = new Aarch64Label();
-                    Aarch64Label normal2 = new Aarch64Label();
-                    Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r9, 0);
-//                    masm.jcc(ConditionFlag.NotEqual, normal);
-//                    masm.cmpImmediate(ConditionFlag.Equal, Aarch64.r9, 0);
-//                    masm.movImmediate(ConditionFlag.Equal, result, -1);
-//                    masm.jcc(ConditionFlag.Equal, exit);
-                    masm.bind(normal);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r16, Aarch64.r9);
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 32);
-//                    masm.jcc(ConditionFlag.Equal, normal2);
-                    masm.mov64BitConstant(Aarch64.r8, 63);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r16, 0, 0);
-//                    masm.jcc(ConditionFlag.Always, exit);
-                    masm.bind(normal2);
-                    masm.mov64BitConstant(Aarch64.r8, 31);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r8, Aarch64.r9, 0, 0);
-                    masm.bind(exit);
-                } else {
-//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r16, Aarch64.r16, 0);
-                    Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 0);
-//                    masm.movImmediate(ConditionFlag.Equal, result, -1);
-//                    masm.jcc(ConditionFlag.Equal, exit);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r8, Aarch64.r16);
-                    masm.mov64BitConstant(Aarch64.r16, 31);
-//                    masm.sub(ConditionFlag.Always, false, result, Aarch64.r16, Aarch64.r8, 0, 0);
-                    masm.bind(exit);
-                }
-            } else {
-                if (src.kind.isLong()) {
-                    assert !Platform.target().arch.is32bit();
-//                    masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r16, 0);
-                    Aarch64Label normal = new Aarch64Label();
-                    Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r9, 0);
-//                    masm.jcc(ConditionFlag.NotEqual, normal);
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r8, 0);
-//                    masm.movImmediate(ConditionFlag.Equal, result, -1);
-//                    masm.jcc(ConditionFlag.Equal, exit);
-                    masm.bind(normal);
-//                    masm.rbit(ConditionFlag.Always, Aarch64.r16, Aarch64.r8);
-//                    masm.rbit(ConditionFlag.Always, Aarch64.r8, Aarch64.r9);
-                    masm.mov(64, Aarch64.r9, Aarch64.r16);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r16, Aarch64.r9);
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 32);
-//                    masm.mov(64, ConditionFlag.NotEqual, false, result, Aarch64.r16);
-//                    masm.jcc(ConditionFlag.NotEqual, exit);
-//                    masm.clz(ConditionFlag.Always, Aarch64.r9, Aarch64.r8);
-//                    masm.add12BitImmediate(ConditionFlag.Always, false, result, Aarch64.r9, 32);
-                    masm.bind(exit);
-                } else {
-//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r16, Aarch64.r16, 0);
-                    Aarch64Label exit = new Aarch64Label();
-//                    masm.cmpImmediate(ConditionFlag.Always, Aarch64.r16, 0);
-//                    masm.movImmediate(ConditionFlag.Equal, result, -1);
-//                    masm.jcc(ConditionFlag.Equal, exit);
-//                    masm.rbit(ConditionFlag.Always, Aarch64.r16, Aarch64.r16);
-//                    masm.clz(ConditionFlag.Always, result, Aarch64.r16);
-                    masm.bind(exit);
-                }
-            }
+            value = rscratch1;
+        }
+        assert value != result;
+        if (most) {
+            masm.clz(64, result, value);
+            masm.mov64BitConstant(rscratch1, 63);
+            masm.sub(64, result, rscratch1, result);
+        } else {
+            masm.rbit(64, rscratch1, value);
+            masm.clz(64, result, rscratch1);
         }
     }
 
