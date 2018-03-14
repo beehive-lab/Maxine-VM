@@ -201,27 +201,22 @@ public class Aarch64LIRGenerator extends LIRGenerator {
             CiValue divisor = load(x.y());
 
             CiValue result = createResultVariable(x);
-            CiValue resultReg;
-            if (opcode == Bytecodes.LREM) {
-                resultReg = RETURNREG_L;
-                lir.insertLongDivExceptionCheck(dividend, divisor, resultReg, LDIV_TMP, info);
-                resultReg = callRuntime(CiRuntimeCall.arithmeticlrem, null, dividend, divisor);
-            } else if (opcode == Bytecodes.LDIV) {
-                resultReg = RETURNREG_L;
-                lir.insertLongDivExceptionCheck(dividend, divisor, resultReg, LDIV_TMP, info);
-                resultReg = callRuntime(CiRuntimeCall.arithmeticldiv, null, dividend, divisor);
-            } else if (opcode == Op2.UREM) {
-                resultReg = RETURNREG_L;
-                lir.insertLongDivExceptionCheck(dividend, divisor, resultReg, LDIV_TMP, info);
-                resultReg = callRuntime(CiRuntimeCall.arithmeticlurem, null, dividend, divisor);
-            } else if (opcode == Op2.UDIV) {
-                resultReg = RETURNREG_L;
-                lir.insertLongDivExceptionCheck(dividend, divisor, resultReg, LDIV_TMP, info);
-                resultReg = callRuntime(CiRuntimeCall.arithmeticludiv, null, dividend, divisor);
-            } else {
-                throw Util.shouldNotReachHere();
+            switch (opcode) {
+                case Bytecodes.LREM:
+                    lir.lrem(dividend, divisor, RETURNREG_L, LDIV_TMP, info);
+                    break;
+                case Bytecodes.LDIV:
+                    lir.ldiv(dividend, divisor, RETURNREG_L, LDIV_TMP, info);
+                    break;
+                case Op2.UREM:
+                    lir.lurem(dividend, divisor, RETURNREG_L, LDIV_TMP, info);
+                    break;
+                case Op2.UDIV:
+                    lir.ludiv(dividend, divisor, RETURNREG_L, LDIV_TMP, info);
+                    break;
+                default:
+                    throw Util.shouldNotReachHere();
             }
-            assert resultReg.asRegister() == Aarch64.r0;
             lir.move(RETURNREG_L, result);
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem right = new LIRItem(x.y(), this);
