@@ -1510,9 +1510,8 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    /* ldiv depends on the runtime call runtimeArithmeticLdiv which cannot be used offline */
-    // @Test
-    public void broken_C1X_FLOATDIV_jtt_BC_ldiv() throws Exception {
+    @Test
+    public void C1X_jtt_BC_ldiv() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         initTests();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -1525,13 +1524,10 @@ public class Aarch64JTTC1XTest {
         pairs.add(new Args(31L, 67L));
         pairs.add(new Args(6L, 4L));
         pairs.add(new Args(-2147483648L, 1L));
-        pairs.add(new Args(Long.MAX_VALUE, 0));
-        pairs.add(new Args(0, Long.MAX_VALUE));
-        pairs.add(new Args(0, Long.MIN_VALUE));
-        pairs.add(new Args(Long.MIN_VALUE, 0));
-        pairs.add(new Args(Long.MAX_VALUE, 0));
-        pairs.add(new Args(0, Long.MAX_VALUE - 20L));
-        pairs.add(new Args(0, Long.MIN_VALUE + 20L));
+        pairs.add(new Args(0L, Long.MAX_VALUE));
+        pairs.add(new Args(0L, Long.MIN_VALUE));
+        pairs.add(new Args(0L, Long.MAX_VALUE - 20L));
+        pairs.add(new Args(0L, Long.MIN_VALUE + 20L));
         pairs.add(new Args(Long.MIN_VALUE, 20L));
         pairs.add(new Args(0xdeadbeefd0daf0baL, 0xdeadd0d0deadd0d0L));
         pairs.add(new Args(0xdeadbeefd0daf0baL, 0xd0d0d0d0d0d0d0d0L));
@@ -1541,7 +1537,7 @@ public class Aarch64JTTC1XTest {
             long   expectedValue     = BC_ldiv.test(pair.lfirst, pair.lsecond);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
+            long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
