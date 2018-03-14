@@ -143,27 +143,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         }
     }
 
-    private void moveRegs(CiRegister src, CiRegister dest, CiKind srcKind, CiKind destKind) {
-        if (src != dest) {
-            if (srcKind == CiKind.Long && destKind == CiKind.Long) {
-                masm.mov(64, dest, src);
-                masm.mov(64, Aarch64.cpuRegisters[dest.number + 1], Aarch64.cpuRegisters[src.number + 1]);
-            } else if (srcKind == CiKind.Int && destKind == CiKind.Long) {
-                assert srcKind != CiKind.Float;
-                assert srcKind != CiKind.Double;
-                masm.mov(64, dest, src);
-                masm.asr(Aarch64.cpuRegisters[dest.number + 1], dest, 31);
-            } else {
-                assert srcKind != CiKind.Float;
-                assert srcKind != CiKind.Double;
-                masm.mov(64, dest, src);
-            }
-        } else if (srcKind == CiKind.Int && destKind == CiKind.Long) {
-            assert src == dest;
-            masm.asr(Aarch64.cpuRegisters[dest.number + 1], dest, 31);
-        }
-    }
-
     private void swapReg(CiRegister a, CiRegister b) {
         masm.xchgptr(a, b);
     }
@@ -355,7 +334,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         } else if (dest.kind.isDouble()) {
             masm.fmov(64, dest.asRegister(), src.asRegister());
         } else {
-            moveRegs(src.asRegister(), dest.asRegister(), src.kind, dest.kind);
+            moveRegs(src.asRegister(), dest.asRegister());
         }
     }
 
@@ -1234,7 +1213,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         throw Util.shouldNotReachHere();
                 }
             }
-            moveRegs(reg, dst.asRegister(), left.kind, dst.kind);
+            moveRegs(reg, dst.asRegister());
         } else {
             CiRegister lreg = left.asRegister();
             if (right.isConstant()) {
@@ -1270,7 +1249,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
             }
             CiRegister dreg = dst.asRegister();
-            moveRegs(lreg, dreg, left.kind, dst.kind);
+            moveRegs(lreg, dreg);
         }
     }
 
