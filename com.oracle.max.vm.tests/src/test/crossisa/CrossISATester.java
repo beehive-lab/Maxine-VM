@@ -84,7 +84,7 @@ public abstract class CrossISATester {
         gdbProcessBuilder = getGDBProcessBuilder();
         gdbProcessBuilder.redirectOutput(gdbOutput);
         gdbProcessBuilder.redirectError(gdbErrors);
-        removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
+        removeFiles = new ProcessBuilder("/bin/rm", "-rfR", "test.elf");
     }
 
     public static void setBitMask(BitsFlag[] bitmasks, int i, BitsFlag mask) {
@@ -239,7 +239,8 @@ public abstract class CrossISATester {
         Process process = null;
         try {
             process = processBuilder.start();
-            process.waitFor();
+            final int exitCode = process.waitFor();
+            assert exitCode == 0 : processBuilder.command() + " returned exitCode = " + exitCode;
         } catch (Exception e) {
             e.printStackTrace();
         }
