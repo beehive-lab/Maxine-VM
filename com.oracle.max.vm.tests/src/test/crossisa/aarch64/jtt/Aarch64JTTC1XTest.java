@@ -1984,7 +1984,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lor() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lor");
@@ -2012,7 +2012,7 @@ public class Aarch64JTTC1XTest {
             long   expectedValue     = BC_lor.test(pair.lfirst, pair.lsecond);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
+            long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
