@@ -48,7 +48,7 @@ public class Aarch64JTTT1XTest {
     private Aarch64T1XCompilation theCompiler;
     private StaticMethodActor anMethod = null;
     private CodeAttribute codeAttr = null;
-    private MaxineAarch64Tester tester;
+    private MaxineAarch64Tester tester = new MaxineAarch64Tester();
     private static boolean POST_CLEAN_FILES = false;
 
     public void initialiseFrameForCompilation(byte[] code, String sig) {
@@ -168,7 +168,7 @@ public class Aarch64JTTT1XTest {
             c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
             c1x.initialize(Phase.HOSTED_TESTING);
             theCompiler = (Aarch64T1XCompilation) t1x.getT1XCompilation();
-            tester = new MaxineAarch64Tester();
+            tester.resetTestValues();
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();

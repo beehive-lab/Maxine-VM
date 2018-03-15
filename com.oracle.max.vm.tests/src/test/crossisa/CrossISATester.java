@@ -127,6 +127,21 @@ public abstract class CrossISATester {
         return simulatedDoubleRegisters;
     }
 
+    public void resetTestValues() {
+        for (int i = 0; i < testIntRegisters.length; i++) {
+            testIntRegisters[i] = false;
+        }
+        for (int i = 0; i < testLongRegisters.length; i++) {
+            testLongRegisters[i] = false;
+        }
+        for (int i = 0; i < testFloatRegisters.length; i++) {
+            testFloatRegisters[i] = false;
+        }
+        for (int i = 0; i < testDoubleRegisters.length; i++) {
+            testDoubleRegisters[i] = false;
+        }
+    }
+
     /**
      * Sets the expected value of a register and enables it for inspection.
      *
