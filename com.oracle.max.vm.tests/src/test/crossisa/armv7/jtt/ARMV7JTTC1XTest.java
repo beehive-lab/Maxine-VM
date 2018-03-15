@@ -2041,7 +2041,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_loopInline() throws Exception {
+    public void infinite_C1X_jtt_loopInline() throws Exception {
         Code.resetBootCodeRegion();
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.LoopInline");
