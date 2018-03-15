@@ -22,14 +22,14 @@ package test.crossisa.aarch64.asm;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.ci.*;
-import com.sun.max.ide.*;
 
 import org.junit.Assert;
+import org.junit.Test;
 import test.crossisa.*;
 
 import static com.oracle.max.asm.target.aarch64.Aarch64.*;
 
-public class Aarch64AssemblerTest extends MaxTestCase {
+public class Aarch64AssemblerTest {
 
     private static final int VARIANT_32 = 32;
     private static final int VARIANT_64 = 64;
@@ -42,10 +42,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         CiTarget aarch64 = new CiTarget(new Aarch64(), true, 8, 0, 4096, 0, false, false, false, true);
         asm = new Aarch64Assembler(aarch64, null);
         masm = new Aarch64MacroAssembler(aarch64, null);
-    }
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(Aarch64AssemblerTest.class);
     }
 
     private static final long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff, 0xffffffffffffL, 0x7fffffffffffffffL};
@@ -77,7 +73,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         Assert.assertTrue(tester.validateLongRegisters());
     }
 
-    public void test_b() throws Exception {
+    @Test
+    public void b() throws Exception {
         initialiseTest();
         asm.mov64BitConstant(r0, -1);
         asm.b(24);
@@ -89,7 +86,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_zero() throws Exception {
+    @Test
+    public void zero() throws Exception {
         initialiseTest();
         masm.mov(r0, 0xFF);
         masm.mov(64, r0, zr);
@@ -98,7 +96,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     }
 
 
-//    public void test_adr_adrp() throws Exception {
+//    @Test
+//    public void adr_adrp() throws Exception {
 //        initialiseTest();
 //        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
 //
@@ -117,7 +116,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //        assert (reg[3] & ~reg[4]) == reg[0];
 //    }
 
-    public void test_mov64() throws Exception {
+    @Test
+    public void mov64() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 10);
         masm.mov64BitConstant(r1, -10);
@@ -134,7 +134,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_mov() throws Exception {
+    @Test
+    public void movtest() throws Exception {
         initialiseTest();
         masm.mov(r0, 10);
         masm.mov(r1, -10);
@@ -145,7 +146,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_mov2() throws Exception {
+    @Test
+    public void mov2() throws Exception {
         initialiseTest();
         masm.mov(r0, Integer.MAX_VALUE);
         masm.mov(r1, Integer.MIN_VALUE);
@@ -160,7 +162,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_add_register() throws Exception {
+    @Test
+    public void add_register() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 10);
         masm.mov64BitConstant(r1, -1);
@@ -186,7 +189,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * branch.
      */
-    public void test_bcond() throws Exception {
+    @Test
+    public void bcond() throws Exception {
         initialiseTest();
         masm.mov32BitConstant(r0, 1);
         masm.mov32BitConstant(r1, 1);
@@ -204,7 +208,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * load and store instructions.
      */
-    public void test_ldr_str() throws Exception {
+    @Test
+    public void ldr_str() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r0, 0x123, 0);        // value to be stored to stack
         Aarch64Address address = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -8); // stack address
@@ -216,7 +221,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_add_imm() throws Exception {
+    @Test
+    public void add_imm() throws Exception {
         initialiseTest();
         // ADD Xi, Xi, valueof(Xi) ; Xi's value should double
         for (int i = 0; i < 10; i++) {
@@ -229,7 +235,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_sub_imm() throws Exception {
+    @Test
+    public void sub_imm() throws Exception {
         initialiseTest();
         // SUB Xi, Xi, valueof(Xi) ; Xi should then be 0
         for (int i = 0; i < 10; i++) {
@@ -242,7 +249,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_and_imm() throws Exception {
+    @Test
+    public void and_imm() throws Exception {
         initialiseTest();
         // AND Xi, Xi, 0x1
         for (int i = 0; i < 10; i++) {
@@ -253,7 +261,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_eor_imm() throws Exception {
+    @Test
+    public void eor_imm() throws Exception {
         initialiseTest();
         // EOR Xi, Xi, 0x1
         for (int i = 0; i < 10; i++) {
@@ -264,7 +273,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_orr_imm() throws Exception {
+    @Test
+    public void orr_imm() throws Exception {
         initialiseTest();
         // ORR Xi, Xi, 0x1
         for (int i = 0; i < 10; i++) {
@@ -275,7 +285,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_movz_imm() throws Exception {
+    @Test
+    public void movz_imm() throws Exception {
         initialiseTest();
         // MOVZ Xi, 0x1, LSL #0x10
         for (int i = 0; i < 1; i++) {
@@ -285,7 +296,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_movn_imm() throws Exception {
+    @Test
+    public void movn_imm() throws Exception {
         initialiseTest();
         // MOVZ Xi, 0x1, LSL #0x10
         for (int i = 0; i < 1; i++) {
@@ -295,7 +307,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_bfm() throws Exception {
+    @Test
+    public void bfm() throws Exception {
         initialiseTest();
         asm.movn(VARIANT_64, r10, 0x0, 0);
         asm.movz(VARIANT_64, r0, 0x0, 0);
@@ -306,7 +319,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_ubfm() throws Exception {
+    @Test
+    public void ubfm() throws Exception {
         initialiseTest();
         asm.movn(VARIANT_64, r10, 0x0, 0);
         asm.movz(VARIANT_64, r0, 0x0, 0);
@@ -317,7 +331,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_sbfm() throws Exception {
+    @Test
+    public void sbfm() throws Exception {
         int mask;
         initialiseTest();
         asm.movz(VARIANT_64, r10, 0b11110000, 0);
@@ -338,7 +353,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /******* Arithmetic (shifted register) (5.5.1). *******/
 
-    public void test_add_shift_reg() throws Exception {
+    @Test
+    public void add_shift_reg() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r10, 1, 0);
         for (int i = 0; i < 1; i++) {
@@ -348,7 +364,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_sub_shift_reg() throws Exception {
+    @Test
+    public void sub_shift_reg() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r10, 0b1000, 0);
         for (int i = 0; i < 1; i++) {
@@ -360,7 +377,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /******* Arithmetic (extended register) (5.5.2). *******/
 
-    public void test_add_ext_reg() throws Exception {
+    @Test
+    public void add_ext_reg() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r0, 1, 0);
         asm.movn(VARIANT_64, r10, 0x0, 0);
@@ -372,7 +390,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_sub_ext_reg() throws Exception {
+    @Test
+    public void sub_ext_reg() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r0, 0b11111111000, 0);
         asm.movn(VARIANT_64, r10, 0x0, 0);
@@ -387,7 +406,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /******* Logical (shifted register) (5.5.3). *******/
 
-    public void test_and_shift_reg() throws Exception {
+    @Test
+    public void and_shift_reg() throws Exception {
         initialiseTest();
         asm.movn(VARIANT_64, r0, 0x0, 0);
         asm.movz(VARIANT_64, r10, 0xf, 0);
@@ -401,7 +421,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     }
 
     /* Variable Shift (5.5.4) */
-    public void test_asr() throws Exception {
+    @Test
+    public void asr() throws Exception {
         initialiseTest();
         for (int i = 0; i < 10; i++) {
             asm.mov32BitConstant(Aarch64.cpuRegisters[i], 0b1010101111L);
@@ -413,7 +434,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     }
 
     /* Bit Operations (5.5.5) */
-    public void test_cls() throws Exception {
+    @Test
+    public void cls() throws Exception {
         initialiseTest();
         asm.movn(VARIANT_64, r30, 0x0, 0);
         asm.movz(VARIANT_64, r10, 0x0, 0);
@@ -429,7 +451,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /* Floating-point Move (register) (5.7.2) */
 
-    public void test_float0() throws Exception {
+    @Test
+    public void float0() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r0, 10, 0);
         asm.movz(VARIANT_64, r1, 11, 0);
@@ -451,7 +474,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * test: fadd, fsub, fmul, fdiv, scvtf, fcvtzs.
      */
-    public void test_float1() throws Exception {
+    @Test
+    public void float1() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r0, 10, 0);
         asm.movz(VARIANT_64, r1, 110, 0);
@@ -490,7 +514,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * frintz, fabs, fneg, fsqrt.
      */
-    public void test_float2() throws Exception {
+    @Test
+    public void float2() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r0, 100, 0);
         asm.movz(VARIANT_64, r1, 110, 0);
@@ -533,7 +558,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * fmadd, fmsub.
      */
-    public void test_float3() throws Exception {
+    @Test
+    public void float3() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r0, 100, 0);
         asm.movz(VARIANT_64, r1, 110, 0);
@@ -559,7 +585,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * fstr, fldr.
      */
-    public void test_float4() throws Exception {
+    @Test
+    public void float4() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r0, 0x123, 0);        // value to be stored to stack
         asm.scvtf(VARIANT_64, VARIANT_64, d0, r0);
@@ -580,7 +607,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * mrs.
      */
-    public void test_mrs() throws Exception {
+    @Test
+    public void mrs() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r10, 1, 0);
         asm.movz(VARIANT_64, r11, 1, 0);
@@ -613,7 +641,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * mrs_reg.
      */
-    public void test_mrs_reg() throws Exception {
+    @Test
+    public void mrs_reg() throws Exception {
         initialiseTest();
         asm.movz(VARIANT_64, r1, 0b1111, 0);
         asm.msr(Aarch64Assembler.SystemRegister.SPSR_EL1, r1);
@@ -627,7 +656,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * mrs_imm.
      */
-    public void test_mrs_imm() throws Exception {
+    @Test
+    public void mrs_imm() throws Exception {
         initialiseTest();
         asm.msr(Aarch64Assembler.PStateField.PSTATEField_DAIFClr, 0b1111);
         asm.msr(Aarch64Assembler.PStateField.PSTATEField_DAIFSet, 0b1001);
@@ -682,7 +712,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         return x & 0x00000000ffffffffL;
     }
 
-    public void test_mov32BitConstant() throws Exception {
+    @Test
+    public void mov32BitConstant() throws Exception {
         initialiseTest();
         int[] values = new int[10];
         values[0] = 0;
@@ -701,7 +732,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_mov64BitConstant() throws Exception {
+    @Test
+    public void mov64BitConstant() throws Exception {
         initialiseTest();
         long[] values = new long[10];
         values[0] = 0L;
@@ -725,7 +757,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-    public void test_AddConstant() throws Exception {
+    @Test
+    public void addConstant() throws Exception {
         for (long aScratchTestSet : scratchTestSet) {
             initialiseTest();
             for (int srcReg = 0; srcReg < 3; srcReg++) {
@@ -739,7 +772,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-    public void test_VPushPop() throws Exception {
+    @Test
+    public void vPushPop() throws Exception {
         initialiseTest();
         for (int i = 0; i < 5; i++) {
             masm.mov64BitConstant(Aarch64.cpuRegisters[i], i); // r1 = 1
@@ -762,7 +796,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_PushPop() throws Exception {
+    @Test
+    public void pushPop() throws Exception {
         initialiseTest();
         for (int i = 0; i < 5; i++) {
             masm.mov64BitConstant(Aarch64.cpuRegisters[i], i);
@@ -784,7 +819,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Vdiv() throws Exception {
+    @Test
+    public void vdiv() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, Double.doubleToRawLongBits(10));
         masm.mov64BitConstant(r1, Double.doubleToRawLongBits(24));
@@ -796,7 +832,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Vcvt_int2float() throws Exception {
+    @Test
+    public void vcvt_int2float() throws Exception {
         initialiseTest();
         masm.mov32BitConstant(r0, 10);
         masm.mov32BitConstant(r1, 24);
@@ -809,7 +846,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Vcvt_int2double() throws Exception {
+    @Test
+    public void vcvt_int2double() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 10);
         masm.mov64BitConstant(r1, 24);
@@ -822,7 +860,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Vcvt_double2float() throws Exception {
+    @Test
+    public void vcvt_double2float() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, Double.doubleToRawLongBits(-10));
         masm.mov64BitConstant(r2, Double.doubleToRawLongBits(-24));
@@ -837,7 +876,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_VAdd() throws Exception {
+    @Test
+    public void vAdd() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 12);
         masm.mov64BitConstant(r1, 10);
@@ -851,7 +891,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_VSub() throws Exception {
+    @Test
+    public void vSub() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 12);
         masm.mov64BitConstant(r1, 10);
@@ -865,7 +906,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_FcvtMul() throws Exception {
+    @Test
+    public void fcvtMul() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 12);
         masm.mov64BitConstant(r1, 10);
@@ -879,7 +921,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_FldrStr() throws Exception {
+    @Test
+    public void fldrStr() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 12);
         masm.mov64BitConstant(r1, 10);
@@ -903,7 +946,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Fldr() throws Exception {
+    @Test
+    public void fldr() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 12);
         masm.mov64BitConstant(r1, 10);
@@ -920,7 +964,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_MVov() throws Exception {
+    @Test
+    public void mVov() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 12);
         masm.mov64BitConstant(r1, 10);
@@ -969,7 +1014,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
 //
-    public void test_SubReg() throws Exception {
+    @Test
+    public void subReg() throws Exception {
         initialiseTest();
         for (int i = 0; i < 5; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
@@ -981,7 +1027,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Mov() throws Exception {
+    @Test
+    public void mov() throws Exception {
         initialiseTest();
         for (int i = 0; i < 5; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
@@ -992,7 +1039,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Sub() throws Exception {
+    @Test
+    public void sub() throws Exception {
         initialiseTest();
         for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
@@ -1002,7 +1050,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Str() throws Exception {
+    @Test
+    public void str() throws Exception {
         initialiseTest();
         asm.mov32BitConstant(r12, 0);
         Aarch64Address address = Aarch64Address.createRegisterOffsetAddress(Aarch64.sp, r12, false);
@@ -1016,7 +1065,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_stp_ldp() throws Exception {
+    @Test
+    public void stp_ldp() throws Exception {
         initialiseTest();
         expectedValues[0] = expectedValues[2] = 0x00001;
         expectedValues[1] = expectedValues[3] = 0xFFFFF;
@@ -1032,7 +1082,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_Ldr() throws Exception {
+    @Test
+    public void ldr() throws Exception {
         initialiseTest();
         for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
@@ -1047,7 +1098,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Decq() throws Exception {
+    @Test
+    public void decq() throws Exception {
         initialiseTest();
         for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
@@ -1057,7 +1109,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Incq() throws Exception {
+    @Test
+    public void incq() throws Exception {
         initialiseTest();
         for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
@@ -1067,7 +1120,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_Subq() throws Exception {
+    @Test
+    public void subq() throws Exception {
         initialiseTest();
         for (int i = 0; i < 10; i++) {
             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
@@ -1082,7 +1136,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(asm.codeBuffer);
     }
 
-    public void test_addq() throws Exception {
+    @Test
+    public void addq() throws Exception {
         initialiseTest();
         for (int i = 0; i < 10; i++) {
             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
@@ -1121,7 +1176,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
 //
-    public void test_StrdAndLdrd() throws Exception {
+    @Test
+    public void strdAndLdrd() throws Exception {
         Aarch64Address address = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -16); // stack address
         for (int i = 0; i < 10; i += 2) {
             initialiseTest();
@@ -1137,7 +1193,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-    public void test_PushAndPop() throws Exception {
+    @Test
+    public void pushAndPop() throws Exception {
         int registers = 1;
         initialiseTest();
         for (int bitmask = 1; bitmask <= 0xfff; bitmask = bitmask | (bitmask + 1), registers++) {
@@ -1166,7 +1223,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-    public void test_MovRor() throws Exception {
+    @Test
+    public void movRor() throws Exception {
         final long value = 0x0fab0dad0badcafeL;
 
         for (int shift = 1; shift < 64; shift += 4) {
@@ -1203,10 +1261,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedLongValues, testValues, bitmasks);
 //     }
 
-    public void test_casInt() throws Exception {
+    @Test
+    public void casInt() throws Exception {
         initialiseTest();
         CiRegister cmpReg = r0;
-        CiRegister newReg = r1;
 
         // r0=50, r1=10, r2=20, r3=30, r4=40, r5=50
         masm.mov64BitConstant(r0, 50);
@@ -1218,7 +1276,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         // Invoke a cas that fails
         masm.add(64, Aarch64.r6, Aarch64.sp, 4 * 16); // point to r1 value in the stack
         Aarch64Address addr = Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r6);
-        masm.cas(32, newReg, cmpReg, addr);
+        masm.cas(32, r1, cmpReg, addr);
         masm.ldr(32, r1, addr);
         tester.setExpectedValue(r1, 10);
 
@@ -1231,10 +1289,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_casLong() throws Exception {
+    @Test
+    public void casLong() throws Exception {
         initialiseTest();
         CiRegister cmpReg = r0;
-        CiRegister newReg = r1;
 
         // r0=50 << 32, r1=10 << 32, r2=20 << 32, r3=30 << 32, r4=40 << 32, r5=50 << 32
         masm.mov64BitConstant(r0, 50L << 32);
@@ -1246,7 +1304,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         // Invoke a cas that fails
         masm.add(64, Aarch64.r6, Aarch64.sp, 4 * 16); // point to r1 value in the stack
         Aarch64Address addr = Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r6);
-        masm.cas(64, newReg, cmpReg, addr);
+        masm.cas(64, r1, cmpReg, addr);
         masm.ldr(64, r1, addr);
         tester.setExpectedValue(r1, 10L << 32);
 
@@ -1259,7 +1317,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_decrementl() throws Exception {
+    @Test
+    public void decrementl() throws Exception {
         initialiseTest();
         masm.mov32BitConstant(r0, 100);
         masm.push(1);
@@ -1270,7 +1329,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(masm.codeBuffer);
     }
 
-    public void test_incrementl() throws Exception {
+    @Test
+    public void incrementl() throws Exception {
         initialiseTest();
         masm.mov32BitConstant(r0, 100);
         masm.push(1);
