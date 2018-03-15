@@ -1347,7 +1347,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_iadd3() throws Exception {
         Code.resetBootCodeRegion();
         short[] argsOne = {1, 0, 33, 1, -128, 127, -32768, 32767};
@@ -1360,11 +1360,11 @@ public class Aarch64JTTC1XTest {
             expectedValue = BC_iadd3.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "short, short ", Short.toString(argsOne[i]) + "," + Short.toString(argsTwo[i]));
             long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_i2s() throws Exception {
         Code.resetBootCodeRegion();
         int[] argsOne = {1, -1, 34, 1, 65535, 32768, -32768};
@@ -1376,11 +1376,11 @@ public class Aarch64JTTC1XTest {
             expectedValue = BC_i2s.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("short", "int  ", Integer.toString(argsOne[i]));
             long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            assert ((short) registerValues[0]) == expectedValue : "Failed incorrect value " + (short) registerValues[0] + " " + expectedValue;
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_iadd() throws Exception {
         Code.resetBootCodeRegion();
         int[] argsOne = {1, 0, 33, 1, -2147483648, -2147483647, 2147483647, 4080};
@@ -1393,11 +1393,11 @@ public class Aarch64JTTC1XTest {
             expectedValue = BC_iadd.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
             long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_iadd2() throws Exception {
         Code.resetBootCodeRegion();
         byte[] argsOne = {1, 0, 33, 1, -128, 127};
@@ -1411,7 +1411,7 @@ public class Aarch64JTTC1XTest {
             expectedValue = BC_iadd2.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
             long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
         }
     }
 
