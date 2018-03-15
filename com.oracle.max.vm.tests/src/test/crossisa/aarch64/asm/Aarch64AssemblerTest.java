@@ -439,6 +439,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.fmovFpu2Cpu(VARIANT_64, r2, d0);
         asm.fmovFpu2Cpu(VARIANT_64, r3, d1);
 
+        tester.setExpectedValue(d0, 10D);
+        tester.setExpectedValue(d1, 11D);
         tester.setExpectedValue(r2, 10);
         tester.setExpectedValue(r3, 11);
 
@@ -473,6 +475,14 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         tester.setExpectedValue(r3, 100);
         tester.setExpectedValue(r4, 10 * 110);
         tester.setExpectedValue(r5, 110 / 10);
+
+        tester.setExpectedValue(d0, 10D);
+        tester.setExpectedValue(d1, 110D);
+        tester.setExpectedValue(d2, 120D);
+        tester.setExpectedValue(d3, 100D);
+        tester.setExpectedValue(d4, 10D * 110D);
+        tester.setExpectedValue(d5, 110D / 10D);
+
 
         generateAndTest(asm.codeBuffer);
     }
@@ -509,6 +519,13 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         tester.setExpectedValue(r3, 10);
         tester.setExpectedValue(r4, 10);
         tester.setExpectedValue(r5, 10);
+
+        tester.setExpectedValue(d0, 100D);
+        tester.setExpectedValue(d1, 110D);
+        tester.setExpectedValue(d2, 1D);
+        tester.setExpectedValue(d3, 10D);
+        tester.setExpectedValue(d4, 10D);
+        tester.setExpectedValue(d5, 10D);
 
         generateAndTest(asm.codeBuffer);
     }
