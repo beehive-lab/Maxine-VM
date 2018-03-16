@@ -71,6 +71,22 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         store(Aarch64.r8, dst, CiKind.Int);
     }
 
+    public void decrementl(CiRegister reg, int value) {
+        assert reg == Aarch64.r12 || reg != Aarch64.r8 : "Reg " + reg;
+        mov32BitConstant(Aarch64.r8, value);
+        sub(32, reg, reg, Aarch64.r8);
+    }
+
+    public void decrementl(CiAddress dst, int value) {
+        if (value == 0) {
+            return;
+        }
+        load(Aarch64.r12, dst, CiKind.Int);
+        mov64BitConstant(Aarch64.r8, value);
+        sub(64, Aarch64.r8, Aarch64.r12, Aarch64.r8);
+        store(Aarch64.r8, dst, CiKind.Int);
+    }
+
     }
 
     /**
