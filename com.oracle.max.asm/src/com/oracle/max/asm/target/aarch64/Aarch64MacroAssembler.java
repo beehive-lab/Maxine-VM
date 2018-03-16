@@ -806,6 +806,17 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     /**
+     * Add a long value to a register using scratch register as temporary.
+     *
+     * @param reg
+     * @param value
+     */
+    public void addq(CiRegister reg, long value) {
+        mov64BitConstant(scratchRegister, value);
+        add(64, reg, reg, scratchRegister);
+    }
+
+    /**
      * dst = src1 + src2.
      *
      * @param size register size. Has to be 32 or 64.

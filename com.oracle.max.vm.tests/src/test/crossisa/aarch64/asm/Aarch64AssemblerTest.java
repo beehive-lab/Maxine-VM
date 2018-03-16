@@ -1140,11 +1140,11 @@ public class Aarch64AssemblerTest {
     public void addq() throws Exception {
         initialiseTest();
         for (int i = 0; i < 10; i++) {
-            asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
-            asm.addq(Aarch64.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+            masm.addq(Aarch64.cpuRegisters[i], expectedValues[i]);
             tester.setExpectedValue(Aarch64.cpuRegisters[i], 2L * expectedValues[i]);
         }
-        generateAndTest(asm.codeBuffer);
+        generateAndTest(masm.codeBuffer);
     }
 //
 //     public void ignore_Ldrsh() throws Exception {

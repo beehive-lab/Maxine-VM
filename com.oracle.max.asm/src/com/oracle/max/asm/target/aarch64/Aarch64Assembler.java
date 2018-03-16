@@ -1613,16 +1613,6 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /**
-     * Add a long value to a register using R15 as temporary.
-     * @param reg
-     * @param value
-     */
-    public void addq(CiRegister reg, long value) {
-        mov64BitConstant(scratchRegister, value);
-        add(64, reg, reg, scratchRegister, ShiftType.LSL, 0);
-    }
-
-    /**
      * Sub a long value from a register using R15 as temporary.
      * @param reg
      * @param value
