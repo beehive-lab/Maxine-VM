@@ -1618,8 +1618,8 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param value
      */
     public void addq(CiRegister reg, long value) {
-        mov64BitConstant(Aarch64.r15, value);
-        add(64, reg, reg, Aarch64.r15, ShiftType.LSL, 0);
+        mov64BitConstant(scratchRegister, value);
+        add(64, reg, reg, scratchRegister, ShiftType.LSL, 0);
     }
 
     /**
@@ -1628,8 +1628,8 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param value
      */
     public void subq(CiRegister reg, long value) {
-        mov64BitConstant(Aarch64.r15, value);
-        sub(64, reg, reg, Aarch64.r15, ShiftType.LSL, 0);
+        mov64BitConstant(scratchRegister, value);
+        sub(64, reg, reg, scratchRegister, ShiftType.LSL, 0);
     }
 
     /* Arithmetic (extended register) (5.5.2) */
