@@ -955,19 +955,16 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     }
                 }
             } else {
-                if (true) {
-                    throw Util.unimplemented();
-                }
                 if (kind.isInt()) {
                     if (right.isStackSlot()) {
                         // register - stack
                         CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                         switch (code) {
                             case Add:
-//                                masm.iadd(dest.asRegister(), lreg, raddr);
+                                masm.iadd(dest.asRegister(), lreg, raddr);
                                 break;
                             case Sub:
-//                                masm.isub(dest.asRegister(), lreg, raddr);
+                                masm.isub(dest.asRegister(), lreg, raddr);
                                 break;
                             default:
                                 throw Util.shouldNotReachHere();
@@ -978,10 +975,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         int delta = ((CiConstant) right).asInt();
                         switch (code) {
                             case Add:
-//                                masm.incrementl(lreg, delta);
+                                masm.incrementl(lreg, delta);
                                 break;
                             case Sub:
-//                                masm.decrementl(lreg, delta);
+                                masm.decrementl(lreg, delta);
                                 break;
                             default:
                                 throw Util.shouldNotReachHere();
@@ -997,21 +994,21 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                         masm.setUpScratch(raddr);
-//                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r15, 0, 0);
-//                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r16, 0, CiKind.Float, CiKind.Int);
+                        masm.add(32, Aarch64.r16, Aarch64.r16, Aarch64.r15);
+                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
                     }
                     switch (code) {
                         case Add:
-//                            masm.vadd(ConditionFlag.Always, lreg, lreg, Aarch64.d30, CiKind.Float);
+                            masm.fadd(32, lreg, lreg, Aarch64.d30);
                             break;
                         case Sub:
-//                            masm.vsub(ConditionFlag.Always, lreg, lreg, Aarch64.d30, CiKind.Float);
+                            masm.fsub(32, lreg, lreg, Aarch64.d30);
                             break;
                         case Mul:
-//                            masm.vmul(ConditionFlag.Always, lreg, lreg, Aarch64.d30, CiKind.Float);
+                            masm.fmul(32, lreg, lreg, Aarch64.d30);
                             break;
                         case Div:
-//                            masm.vdiv(ConditionFlag.Always, lreg, lreg, Aarch64.d30, CiKind.Float);
+                            masm.fdiv(32, lreg, lreg, Aarch64.d30);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1027,7 +1024,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                         masm.setUpScratch(raddr);
                         masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r15);
-//                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r16, 0, CiKind.Double, CiKind.Int);
+                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
                     }
                     switch (code) {
                         case Add:
@@ -1055,15 +1052,15 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         masm.load(Aarch64.r8, raddr, CiKind.Long);
                         switch (code) {
                             case Add:
-//                                masm.addLong(lreg, lreg, Aarch64.r8);
+                                masm.add(64, lreg, lreg, Aarch64.r8);
                                 break;
                             case Sub:
-//                                masm.subLong(lreg, lreg, Aarch64.r8);
+                                masm.sub(64, lreg, lreg, Aarch64.r8);
                                 break;
                             default:
                                 throw Util.shouldNotReachHere();
                         }
-                        //masm.vmov(ConditionFlag.Always, Aarch64.r9, Aarch64.d30, null, CiKind.Int, CiKind.Float);
+                        masm.fmov(64, Aarch64.r9, Aarch64.d30);
                         masm.restoreFromFP(9);
                     } else {
                         // register - constant
@@ -1073,10 +1070,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         masm.movlong(Aarch64.r8, c, CiKind.Long);
                         switch (code) {
                             case Add:
-//                                masm.addLong(lreg, lreg, Aarch64.r8);
+                                masm.add(64, lreg, lreg, Aarch64.r8);
                                 break;
                             case Sub:
-//                                masm.subLong(lreg, lreg, Aarch64.r8);
+                                masm.sub(64, lreg, lreg, Aarch64.r8);
                                 break;
                             default:
                                 throw Util.shouldNotReachHere();
@@ -1111,10 +1108,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 int c = ((CiConstant) right).asInt();
                 switch (code) {
                     case Add:
-//                        masm.incrementl(laddr, c);
+                        masm.incrementl(laddr, c);
                         break;
                     case Sub:
-//                        masm.decrementl(laddr, c);
+                        masm.decrementl(laddr, c);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
