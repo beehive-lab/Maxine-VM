@@ -87,6 +87,11 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         store(Aarch64.r8, dst, CiKind.Int);
     }
 
+    public void align(int modulus) {
+        if (codeBuffer.position() % modulus != 0) {
+            assert modulus % 4 == 0;
+            nop((modulus - (codeBuffer.position() % modulus)) / 4);
+        }
     }
 
     /**
