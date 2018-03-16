@@ -619,12 +619,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 tasm.recordImplicitException(codePos() - 4, op.info); // ADDED EXCEPTION
             }
         } else {
-            ConditionFlag acond = ConditionFlag.AL;
+            ConditionFlag acond;
             if (op.code == LIROpcode.CondFloatBranch) {
                 assert op.unorderedBlock() != null : "must have unordered successor";
                 masm.branchConditionally(ConditionFlag.VS, new Aarch64Label(op.unorderedBlock().label()));
 
-                // Checkstyle: off
                 switch (op.cond()) {
                     case EQ:
                         acond = ConditionFlag.EQ;
@@ -648,41 +647,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         throw Util.shouldNotReachHere();
                 }
             } else {
-                switch (op.cond()) {
-                    case EQ:
-                        acond = ConditionFlag.EQ;
-                        break;
-                    case NE:
-                        acond = ConditionFlag.NE;
-                        break;
-                    case LT:
-                        acond = ConditionFlag.LT;
-                        break;
-                    case LE:
-                        acond = ConditionFlag.LE;
-                        break;
-                    case GE:
-                        acond = ConditionFlag.GE;
-                        break;
-                    case GT:
-                        acond = ConditionFlag.GT;
-                        break;
-                    case BE:
-                        acond = ConditionFlag.LS;
-                        break;
-                    case AE:
-                        acond = ConditionFlag.HS;
-                        break;
-                    case BT:
-                        acond = ConditionFlag.LO;
-                        break;
-                    case AT:
-                        acond = ConditionFlag.HI;
-                        break;
-                    default:
-                        throw Util.shouldNotReachHere();
-                }
-                // Checkstyle: on
+                acond = convertCondition(op.cond());
             }
             masm.branchConditionally(acond, new Aarch64Label(op.label()));
         }
@@ -1309,47 +1274,42 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     private ConditionFlag convertCondition(Condition condition) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-//        ConditionFlag acond = ConditionFlag.NeverUse;
+        ConditionFlag acond;
         switch (condition) {
             case EQ:
-//                acond = ConditionFlag.Equal;
+                acond = ConditionFlag.EQ;
                 break;
             case NE:
-//                acond = ConditionFlag.NotEqual;
+                acond = ConditionFlag.NE;
                 break;
             case LT:
-//                acond = ConditionFlag.SignedLesser;
+                acond = ConditionFlag.LT;
                 break;
             case LE:
-//                acond = ConditionFlag.SignedLowerOrEqual;
+                acond = ConditionFlag.LE;
                 break;
             case GE:
-//                acond = ConditionFlag.SignedGreaterOrEqual;
+                acond = ConditionFlag.GE;
                 break;
             case GT:
-//                acond = ConditionFlag.SignedGreater;
+                acond = ConditionFlag.GT;
                 break;
             case BE:
-//                acond = ConditionFlag.UnsignedLowerOrEqual;
+                acond = ConditionFlag.LS;
                 break;
             case AE:
-//                acond = ConditionFlag.CarrySetUnsignedHigherEqual;
+                acond = ConditionFlag.HS;
                 break;
             case BT:
-//                acond = ConditionFlag.CarryClearUnsignedLower;
+                acond = ConditionFlag.LO;
                 break;
             case AT:
-//                acond = ConditionFlag.UnsignedHigher;
+                acond = ConditionFlag.HI;
                 break;
             default:
                 throw Util.shouldNotReachHere();
         }
-//        return acond;
-        return null; // TODO: remove
+        return acond;
     }
 
     @Override
