@@ -873,40 +873,33 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
-    public void C1X_jtt_MSB32() throws Exception {
+    @Test
+    public void C1X_jtt_MSB64() throws Exception {
         Code.resetBootCodeRegion();
-        long[] input = new long[] {1L, 2L, 0L, -1L, 61440L, 2147483648L};
-        int[] output = new int[] {0, 1, -1, 31, 15, 31};
-
-        String klassName = getKlassName("jtt.max.MostSignificantBit32");
+        long[] input = new long[] {1L, 2L, 3L, 8L, 0L, -1L, 61440L, 2147483648L};
+        String klassName = getKlassName("jtt.max.MostSignificantBit64");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        initializeCodeBuffers(methods, "MostSignificantBit32.java", "int test(long)");
+        initializeCodeBuffers(methods, "MostSignificantBit64.java", "int test(long)");
         for (int i = 0; i < input.length; i++) {
-            @SuppressWarnings("unused")
-            int answer = jtt.max.MostSignificantBit32.test(input[i]);
-            int    expectedValue     = output[i];
+            int    expectedValue     = jtt.max.MostSignificantBit64.test(input[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
         }
     }
 
-    // @Test
-    public void C1X_jtt_LSB32() throws Exception {
+    @Test
+    public void C1X_jtt_LSB64() throws Exception {
         Code.resetBootCodeRegion();
-        long[] input = new long[] {1L, 2L, 0L, -1L, 61440L};
-        int[] output = new int[] {0, 1, -1, 0, 12};
-        String klassName = getKlassName("jtt.max.LeastSignificantBit32");
+        long[] input = new long[] {1L, 2L, 3L, 8L, 0L, -1L, 61440L};
+        String klassName = getKlassName("jtt.max.LeastSignificantBit64");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        initializeCodeBuffers(methods, "LeastSignificantBit32.java", "int test(long)");
+        initializeCodeBuffers(methods, "LeastSignificantBit64.java", "int test(long)");
         for (int i = 0; i < input.length; i++) {
-            @SuppressWarnings("unused")
-            int answer = jtt.max.LeastSignificantBit64.test(input[i]);
-            int    expectedValue     = output[i];
+            int    expectedValue     = jtt.max.LeastSignificantBit64.test(input[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
         }
     }
 
