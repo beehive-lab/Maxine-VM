@@ -53,6 +53,24 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         sub(32, dest, left, r12);
     }
 
+    public void incrementl(CiRegister reg, int value) {
+        if (value == 0) {
+            return;
+        }
+        assert reg != Aarch64.r12;
+        addq(reg, value);
+    }
+
+    public void incrementl(CiAddress dst, int value) {
+        if (value == 0) {
+            return;
+        }
+        load(Aarch64.r12, dst, CiKind.Int);
+        mov64BitConstant(Aarch64.r8, value);
+        add(64, Aarch64.r8, r12, Aarch64.r8);
+        store(Aarch64.r8, dst, CiKind.Int);
+    }
+
     }
 
     /**
