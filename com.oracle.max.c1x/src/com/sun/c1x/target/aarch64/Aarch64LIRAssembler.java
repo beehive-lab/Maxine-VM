@@ -156,10 +156,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, CiConstant constant) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert constant.kind == CiKind.Object;
         if (constant.isNull()) {
             masm.mov64BitConstant(dst, 0x0);
@@ -168,8 +164,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             masm.mov64BitConstant(dst, 0xDEADDEAD);
         } else {
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
-//            masm.addRegisters(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r15, 0, 0);
-//            masm.ldr(ConditionFlag.Always, dst, Aarch64.r16, 0);
+            masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r15);
+            masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
         }
     }
 
