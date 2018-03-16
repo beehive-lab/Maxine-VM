@@ -1124,16 +1124,16 @@ public class Aarch64AssemblerTest {
     public void subq() throws Exception {
         initialiseTest();
         for (int i = 0; i < 10; i++) {
-            asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
             if (i % 2 == 1) {
-                asm.subq(Aarch64.cpuRegisters[i], 2 * expectedValues[i]);
+                masm.subq(Aarch64.cpuRegisters[i], 2 * expectedValues[i]);
                 tester.setExpectedValue(Aarch64.cpuRegisters[i], -expectedValues[i]);
             } else {
-                asm.subq(Aarch64.cpuRegisters[i], expectedValues[i]);
+                masm.subq(Aarch64.cpuRegisters[i], expectedValues[i]);
                 tester.setExpectedValue(Aarch64.cpuRegisters[i], 0);
             }
         }
-        generateAndTest(asm.codeBuffer);
+        generateAndTest(masm.codeBuffer);
     }
 
     @Test

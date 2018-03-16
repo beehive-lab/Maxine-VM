@@ -829,6 +829,16 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     /**
+     * Sub a long value from a register using R15 as temporary.
+     * @param reg
+     * @param value
+     */
+    public void subq(CiRegister reg, long value) {
+        mov64BitConstant(scratchRegister, value);
+        sub(64, reg, reg, scratchRegister);
+    }
+
+    /**
      * dst = src1 - src2.
      *
      * @param size register size. Has to be 32 or 64.
