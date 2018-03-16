@@ -548,7 +548,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lookupswitch03() throws Exception {
         Code.resetBootCodeRegion();
         int[] argOne = {0, 1, 44, 66, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213, -121, -122, -123};
@@ -565,7 +565,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_lookupswitch04() throws Exception {
         Code.resetBootCodeRegion();
         int[] argOne = {0, 1, 44, 66, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213, -121, -122, -123};
@@ -672,7 +672,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_invokestatic() throws Exception {
         Code.resetBootCodeRegion();
         List<Args> pairs = new LinkedList<Args>();
@@ -686,7 +686,7 @@ public class Aarch64JTTC1XTest {
             int answer = BC_invokestatic.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("void", "int", Integer.toString(pair.first));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
+            assert (int) registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
         }
     }
 
@@ -1875,7 +1875,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_loop01() throws Exception {
         Code.resetBootCodeRegion();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -1923,7 +1923,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_loop02() throws Exception {
         Code.resetBootCodeRegion();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -1947,7 +1947,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_loop03() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.loop.Loop03");
@@ -1969,7 +1969,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_loop04() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.loop.Loop04");
@@ -1990,7 +1990,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_loop11() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.loop.Loop11");
