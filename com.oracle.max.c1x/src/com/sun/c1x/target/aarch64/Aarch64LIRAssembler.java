@@ -552,10 +552,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitTableSwitch(LIRTableSwitch op) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert assertEmitTableSwitch(op);
         CiRegister value = op.value().asRegister();
         final Buffer buf = masm.codeBuffer;
@@ -565,9 +561,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         if (op.lowKey != 0) {
             // subtract the low value from the switch value
             masm.subq(value, op.lowKey);
-//            masm.cmpl(value, highKey - op.lowKey);
+            masm.cmp(64, value, highKey - op.lowKey);
         } else {
-//            masm.cmpl(value, highKey);
+            masm.cmp(64, value, highKey);
         }
 
         // Jump to default target if index is not within the jump table
@@ -578,8 +574,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         int afterLea = buf.position();
 
         // Load jump table entry into scratch and jump to it
-//        masm.setUpRegister(value, new CiAddress(CiKind.Int, rscratch1.asValue(), value.asValue(), CiAddress.Scale.Times4, 0));
-//        masm.add12BitImmediate(ConditionFlag.Always, false, rscratch1, value, 0);
+        masm.setUpRegister(value, new CiAddress(CiKind.Int, rscratch1.asValue(), value.asValue(), CiAddress.Scale.Times4, 0));
+        masm.add(64, rscratch1, value, 0);
         masm.jmp(rscratch1);
 
         // Inserting padding so that jump table address is 4-byte aligned
@@ -601,6 +597,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 int imm32 = label.position() - jumpTablePos;
                 buf.emitInt(imm32);
             } else {
+                if (true) {
+                    throw Util.unimplemented();
+                }
+//
 //                BranchInfo info = new BranchInfo(BranchType.TABLESWITCH, ConditionFlag.Always);
 //                label.addPatchAt(buf.position(), info);
 //                buf.emitInt((ConditionFlag.Always.value() << 28) | (offsetToJumpTableBase << 12) | 0x0d0);
