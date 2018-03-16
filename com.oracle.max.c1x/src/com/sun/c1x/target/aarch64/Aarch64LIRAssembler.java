@@ -1699,11 +1699,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitAlignment() {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-//        masm.align(8);
+        masm.align(8);
     }
 
     @Override
@@ -2352,11 +2348,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 masm.mov(64, dst, Aarch64.r16);
             } else {
                 masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
-                if (true) {
-                    throw Util.unimplemented();
-                }
-                // masm.addRegisters(ConditionFlag.Always, false, Aarch64.r16, Aarch64.r16, Aarch64.r15, 0, 0);
-                // masm.ldr(ConditionFlag.Always, dst, Aarch64.r16, 0);
+                masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r15);
+                masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
             }
         }
     }
