@@ -1280,13 +1280,23 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      *
      * @param size register size. Has to be 32 or 64.
      * @param x general purpose register. May not be null or stackpointer.
-     * @param y comparison immediate, {@link #isComparisonImmediate(long)} has to be true for it.
+     * @param y comparison immediate
      */
-    public void cmp(int size, CiRegister x, int y) {
-        if (y < 0) {
-            super.adds(size, Aarch64.zr, x, -y);
+    public void cmp(int size, CiRegister x, long y) {
+        if (isComparisonImmediate(y)) {
+            if (y < 0) {
+                super.adds(size, Aarch64.zr, x, (int) -y);
+            } else {
+                super.subs(size, Aarch64.zr, x, (int) y);
+            }
         } else {
-            super.subs(size, Aarch64.zr, x, y);
+            if (y < Integer.MAX_VALUE && y > Integer.MIN_VALUE) {
+                mov32BitConstant(scratchRegister, y);
+            } else {
+                assert size == 64;
+                mov64BitConstant(scratchRegister, y);
+            }
+            cmp(size, x, scratchRegister);
         }
     }
 
