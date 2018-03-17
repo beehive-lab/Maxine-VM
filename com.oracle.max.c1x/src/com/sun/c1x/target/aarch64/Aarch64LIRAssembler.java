@@ -379,30 +379,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert src.isStackSlot();
         assert dest.isRegister();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
-        // Checkstyle: off
-        switch (dest.kind) {
-            case Boolean:
-            case Byte:
-            case Char:
-            case Short:
-            case Jsr:
-            case Int:
-            case Object:
-                masm.load(dest.asRegister(), addr, CiKind.Int);
-                break;
-            case Long:
-                masm.load(dest.asRegister(), addr, CiKind.Long);
-                break;
-            case Float:
-                masm.load(dest.asRegister(), addr, CiKind.Float);
-                break;
-            case Double:
-                masm.load(dest.asRegister(), addr, CiKind.Double);
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
+        masm.load(dest.asRegister(), addr, dest.kind);
     }
 
     @Override
