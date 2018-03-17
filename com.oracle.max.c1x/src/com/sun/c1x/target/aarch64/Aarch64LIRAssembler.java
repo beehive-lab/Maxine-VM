@@ -567,43 +567,37 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         }
 
         // Jump to default target if index is not within the jump table
-//        masm.jcc(ConditionFlag.UnsignedHigher, new Aarch64Label(op.defaultTarget.label()));
+        masm.branchConditionally(ConditionFlag.HI, op.defaultTarget.label());
         // Set scratch to address of jump table
-        int leaPos = buf.position();
-        masm.leaq(rscratch1, CiAddress.Placeholder);
-        int afterLea = buf.position();
+        int adrPos = buf.position();
+        masm.adr(rscratch1, 0);
 
-        // Load jump table entry into scratch and jump to it
-        masm.setUpRegister(value, new CiAddress(CiKind.Int, rscratch1.asValue(), value.asValue(), CiAddress.Scale.Times4, 0));
-        masm.add(64, rscratch1, value, 0);
-        masm.jmp(rscratch1);
+        // Load jump table entry into value and jump to it
+        masm.add(64, value, rscratch1, value, ShiftType.LSL, 2); // Shift left by 2 to make offset in bytes
+        masm.jmp(value);
 
         // Inserting padding so that jump table address is 4-byte aligned
         if ((buf.position() & 0x3) != 0) {
             masm.nop(4 - (buf.position() & 0x3));
         }
 
-        // Patch LEA instruction above now that we know the position of the jump table
+        // Patch setUpScratch instructions above now that we know the position of the jump table
         int jumpTablePos = buf.position();
-        buf.setPosition(leaPos);
-        masm.leaq(rscratch1, new CiAddress(target.wordKind, Aarch64.r15.asValue(), jumpTablePos - afterLea));
+        buf.setPosition(adrPos);
+        masm.adr(rscratch1, jumpTablePos - adrPos);
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
         for (BlockBegin target : op.targets) {
             Label label = target.label();
-            int offsetToJumpTableBase = buf.position() - jumpTablePos;
             if (label.isBound()) {
                 int imm32 = label.position() - jumpTablePos;
                 buf.emitInt(imm32);
             } else {
-                if (true) {
-                    throw Util.unimplemented();
-                }
-//
-//                BranchInfo info = new BranchInfo(BranchType.TABLESWITCH, ConditionFlag.Always);
-//                label.addPatchAt(buf.position(), info);
-//                buf.emitInt((ConditionFlag.Always.value() << 28) | (offsetToJumpTableBase << 12) | 0x0d0);
+                label.addPatchAt(buf.position());
+                buf.emitByte(PatchLabelKind.TABLE_SWITCH.encoding);
+                buf.emitByte(0);
+                buf.emitShort(0);
             }
         }
         JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);
