@@ -43,29 +43,25 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     @Override
     public void patchJumpTarget(int branch, int target) {
-        // TODO Test me.
-        int instruction = codeBuffer.getInt(branch);
         int branchOffset = target - branch;
-        PatchLabelKind type = PatchLabelKind.fromEncoding(instruction);
+        PatchLabelKind type = PatchLabelKind.fromEncoding(codeBuffer.getByte(branch));
         switch (type) {
             case BRANCH_CONDITIONALLY:
-                ConditionFlag cf = ConditionFlag.fromEncoding(instruction >>> PatchLabelKind.INFORMATION_OFFSET);
+                assert codeBuffer.getShort(branch + 2) == 0;
+                ConditionFlag cf = ConditionFlag.fromEncoding(codeBuffer.getByte(branch + 1));
                 b(cf, branchOffset, branch);
                 break;
+            case TABLE_SWITCH:
             case BRANCH_UNCONDITIONALLY:
+                assert codeBuffer.getByte(branch + 1) == 0;
+                assert codeBuffer.getShort(branch + 2) == 0;
                 b(branchOffset, branch);
                 break;
-            case JUMP_ADDRESS:
-                codeBuffer.emitInt(target, branch);
-                break;
             case BRANCH_NONZERO:
-            case BRANCH_ZERO: {
-                int information = instruction >>> PatchLabelKind.INFORMATION_OFFSET;
-                int sizeEncoding = information & 1;
-                int regEncoding = information >>> 1;
+            case BRANCH_ZERO:
+                int size = codeBuffer.getByte(branch + 1);
+                int regEncoding = codeBuffer.getShort(branch + 2);
                 CiRegister reg = Aarch64.cpuRegisters[regEncoding];
-                // 1 => 64; 0 => 32
-                int size = sizeEncoding * 32 + 32;
                 switch (type) {
                     case BRANCH_NONZERO:
                         cbnz(size, reg, branchOffset, branch);
@@ -75,14 +71,6 @@ public class Aarch64Assembler extends AbstractAssembler {
                         break;
                 }
                 break;
-            }
-            case ADR: {
-                int information = instruction >>> PatchLabelKind.INFORMATION_OFFSET;
-                int regEncoding = information;
-                CiRegister reg = Aarch64.cpuRegisters[regEncoding];
-                adr(reg, branchOffset, branch);
-                break;
-            }
             default:
                 throw new IllegalArgumentException();
         }
@@ -656,21 +644,6 @@ public class Aarch64Assembler extends AbstractAssembler {
         return imm << ConditionalBranchImmOffset;
     }
 
-    /**
-     * Branch unconditionally to a label.
-     * @param label
-     */
-    public void b(Label label) {
-        // TODO Handle case where offset is too large for a single
-        // branch immediate instruction.
-        if (label.isBound()) {
-            int offset = label.position() - codeBuffer.position();
-            b(offset);
-        } else {
-            label.addPatchAt(codeBuffer.position());
-            emitInt(PatchLabelKind.BRANCH_UNCONDITIONALLY.encoding);
-        }
-    }
     /* Unconditional Branch (immediate) (5.2.2) */
 
     /**
@@ -2803,14 +2776,7 @@ public class Aarch64Assembler extends AbstractAssembler {
         BRANCH_UNCONDITIONALLY(0x1),
         BRANCH_NONZERO(0x2),
         BRANCH_ZERO(0x3),
-        JUMP_ADDRESS(0x4),
-        ADR(0x5);
-
-        /**
-         * Offset by which additional information for branch conditionally, branch zero and branch
-         * non zero has to be shifted.
-         */
-        public static final int INFORMATION_OFFSET = 5;
+        TABLE_SWITCH(0x4);
 
         public final int encoding;
 
@@ -2822,7 +2788,7 @@ public class Aarch64Assembler extends AbstractAssembler {
          * @return PatchLabelKind with given encoding.
          */
         private static PatchLabelKind fromEncoding(int encoding) {
-            return values()[encoding & NumUtil.getNbitNumberInt(INFORMATION_OFFSET)];
+            return values()[encoding];
         }
     }
 }

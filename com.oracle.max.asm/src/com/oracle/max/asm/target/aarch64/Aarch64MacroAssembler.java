@@ -1313,30 +1313,21 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     /**
-     * When patching up Labels we have to know what kind of code to generate.
+     * Branch unconditionally to a label.
+     * @param label
      */
-    public enum PatchLabelKind {
-        BRANCH_CONDITIONALLY(0x0), BRANCH_UNCONDITIONALLY(0x1), BRANCH_NONZERO(0x2), BRANCH_ZERO(0x3), JUMP_ADDRESS(0x4);
-
-        /**
-         * Offset by which additional information for branch conditionally, branch zero and branch non zero has to be
-         * shifted.
-         */
-        public static final int INFORMATION_OFFSET = 5;
-
-        public final int encoding;
-
-        PatchLabelKind(int encoding) {
-            this.encoding = encoding;
+    public void b(Label label) {
+        // TODO Handle case where offset is too large for a single
+        // branch immediate instruction.
+        if (label.isBound()) {
+            int offset = label.position() - codeBuffer.position();
+            b(offset);
+        } else {
+            label.addPatchAt(codeBuffer.position());
+            emitByte(PatchLabelKind.BRANCH_UNCONDITIONALLY.encoding);
+            emitByte(0);
+            emitShort(0);
         }
-
-        /**
-         * @return PatchLabelKind with given encoding.
-         */
-        private static PatchLabelKind fromEncoding(int encoding) {
-            return values()[encoding & NumUtil.getNbitNumberInt(INFORMATION_OFFSET)];
-        }
-
     }
 
     /**
@@ -1353,10 +1344,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             super.cbnz(size, cmp, offset);
         } else {
             label.addPatchAt(codeBuffer.position());
-            int regEncoding = cmp.getEncoding() << (PatchLabelKind.INFORMATION_OFFSET + 1);
-            int sizeEncoding = (size == 64 ? 1 : 0) << PatchLabelKind.INFORMATION_OFFSET;
-            // Encode condition flag so that we know how to patch the instruction later
-            emitInt(PatchLabelKind.BRANCH_NONZERO.encoding | regEncoding | sizeEncoding);
+            int regEncoding = cmp.getEncoding();
+            emitByte(PatchLabelKind.BRANCH_NONZERO.encoding);
+            emitByte(size);
+            emitShort(regEncoding);
         }
     }
 
@@ -1374,10 +1365,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             super.cbz(size, cmp, offset);
         } else {
             label.addPatchAt(codeBuffer.position());
-            int regEncoding = cmp.getEncoding() << (PatchLabelKind.INFORMATION_OFFSET + 1);
-            int sizeEncoding = (size == 64 ? 1 : 0) << PatchLabelKind.INFORMATION_OFFSET;
-            // Encode condition flag so that we know how to patch the instruction later
-            emitInt(PatchLabelKind.BRANCH_ZERO.encoding | regEncoding | sizeEncoding);
+            int regEncoding = cmp.getEncoding();
+            emitByte(PatchLabelKind.BRANCH_ZERO.encoding);
+            emitByte(size);
+            emitShort(regEncoding);
         }
     }
 
@@ -1394,8 +1385,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             super.b(condition, offset);
         } else {
             label.addPatchAt(codeBuffer.position());
-            // Encode condition flag so that we know how to patch the instruction later
-            emitInt(PatchLabelKind.BRANCH_CONDITIONALLY.encoding | condition.encoding << PatchLabelKind.INFORMATION_OFFSET);
+            emitByte(PatchLabelKind.BRANCH_CONDITIONALLY.encoding);
+            emitByte(condition.encoding);
+            emitShort(0);
         }
     }
 
