@@ -582,7 +582,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_tableswitch() throws Exception {
         Code.resetBootCodeRegion();
         int[] argOne = {7, -1, 0, 1, 2, 3, 4, 5, 6, 0};
@@ -967,7 +967,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_dcmp10() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_dcmp10");
@@ -1136,7 +1136,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_fcmp10() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_fcmp10");
