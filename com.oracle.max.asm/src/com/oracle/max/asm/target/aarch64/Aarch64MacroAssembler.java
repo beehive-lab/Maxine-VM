@@ -350,9 +350,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         stxr(size, scratchRegister, newValue, address); // store newValue to address and result to scratch register
 
         // If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
-        cmp(64, scratchRegister, Aarch64.zr);
         // If the scratch register is not 0 then there was an issue with atomicity so do the operation again
-        branchConditionally(ConditionFlag.NE, atomicFail);
+        cbnz(64, scratchRegister, atomicFail);
         mov(64, cmpValue, Aarch64.zr); // store 0 to r0/cmpValue to indicate success
         bind(notEqualTocmpValue);
         dmb(BarrierKind.SY);

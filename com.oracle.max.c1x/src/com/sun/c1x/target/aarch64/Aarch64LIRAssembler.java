@@ -1646,10 +1646,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         }
         assert value != result;
         // if zero return -1
-        masm.cmp(64, src.asRegister(), 0);
         masm.not(64, result, Aarch64.zr);
         Label end = new Label();
-        masm.branchConditionally(ConditionFlag.EQ, end);
+        masm.cbz(64, src.asRegister(), end);
         // else find the bit
         if (most) {
             masm.clz(64, result, value);
