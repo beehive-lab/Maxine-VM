@@ -338,8 +338,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         assert newValue != cmpValue;
         assert Aarch64.r0 == cmpValue;
 
-        Aarch64Label atomicFail = new Aarch64Label();
-        Aarch64Label notEqualTocmpValue = new Aarch64Label();
+        Label atomicFail = new Label();
+        Label notEqualTocmpValue = new Label();
 
         bind(atomicFail);
         membar(-1);
@@ -1567,7 +1567,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void insertForeverLoop() {
-        Aarch64Label forever = new Aarch64Label();
+        Label forever = new Label();
         bind(forever);
         branchConditionally(ConditionFlag.AL, forever);
     }

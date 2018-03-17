@@ -591,7 +591,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
         // Emit jump table entries
         for (BlockBegin target : op.targets) {
-            Aarch64Label label = new Aarch64Label(target.label());
+            Label label = target.label();
             int offsetToJumpTableBase = buf.position() - jumpTablePos;
             if (label.isBound()) {
                 int imm32 = label.position() - jumpTablePos;
@@ -614,7 +614,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     protected void emitBranch(LIRBranch op) {
         assert assertEmitBranch(op);
         if (op.cond() == Condition.TRUE) {
-            masm.b(new Aarch64Label(op.label()));
+            masm.b(op.label());
             if (op.info != null) {
                 tasm.recordImplicitException(codePos() - 4, op.info); // ADDED EXCEPTION
             }
@@ -622,7 +622,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             ConditionFlag acond;
             if (op.code == LIROpcode.CondFloatBranch) {
                 assert op.unorderedBlock() != null : "must have unordered successor";
-                masm.branchConditionally(ConditionFlag.VS, new Aarch64Label(op.unorderedBlock().label()));
+                masm.branchConditionally(ConditionFlag.VS, op.unorderedBlock().label());
 
                 switch (op.cond()) {
                     case EQ:
@@ -649,7 +649,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             } else {
                 acond = convertCondition(op.cond());
             }
-            masm.branchConditionally(acond, new Aarch64Label(op.label()));
+            masm.branchConditionally(acond, op.label());
         }
     }
 
@@ -827,7 +827,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             }
         } else {
             // conditional move not available, use emit a branch and move
-            Aarch64Label skip = new Aarch64Label();
+            Label skip = new Label();
             masm.branchConditionally(acond, skip);
             if (other.isRegister()) {
                 reg2reg(other, result);
@@ -1224,10 +1224,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
         } else {
             CiRegister denominator = right.asRegister();
-            Aarch64Label continuation = new Aarch64Label();
+            Label continuation = new Label();
             if (C1XOptions.GenSpecialDivChecks) {
                 // check for special case of MIN_VALUE / -1
-                Aarch64Label normalCase = new Aarch64Label();
+                Label normalCase = new Label();
                 masm.mov64BitConstant(rscratch1, size == 32 ? Integer.MIN_VALUE : Long.MIN_VALUE);
                 masm.cmp(size, numerator, rscratch1);
                 masm.branchConditionally(ConditionFlag.NE, normalCase);
@@ -1514,9 +1514,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         } else {
             assert code == LIROpcode.Cmpl2i;
             CiRegister dest = dst.asRegister();
-            Aarch64Label high = new Aarch64Label();
-            Aarch64Label done = new Aarch64Label();
-            Aarch64Label isEqual = new Aarch64Label();
+            Label high = new Label();
+            Label done = new Label();
+            Label isEqual = new Label();
 //            masm.lcmpl(ConditionFlag.Equal, left.asRegister(), right.asRegister());
 //            masm.jcc(ConditionFlag.Equal, isEqual);
 //            masm.lcmpl(ConditionFlag.SignedGreater, left.asRegister(), right.asRegister());
@@ -1648,7 +1648,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         // if zero return -1
         masm.cmp(64, src.asRegister(), 0);
         masm.not(64, result, Aarch64.zr);
-        Label end = new Aarch64Label();
+        Label end = new Label();
         masm.branchConditionally(ConditionFlag.EQ, end);
         // else find the bit
         if (most) {
@@ -1956,7 +1956,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 case Jmp: {
                     if (inst.extra instanceof XirLabel) {
-                        Aarch64Label label = new Aarch64Label(labels[((XirLabel) inst.extra).index]);
+                        Label label = labels[((XirLabel) inst.extra).index];
                         masm.b(label);
                     } else {
                         directJmp(inst.extra);
@@ -2031,7 +2031,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case Jbset: {
-                    Aarch64Label label = new Aarch64Label(labels[((XirLabel) inst.extra).index]);
+                    Label label = labels[((XirLabel) inst.extra).index];
                     CiValue offset = operands[inst.y().index];
                     CiValue bit = operands[inst.z().index];
                     assert offset.isConstant() && bit.isConstant();
@@ -2224,7 +2224,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
-//        masm.jcc(cflag, new Aarch64Label(label));
+//        masm.jcc(cflag, new Label(label));
         masm.nop(3);
     }
 
