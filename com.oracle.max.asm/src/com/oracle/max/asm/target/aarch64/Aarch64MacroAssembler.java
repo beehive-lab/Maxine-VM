@@ -426,51 +426,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
-    private int numInstructions(CiAddress addr) {
-        CiRegister index = addr.index();
-        int disp = addr.displacement;
-        if (disp != 0) {
-            if (index.isValid()) {
-                return 4;
-            } else {
-                return 3;
-            }
-        } else {
-            return 2;
-        }
-    }
-
     public void setUpScratch(CiAddress addr) {
-        CiRegister base = addr.base();
-        CiRegister index = addr.index();
-        CiAddress.Scale scale = addr.scale;
-        int disp = addr.displacement;
-
-        if (addr == CiAddress.Placeholder) {
-            nop(numInstructions(addr));
-            return;
-        }
-        assert !(base.isValid() && disp == 0 && base.compareTo(Aarch64.LATCH_REGISTER) == 0);
-        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
-
-        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
-            if (base == CiRegister.Frame) {
-                base = frameRegister;
-            }
-            if (disp != 0) {
-                mov64BitConstant(scratchRegister, disp);
-                add(64, scratchRegister, scratchRegister, base, ShiftType.LSL, 0);
-                if (index.isValid()) {
-                    addlsl(scratchRegister, scratchRegister, index, scale.log2);
-                }
-            } else {
-                if (index.isValid()) {
-                    addlsl(scratchRegister, base, index, scale.log2);
-                } else {
-                    mov(64, scratchRegister, base);
-                }
-            }
-        }
+        setUpRegister(scratchRegister, addr);
     }
 
     private int getRegisterList(CiRegister... registers) {
@@ -1762,17 +1719,17 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         return new CiAddress(addr.kind, new CiRegisterValue(CiKind.Int, base), disp);
     }
 
-    // TODO: check if this works on Aarch64 (migrated from ARMV7)
     public void setUpRegister(CiRegister dest, CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
         if (addr == CiAddress.Placeholder) {
-            nop(numInstructions(addr));
+            nop(6);
             return;
         }
 
+        assert !(base.isValid() && disp == 0 && base.compareTo(Aarch64.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
         if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
