@@ -2430,7 +2430,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_l2i() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_l2i");
@@ -2454,7 +2454,7 @@ public class Aarch64JTTC1XTest {
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long", Long.toString(pair.lfirst) + "LL");
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            assert ((int) returnValue) == expectedValue : "Failed incorrect value " + (int) expectedValue + " " + returnValue;
         }
     }
 

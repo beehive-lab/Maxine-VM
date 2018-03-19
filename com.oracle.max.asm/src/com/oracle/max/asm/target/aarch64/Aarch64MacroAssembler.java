@@ -1064,6 +1064,29 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null or stackpointer.
+     * @param src general purpose register. May not be null or stackpointer.
+     * @param bimm logical immediate.
+     */
+    public void and(int size, CiRegister dst, CiRegister src, long bimm) {
+        if (isLogicalImmediate(bimm)) {
+            super.and(size, dst, src, bimm);
+            return;
+        }
+
+        if (size == 32) {
+            mov32BitConstant(scratchRegister, bimm);
+        } else {
+            assert size == 64;
+            mov64BitConstant(scratchRegister, bimm);
+        }
+        and(size, dst, src, scratchRegister);
+    }
+
+    /**
+     * dst = src1 & src2.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or stackpointer.
      * @param src1 general purpose register. May not be null or stackpointer.
      * @param src2 general purpose register. May not be null or stackpointer.
      */
