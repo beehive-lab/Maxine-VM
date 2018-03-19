@@ -724,7 +724,7 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    // @Test
+    @Test
     public void C1X_jtt_BC_f2b() throws Exception {
         Code.resetBootCodeRegion();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -738,7 +738,7 @@ public class Aarch64JTTC1XTest {
             expectedByte = BC_f2b.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("char", "float", Float.toString(arguments[i]));
             long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedByte : "Failed incorrect value " + registerValues[0] + " " + expectedByte;
+            assert ((byte) registerValues[0]) == expectedByte : "Failed incorrect value " + ((byte) registerValues[0]) + " " + expectedByte;
         }
     }
 
