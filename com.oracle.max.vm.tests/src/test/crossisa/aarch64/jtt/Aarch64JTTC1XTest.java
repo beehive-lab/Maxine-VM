@@ -2456,9 +2456,8 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    /* l2f depends on the runtime call runtimel2float which cannot be tested offline yet */
-    // @Test
-    public void broken_C1X_jtt_BC_l2f() throws Exception {
+    @Test
+    public void C1X_jtt_BC_l2f() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_l2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -2481,9 +2480,8 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    /* l2d depends on the runtime call runtimel2double which cannot be tested offline yet */
-    // @Test
-    public void broken_C1X_jtt_BC_l2d() throws Exception {
+    @Test
+    public void C1X_jtt_BC_l2d() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_l2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");

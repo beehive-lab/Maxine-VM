@@ -594,14 +594,6 @@ public class Aarch64LIRGenerator extends LIRGenerator {
             CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
             lir.convert(x.opcode, input, stubResult, stub);
             lir.move(stubResult, result);
-        } else if (x.opcode == Convert.Op.D2L) {
-            result = callRuntimeWithResult(CiRuntimeCall.d2long, null, input);
-        } else if (x.opcode == Convert.Op.F2L) {
-            result = callRuntimeWithResult(CiRuntimeCall.f2long, null, input);
-        } else if (x.opcode == Convert.Op.L2D) {
-            result = callRuntimeWithResult(CiRuntimeCall.l2double, null, input);
-        } else if (x.opcode == Convert.Op.L2F) {
-            result = callRuntimeWithResult(CiRuntimeCall.l2float, null, input);
         } else {
             lir.convert(x.opcode, input, result, stub);
         }
