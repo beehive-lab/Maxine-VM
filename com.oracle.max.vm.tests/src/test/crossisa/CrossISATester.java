@@ -260,6 +260,7 @@ public abstract class CrossISATester {
         }
 
         if (!valid) {
+            System.out.println("validateIntRegisters FAILED");
             for (int i = 0; i < simulatedIntRegisters.length; i++) {
                 System.out.println(i + " sim: " + simulatedIntRegisters[i] + " exp: " + expectedIntRegisters[i]
                                    + " test: " + testIntRegisters[i]);
@@ -287,6 +288,7 @@ public abstract class CrossISATester {
         }
 
         if (!valid) {
+            System.out.println("validateLongRegisters FAILED");
             for (int i = 0; i < simulatedLongRegisters.length; i++) {
                 System.out.println(i + " sim: " + simulatedLongRegisters[i] + " exp: " + expectedLongRegisters[i]
                                    + " test: " + testLongRegisters[i]);
@@ -314,6 +316,7 @@ public abstract class CrossISATester {
         }
 
         if (!valid) {
+            System.out.println("validateFloatRegisters FAILED");
             for (int i = 0; i < simulatedFloatRegisters.length; i++) {
                 System.out.println(i + " sim: " + simulatedFloatRegisters[i] + " exp: " + expectedFloatRegisters[i]
                                    + " test: " + testFloatRegisters[i]);
@@ -341,6 +344,7 @@ public abstract class CrossISATester {
         }
 
         if (!valid) {
+            System.out.println("validateDoubleRegisters FAILED");
             for (int i = 0; i < simulatedDoubleRegisters.length; i++) {
                 System.out.println(i + " sim: " + simulatedDoubleRegisters[i] + " exp: " + expectedDoubleRegisters[i]
                                    + " test: " + testDoubleRegisters[i]);
