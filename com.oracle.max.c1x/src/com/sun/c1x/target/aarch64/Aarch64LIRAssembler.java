@@ -164,7 +164,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             masm.mov64BitConstant(dst, 0xDEADDEAD);
         } else {
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
-            masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r15);
+            int currentPC = masm.codeBuffer.position();
+            masm.adr(Aarch64.r17, currentPC);
+            masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r17);
             masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
         }
     }
@@ -236,26 +238,26 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             case Short:
             case Jsr:
             case Int:
-                masm.mov64BitConstant(Aarch64.r8, c.asInt());
-                masm.store(Aarch64.r8, address, CiKind.Int);
+                masm.mov64BitConstant(Aarch64.r17, c.asInt());
+                masm.store(Aarch64.r17, address, CiKind.Int);
                 break;
             case Float:
-                masm.mov64BitConstant(Aarch64.r8, Float.floatToRawIntBits(c.asFloat()));
-                masm.store(Aarch64.r8, address, CiKind.Int);
+                masm.mov64BitConstant(Aarch64.r17, Float.floatToRawIntBits(c.asFloat()));
+                masm.store(Aarch64.r17, address, CiKind.Int);
                 break;
             case Object:
                 movoop(frameMap.toStackAddress(slot), c);
                 break;
             case Long:
                 masm.saveInFP(9);
-                masm.movlong(Aarch64.r8, c.asLong(), CiKind.Long);
-                masm.store(Aarch64.r8, address, CiKind.Long);
+                masm.movlong(Aarch64.r17, c.asLong(), CiKind.Long);
+                masm.store(Aarch64.r17, address, CiKind.Long);
                 masm.restoreFromFP(9);
                 break;
             case Double:
                 masm.saveInFP(9);
-                masm.movlong(Aarch64.r8, Double.doubleToRawLongBits(c.asDouble()), CiKind.Long);
-                masm.store(Aarch64.r8, address, CiKind.Long);
+                masm.movlong(Aarch64.r17, Double.doubleToRawLongBits(c.asDouble()), CiKind.Long);
+                masm.store(Aarch64.r17, address, CiKind.Long);
                 masm.restoreFromFP(9);
                 break;
             default:
@@ -281,18 +283,18 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             case Jsr:
             case Int:
                 if (kind == CiKind.Boolean || kind == CiKind.Byte) {
-                    masm.mov64BitConstant(Aarch64.r8, constant.asInt() & 0xFF);
+                    masm.mov64BitConstant(Aarch64.r17, constant.asInt() & 0xFF);
                 } else if (kind == CiKind.Char || kind == CiKind.Short) {
-                    masm.mov64BitConstant(Aarch64.r8, constant.asInt() & 0xFFFF);
+                    masm.mov64BitConstant(Aarch64.r17, constant.asInt() & 0xFFFF);
                 } else {
-                    masm.mov64BitConstant(Aarch64.r8, constant.asInt());
+                    masm.mov64BitConstant(Aarch64.r17, constant.asInt());
                 }
-                masm.store(Aarch64.r8, addr, CiKind.Int);
+                masm.store(Aarch64.r17, addr, CiKind.Int);
                 nullCheckHere = codePos() - 4;
                 break;
             case Float:
-                masm.mov64BitConstant(Aarch64.r8, Float.floatToRawIntBits(constant.asFloat()));
-                masm.store(Aarch64.r8, addr, CiKind.Int);
+                masm.mov64BitConstant(Aarch64.r17, Float.floatToRawIntBits(constant.asFloat()));
+                masm.store(Aarch64.r17, addr, CiKind.Int);
                 nullCheckHere = codePos() - 4;
                 break;
             case Object:
@@ -300,15 +302,15 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 break;
             case Long:
                 masm.saveInFP(9);
-                masm.movlong(Aarch64.r8, constant.asLong(), CiKind.Long);
-                masm.store(Aarch64.r8, addr, CiKind.Long);
+                masm.movlong(Aarch64.r17, constant.asLong(), CiKind.Long);
+                masm.store(Aarch64.r17, addr, CiKind.Long);
                 nullCheckHere = codePos() - 4;
                 masm.restoreFromFP(9);
                 break;
             case Double:
                 masm.saveInFP(9);
-                masm.movlong(Aarch64.r8, Double.doubleToRawLongBits(constant.asDouble()), CiKind.Long);
-                masm.store(Aarch64.r8, addr, CiKind.Long);
+                masm.movlong(Aarch64.r17, Double.doubleToRawLongBits(constant.asDouble()), CiKind.Long);
+                masm.store(Aarch64.r17, addr, CiKind.Long);
                 masm.restoreFromFP(9);
                 break;
             default:
@@ -401,12 +403,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
         if (src.kind == CiKind.Long || src.kind == CiKind.Double) {
             masm.saveInFP(9);
-            masm.load(Aarch64.r8, frameMap.toStackAddress((CiStackSlot) src), CiKind.Long);
-            masm.store(Aarch64.r8, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Long);
+            masm.load(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) src), CiKind.Long);
+            masm.store(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Long);
             masm.restoreFromFP(9);
         } else {
-            masm.load(Aarch64.r8, frameMap.toStackAddress((CiStackSlot) src), CiKind.Int);
-            masm.store(Aarch64.r8, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Int);
+            masm.load(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) src), CiKind.Int);
+            masm.store(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Int);
         }
     }
 
@@ -997,13 +999,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         assert right.kind == CiKind.Long;
                         CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                         masm.saveInFP(9);
-                        masm.load(Aarch64.r8, raddr, CiKind.Long);
+                        masm.load(Aarch64.r17, raddr, CiKind.Long);
                         switch (code) {
                             case Add:
-                                masm.add(64, lreg, lreg, Aarch64.r8);
+                                masm.add(64, lreg, lreg, Aarch64.r17);
                                 break;
                             case Sub:
-                                masm.sub(64, lreg, lreg, Aarch64.r8);
+                                masm.sub(64, lreg, lreg, Aarch64.r17);
                                 break;
                             default:
                                 throw Util.shouldNotReachHere();
@@ -1015,13 +1017,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         long c = ((CiConstant) right).asLong();
                         masm.saveInFP(9);
-                        masm.movlong(Aarch64.r8, c, CiKind.Long);
+                        masm.movlong(Aarch64.r17, c, CiKind.Long);
                         switch (code) {
                             case Add:
-                                masm.add(64, lreg, lreg, Aarch64.r8);
+                                masm.add(64, lreg, lreg, Aarch64.r17);
                                 break;
                             case Sub:
-                                masm.sub(64, lreg, lreg, Aarch64.r8);
+                                masm.sub(64, lreg, lreg, Aarch64.r17);
                                 break;
                             default:
                                 throw Util.shouldNotReachHere();
@@ -1035,19 +1037,19 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             CiAddress laddr = asAddress(left);
             if (right.isRegister()) {
                 CiRegister rreg = right.asRegister();
-                masm.load(Aarch64.r8, laddr, CiKind.Int);
+                masm.load(Aarch64.r17, laddr, CiKind.Int);
                 switch (code) {
                     case Add:
-                        masm.add(32, Aarch64.r8, Aarch64.r8, rreg);
+                        masm.add(32, Aarch64.r17, Aarch64.r17, rreg);
                         break;
                     case Sub:
-                        masm.sub(32, Aarch64.r8, Aarch64.r8, rreg);
+                        masm.sub(32, Aarch64.r17, Aarch64.r17, rreg);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
 
                 }
-                masm.store(Aarch64.r8, laddr, CiKind.Int);
+                masm.store(Aarch64.r17, laddr, CiKind.Int);
             } else {
                 if (true) {
                     throw Util.unimplemented();
@@ -1108,17 +1110,17 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 // added support for stack operands
                 CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                 masm.setUpScratch(raddr);
-                masm.ldr(32,  Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
+                masm.ldr(32,  Aarch64.r17, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
                 assert reg != Aarch64.r16;
                 switch (code) {
                     case LogicAnd:
-                        masm.and(32, reg, reg, Aarch64.r8);
+                        masm.and(32, reg, reg, Aarch64.r17);
                         break;
                     case LogicOr:
-                        masm.orr(32, reg, reg, Aarch64.r8, ShiftType.ASR, 0);
+                        masm.orr(32, reg, reg, Aarch64.r17, ShiftType.ASR, 0);
                         break;
                     case LogicXor:
-                        masm.eor(32, reg, reg, Aarch64.r8);
+                        masm.eor(32, reg, reg, Aarch64.r17);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -1344,8 +1346,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
                         masm.fmov(64, Aarch64.d30, Aarch64.r9);
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-//                        masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r16, 0);
-//                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r8);
+//                        masm.ldrd(ConditionFlag.Always, Aarch64.r17, Aarch64.r16, 0);
+//                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r17);
                         masm.fmov(64, Aarch64.r9, Aarch64.d30);
                         break;
                     case Object:
@@ -1398,23 +1400,23 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
                         masm.saveInFP(9);
                         if (c.asLong() == 0) {
-                            masm.movlong(Aarch64.r8, 0, CiKind.Long);
+                            masm.movlong(Aarch64.r17, 0, CiKind.Long);
                         } else {
-                            masm.movlong(Aarch64.r8, c.asLong(), CiKind.Long);
+                            masm.movlong(Aarch64.r17, c.asLong(), CiKind.Long);
                         }
-//                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r8);
+//                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r17);
                         masm.restoreFromFP(9);
                         break;
                     }
                     case Object: {
-                        movoop(Aarch64.r8, c);
+                        movoop(Aarch64.r17, c);
                         if (oldOpr1.isConstant()) {
                             CiValue newOpr1 = compilation.registerConfig.getScratchRegister().asValue(oldOpr1.kind);
                             const2reg(oldOpr1, newOpr1, null);
                             opr1 = newOpr1;
                             reg1 = opr1.asRegister();
                         }
-                        masm.cmp(64, reg1, Aarch64.r8);
+                        masm.cmp(64, reg1, Aarch64.r17);
                         break;
                     }
                     default:
@@ -1540,13 +1542,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitShiftOp(LIROpcode code, CiValue left, CiValue count, CiValue dest, CiValue tmp) {
-        assert count.asRegister() == SHIFTCount : "count must be in r8";
+        assert count.asRegister() == SHIFTCount : "count must be in r17";
         assert left == dest : "left and dest must be equal";
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
         assert count.asRegister() != Aarch64.r16 : "count register must not be scratch";
         CiRegister register = left.asRegister();
-        assert register != SHIFTCount : "left cannot be r8";
+        assert register != SHIFTCount : "left cannot be r17";
         int size = left.kind.isInt() ? 32 : 64;
         switch (code) {
             case Shl:
@@ -2013,8 +2015,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         final int intSize = 4;
                         for (int i = 0; i < frameSize / intSize; ++i) {
                             masm.setUpScratch(new CiAddress(CiKind.Int, Aarch64.sp.asValue(), i * intSize));
-                            masm.mov64BitConstant(Aarch64.r8, 0xC1C1C1C1);
-                            masm.str(64, Aarch64.r8, Aarch64Address.createRegisterOffsetAddress(Aarch64.r16, Aarch64.r0, false));
+                            masm.mov64BitConstant(Aarch64.r17, 0xC1C1C1C1);
+                            masm.str(64, Aarch64.r17, Aarch64Address.createRegisterOffsetAddress(Aarch64.r16, Aarch64.r0, false));
                         }
                     }
 
@@ -2226,8 +2228,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     public void movoop(CiAddress dst, CiConstant obj) {
-        movoop(Aarch64.r8, obj);
-        masm.store(Aarch64.r8, dst, CiKind.Int);
+        movoop(Aarch64.r17, obj);
+        masm.store(Aarch64.r17, dst, CiKind.Int);
     }
 
     public void directCall(Object target, LIRDebugInfo info) {
