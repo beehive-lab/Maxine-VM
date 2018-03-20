@@ -435,10 +435,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     if (info != null) {
                         tasm.recordImplicitException(codePos(), info);
                     }
-//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, dest.asRegister(), Aarch64.LATCH_REGISTER, 0);
+                    masm.ldr(32, dest.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.LATCH_REGISTER));
                 } else {
                     masm.setUpScratch(addr);
-//                    masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, dest.asRegister(), safepoint ? Aarch64.LATCH_REGISTER : Aarch64.r16, 0);
+                    masm.ldr(32, dest.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(safepoint ? Aarch64.LATCH_REGISTER : Aarch64.r16));
                     if (info != null) {
                         tasm.recordImplicitException(codePos() - 4, info);
                     }
@@ -1123,7 +1123,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 // added support for stack operands
                 CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                 masm.setUpScratch(raddr);
-//                masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r8, Aarch64.r16, 0);
+//                masm.ldr(32,  Aarch64.r8, Aarch64.r16, 0);
                 assert reg != Aarch64.r16;
                 switch (code) {
                     case LogicAnd:
