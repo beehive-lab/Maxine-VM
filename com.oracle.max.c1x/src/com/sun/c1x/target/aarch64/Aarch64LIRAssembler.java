@@ -1070,25 +1070,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitIntrinsicOp(LIROpcode code, CiValue value, CiValue unused, CiValue dest, LIROp2 op) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert value.kind.isDouble();
         switch (code) {
             case Abs:
-                if (dest.asRegister() != value.asRegister()) {
-//                    masm.vmov(ConditionFlag.Always, dest.asRegister(), value.asRegister(), null, CiKind.Double, CiKind.Double);
-                }
-//                masm.vmov(ConditionFlag.Always, Aarch64.d30, Aarch64.r9, null, CiKind.Float, CiKind.Int);
-                masm.mov64BitConstant(Aarch64.r16, 0x7fffffff);
-//                masm.vmov(ConditionFlag.Always, Aarch64.r8, dest.asRegister(), null, CiKind.Long, CiKind.Double);
-//                masm.and(ConditionFlag.Always, false, Aarch64.r9, Aarch64.r9, Aarch64.r16, 0, 0);
-//                masm.vmov(ConditionFlag.Always, dest.asRegister(), Aarch64.r8, Aarch64.r9, CiKind.Double, CiKind.Long);
-//                masm.vmov(ConditionFlag.Always, Aarch64.r9, Aarch64.d30, null, CiKind.Int, CiKind.Float);
+                masm.fabs(64, dest.asRegister(), value.asRegister());
                 break;
             case Sqrt:
-//                masm.vsqrt(ConditionFlag.Always, dest.asRegister(), value.asRegister(), dest.kind);
+                masm.fsqrt(64, dest.asRegister(), value.asRegister());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -1357,11 +1345,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                             throw Util.unimplemented();
                         }
 
-                        //                        masm.vmov(ConditionFlag.Always, Aarch64.d30, Aarch64.r9, null, CiKind.Float, CiKind.Int);
+                        //                        masm.fmov(64, Aarch64.d30, Aarch64.r9, null, CiKind.Float, CiKind.Int);
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
 //                        masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r16, 0);
 //                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r8);
-//                        masm.vmov(ConditionFlag.Always, Aarch64.r9, Aarch64.d30, null, CiKind.Int, CiKind.Float);
+//                        masm.fmov(64, Aarch64.r9, Aarch64.d30, null, CiKind.Int, CiKind.Float);
                         break;
                     case Object:
                         if (true) {
