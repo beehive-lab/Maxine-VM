@@ -1470,18 +1470,18 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             Label done = new Label();
             Label isEqual = new Label();
 //            masm.lcmpl(ConditionFlag.Equal, left.asRegister(), right.asRegister());
-//            masm.jcc(ConditionFlag.Equal, isEqual);
+            masm.branchConditionally(ConditionFlag.EQ, isEqual);
 //            masm.lcmpl(ConditionFlag.SignedGreater, left.asRegister(), right.asRegister());
-//            masm.jcc(ConditionFlag.SignedGreater, high);
-//            masm.xorptr(dest, dest);
-//            masm.decrementl(dest, 1);
-//            masm.jmp(done);
+            masm.branchConditionally(ConditionFlag.GT, high);
+            masm.xorptr(dest, dest);
+            masm.decrementl(dest, 1);
+            masm.b(done);
             masm.bind(high);
-//            masm.xorptr(dest, dest);
-//            masm.incrementl(dest, 1);
-//            masm.jmp(done);
+            masm.xorptr(dest, dest);
+            masm.incrementl(dest, 1);
+            masm.b(done);
             masm.bind(isEqual);
-//            masm.xorptr(dest, dest);
+            masm.xorptr(dest, dest);
             masm.bind(done);
         }
     }
