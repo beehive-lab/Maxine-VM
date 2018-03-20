@@ -136,19 +136,6 @@ public class Aarch64JTTC1XTest {
         Assert.assertTrue(tester.validateFloatRegisters());
     }
 
-    private MaxineAarch64Tester generateObjectsAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode) throws Exception {
-        Aarch64CodeWriter code = new Aarch64CodeWriter(theCode);
-        code.createStaticCodeStubsFile(functionPrototype, theCode, entryPoint);
-        MaxineAarch64Tester r = new MaxineAarch64Tester();
-        r.cleanFiles();
-        r.cleanProcesses();
-        r.compile();
-        r.runSimulation();
-        r.reset();
-        return r;
-    }
-
-
     public Aarch64JTTC1XTest() {
         initTests();
     }
@@ -691,9 +678,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < arguments.length; i++) {
             expectedDouble = BC_f2d.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "float", Float.toString(arguments[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double returnValue = tester.getSimulatedDoubleRegisters()[0];
-            assert returnValue == expectedDouble : "Failed incorrect value " + returnValue + " " + expectedDouble;
+            tester.setExpectedValue(Aarch64.d0, expectedDouble);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -708,9 +694,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < arguments.length; i++) {
             expectedFloat = BC_i2f.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "int", Integer.toString(arguments[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float returnValue = tester.getSimulatedFloatRegisters()[0];
-            assert returnValue == expectedFloat : "Failed incorrect value " + returnValue + " expected: " + expectedFloat;
+            tester.setExpectedValue(Aarch64.d0, expectedFloat);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -745,9 +730,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < arguments.length; i++) {
             expectedFloat = BC_b2f.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "signed char", Byte.toString(arguments[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == expectedFloat : "Failed incorrect value " + simulatedValue + " expected " + expectedFloat;
+            tester.setExpectedValue(Aarch64.d0, expectedFloat);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -762,9 +746,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < arguments.length; i++) {
             expectedFloat = BC_d2f.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "double", Double.toString(arguments[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == expectedFloat : "Failed incorrect value " + simulatedValue + " expected " + expectedFloat;
+            tester.setExpectedValue(Aarch64.d0, expectedFloat);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -823,9 +806,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < arguments.length; i++) {
             double answer = BC_i2d.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "int", Integer.toString(arguments[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == answer : "Failed incorrect value " + simulatedValue + " expected " + answer;
+            tester.setExpectedValue(Aarch64.d0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1135,9 +1117,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fmul.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == floatValue : "Failed incorrect value " + simulatedValue + " expected " + floatValue;
+            tester.setExpectedValue(Aarch64.d0, floatValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1152,9 +1133,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fadd.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == floatValue : "Failed incorrect value " + simulatedValue + " expected " + floatValue;
+            tester.setExpectedValue(Aarch64.d0, floatValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1169,9 +1149,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fsub.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == floatValue : "Failed incorrect value " + simulatedValue + " expected " + floatValue;
+            tester.setExpectedValue(Aarch64.d0, floatValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1186,9 +1165,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fdiv.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == floatValue : "Failed incorrect value " + simulatedValue + " expected " + floatValue;
+            tester.setExpectedValue(Aarch64.d0, floatValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1203,9 +1181,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_frem.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == floatValue : "Failed incorrect value " + simulatedValue + " expected " + floatValue;
+            tester.setExpectedValue(Aarch64.d0, floatValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1238,9 +1215,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_drem.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "double, double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value " + simulatedValue + " expected " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1255,9 +1231,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_ddiv.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "double, double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value " + simulatedValue + " expected " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1388,9 +1363,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fload.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", " float ", Float.toString(argsOne[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == floatValue : "Failed incorrect value " + simulatedValue + " expected " + floatValue;
+            tester.setExpectedValue(Aarch64.d0, floatValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1406,9 +1380,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fload_2.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", " float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == floatValue : "Failed incorrect value " + simulatedValue + " expected " + floatValue;
+            tester.setExpectedValue(Aarch64.d0, floatValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1423,9 +1396,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_freturn.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", " float ", Float.toString(argsOne[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == floatValue : "Failed incorrect value " + simulatedValue + " expected " + floatValue;
+            tester.setExpectedValue(Aarch64.d0, floatValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1440,9 +1412,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dreturn.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", " double ", Double.toString(argsOne[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value " + simulatedValue + " expected " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1458,9 +1429,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dmul.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "double, double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value " + simulatedValue + " expected " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1476,9 +1446,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dsub.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "double, double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value " + simulatedValue + " expected " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1492,9 +1461,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dsub2.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "double ", Double.toString(argsOne[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value " + simulatedValue + " expected " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1510,9 +1478,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = BC_fneg.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "float ", Float.toString(argsOne[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float simulatedValue = tester.getSimulatedFloatRegisters()[0];
-            assert simulatedValue == floatValue : "Failed incorrect value " + simulatedValue + " expected " + floatValue;
+            tester.setExpectedValue(Aarch64.d0, floatValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1528,9 +1495,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dneg2.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", " double ", Double.toString(argsOne[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value " + simulatedValue + " expected " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -1548,9 +1514,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dneg.test(argsOne[i], argsTwo[i], argsThree[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "double, double, int", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]) + "," + Integer.toString(argsThree[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value " + simulatedValue + " expected " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -2406,9 +2371,8 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             float  expectedValue     = BC_l2f.test(pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("float", "long long", Long.toString(pair.lfirst) + "LL");
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            float  returnValue       = tester.getSimulatedFloatRegisters()[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " expected: " + expectedValue;
+            tester.setExpectedValue(Aarch64.d0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -2423,9 +2387,8 @@ public class Aarch64JTTC1XTest {
         for (float arg : input) {
             long expectedValue = BC_f2l.test(arg);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "float", Float.toString(arg));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long  returnValue = tester.getSimulatedLongRegisters()[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " expected: " + expectedValue;
+            tester.setExpectedValue(Aarch64.d0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -2447,9 +2410,8 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             double expectedValue = BC_l2d.test(pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "long long", Long.toString(pair.lfirst) + "LL");
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double returnValue = tester.getSimulatedDoubleRegisters()[0];
-            assert returnValue == expectedValue : "Failed incorrect value of d0 " + returnValue + " expected " + expectedValue;
+            tester.setExpectedValue(Aarch64.d0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -2464,9 +2426,8 @@ public class Aarch64JTTC1XTest {
         for (double arg: input) {
             long expectedValue = BC_d2l.test(arg);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "double", Double.toString(arg));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long returnValue = tester.getSimulatedLongRegisters()[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " expected " + expectedValue;
+            tester.setExpectedValue(Aarch64.d0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -2569,9 +2530,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dload.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", " double ", Double.toString(argsOne[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value got:" + simulatedValue + " expected: " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -2587,9 +2547,8 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dload_2.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", " double, double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value got:" + simulatedValue + " expected: " + doubleValue;
+            tester.setExpectedValue(Aarch64.d0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
