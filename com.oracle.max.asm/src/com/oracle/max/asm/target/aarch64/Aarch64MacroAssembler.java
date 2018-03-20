@@ -1279,9 +1279,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void frem(int size, CiRegister dst, CiRegister n, CiRegister d) {
         // There is no frem instruction, instead we compute the remainder using the relation:
         // rem = n - Truncating(n / d) * d
-        super.fdiv(size, dst, n, d);
-        super.frintz(size, dst, dst);
-        super.fmsub(size, dst, dst, d, n);
+        super.fdiv(size, Aarch64.d31, n, d); // Use d31 as scratch to support dst == n
+        super.frintz(size, Aarch64.d31, Aarch64.d31);
+        super.fmsub(size, dst, Aarch64.d31, d, n);
     }
 
     /* Branches */
