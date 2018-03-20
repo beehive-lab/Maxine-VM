@@ -835,6 +835,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         case Mul:
                             masm.mul(32, dest.asRegister(), lreg, rreg);
                             break;
+                        case Rem:
+                            masm.rem(32, dest.asRegister(), lreg, rreg);
+                            break;
                         default:
                             throw Util.shouldNotReachHere();
                     }
@@ -852,6 +855,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                             break;
                         case Div:
                             masm.fdiv(32, dest.asRegister(), lreg, rreg);
+                            break;
+                        case Rem:
+                            masm.frem(32, dest.asRegister(), lreg, rreg);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -871,6 +877,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         case Div:
                             masm.fdiv(64, dest.asRegister(), lreg, rreg);
                             break;
+                        case Rem:
+                            masm.frem(64, dest.asRegister(), lreg, rreg);
+                            break;
                         default:
                             throw Util.shouldNotReachHere();
                     }
@@ -885,6 +894,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                             break;
                         case Mul:
                             masm.mul(64, dest.asRegister(), lreg, rreg);
+                            break;
+                        case Rem:
+                            masm.rem(64, dest.asRegister(), lreg, rreg);
                             break;
                         default:
                             throw Util.shouldNotReachHere();

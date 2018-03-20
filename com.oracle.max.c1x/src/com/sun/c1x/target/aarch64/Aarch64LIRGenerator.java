@@ -34,6 +34,8 @@ import com.sun.c1x.util.Util;
 import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.*;
 
+import static com.sun.cri.bytecode.Bytecodes.*;
+
 public class Aarch64LIRGenerator extends LIRGenerator {
 
     // TODO: (ck) We have to change those to ARM register terminology
@@ -179,18 +181,45 @@ public class Aarch64LIRGenerator extends LIRGenerator {
             right.loadItem();
         }
 
-        CiVariable reg;
-
-        if (x.opcode == Bytecodes.FREM) {
-            reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticFrem, null, left.result(), right.result());
-        } else if (x.opcode == Bytecodes.DREM) {
-            reg = callRuntimeWithResult(CiRuntimeCall.ArithmeticDrem, null, left.result(), right.result());
-        } else {
-            reg = newVariable(x.kind);
-            arithmeticOpFpu(x.opcode, reg, left.result(), right.result(), ILLEGAL);
-        }
+        CiVariable reg = newVariable(x.kind);
+        arithmeticOpFpu(x.opcode, reg, left.result(), right.result(), ILLEGAL);
 
         setResult(x, reg);
+    }
+
+    protected void arithmeticOpFpu(int code, CiValue result, CiValue left, CiValue right, CiValue tmp) {
+        CiValue leftOp = left;
+
+        if (isTwoOperand && leftOp != result) {
+            assert right != result : "malformed";
+            lir.move(leftOp, result);
+            leftOp = result;
+        }
+
+        switch (code) {
+            case DADD:
+            case FADD:
+                lir.add(leftOp, right, result);
+                break;
+            case FMUL:
+            case DMUL:
+                lir.mul(leftOp, right, result);
+                break;
+            case DSUB:
+            case FSUB:
+                lir.sub(leftOp, right, result);
+                break;
+            case FDIV:
+            case DDIV:
+                lir.div(leftOp, right, result, null);
+                break;
+            case FREM:
+            case DREM:
+                lir.rem(leftOp, right, result, null);
+                break;
+            default:
+                Util.shouldNotReachHere();
+        }
     }
 
     public void visitArithmeticOpLong(ArithmeticOp x) {

@@ -1219,9 +1219,8 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    /* frem depends on the runtime call runtimeArithmeticFrem which cannot be tested offline yet */
-    // @Test
-    public void broken_C1X_jtt_BC_frem() throws Exception {
+    @Test
+    public void C1X_jtt_BC_frem() throws Exception {
         Code.resetBootCodeRegion();
         float[] argsOne = {311.0f, 2f};
         float[] argsTwo = {10f, 20.1f};
@@ -1255,9 +1254,8 @@ public class Aarch64JTTC1XTest {
         }
     }
 
-    /* drem depends on the runtime call runtimeArithmeticDrem which cannot be tested offline yet */
-    // @Test
-    public void broken_jtt_BC_drem() throws Exception {
+    @Test
+    public void C1X_jtt_BC_drem() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {311.0D, 2D};
         double[] argsTwo = {10D, 20.1D};
