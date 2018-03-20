@@ -19,6 +19,7 @@
  */
 package test.crossisa.aarch64.jtt;
 
+import com.oracle.max.asm.target.aarch64.Aarch64;
 import com.oracle.max.vm.ext.c1x.C1X;
 import com.oracle.max.vm.ext.maxri.Compile;
 import com.sun.max.program.option.OptionSet;
@@ -31,6 +32,7 @@ import com.sun.max.vm.hosted.JavaPrototype;
 import com.sun.max.vm.hosted.VMConfigurator;
 import jtt.bytecode.*;
 import org.junit.*;
+import test.crossisa.CrossISATester;
 import test.crossisa.aarch64.asm.Aarch64CodeWriter;
 import test.crossisa.aarch64.asm.MaxineAarch64Tester;
 
@@ -116,21 +118,22 @@ public class Aarch64JTTC1XTest {
         return "^" + klass + "^";
     }
 
-    private long[] generateAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode) throws Exception {
+    private void generateAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode) throws Exception {
         Aarch64CodeWriter code = new Aarch64CodeWriter(theCode);
         code.createStaticCodeStubsFile(functionPrototype, theCode, entryPoint);
-        MaxineAarch64Tester r = new MaxineAarch64Tester();
-        r.cleanFiles();
-        r.cleanProcesses();
-        r.assembleStartup();
-        r.compile();
-        r.link();
-        long[] simulatedRegisters = r.runRegisteredSimulation();
-        r.cleanProcesses();
-        if (POST_CLEAN_FILES) {
-            r.cleanFiles();
+        if (!CrossISATester.ENABLE_SIMULATOR) {
+            System.out.println("Code Generation is disabled!");
+            System.exit(1);
         }
-        return simulatedRegisters;
+        tester.compile();
+        tester.runSimulation();
+        tester.cleanProcesses();
+        if (POST_CLEAN_FILES) {
+            tester.cleanFiles();
+        }
+        Assert.assertTrue(tester.validateLongRegisters());
+        Assert.assertTrue(tester.validateDoubleRegisters());
+        Assert.assertTrue(tester.validateFloatRegisters());
     }
 
     private MaxineAarch64Tester generateObjectsAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode) throws Exception {
@@ -182,6 +185,11 @@ public class Aarch64JTTC1XTest {
             System.out.println(e);
             e.printStackTrace();
         }
+    }
+
+    private void initialiseTest() {
+        tester.resetTestValues();
+        Code.resetBootCodeRegion();
     }
 
     private void initializeCodeBuffers(List<TargetMethod> methods, String fileName, String methodName) {
@@ -246,87 +254,83 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_dcmp02() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp02.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer = BC_dcmp02.test(argOne[i]);
-            int expectedValue = answer ? 1 : 0;
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dcmp04() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp04.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp04.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dcmp07() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp07");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp07.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp07.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dcmp09() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp09");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp09.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp09.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_d2i01() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_d2i01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_d2i01.java", "int test(double)");
         double[] arguments = {0.0d, 1.0d, 01.06d, -2.2d};
-        int expectedInt = -9;
+        int expectedInt;
         for (int i = 0; i < arguments.length; i++) {
             expectedInt = BC_d2i01.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(arguments[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert (int) registerValues[0] == expectedInt : "Failed incorrect value " + (int) registerValues[0] + " " + expectedInt;
+            tester.setExpectedValue(Aarch64.r0, expectedInt);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dadd() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {0.0D, 1.0D, 253.11d};
         double[] argsTwo = {0.0D, 1.0D, 54.43D};
         String klassName = getKlassName("jtt.bytecode.BC_dadd");
@@ -336,15 +340,14 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = BC_dadd.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("double", "double, double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
-            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            double simulatedValue = tester.getSimulatedDoubleRegisters()[0];
-            assert simulatedValue == doubleValue : "Failed incorrect value got:" + simulatedValue + " expected: " + doubleValue;
+            tester.setExpectedValue(Aarch64.r0, doubleValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_imul() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argsOne = {1, 0, 33, 1, -2147483648, 2147483647, -2147483648};
         int[] argsTwo = {12, -1, 67, -1, 1, -1, -1};
         String klassName = getKlassName("jtt.bytecode.BC_imul");
@@ -354,14 +357,14 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_imul.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_iand() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_iand");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -375,15 +378,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_iand.test(pair.first, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
-            long[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_ishl() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_ishl");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -398,15 +400,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = BC_ishl.test(pair.first, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            int    returnValue       = (int) registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_ishr() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_ishr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -421,15 +422,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = BC_ishr.test(pair.first, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            int    returnValue       = (int) registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_iushr() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_iushr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -446,204 +446,203 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = BC_iushr.test(pair.first, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_i2b() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         int[] argsOne = {0, -1, 2, 255, 128, Byte.MIN_VALUE, Byte.MAX_VALUE};
         String klassName = getKlassName("jtt.bytecode.BC_i2b");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         CompilationBroker.singleton.setSimulateAdapter(true);
         initializeCodeBuffers(methods, "BC_i2b.java", "byte test(int)");
-        byte expectedValue = 0;
+        byte expectedValue;
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_i2b.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("char", "int", Integer.toString(argsOne[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((byte) registerValues[0]) == expectedValue : "Failed incorrect value " + ((byte) registerValues[0]) + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_i2c() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         int[] argsOne = {0, -1, 2, 255, 128, Character.MAX_VALUE};
         String klassName = getKlassName("jtt.bytecode.BC_i2c");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         CompilationBroker.singleton.setSimulateAdapter(true);
         initializeCodeBuffers(methods, "BC_i2c.java", "char test(int)");
-        char expectedValue = 0;
+        char expectedValue;
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_i2c.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("char", "int", Integer.toString(argsOne[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((char) registerValues[0]) == expectedValue : "Failed incorrect value " + ((char) registerValues[0]) + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_ireturn() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {0, 1, -1, 256};
         String klassName = getKlassName("jtt.bytecode.BC_ireturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_ireturn.java", "int test(int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_ireturn.test(argOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lookupswitch01() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {0, 1, 44, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213};
         String klassName = getKlassName("jtt.bytecode.BC_lookupswitch01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_lookupswitch01.java", "int test(int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_lookupswitch01.test(argOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lookupswitch02() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {0, 1, 44, 66, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213, -121, -122, -123};
         String klassName = getKlassName("jtt.bytecode.BC_lookupswitch02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_lookupswitch02.java", "int test(int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_lookupswitch02.test(argOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lookupswitch03() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {0, 1, 44, 66, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213, -121, -122, -123};
         String klassName = getKlassName("jtt.bytecode.BC_lookupswitch03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_lookupswitch03.java", "int test(int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_lookupswitch03.test(argOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lookupswitch04() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {0, 1, 44, 66, 67, 68, 96, 97, 98, 106, 107, 108, 132, 133, 134, 211, 212, 213, -121, -122, -123};
         String klassName = getKlassName("jtt.bytecode.BC_lookupswitch04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_lookupswitch04.java", "int test(int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_lookupswitch04.test(argOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_tableswitch() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {7, -1, 0, 1, 2, 3, 4, 5, 6, 0};
         String klassName = getKlassName("jtt.bytecode.BC_tableswitch");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_tableswitch.java", "int test(int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_tableswitch.test(argOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_tableswitch2() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {7, -1, 0, 1, 2, 3, 4, 5, 6, 0};
         String klassName = getKlassName("jtt.bytecode.BC_tableswitch2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_tableswitch2.java", "int test(int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_tableswitch2.test(argOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_tableswitch3() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {01, -2, -3, 0, -4, 3, 1, 2, 10};
         String klassName = getKlassName("jtt.bytecode.BC_tableswitch3");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_tableswitch3.java", "int test(int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_tableswitch3.test(argOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_tableswitch4() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {-1, 11, 0, 1, -5, -4, -3, -8};
         String klassName = getKlassName("jtt.bytecode.BC_tableswitch4");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_tableswitch4.java", "int test(int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_tableswitch4.test(argOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_iconst() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_iconst");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -658,14 +657,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = BC_iconst.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_invokestatic() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         List<Args> pairs = new LinkedList<Args>();
         String klassName = getKlassName("jtt.bytecode.BC_invokestatic");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -676,14 +675,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int answer = BC_invokestatic.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("void", "int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert (int) registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_f2d() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_f2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_f2d.java", "double test(float)");
@@ -700,7 +699,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_i2f() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_i2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_i2f.java", "float test(int)");
@@ -717,7 +716,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_f2b() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_f2b");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -728,14 +727,14 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < arguments.length; i++) {
             expectedByte = BC_f2b.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("char", "float", Float.toString(arguments[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((byte) registerValues[0]) == expectedByte : "Failed incorrect value " + ((byte) registerValues[0]) + " " + expectedByte;
+            tester.setExpectedValue(Aarch64.r0, expectedByte);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_b2f() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_b2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -754,7 +753,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_d2f() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_d2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_d2f.java", "float test(double)");
@@ -771,7 +770,7 @@ public class Aarch64JTTC1XTest {
 
     // @Test
     public void C1X_jtt_BC_anewarray() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_anewarray");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_anewarray.java", "int test(int)");
@@ -779,14 +778,14 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < arguments.length; i++) {
             int    answer            = BC_anewarray.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(arguments[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     // @Test
     public void C1X_jtt_BC_new() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_new");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_new.java", "int test(int)");
@@ -794,14 +793,14 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < arguments.length; i++) {
             int    answer            = BC_new.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(arguments[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_f2i01() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_f2i01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_f2i01.java", "int test(float)");
@@ -809,14 +808,14 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < arguments.length; i++) {
             int    answer            = BC_f2i01.test(arguments[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "float", Float.toString(arguments[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_i2d() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_i2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_i2d.java", "double test(int)");
@@ -832,7 +831,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_ifge_2() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argOne = {0, 1, 6, 7};
         int[] argTwo = {2, -2, 375, 50};
         String klassName = getKlassName("jtt.bytecode.BC_ifge_2");
@@ -840,16 +839,15 @@ public class Aarch64JTTC1XTest {
         initializeCodeBuffers(methods, "BC_ifge_2.java", "boolean test(int, int)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer = BC_ifge_2.test(argOne[i], argTwo[i]);
-            int expectedValue = answer ? 1 : 0;
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int", Integer.toString(argOne[i]) + new String(", ") + Integer.toString(argTwo[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + "   " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dcmp01() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argOne = {5.0d, -3.1d, 5.0d, -5.0d, 0d, -0.1d, -5.0d, 25.5d, 0.5d};
         double[] argTwo = {78.00d, 78.01d, 3.3d, -7.2d, 78.00d, 78.001d, -3.2d, 25.5d, 1.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp01");
@@ -857,16 +855,15 @@ public class Aarch64JTTC1XTest {
         initializeCodeBuffers(methods, "BC_dcmp01.java", "boolean test(double, double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp01.test(argOne[i], argTwo[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double, double", Double.toString(argOne[i]) + new String(", ") + Double.toString(argTwo[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + "   " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_MSB64() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         long[] input = new long[] {1L, 2L, 3L, 8L, 0L, -1L, 61440L, 2147483648L};
         String klassName = getKlassName("jtt.max.MostSignificantBit64");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -874,14 +871,14 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < input.length; i++) {
             int    expectedValue     = jtt.max.MostSignificantBit64.test(input[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_LSB64() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         long[] input = new long[] {1L, 2L, 3L, 8L, 0L, -1L, 61440L};
         String klassName = getKlassName("jtt.max.LeastSignificantBit64");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -889,93 +886,88 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < input.length; i++) {
             int    expectedValue     = jtt.max.LeastSignificantBit64.test(input[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dcmp03() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp03.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp03.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dcmp05() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp05");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp05.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp05.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dcmp06() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp06");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp06.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp06.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dcmp08() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp08");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp08.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_dcmp08.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dcmp10() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_dcmp10");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp10.java", "boolean test(int)");
         for (int i = 0; i < 9; i++) {
             boolean answer            = BC_dcmp10.test(i);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(i));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp01() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argOne = {5.0f, -3.0f, 5.0f, -5.0f, 0f, -0.1f, 0.75f};
         float[] argTwo = {78.00f, 78.01f, 3.3f, -7.2f, 78.00f, 78.001f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp01");
@@ -986,7 +978,6 @@ public class Aarch64JTTC1XTest {
                 argOne[i] = Float.parseFloat("NaN");
             }
             boolean answer = BC_fcmp01.test(argOne[i], argTwo[i]);
-            int expectedValue = answer ? 1 : 0;
             String tmp = null;
             if (Float.isNaN(argOne[i])) {
                 tmp = new String("0.0f/0.0f");
@@ -994,157 +985,148 @@ public class Aarch64JTTC1XTest {
                 tmp = Float.toString(argOne[i]);
             }
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "float, float", tmp + new String(",") + Float.toString(argTwo[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp02() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp02.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp02.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp03() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp03.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp03.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp04() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp04.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp04.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp05() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp05");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp05.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp05.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp06() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp06");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp06.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp06.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp07() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp07");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp07.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp07.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp08() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp08");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp08.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp08.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp09() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp09");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp09.java", "boolean test(float)");
         for (int i = 0; i < argOne.length; i++) {
             boolean answer            = BC_fcmp09.test(argOne[i]);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fcmp10() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_fcmp10");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp10.java", "boolean test(int)");
         for (int i = 0; i < 9; i++) {
             boolean answer            = BC_fcmp10.test(i);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "int", Integer.toString(i));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fmul() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {311.0f, 2f, -2.5f};
         float[] argsTwo = {10f, 20.1f, -6.01f};
         String klassName = getKlassName("jtt.bytecode.BC_fmul");
@@ -1161,7 +1143,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_fadd() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {311.0f, 2f, -2.5f, 0.0f, 1.0f};
         float[] argsTwo = {10f, 20.1f, -6.01f, 0.0f, 1.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fadd");
@@ -1178,7 +1160,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_fsub() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {311.0f, 2f, -2.5f};
         float[] argsTwo = {10f, 20.1f, -6.01f};
         String klassName = getKlassName("jtt.bytecode.BC_fsub");
@@ -1195,7 +1177,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_fdiv() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {311.0f, 2f};
         float[] argsTwo = {10f, 20.1f};
         String klassName = getKlassName("jtt.bytecode.BC_fdiv");
@@ -1212,7 +1194,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_frem() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {311.0f, 2f};
         float[] argsTwo = {10f, 20.1f};
         String klassName = getKlassName("jtt.bytecode.BC_frem");
@@ -1229,25 +1211,25 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_irem() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argsOne = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         int[] argsTwo = {2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
         String klassName = getKlassName("jtt.bytecode.BC_irem");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_irem.java", "int test(int, int)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_irem.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_drem() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {311.0D, 2D};
         double[] argsTwo = {10D, 20.1D};
         String klassName = getKlassName("jtt.bytecode.BC_drem");
@@ -1264,7 +1246,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_ddiv() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {311.0D, 2D, -10.0D};
         double[] argsTwo = {10D, 20.1D, 5.0D};
         String klassName = getKlassName("jtt.bytecode.BC_ddiv");
@@ -1281,7 +1263,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_ldiv() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_ldiv");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1303,15 +1285,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_ldiv.test(pair.lfirst, pair.lsecond);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_idiv() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         int[] argsOne = {1, 2, 256, 135, -2147483648, -2147483648};
         int[] argsTwo = {2, -1, 4, 7, -1, 1};
@@ -1319,36 +1300,35 @@ public class Aarch64JTTC1XTest {
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         CompilationBroker.singleton.setSimulateAdapter(false);
         initializeCodeBuffers(methods, "BC_idiv.java", "int test(int, int)");
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_idiv.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues != null : "Failed to return array of register values";
-            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_iadd3() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         short[] argsOne = {1, 0, 33, 1, -128, 127, -32768, 32767};
         short[] argsTwo = {2, -1, 67, -1, 1, 1, 1, 1};
         String klassName = getKlassName("jtt.bytecode.BC_iadd3");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_iadd3.java", "int test(short, short)");
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_iadd3.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "short, short ", Short.toString(argsOne[i]) + "," + Short.toString(argsTwo[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_i2s() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argsOne = {1, -1, 34, 1, 65535, 32768, -32768};
         String klassName = getKlassName("jtt.bytecode.BC_i2s");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1357,49 +1337,49 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_i2s.test(argsOne[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("short", "int  ", Integer.toString(argsOne[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((short) registerValues[0]) == expectedValue : "Failed incorrect value " + (short) registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_iadd() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         int[] argsOne = {1, 0, 33, 1, -2147483648, -2147483647, 2147483647, 4080};
         int[] argsTwo = {2, -1, 67, -1, 1, -2, 1, 134217728};
         String klassName = getKlassName("jtt.bytecode.BC_iadd");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_iadd.java", "int test(int, int)");
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_iadd.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_iadd2() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         byte[] argsOne = {1, 0, 33, 1, -128, 127};
         byte[] argsTwo = {2, -1, 67, -1, 1, 1};
         String klassName = getKlassName("jtt.bytecode.BC_iadd2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_iadd2.java", "int test(byte, byte)");
 
-        int expectedValue = 0;
+        int expectedValue;
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_iadd2.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert ((int) registerValues[0]) == expectedValue : "Failed incorrect value " + (int) registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_fload() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
         String klassName = getKlassName("jtt.bytecode.BC_fload");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1416,7 +1396,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_fload2() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
         float[] argsTwo = {17.1f, 2.5f, 45.32f, -44.5f, -990.9f};
         String klassName = getKlassName("jtt.bytecode.BC_fload_2");
@@ -1434,7 +1414,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_freturn() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
         String klassName = getKlassName("jtt.bytecode.BC_freturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1451,7 +1431,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_dreturn() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {0.0D, 1.1D, -1.4d, 256.33d, 1000.001d};
         String klassName = getKlassName("jtt.bytecode.BC_dreturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1468,7 +1448,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_dmul() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {311.0D, 11.2D};
         double[] argsTwo = {10D, 2.0D};
         String klassName = getKlassName("jtt.bytecode.BC_dmul");
@@ -1486,7 +1466,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_dsub() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {0.0D, 1.0D, 253.11d, 0.0D};
         double[] argsTwo = {0.0D, 1.0D, 54.43d, 1.0D};
         String klassName = getKlassName("jtt.bytecode.BC_dsub");
@@ -1504,7 +1484,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_dsub2() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {1.0D, 2.0d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dsub2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1520,7 +1500,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_fneg() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {0.0f, -1.01f, 7263.8734f, 0.0f, 7263.8743f};
         String klassName = getKlassName("jtt.bytecode.BC_fneg");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1538,7 +1518,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_dneg2() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {1.0d, -1.0d, -0.0D, 0.0d, -2.0d, 2.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dneg2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1556,7 +1536,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_dneg() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {0.0D, -1.01D, 7263.8734d, 0.0d, -1.01d, 7263.8743d, 0.0d};
         double[] argsTwo = {1.0d, -2.01D, 8263.8734d, 1.0d, -2.01d, 8263.8734d, 1.0d};
         int[] argsThree = {0, 0, 0, 1, 1, 1, 0};
@@ -1576,7 +1556,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_lload_0() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lload_0");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1589,15 +1569,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lload_0.test(pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lload_4() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lload_4");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1610,15 +1589,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lload_4.test(pair.lfirst, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long, int", Long.toString(pair.lfirst) + "," + Long.toString(pair.second));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " +returnValue + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lload_1() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lload_1");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1630,15 +1608,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lload_1.test(pair.first, pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "int, long long", Integer.toString(pair.first) + "," + Long.toString(pair.lfirst));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lload_2() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lload_2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1651,15 +1628,14 @@ public class Aarch64JTTC1XTest {
             long expectedValue = BC_lload_2.test(pair.first, pair.second, pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "int, int, long long",
                     Integer.toString(pair.first) + "," + Integer.toString(pair.second) + "," + Long.toString(pair.lfirst));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue    = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lload_3() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lload_3");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1672,15 +1648,14 @@ public class Aarch64JTTC1XTest {
             long expectedValue = BC_lload_3.test(pair.first, pair.second, pair.third, pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "int, int, int, long long",
                     Integer.toString(pair.first) + "," + Integer.toString(pair.second) + "," + Integer.toString(pair.third) + "," + Long.toString(pair.lfirst));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue    = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_ladd() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_ladd");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1697,15 +1672,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_ladd.test(pair.lfirst, pair.lsecond);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lor() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lor");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1729,15 +1703,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lor.test(pair.lfirst, pair.lsecond);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lxor() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lxor");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1753,15 +1726,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lxor.test(pair.lfirst, pair.lsecond);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_land() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_land");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1778,15 +1750,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_land.test(pair.lfirst, pair.lsecond);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_land_const() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_land_const");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1799,15 +1770,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_land_const.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "int", Long.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " +  expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lshl() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lshl");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1826,15 +1796,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lshl.test(pair.lfirst, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, int", Long.toString(pair.lfirst) + "LL," + Integer.toString(pair.second));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lshr() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lshr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1851,15 +1820,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lshr.test(pair.lfirst, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, int", Long.toString(pair.lfirst) + "LL," + Integer.toString(pair.second));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_loop01() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.Loop01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1873,17 +1841,15 @@ public class Aarch64JTTC1XTest {
 
         for (Args pair : pairs) {
             boolean answer            = jtt.loop.Loop01.test(pair.first);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long    returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_charcomp() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_charcomp");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1895,19 +1861,17 @@ public class Aarch64JTTC1XTest {
         for (int j = 0; j < argTwo.length; j++) {
             for (int i = -2; i < 4; i++) {
                 boolean answer = BC_charcomp.test(i, argOne, argTwo[j]);
-                int expectedValue = answer ? 1 : 0;
                 String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int, char, char",
                         Integer.toString(i) + ", " + "'" + Character.toString(argOne) + "'" + ", " + "'" + Character.toString(argTwo[j]) + "'");
-                long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-                long   returnValue    = registerValues[0];
-                assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+                tester.setExpectedValue(Aarch64.r0, answer);
+                generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             }
         }
     }
 
     @Test
     public void C1X_jtt_loop02() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.Loop02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -1921,17 +1885,15 @@ public class Aarch64JTTC1XTest {
 
         for (Args pair : pairs) {
             boolean answer            = jtt.loop.Loop02.test(pair.first);
-            int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long    returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, answer);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_loop03() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.loop.Loop03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1945,15 +1907,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.Loop03.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_loop04() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.loop.Loop04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1966,15 +1927,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.Loop04.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_loop11() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.loop.Loop11");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -1987,15 +1947,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.Loop11.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     // @Test
     public void infinite_C1X_jtt_loopPHI() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.loop.LoopPhi");
         CompilationBroker.singleton.setSimulateAdapter(true);
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -2018,15 +1977,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.LoopPhi.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_irem2() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_irem");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -2047,15 +2005,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = BC_irem.test(pair.first, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int, int ", Integer.toString(pair.first) + ", " + Integer.toString(pair.second));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     // @Test
     public void C1X_jtt_loopInline() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.LoopInline");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -2071,9 +2028,8 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.LoopInline.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
@@ -2089,7 +2045,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_long_tests() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2111,15 +2067,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_long_tests.test(pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_long_le() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2134,15 +2089,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.le(pair.lfirst, pair.lsecond);
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues     = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_long_ge() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2157,15 +2111,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.ge(pair.lfirst, pair.lsecond);
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues     = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_long_eq() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2180,15 +2133,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.eq(pair.lfirst, pair.lsecond);
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues     = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_long_ne() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2203,15 +2155,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.ne(pair.lfirst, pair.lsecond);
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues     = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_long_gt() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2226,15 +2177,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.gt(pair.lfirst, pair.lsecond);
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues     = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_long_lt() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2249,15 +2199,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.lt(pair.lfirst, pair.lsecond);
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues     = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lushr() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lushr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2272,15 +2221,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lushr.test(pair.lfirst, pair.second);
             String functionPrototype = Aarch64CodeWriter.preAmble("unsigned long long", "unsigned long long, int", asUnsignedDecimalString(pair.lfirst) + "," + Integer.toString(pair.second));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lcmp() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lcmp");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2294,15 +2242,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_lcmp.test(pair.lfirst, pair.lsecond);
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
-            long[] registerValues     = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] > 0 ? true : false;
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lmul() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lmul");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2319,15 +2266,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lmul.test(pair.lfirst, pair.lsecond);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lneg() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lneg");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2340,15 +2286,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lneg.test(pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lreturn() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lreturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2362,15 +2307,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lreturn.test(pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_lsub() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_lsub");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2389,15 +2333,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lsub.test(pair.lfirst, pair.lsecond);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_i2l() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_i2l");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2413,15 +2356,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             long   expectedValue     = BC_i2l.test(pair.first);
             String functionPrototype = Aarch64CodeWriter.preAmble("long long", "int", Integer.toString(pair.first));
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value " + expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_l2i() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_l2i");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<Args>();
@@ -2441,15 +2383,14 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = BC_l2i.test(pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long", Long.toString(pair.lfirst) + "LL");
-            long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            long   returnValue       = registerValues[0];
-            assert ((int) returnValue) == expectedValue : "Failed incorrect value " + (int) expectedValue + " " + returnValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_l2f() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_l2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new LinkedList<>();
@@ -2473,7 +2414,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_f2l() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_f2l");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         float[] input = {0.0f, 1.0f, -1.06f, 3.33f, Float.MAX_VALUE, Float.MIN_VALUE};
@@ -2490,7 +2431,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_l2d() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_l2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         List<Args> pairs = new ArrayList<>(8);
@@ -2514,7 +2455,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_d2l() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         String klassName = getKlassName("jtt.bytecode.BC_d2l");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         double[] input = {0.0d, 1.0d, -1.06d, 3.33d, Double.MAX_VALUE, Double.MIN_VALUE};
@@ -2538,7 +2479,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_fload_5() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         float[] argsOne = {0.0f, 1.1f};
         float[] argsTwo = {17.1f, 2.5f};
         float[] argsThree = {0.0f, 1.1f};
@@ -2553,14 +2494,14 @@ public class Aarch64JTTC1XTest {
             int expectedValue = rt ? 1 : 0;
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "float, float, float, float, float",
                     Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]) + "," + Float.toString(argsThree[i]) + "," + Float.toString(argsFour[i]) + "," + Float.toString(argsFive[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dload_9() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
         double[] argsThree = {0.0D, 1.1D};
@@ -2581,14 +2522,14 @@ public class Aarch64JTTC1XTest {
                     Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]) + "," + Double.toString(argsThree[i]) + "," + Double.toString(argsFour[i]) + "," +
                             Double.toString(argsFive[i]) + "," + Double.toString(argsSix[i]) + "," + Double.toString(argsSeven[i]) + "," + Double.toString(argsEight[i]) + "," +
                             Double.toString(argsNine[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dload_10() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
         double[] argsThree = {0.0D, 1.1D};
@@ -2612,14 +2553,14 @@ public class Aarch64JTTC1XTest {
                             Double.toString(argsFive[i]) + "," + Double.toString(argsSix[i]) + "," + Double.toString(argsSeven[i]) + "," + Double.toString(argsEight[i]) + "," +
                             Double.toString(argsNine[i]) + "," + Float.toString(argsTen[i]));
 
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 
     @Test
     public void C1X_jtt_BC_dload() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
         String klassName = getKlassName("jtt.bytecode.BC_dload");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -2636,7 +2577,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_dload_2() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
         double[] argsTwo = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
         String klassName = getKlassName("jtt.bytecode.BC_dload_2");
@@ -2654,7 +2595,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void C1X_jtt_BC_fdload() throws Exception {
-        Code.resetBootCodeRegion();
+        initialiseTest();
         double[] argsOne = {Double.MAX_VALUE, Double.MIN_VALUE};
         float[] argsTwo = {0.0f, 2.5f};
         double[] argsThree = {Double.MIN_VALUE, Double.MAX_VALUE};
@@ -2670,8 +2611,8 @@ public class Aarch64JTTC1XTest {
             int expectedValue = rt ? 1 : 0;
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "double, float, double, float, float", Double.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]) + "," +
                     Double.toString(argsThree[i]) + "," + Float.toString(argsFour[i]) + "," + Float.toString(argsFive[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
         }
     }
 }
