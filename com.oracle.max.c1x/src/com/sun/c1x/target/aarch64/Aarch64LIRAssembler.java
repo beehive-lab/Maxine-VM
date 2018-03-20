@@ -1105,23 +1105,20 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         throw Util.shouldNotReachHere();
                 }
             } else if (right.isStackSlot()) {
-                if (true) {
-                    throw Util.unimplemented();
-                }
                 // added support for stack operands
                 CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                 masm.setUpScratch(raddr);
-//                masm.ldr(32,  Aarch64.r8, Aarch64.r16, 0);
+                masm.ldr(32,  Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
                 assert reg != Aarch64.r16;
                 switch (code) {
                     case LogicAnd:
-//                        masm.iand(reg, reg, Aarch64.r8);
+                        masm.and(32, reg, reg, Aarch64.r8);
                         break;
                     case LogicOr:
-//                        masm.ior(reg, reg, Aarch64.r8);
+                        masm.orr(32, reg, reg, Aarch64.r8, ShiftType.ASR, 0);
                         break;
                     case LogicXor:
-//                        masm.ixor(reg, reg, Aarch64.r8);
+                        masm.eor(32, reg, reg, Aarch64.r8);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
