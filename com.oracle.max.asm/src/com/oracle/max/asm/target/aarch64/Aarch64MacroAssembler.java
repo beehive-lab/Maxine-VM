@@ -45,19 +45,19 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     public void iadd(CiRegister dest, CiRegister left, CiAddress right) {
         load(dest, right, CiKind.Int);
-        add(32, dest, left, r12);
+        add(32, dest, left, r16);
     }
 
     public void isub(CiRegister dest, CiRegister left, CiAddress right) {
         load(dest, right, CiKind.Int);
-        sub(32, dest, left, r12);
+        sub(32, dest, left, r16);
     }
 
     public void incrementl(CiRegister reg, int value) {
         if (value == 0) {
             return;
         }
-        assert reg != Aarch64.r12;
+        assert reg != Aarch64.r16;
         addq(reg, value);
     }
 
@@ -65,26 +65,26 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         if (value == 0) {
             return;
         }
-        load(Aarch64.r12, dst, CiKind.Int);
-        mov64BitConstant(Aarch64.r8, value);
-        add(64, Aarch64.r8, r12, Aarch64.r8);
-        store(Aarch64.r8, dst, CiKind.Int);
+        load(Aarch64.r16, dst, CiKind.Int);
+        mov64BitConstant(Aarch64.r17, value);
+        add(64, Aarch64.r17, r16, Aarch64.r17);
+        store(Aarch64.r17, dst, CiKind.Int);
     }
 
     public void decrementl(CiRegister reg, int value) {
-        assert reg == Aarch64.r12 || reg != Aarch64.r8 : "Reg " + reg;
-        mov32BitConstant(Aarch64.r8, value);
-        sub(32, reg, reg, Aarch64.r8);
+        assert reg == Aarch64.r16 || reg != Aarch64.r17 : "Reg " + reg;
+        mov32BitConstant(Aarch64.r17, value);
+        sub(32, reg, reg, Aarch64.r17);
     }
 
     public void decrementl(CiAddress dst, int value) {
         if (value == 0) {
             return;
         }
-        load(Aarch64.r12, dst, CiKind.Int);
-        mov64BitConstant(Aarch64.r8, value);
-        sub(64, Aarch64.r8, Aarch64.r12, Aarch64.r8);
-        store(Aarch64.r8, dst, CiKind.Int);
+        load(Aarch64.r16, dst, CiKind.Int);
+        mov64BitConstant(Aarch64.r17, value);
+        sub(64, Aarch64.r17, Aarch64.r16, Aarch64.r17);
+        store(Aarch64.r17, dst, CiKind.Int);
     }
 
     public void align(int modulus) {
@@ -333,8 +333,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void cas(int size, CiRegister newValue, CiRegister cmpValue, Aarch64Address address) {
-        assert Aarch64.r8 != cmpValue;
-        assert Aarch64.r8 != newValue;
+        assert Aarch64.r17 != cmpValue;
+        assert Aarch64.r17 != newValue;
         assert newValue != cmpValue;
         assert Aarch64.r0 == cmpValue;
 
@@ -607,9 +607,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             return;
         }
         ldr(64, scratchRegister, dst);
-        mov(Aarch64.r8, value);
-        add(64, Aarch64.r8, scratchRegister, Aarch64.r8);
-        str(64, Aarch64.r8, dst);
+        mov(Aarch64.r17, value);
+        add(64, Aarch64.r17, scratchRegister, Aarch64.r17);
+        str(64, Aarch64.r17, dst);
     }
 
     /**
@@ -622,9 +622,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             return;
         }
         ldr(64, scratchRegister, dst);
-        mov(Aarch64.r8, value);
-        sub(64, Aarch64.r8, scratchRegister, Aarch64.r8);
-        str(64, Aarch64.r8, dst);
+        mov(Aarch64.r17, value);
+        sub(64, Aarch64.r17, scratchRegister, Aarch64.r17);
+        str(64, Aarch64.r17, dst);
     }
 
     public void decrementq(CiRegister reg, int value) {
@@ -1559,7 +1559,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void xchgptr(CiRegister src1, CiRegister src2) {
-        CiRegister tmp = Aarch64.r8;
+        CiRegister tmp = Aarch64.r17;
         assert src1 != tmp && src2 != tmp;
         mov(64, tmp, src1);
         mov(64, src1, src2);
@@ -1572,8 +1572,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         } else {
             assert dstKind.isDouble() : "Dst reg must be double";
             saveInFP(9);
-            mov64BitConstant(Aarch64.r8, src);
-            fmov(64, dst, Aarch64.r8);
+            mov64BitConstant(Aarch64.r17, src);
+            fmov(64, dst, Aarch64.r17);
             restoreFromFP(9);
         }
     }
