@@ -2504,6 +2504,23 @@ public class Aarch64JTTC1XTest {
         }
     }
 
+    @Test
+    public void C1X_jtt_BC_d2l() throws Exception {
+        Code.resetBootCodeRegion();
+        String klassName = getKlassName("jtt.bytecode.BC_d2l");
+        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
+        double[] input = {0.0d, 1.0d, -1.06d, 3.33d, Double.MAX_VALUE, Double.MIN_VALUE};
+        initializeCodeBuffers(methods, "BC_d2l.java", "long test(double)");
+
+        for (double arg: input) {
+            long expectedValue = BC_d2l.test(arg);
+            String functionPrototype = Aarch64CodeWriter.preAmble("long long", "double", Double.toString(arg));
+            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
+            long returnValue = tester.getSimulatedLongRegisters()[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " expected " + expectedValue;
+        }
+    }
+
     // @Test
     public void C1X_jtt_generic_compilation() throws Exception {
         String klassName = getKlassName("com.sun.max.vm.MaxineVM");

@@ -50,6 +50,7 @@ public class JTConfig {
         jtt.bytecode.BC_d2f.class,
         jtt.bytecode.BC_d2i01.class,
         jtt.bytecode.BC_d2i02.class,
+        jtt.bytecode.BC_d2l.class,
         jtt.bytecode.BC_d2l01.class,
         jtt.bytecode.BC_d2l02.class,
         jtt.bytecode.BC_dadd.class,

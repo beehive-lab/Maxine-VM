@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,10 +25,10 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 0.0d = 0.0f; 1.0d = 1.0f; -1.06d = -1.06f
+ * @Runs: 0.0d = 0L; 1.0d = 1L; -1.06d = -1L
  */
-public class BC_d2f {
-    public static float test(double d) {
-        return (float) d;
+public class BC_d2l {
+    public static long test(double d) {
+        return (long) d;
     }
 }
