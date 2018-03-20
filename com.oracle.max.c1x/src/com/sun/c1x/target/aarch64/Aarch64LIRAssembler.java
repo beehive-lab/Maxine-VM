@@ -1642,15 +1642,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitNullCheck(CiValue src, LIRDebugInfo info) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert src.isRegister();
         if (C1XOptions.NullCheckUniquePc) {
             masm.nop();
         }
-//        masm.nullCheck(src.asRegister());
+        masm.nullCheck(src.asRegister());
         tasm.recordImplicitException(codePos() - 4, info);
     }
 
