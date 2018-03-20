@@ -1776,4 +1776,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
+
+    public void nullCheck(CiRegister r) {
+        throw new Error("unimplemented");
+    }
 }
