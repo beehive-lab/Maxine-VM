@@ -1923,58 +1923,37 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 case Jeq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-                    //                    emitXirCompare(inst, Condition.EQ, ConditionFlag.Equal, operands, label);
+                    emitXirCompare(inst, Condition.EQ, ConditionFlag.EQ, operands, label);
                     break;
                 }
                 case Jneq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    emitXirCompare(inst, Condition.NE, ConditionFlag.NotEqual, operands, label);
+                    emitXirCompare(inst, Condition.NE, ConditionFlag.NE, operands, label);
                     break;
                 }
                 case Jgt: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    emitXirCompare(inst, Condition.GT, ConditionFlag.SignedGreater, operands, label);
+                    emitXirCompare(inst, Condition.GT, ConditionFlag.GT, operands, label);
                     break;
                 }
                 case Jgteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    emitXirCompare(inst, Condition.GE, ConditionFlag.SignedGreaterOrEqual, operands, label);
+                    emitXirCompare(inst, Condition.GE, ConditionFlag.GE, operands, label);
                     break;
                 }
                 case Jugteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    emitXirCompare(inst, Condition.AE, ConditionFlag.CarrySetUnsignedHigherEqual, operands, label);
+                    emitXirCompare(inst, Condition.AE, ConditionFlag.HS, operands, label);
                     break;
                 }
                 case Jlt: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    emitXirCompare(inst, Condition.LT, ConditionFlag.SignedLesser, operands, label);
+                    emitXirCompare(inst, Condition.LT, ConditionFlag.LT, operands, label);
                     break;
                 }
                 case Jlteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    emitXirCompare(inst, Condition.LE, ConditionFlag.SignedLowerOrEqual, operands, label);
+                    emitXirCompare(inst, Condition.LE, ConditionFlag.LE, operands, label);
                     break;
                 }
                 case Jbset: {
@@ -1984,10 +1963,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     assert offset.isConstant() && bit.isConstant();
                     assert false;
                     masm.crashme();
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    masm.jcc(ConditionFlag.SignedGreaterOrEqual, label);
+                    masm.branchConditionally(ConditionFlag.GE, label);
                     break;
                 }
                 case Bind: {
@@ -2005,18 +1981,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 case NullCheck: {
                     CiValue pointer = operands[inst.x().index];
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    masm.nullCheck(pointer.asRegister());
+                    masm.nullCheck(pointer.asRegister());
                     tasm.recordImplicitException(codePos() - 4, info);
                     break;
                 }
                 case Align: {
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    masm.align((Integer) inst.extra);
+                    masm.align((Integer) inst.extra);
                     break;
                 }
                 case StackOverflowCheck: {
@@ -2079,11 +2049,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     if (value.asRegister().number <= Aarch64.zr.number) {
                         masm.push(value.asRegister());
                     } else {
-                        if (true) {
-                            throw Util.unimplemented();
-                        }
-
-//                        masm.vpush(ConditionFlag.Always, value.asRegister(), value.asRegister(), value.kind, value.kind);
+                        masm.fpush(value.asRegister());
                     }
                     break;
                 }
@@ -2093,10 +2059,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         if (result.asRegister().number <= Aarch64.zr.number) {
                             masm.pop(result.asRegister());
                         } else {
-                            if (true) {
-                                throw Util.unimplemented();
-                            }
-                            //                            masm.vpop(ConditionFlag.Always, result.asRegister(), result.asRegister(), result.kind, result.kind);
+                            masm.fpop(result.asRegister());
                         }
                     } else {
                         masm.pop(rscratch1);
