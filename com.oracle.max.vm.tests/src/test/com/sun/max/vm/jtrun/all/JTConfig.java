@@ -78,6 +78,7 @@ public class JTConfig {
         jtt.bytecode.BC_f2d.class,
         jtt.bytecode.BC_f2i01.class,
         jtt.bytecode.BC_f2i02.class,
+        jtt.bytecode.BC_f2l.class,
         jtt.bytecode.BC_f2l01.class,
         jtt.bytecode.BC_f2l02.class,
         jtt.bytecode.BC_fadd.class,

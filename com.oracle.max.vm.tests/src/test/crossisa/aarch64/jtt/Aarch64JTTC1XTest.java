@@ -2481,6 +2481,23 @@ public class Aarch64JTTC1XTest {
     }
 
     @Test
+    public void C1X_jtt_BC_f2l() throws Exception {
+        Code.resetBootCodeRegion();
+        String klassName = getKlassName("jtt.bytecode.BC_f2l");
+        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
+        float[] input = {0.0f, 1.0f, -1.06f, 3.33f, Float.MAX_VALUE, Float.MIN_VALUE};
+        initializeCodeBuffers(methods, "BC_f2l.java", "long test(float)");
+
+        for (float arg : input) {
+            long expectedValue = BC_f2l.test(arg);
+            String functionPrototype = Aarch64CodeWriter.preAmble("long long", "float", Float.toString(arg));
+            MaxineAarch64Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
+            long  returnValue = tester.getSimulatedLongRegisters()[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " expected: " + expectedValue;
+        }
+    }
+
+    @Test
     public void C1X_jtt_BC_l2d() throws Exception {
         Code.resetBootCodeRegion();
         String klassName = getKlassName("jtt.bytecode.BC_l2d");
