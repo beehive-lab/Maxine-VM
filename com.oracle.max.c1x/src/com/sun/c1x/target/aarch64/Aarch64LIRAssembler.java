@@ -2127,14 +2127,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     private void emitXirCompare(XirInstruction inst, Condition condition, ConditionFlag cflag, CiValue[] ops, Label label) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-//
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
-//        masm.jcc(cflag, new Label(label));
+        masm.branchConditionally(cflag, new Label(label.getPatchPositions(), label.positionCopy()));
         masm.nop(3);
     }
 
