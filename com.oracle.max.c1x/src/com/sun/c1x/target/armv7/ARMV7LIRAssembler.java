@@ -22,6 +22,7 @@ package com.sun.c1x.target.armv7;
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
 
 import java.util.*;
 
@@ -2361,7 +2362,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
                     if (CompilationBroker.singleton.simulateAdapter()) {
-                        masm.nop(4);
+                        masm.nop(OPTIMIZED_ENTRY_POINT.offset() / 4);
                     }
                     masm.push(ConditionFlag.Always, 1 << 14);
                     masm.movImmediate(ConditionFlag.Always, ARMV7.r12, frameSize);
