@@ -823,213 +823,82 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         CiKind kind = left.kind;
 
         if (left.isRegister()) {
+            final int size = kind.isInt() || kind.isFloat() ? 32 : 64;
             CiRegister lreg = left.asRegister();
-            if (right.isRegister()) {
-                CiRegister rreg = right.asRegister();
+            CiRegister rreg;
+            if (right.isConstant() && (kind.isInt() || kind.isLong())) {
                 if (kind.isInt()) {
-                    switch (code) {
-                        case Add:
-                            masm.add(32, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Sub:
-                            masm.sub(32, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Mul:
-                            masm.mul(32, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Rem:
-                            masm.rem(32, dest.asRegister(), lreg, rreg);
-                            break;
-                        default:
-                            throw Util.shouldNotReachHere();
-                    }
-                } else if (kind.isFloat()) {
-                    assert rreg.isFpu() : "must be xmm";
-                    switch (code) {
-                        case Add:
-                            masm.fadd(32, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Sub:
-                            masm.fsub(32, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Mul:
-                            masm.fmul(32, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Div:
-                            masm.fdiv(32, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Rem:
-                            masm.frem(32, dest.asRegister(), lreg, rreg);
-                            break;
-                        default:
-                            throw Util.shouldNotReachHere();
-                    }
-                } else if (kind.isDouble()) {
-                    assert rreg.isFpu();
-                    switch (code) {
-                        case Add:
-                            masm.fadd(64, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Sub:
-                            masm.fsub(64, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Mul:
-                            masm.fmul(64, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Div:
-                            masm.fdiv(64, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Rem:
-                            masm.frem(64, dest.asRegister(), lreg, rreg);
-                            break;
-                        default:
-                            throw Util.shouldNotReachHere();
-                    }
+                    final int delta = ((CiConstant) right).asInt();
+                    masm.increment32(dest.asRegister(), delta);
                 } else {
                     assert kind.isLong();
-                    switch (code) {
-                        case Add:
-                            masm.add(64, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Sub:
-                            masm.sub(64, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Mul:
-                            masm.mul(64, dest.asRegister(), lreg, rreg);
-                            break;
-                        case Rem:
-                            masm.rem(64, dest.asRegister(), lreg, rreg);
-                            break;
-                        default:
-                            throw Util.shouldNotReachHere();
-                    }
+                    final long delta = ((CiConstant) right).asLong();
+                    masm.addq(dest.asRegister(), delta);
+                }
+                return;
+            }
+            if (right.isRegister()) {
+                rreg = right.asRegister();
+            } else if (right.isStackSlot()) {
+                CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
+                if (kind.isInt() || kind.isLong()) {
+                    masm.setUpScratch(raddr);
+                    rreg = rscratch1;
+                } else {
+                    assert kind.isFloat() || kind.isDouble();
+                    masm.load(Aarch64.d30, raddr, kind);
+                    rreg = Aarch64.d30;
                 }
             } else {
-                if (kind.isInt()) {
-                    if (right.isStackSlot()) {
-                        // register - stack
-                        CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
-                        switch (code) {
-                            case Add:
-                                masm.iadd(dest.asRegister(), lreg, raddr);
-                                break;
-                            case Sub:
-                                masm.isub(dest.asRegister(), lreg, raddr);
-                                break;
-                            default:
-                                throw Util.shouldNotReachHere();
-                        }
-                    } else if (right.isConstant()) {
-                        // register - constant
-                        assert kind.isInt();
-                        int delta = ((CiConstant) right).asInt();
-                        switch (code) {
-                            case Add:
-                                masm.incrementl(lreg, delta);
-                                break;
-                            case Sub:
-                                masm.decrementl(lreg, delta);
-                                break;
-                            default:
-                                throw Util.shouldNotReachHere();
-                        }
-                    }
-                } else if (kind.isFloat()) {
-                    // register - stack/constant
-                    CiAddress raddr;
-                    if (right.isStackSlot()) {
-                        raddr = frameMap.toStackAddress((CiStackSlot) right);
-                        masm.load(Aarch64.d30, raddr, CiKind.Float);
-                    } else {
-                        assert right.isConstant();
-                        raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
-                        masm.setUpScratch(raddr);
-                        masm.add(32, Aarch64.r16, Aarch64.r16, Aarch64.r15);
-                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
-                    }
-                    switch (code) {
-                        case Add:
-                            masm.fadd(32, lreg, lreg, Aarch64.d30);
-                            break;
-                        case Sub:
-                            masm.fsub(32, lreg, lreg, Aarch64.d30);
-                            break;
-                        case Mul:
-                            masm.fmul(32, lreg, lreg, Aarch64.d30);
-                            break;
-                        case Div:
-                            masm.fdiv(32, lreg, lreg, Aarch64.d30);
-                            break;
-                        default:
-                            throw Util.shouldNotReachHere();
-                    }
-                } else if (kind.isDouble()) {
-                    // register - stack/constant
-                    CiAddress raddr;
-                    if (right.isStackSlot()) {
-                        raddr = frameMap.toStackAddress((CiStackSlot) right);
-                        masm.load(Aarch64.d30, raddr, CiKind.Double);
-                    } else {
-                        assert right.isConstant();
-                        raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
-                        masm.setUpScratch(raddr);
-                        masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r15);
-                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
-                    }
-                    switch (code) {
-                        case Add:
-                            masm.fadd(64, dest.asRegister(), lreg, Aarch64.d30);
-                            break;
-                        case Sub:
-                            masm.fsub(64, dest.asRegister(), lreg, Aarch64.d30);
-                            break;
-                        case Mul:
-                            masm.fmul(64, dest.asRegister(), lreg, Aarch64.d30);
-                            break;
-                        case Div:
-                            masm.fdiv(64, dest.asRegister(), lreg, Aarch64.d30);
-                            break;
-                        default:
-                            throw Util.shouldNotReachHere();
-                    }
+                assert right.isConstant();
+                assert kind.isFloat() || kind.isDouble();
+                CiAddress raddr;
+                if (kind.isFloat()) {
+                    raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                 } else {
-                    assert target.sizeInBytes(kind) == 8;
-                    if (right.isStackSlot()) {
-                        // register - stack
-                        assert right.kind == CiKind.Long;
-                        CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
-                        masm.saveInFP(9);
-                        masm.load(Aarch64.r17, raddr, CiKind.Long);
-                        switch (code) {
-                            case Add:
-                                masm.add(64, lreg, lreg, Aarch64.r17);
-                                break;
-                            case Sub:
-                                masm.sub(64, lreg, lreg, Aarch64.r17);
-                                break;
-                            default:
-                                throw Util.shouldNotReachHere();
-                        }
-                        masm.fmov(64, Aarch64.r9, Aarch64.d30);
-                        masm.restoreFromFP(9);
-                    } else {
-                        // register - constant
-                        assert right.isConstant();
-                        long c = ((CiConstant) right).asLong();
-                        masm.saveInFP(9);
-                        masm.movlong(Aarch64.r17, c, CiKind.Long);
-                        switch (code) {
-                            case Add:
-                                masm.add(64, lreg, lreg, Aarch64.r17);
-                                break;
-                            case Sub:
-                                masm.sub(64, lreg, lreg, Aarch64.r17);
-                                break;
-                            default:
-                                throw Util.shouldNotReachHere();
-                        }
-                        masm.restoreFromFP(9);
-                    }
+                    raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
+                }
+                masm.load(Aarch64.d30, raddr, kind);
+                rreg = Aarch64.d30;
+            }
+            if (kind.isInt() || kind.isLong()) {
+                switch (code) {
+                    case Add:
+                        masm.add(size, dest.asRegister(), lreg, rreg);
+                        break;
+                    case Sub:
+                        masm.sub(size, dest.asRegister(), lreg, rreg);
+                        break;
+                    case Mul:
+                        masm.mul(size, dest.asRegister(), lreg, rreg);
+                        break;
+                    case Rem:
+                        masm.rem(size, dest.asRegister(), lreg, rreg);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
+                }
+            } else {
+                assert kind.isFloat() || kind.isDouble();
+                assert rreg.isFpu() : "must be floating point register";
+                switch (code) {
+                    case Add:
+                        masm.fadd(size, dest.asRegister(), lreg, rreg);
+                        break;
+                    case Sub:
+                        masm.fsub(size, dest.asRegister(), lreg, rreg);
+                        break;
+                    case Mul:
+                        masm.fmul(size, dest.asRegister(), lreg, rreg);
+                        break;
+                    case Div:
+                        masm.fdiv(size, dest.asRegister(), lreg, rreg);
+                        break;
+                    case Rem:
+                        masm.frem(size, dest.asRegister(), lreg, rreg);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
             }
         } else {
@@ -1037,31 +906,28 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             CiAddress laddr = asAddress(left);
             if (right.isRegister()) {
                 CiRegister rreg = right.asRegister();
-                masm.load(Aarch64.r17, laddr, CiKind.Int);
+                masm.load(rscratch1, laddr, CiKind.Int);
                 switch (code) {
                     case Add:
-                        masm.add(32, Aarch64.r17, Aarch64.r17, rreg);
+                        masm.add(32, rscratch1, rscratch1, rreg);
                         break;
                     case Sub:
-                        masm.sub(32, Aarch64.r17, Aarch64.r17, rreg);
+                        masm.sub(32, rscratch1, rscratch1, rreg);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
 
                 }
-                masm.store(Aarch64.r17, laddr, CiKind.Int);
+                masm.store(rscratch1, laddr, CiKind.Int);
             } else {
-                if (true) {
-                    throw Util.unimplemented();
-                }
                 assert right.isConstant();
                 int c = ((CiConstant) right).asInt();
                 switch (code) {
                     case Add:
-                        masm.incrementl(laddr, c);
+                        masm.increment32(laddr, c);
                         break;
                     case Sub:
-                        masm.decrementl(laddr, c);
+                        masm.increment32(laddr, -c);
                         break;
                     default:
                         throw Util.shouldNotReachHere();

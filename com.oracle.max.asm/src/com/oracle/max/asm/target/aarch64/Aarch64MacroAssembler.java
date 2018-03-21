@@ -61,16 +61,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         addq(reg, value);
     }
 
-    public void incrementl(CiAddress dst, int value) {
-        if (value == 0) {
-            return;
-        }
-        load(Aarch64.r16, dst, CiKind.Int);
-        mov64BitConstant(Aarch64.r17, value);
-        add(64, Aarch64.r17, r16, Aarch64.r17);
-        store(Aarch64.r17, dst, CiKind.Int);
-    }
-
     public void decrementl(CiRegister reg, int value) {
         assert reg == Aarch64.r16 || reg != Aarch64.r17 : "Reg " + reg;
         mov32BitConstant(Aarch64.r17, value);
@@ -592,9 +582,21 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param delta
      */
     public void increment32(CiRegister reg, int delta) {
+        if (delta == 0) {
+            return;
+        }
         assert reg != scratchRegister;
         mov32BitConstant(scratchRegister, delta);
-        add(32, reg, reg, scratchRegister, ShiftType.LSL, 0);
+        add(32, reg, reg, scratchRegister);
+    }
+
+    public void increment32(CiAddress dst, int delta) {
+        if (delta == 0) {
+            return;
+        }
+        load(r17, dst, CiKind.Int);
+        increment32(r17, delta);
+        store(r17, dst, CiKind.Int);
     }
 
     /**
