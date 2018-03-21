@@ -43,16 +43,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         add(32, dest, left, right);
     }
 
-    public void iadd(CiRegister dest, CiRegister left, CiAddress right) {
-        load(dest, right, CiKind.Int);
-        add(32, dest, left, r16);
-    }
-
-    public void isub(CiRegister dest, CiRegister left, CiAddress right) {
-        load(dest, right, CiKind.Int);
-        sub(32, dest, left, r16);
-    }
-
     public void incrementl(CiRegister reg, int value) {
         if (value == 0) {
             return;
