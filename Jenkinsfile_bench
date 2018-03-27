@@ -1,0 +1,100 @@
+pipeline {
+    agent any
+    options {
+        timestamps()
+        timeout(time: 3, unit: 'HOURS')
+    }
+    tools {
+        jdk 'openJDK8'
+    }
+    environment {
+        //Change the first three variables
+        DJANGO="/home/vasilis/Desktop/BenchVisualizer"
+        DACAPO="/home/vasilis/Desktop/SPECjvm2008"
+        SPECJVM2008="/home/vasilis/Desktop/SPECjvm2008"
+
+        MAXINE_HOME="$WORKSPACE/maxine"
+        MX_HOME="$WORKSPACE/mx"
+        MX="$MX_HOME/mx"
+        PATH="/localhome/regression/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin:/localhome/regression/gcc-arm-none-eabi-7-2017-q4-major/bin:/localhome/regression/qemu-2.10.1/build/aarch64-softmmu:/localhome/regression/qemu-2.10.1/build/arm-softmmu:/localhome/regression/riscv/bin:$PATH"
+        LD_LIBRARY_PATH="$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/"
+    }
+
+    stages {
+        stage('clone') {
+            steps {
+                // Clean up workspace
+                step([$class: 'WsCleanup'])
+                dir(env.MAXINE_HOME) {
+                    checkout scm
+                }
+                dir(env.MX_HOME) {
+                    checkout([$class: 'GitSCM', branches: [[name: '5.190.3']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/beehive-lab/mx.git']]])
+                }
+                // Trigger fetch of dependencies
+                dir(env.MAXINE_HOME) {
+                    sh '$MX help'
+                }
+            }
+        }
+        stage('build') {
+            steps {
+                dir(env.MAXINE_HOME) {
+                        sh '$MX build'
+                    }
+            }
+        }
+        stage('image') {
+            steps {
+                dir(env.MAXINE_HOME) {
+                        sh '$MX image'
+                    }
+            }
+        }
+        stage('DACAPO benchmarks') {
+            steps {
+                dir(env.DACAPO) {
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar avrora || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar batik || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar eclipse || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar fop || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar h2 || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar jython || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar luindex || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar lusearch || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar pmd || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar sunflow || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar tomcat || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar tradebeans || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar tradesoap || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar xalan || true'
+                }
+            }
+        }
+        stage('SPECJVM benchmarks') {
+            steps {
+                dir(env.SPECJVM2008) {
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 startup || true'
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 compiler || true'
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 compress || true'
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 crypto || true'
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 derby || true'
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 mpegaudio || true'
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 scimark || true'
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 serial || true'
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 sunflow || true'
+                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 xml || true'
+                }
+            }
+        }
+        stage('db_update') {
+            steps {
+                dir(env.DJANGO) {
+                   sh 'python manage.py addBenchToJob $JOB_NAME --get_jenkins_latest'
+                }
+            }
+        }
+    }
+
+
+}
