@@ -88,6 +88,8 @@ public class MaxineTester {
     private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 20,
                     "The scaling factor for automatically computing the timeout for running user programs " +
                     "from how long the program took on the reference VM.");
+    private static final Option<Integer> compilerTestTimeOutOption = options.newIntegerOption("compiler-test-timeout", 300,
+                    "The number of seconds to wait for a compiler test to complete before timing out and killing it.");
     private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
                     "The tracing level for building the images and running the tests.");
     private static final Option<Boolean> skipImageGenOption = options.newBooleanOption("skip-image-gen", false,
@@ -1630,7 +1632,7 @@ public class MaxineTester {
                     out.flush();
                     final Logs logs = new Logs(outputDir, compilerName, name);
                     final long start = System.currentTimeMillis();
-                    final int exitValue = exec(null, javaArgs, null, logs, compilerName + "Test", 300);
+                    final int exitValue = exec(null, javaArgs, null, logs, compilerName + "Test", compilerTestTimeOutOption.getValue());
                     out.print("Stopped " + ucCompilerName + " " + name + ":");
                     if (exitValue != 0) {
                         if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {

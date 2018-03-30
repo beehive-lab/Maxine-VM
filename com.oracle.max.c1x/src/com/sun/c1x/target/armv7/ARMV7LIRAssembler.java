@@ -1051,6 +1051,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 if (kind.isInt()) {
                     if (right.isStackSlot()) {
                         // register - stack
+                        assert false : "FZ: Assuming this is dead code on ARMv7";
                         CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                         switch (code) {
                             case Add:

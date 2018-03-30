@@ -559,7 +559,7 @@ def olc(args):
     --- Patterns ---
     {0}"""
 
-    mx.run_java(['-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
+    mx.run_java(['-ea', '-esa', '-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""

@@ -19,9 +19,13 @@
  */
 package test.crossisa;
 
+import com.sun.cri.ci.CiRegister;
+
 import java.io.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
+
+import static test.crossisa.CrossISATester.BitsFlag.*;
 
 public abstract class CrossISATester {
 
@@ -43,7 +47,7 @@ public abstract class CrossISATester {
     private static boolean RESET            = false;
     private static boolean DEBUG            = false;
 
-    protected BitsFlag[] bitMasks;
+    private static final int MAX_NUMBER_OF_REGISTERS = 32;
     protected Process gcc;
     protected Process assembler;
     protected Process linker;
@@ -55,18 +59,20 @@ public abstract class CrossISATester {
     protected ProcessBuilder qemuProcessBuilder;
     protected ProcessBuilder gdbProcessBuilder;
     private ProcessBuilder removeFiles;
-    protected int[] simulatedIntRegisters;
-    protected int[] expectedIntRegisters;
-    protected boolean[] testIntRegisters;
-    protected long[] simulatedLongRegisters;
-    protected long[] expectedLongRegisters;
-    protected boolean[] testLongRegisters;
-    protected float[] simulatedFloatRegisters;
-    protected float[] expectedFloatRegisters;
-    protected boolean[] testFloatRegisters;
-    protected double[] simulatedDoubleRegisters;
-    protected double[] expectedDoubleRegisters;
-    protected boolean[] testDoubleRegisters;
+
+    protected BitsFlag[] bitMasks                 = new BitsFlag[MAX_NUMBER_OF_REGISTERS];
+    protected int[]      simulatedIntRegisters    = new int[MAX_NUMBER_OF_REGISTERS];
+    protected int[]      expectedIntRegisters     = new int[MAX_NUMBER_OF_REGISTERS];
+    protected boolean[]  testIntRegisters         = new boolean[MAX_NUMBER_OF_REGISTERS];
+    protected long[]     simulatedLongRegisters   = new long[MAX_NUMBER_OF_REGISTERS];
+    protected long[]     expectedLongRegisters    = new long[MAX_NUMBER_OF_REGISTERS];
+    protected boolean[]  testLongRegisters        = new boolean[MAX_NUMBER_OF_REGISTERS];
+    protected float[]    simulatedFloatRegisters  = new float[MAX_NUMBER_OF_REGISTERS];
+    protected float[]    expectedFloatRegisters   = new float[MAX_NUMBER_OF_REGISTERS];
+    protected boolean[]  testFloatRegisters       = new boolean[MAX_NUMBER_OF_REGISTERS];
+    protected double[]   simulatedDoubleRegisters = new double[MAX_NUMBER_OF_REGISTERS];
+    protected double[]   expectedDoubleRegisters  = new double[MAX_NUMBER_OF_REGISTERS];
+    protected boolean[]  testDoubleRegisters      = new boolean[MAX_NUMBER_OF_REGISTERS];
 
     protected CrossISATester() {
         gccProcessBuilder = getCompilerProcessBuilder();
@@ -84,7 +90,7 @@ public abstract class CrossISATester {
         gdbProcessBuilder = getGDBProcessBuilder();
         gdbProcessBuilder.redirectOutput(gdbOutput);
         gdbProcessBuilder.redirectError(gdbErrors);
-        removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
+        removeFiles = new ProcessBuilder("/bin/rm", "-rfR", "test.elf");
     }
 
     public static void setBitMask(BitsFlag[] bitmasks, int i, BitsFlag mask) {
@@ -121,6 +127,121 @@ public abstract class CrossISATester {
         return simulatedDoubleRegisters;
     }
 
+    public void resetTestValues() {
+        for (int i = 0; i < testIntRegisters.length; i++) {
+            testIntRegisters[i] = false;
+        }
+        for (int i = 0; i < testLongRegisters.length; i++) {
+            testLongRegisters[i] = false;
+        }
+        for (int i = 0; i < testFloatRegisters.length; i++) {
+            testFloatRegisters[i] = false;
+        }
+        for (int i = 0; i < testDoubleRegisters.length; i++) {
+            testDoubleRegisters[i] = false;
+        }
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    public void setExpectedValue(CiRegister cpuRegister, long expectedValue) {
+        final int index = cpuRegister.getEncoding();
+        expectedLongRegisters[index] = expectedValue;
+        testLongRegisters[index] = true;
+        bitMasks[index] = All64Bits;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    public void setExpectedValue(CiRegister cpuRegister, int expectedValue) {
+        final int index = cpuRegister.getEncoding();
+        expectedLongRegisters[index] = expectedValue;
+        testLongRegisters[index] = true;
+        bitMasks[index] = Lower32Bits;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    public void setExpectedValue(CiRegister cpuRegister, short expectedValue) {
+        final int index = cpuRegister.getEncoding();
+        expectedLongRegisters[index] = expectedValue;
+        testLongRegisters[index] = true;
+        bitMasks[index] = Lower16Bits;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    public void setExpectedValue(CiRegister cpuRegister, boolean expectedValue) {
+        final int index = cpuRegister.getEncoding();
+        final int expectedLongValue = expectedValue ? 1 : 0;
+        expectedLongRegisters[index] = expectedLongValue;
+        testLongRegisters[index] = true;
+        bitMasks[index] = Lower8Bits;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    public void setExpectedValue(CiRegister cpuRegister, byte expectedValue) {
+        final int index = cpuRegister.getEncoding();
+        expectedLongRegisters[index] = expectedValue;
+        testLongRegisters[index] = true;
+        bitMasks[index] = Lower8Bits;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    public void setExpectedValue(CiRegister cpuRegister, char expectedValue) {
+        setExpectedValue(cpuRegister, (short) expectedValue);
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param fpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    public void setExpectedValue(CiRegister fpuRegister, float expectedValue) {
+        final int index = fpuRegister.getEncoding();
+        expectedFloatRegisters[index] = expectedValue;
+        testFloatRegisters[index] = true;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param fpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    public void setExpectedValue(CiRegister fpuRegister, double expectedValue) {
+        final int index = fpuRegister.getEncoding();
+        expectedDoubleRegisters[index] = expectedValue;
+        testDoubleRegisters[index] = true;
+    }
+
     public boolean validateIntRegisters() {
         boolean valid   = true;
 
@@ -139,6 +260,7 @@ public abstract class CrossISATester {
         }
 
         if (!valid) {
+            System.out.println("validateIntRegisters FAILED");
             for (int i = 0; i < simulatedIntRegisters.length; i++) {
                 System.out.println(i + " sim: " + simulatedIntRegisters[i] + " exp: " + expectedIntRegisters[i]
                                    + " test: " + testIntRegisters[i]);
@@ -166,6 +288,7 @@ public abstract class CrossISATester {
         }
 
         if (!valid) {
+            System.out.println("validateLongRegisters FAILED");
             for (int i = 0; i < simulatedLongRegisters.length; i++) {
                 System.out.println(i + " sim: " + simulatedLongRegisters[i] + " exp: " + expectedLongRegisters[i]
                                    + " test: " + testLongRegisters[i]);
@@ -193,6 +316,7 @@ public abstract class CrossISATester {
         }
 
         if (!valid) {
+            System.out.println("validateFloatRegisters FAILED");
             for (int i = 0; i < simulatedFloatRegisters.length; i++) {
                 System.out.println(i + " sim: " + simulatedFloatRegisters[i] + " exp: " + expectedFloatRegisters[i]
                                    + " test: " + testFloatRegisters[i]);
@@ -220,6 +344,7 @@ public abstract class CrossISATester {
         }
 
         if (!valid) {
+            System.out.println("validateDoubleRegisters FAILED");
             for (int i = 0; i < simulatedDoubleRegisters.length; i++) {
                 System.out.println(i + " sim: " + simulatedDoubleRegisters[i] + " exp: " + expectedDoubleRegisters[i]
                                    + " test: " + testDoubleRegisters[i]);
@@ -239,7 +364,8 @@ public abstract class CrossISATester {
         Process process = null;
         try {
             process = processBuilder.start();
-            process.waitFor();
+            final int exitCode = process.waitFor();
+            assert exitCode == 0 : processBuilder.command() + " returned exitCode = " + exitCode;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -339,8 +465,7 @@ public abstract class CrossISATester {
             }
             parsedValues.add(parseIntRegister(line));
         } while ((line = reader.readLine()) != null);
-        simulatedIntRegisters = new int[parsedValues.size()];
-        for (int i = 0; i < simulatedIntRegisters.length; i++) {
+        for (int i = 0; i < parsedValues.size(); i++) {
             simulatedIntRegisters[i] = parsedValues.get(i);
         }
         reader.close();
@@ -405,8 +530,7 @@ public abstract class CrossISATester {
             }
             parsedValues.add(parseLongRegister(line));
         } while ((line = reader.readLine()) != null);
-        simulatedLongRegisters = new long[parsedValues.size()];
-        for (int i = 0; i < simulatedLongRegisters.length; i++) {
+        for (int i = 0; i < parsedValues.size(); i++) {
             simulatedLongRegisters[i] = parsedValues.get(i);
         }
         reader.close();
@@ -462,8 +586,7 @@ public abstract class CrossISATester {
             }
             parsedValues.add(parseFloatRegister(line));
         } while ((line = reader.readLine()) != null);
-        simulatedFloatRegisters = new float[parsedValues.size()];
-        for (int i = 0; i < simulatedFloatRegisters.length; i++) {
+        for (int i = 0; i < parsedValues.size(); i++) {
             simulatedFloatRegisters[i] = parsedValues.get(i);
         }
         reader.close();
@@ -503,8 +626,7 @@ public abstract class CrossISATester {
             }
             parsedValues.add(parseDoubleRegister(line));
         } while ((line = reader.readLine()) != null);
-        simulatedDoubleRegisters = new double[parsedValues.size()];
-        for (int i = 0; i < simulatedDoubleRegisters.length; i++) {
+        for (int i = 0; i < parsedValues.size(); i++) {
             simulatedDoubleRegisters[i] = parsedValues.get(i);
         }
         reader.close();
