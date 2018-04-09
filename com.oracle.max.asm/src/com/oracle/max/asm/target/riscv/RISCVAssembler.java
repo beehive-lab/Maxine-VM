@@ -55,6 +55,32 @@ public class RISCVAssembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    /**
+     * Emits an instruction of type R-type.
+     *
+     * <pre>
+     *     | funct7 | rs2 | rs1 | funct3 | rd | opcode |
+     *     |--------|-----|-----|--------|----|--------|
+     *     |    7   |  5  |  5  |   3    |  5 |    7   |
+     * </pre>
+     *  @param opcode
+     * @param rd
+     * @param funct3
+     * @param rs1
+     * @param rs2
+     * @param funct7
+     */
+    private void rtype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
+        assert opcode.getValue() >> 7 == 0;
+        assert rd.number >> 5 == 0;
+        int instruction = opcode.getValue();
+        instruction |= rd.number << 7;
+        instruction |= rs1.number << 15;
+        instruction |= rs2.number << 20;
+        instruction |= funct7 << 25;
+        emitInt(instruction);
+    }
+
     // RV32I Base instruction set /////////////////////////////////////////////
 
     /**
@@ -331,7 +357,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void add(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(ADD, rd,111, rs1, rs2, 0000000);
     }
 
     /**
