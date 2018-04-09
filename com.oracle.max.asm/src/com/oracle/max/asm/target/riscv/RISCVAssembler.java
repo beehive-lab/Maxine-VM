@@ -357,7 +357,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void add(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        rtype(ADD, rd,111, rs1, rs2, 0000000);
+        rtype(ADD, rd, 111, rs1, rs2, 0000000);
     }
 
     /**
