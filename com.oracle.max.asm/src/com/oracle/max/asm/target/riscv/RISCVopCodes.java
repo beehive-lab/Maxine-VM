@@ -25,6 +25,7 @@ public enum RISCVopCodes {
 
     LUI((byte) 0b0110111),
     ADD((byte) 0b0110011),
+    SUB((byte) 0b0110011),
     // TODO: fill the rest
 
     // RV64I Base instruction set /////////////////////////////////////////////
