@@ -75,6 +75,7 @@ public class RISCVAssembler extends AbstractAssembler {
         assert rd.number >> 5 == 0;
         int instruction = opcode.getValue();
         instruction |= rd.number << 7;
+        instruction |= funct3 << 12;
         instruction |= rs1.number << 15;
         instruction |= rs2.number << 20;
         instruction |= funct7 << 25;
@@ -357,7 +358,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void add(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        rtype(ADD, rd, 111, rs1, rs2, 0000000);
+        rtype(ADD, rd, 0, rs1, rs2, 0);
     }
 
     /**
@@ -367,7 +368,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void sub(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(SUB, rd, 0, rs1, rs2, 32);
     }
 
     /**
