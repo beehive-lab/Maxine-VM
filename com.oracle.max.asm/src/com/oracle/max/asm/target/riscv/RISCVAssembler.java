@@ -388,7 +388,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void slt(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(SLT, rd, 2, rs1, rs2, 0);
     }
 
     /**
@@ -398,7 +398,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void sltu(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(SLTU, rd, 3, rs1, rs2, 0);
     }
 
     /**
@@ -408,7 +408,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void xor(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(XOR, rd, 4, rs1, rs2, 0);
     }
 
     /**
@@ -438,7 +438,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void or(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(OR, rd, 6, rs1, rs2, 0);
     }
 
     /**
@@ -448,7 +448,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void and(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(AND, rd, 7, rs1, rs2, 0);
     }
 
     /**
