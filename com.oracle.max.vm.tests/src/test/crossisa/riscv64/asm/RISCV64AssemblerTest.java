@@ -151,15 +151,103 @@ public class RISCV64AssemblerTest {
         asm.lui(s1, 0x00022000);
         asm.lui(s2, 0x00089000);
         asm.lui(s3, 0xFFFFF000);
-        asm.lui(s4, 0x00000000);
-        asm.lui(s5, 0x00000000);
 
         asm.sub(t0, s2, s1);
-        asm.sub(t1, s3, s4);
-        asm.sub(t2, s4, s5);
+        asm.sub(t1, s3, zero);
+        asm.sub(t2, zero, zero);
         setExpectedValue(t0, 0x00067000);
         setExpectedValue(t1, 0xFFFFF000);
-        setExpectedValue(t2, 0x00000000);
+        setExpectedValue(t2, 0x0);
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
+
+    @Test
+    public void slt() throws Exception {
+        initialiseExpectedValues();
+        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        //store values
+        asm.lui(s1, 0XFFFFF000);
+        asm.lui(s2, 0X11111000);
+
+        asm.slt(t0, s1, s2);
+        asm.slt(t1, s2, s1);
+        setExpectedValue(t0, 1);
+        setExpectedValue(t1, 0);
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+    @Test
+    public void sltu() throws Exception {
+        initialiseExpectedValues();
+        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        //store values
+        asm.lui(s1, 0XFFFFF000);
+
+        asm.sltu(t0, s1, zero);
+        asm.sltu(t1, zero, s1);
+        setExpectedValue(t0, 0);
+        setExpectedValue(t1, 1);
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+    @Test
+    public void xor() throws Exception {
+        initialiseExpectedValues();
+        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        //store values
+        asm.lui(s1, 0XFF0FF000);
+        asm.lui(s2, 0X0FF0F000);
+        asm.lui(s4, 0xFFFFF000);
+
+        asm.xor(t0, s1, s2);
+        asm.xor(t1, s4, zero);
+        setExpectedValue(t0, 0xF0FF0000);
+        setExpectedValue(t1, 0xFFFFF000);
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+    @Test
+    public void or() throws Exception {
+        initialiseExpectedValues();
+        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        //store values
+        asm.lui(s1, 0xFF0FF000);
+        asm.lui(s2, 0x0FF0F000);
+
+        asm.or(t0, s1, s2);
+        asm.or(t1, s1, zero);
+        setExpectedValue(t0, 0xFFFFF000);
+        setExpectedValue(t1, 0xFF0FF000);
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+    @Test
+    public void and() throws Exception {
+        initialiseExpectedValues();
+        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        //store values
+        asm.lui(s1, 0xAF1F1000);
+        asm.lui(s2, 0xF0FF5000);
+        asm.lui(s3, 0x00000000);
+        asm.lui(s4, 0xFFFFF000);
+
+        asm.and(t0, s1, s2);
+        asm.and(t1, s1, s3);
+        asm.and(t2, s4, s4);
+        setExpectedValue(t0, 0xA01F1000);
+        setExpectedValue(t1, 0x00000000);
+        setExpectedValue(t2, 0xFFFFF000);
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 }
