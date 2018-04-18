@@ -273,9 +273,9 @@ public class RegisterConfigs {
                     Aarch64.r8,  Aarch64.r9,  Aarch64.r10, Aarch64.r11, Aarch64.r12, Aarch64.r13, Aarch64.r14, Aarch64.r15,
                     /*Aarch64.r16, Aarch64.r17, Aarch64.r18,*/
                     Aarch64.r19, Aarch64.r20, Aarch64.r21, Aarch64.r22, Aarch64.r23,
-                    Aarch64.r24, Aarch64.r25, Aarch64.r26,
-                    //r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
-                    /*Aarch64.r27, Aarch64.r28, Aarch64.r29, Aarch64.r30,*/
+                    Aarch64.r24, Aarch64.r25,
+                    //r26:latch register, r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
+                    /*Aarch64.r26, Aarch64.r27, Aarch64.r28, Aarch64.r29, Aarch64.r30,*/
                     //r31:sp||zr
                     /*Aarch64.r31, Aarch64.sp,  Aarch64.zr,*/
                     Aarch64.d0,  Aarch64.d1,  Aarch64.d2,  Aarch64.d3,  Aarch64.d4,  Aarch64.d5,  Aarch64.d6,  Aarch64.d7,
