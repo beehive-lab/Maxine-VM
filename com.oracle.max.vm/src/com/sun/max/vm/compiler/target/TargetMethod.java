@@ -28,6 +28,7 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.asm.target.aarch64.Aarch64InstructionDecoder;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
@@ -729,6 +730,8 @@ public abstract class TargetMethod extends MemoryRegion {
             X86InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
         } else if (platform().isa == ISA.ARM) {
             ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
+        } else if (platform().isa == ISA.Aarch64) {
+            Aarch64InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
         } else {
             throw FatalError.unimplemented();
         }
