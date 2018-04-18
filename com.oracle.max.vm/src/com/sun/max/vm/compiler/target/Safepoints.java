@@ -152,10 +152,11 @@ public final class Safepoints {
      * Mask for extracting position.
      */
 
-    public static final int POS_MASK = Platform.target().arch.isX86() ? (1 << 25) - 1 : (1 << 23) - 1;
+    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isARM() ? 23 : 25;
+    public static final int POS_MASK = (1 << CAUSE_OFFSET_SHIFT) - 1;
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
-    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isX86() ? 25 : 23;
-    private static final int MAX_CAUSE_OFFSET = Platform.target().arch.isX86() ? 7 : 16;
+    // TODO (fz): Consider rasing MAX_CAUSE_OFFSET to 31 for ARM (this is the max we can handle in the reserved bits)
+    private static final int MAX_CAUSE_OFFSET = Platform.target().arch.isARM() ? 16 : 7;
 
     /**
      * Mask for extracting attributes.
@@ -381,9 +382,7 @@ public final class Safepoints {
      * @param callSize size of the call instruction
      */
     public static int safepointPosForCall(int callPos, int callSize) {
-        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM) {
-            return callPos + callSize;
-        } else if (platform().isa == ISA.Aarch64) {
+        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64) {
             return callPos + callSize;
         } else {
             throw FatalError.unimplemented();
@@ -434,6 +433,7 @@ public final class Safepoints {
         assert pos(safepointPos) == safepointPos : "safepoint position out of range";
         assert (attrs & ATTRS_MASK) == attrs;
         int causeOffset = safepointPos - causePos;
+        // TODO (fz): Consider removing the if, since the assertion should hold for online compilation as well
         if (vm().compilationBroker.isOffline()) {
             assert causeOffset >= 0 && causeOffset <= MAX_CAUSE_OFFSET : "cause position out of range";
         }
