@@ -29,6 +29,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.oracle.max.asm.target.aarch64.Aarch64;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.cri.intrinsics.*;
@@ -234,6 +235,9 @@ public class MaxRuntime implements RiRuntime {
             refMapToFPOffset = 0;
         } else if (platform.isa == ISA.ARM) {
             fp = ARMV7.r13;
+            refMapToFPOffset = 0;
+        } else if (platform.isa == ISA.Aarch64) {
+            fp = Aarch64.fp;
             refMapToFPOffset = 0;
         } else {
             throw FatalError.unimplemented();
