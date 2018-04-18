@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * A set of safepoints sorted by their {@linkplain #posAt(int) positions}. The information for each safepoint
- * is encoded in an {@code int} as shown below.
+ * is encoded in an {@code int} as shown below for non-ARMv7.
  * <pre>
  *
  *   0                                            25 26 27 28 29 30 31
@@ -52,7 +52,23 @@ import com.sun.max.vm.runtime.*;
  *
  * The width of the 'position' field supports a code array of up to 32Mb
  *
- * OK so we have to change this for ARM we now ....
+ * And as shown below for ARMv7.
+ * <pre>
+ *
+ *   0                                      23 24 25 26 27 28 29 30 31
+ *  +--------------------------------------+--------------+--+--+--+--+
+ *  |                         position     |              |  |  |  |  |
+ *  +--------------------------------------+--------------+--+--+--+--+
+ *                                                 ^       ^  ^  ^  ^
+ *                                                 |       |  |  |  |
+ *                                                 |       |  |  |  +---- NATIVE_CALL
+ *                                                 |       |  |  +------- INDIRECT_CALL
+ *                                                 |       |  +---------- DIRECT_CALL
+ *                                                 |       +------------- TEMPLATE_CALL
+ *                                                 +--------------------- cause position offset
+ * </pre>
+ *
+ * The width of the 'position' field supports a code array of up to 8Mb
  */
 public final class Safepoints {
 
