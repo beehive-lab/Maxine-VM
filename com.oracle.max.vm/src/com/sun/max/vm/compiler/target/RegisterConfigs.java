@@ -318,7 +318,7 @@ public class RegisterConfigs {
                 roleMap.put(CPU_FP, Aarch64.r29);
                 roleMap.put(ABI_SP, Aarch64.sp);
                 roleMap.put(ABI_FP, Aarch64.r29);
-                roleMap.put(LATCH, Aarch64.r26);
+                roleMap.put(LATCH, Aarch64.LATCH_REGISTER);
 
                 /**
                  * The register configuration for a normal Java method.
@@ -348,7 +348,7 @@ public class RegisterConfigs {
                 standard.stackArg0Offsets[RuntimeCall.ordinal()] = javaStackArg0Offset;
                 standard.stackArg0Offsets[NativeCall.ordinal()] = nativeStackArg0Offset;
 
-                setNonZero(standard.getAttributesMap(), Aarch64.r26, Aarch64.sp, Aarch64.fp);
+                setNonZero(standard.getAttributesMap(), Aarch64.LATCH_REGISTER, Aarch64.sp, Aarch64.fp);
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, calleeSavedRegisters));
                 CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, Aarch64.calleeSavedRegisters));
@@ -377,7 +377,7 @@ public class RegisterConfigs {
                                 Aarch64.allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
 
-                setNonZero(template.getAttributesMap(), Aarch64.r26, Aarch64.sp, Aarch64.r29);
+                setNonZero(template.getAttributesMap(), Aarch64.LATCH_REGISTER, Aarch64.sp, Aarch64.fp);
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
         } else {

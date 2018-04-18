@@ -42,7 +42,7 @@ public final class Aarch64SafepointPoll extends SafepointPoll {
     /**
      * ATTENTION: must be callee-saved by all C ABIs in use.
      */
-    public static final CiRegister LATCH_REGISTER = Aarch64.r26;
+    public static final CiRegister LATCH_REGISTER = Aarch64.LATCH_REGISTER;
 
     @HOSTED_ONLY
     public Aarch64SafepointPoll() {
