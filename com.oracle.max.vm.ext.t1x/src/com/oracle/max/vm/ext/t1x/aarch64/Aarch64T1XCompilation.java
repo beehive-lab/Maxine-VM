@@ -227,15 +227,16 @@ public class Aarch64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignObject(CiRegister dst, Object value) {
-        // XXX Test me
         if (value == null) {
             asm.eor(64, dst, dst, dst);
             return;
         }
+
         int index = objectLiterals.size();
         objectLiterals.add(value);
         patchInfo.addObjectLiteral(buf.position(), index);
-        asm.ldr(64, dst, Aarch64Address.Placeholder);
+        asm.adr(scratch, 0); // this gets patched
+        asm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(scratch));
     }
 
     @Override

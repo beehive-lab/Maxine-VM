@@ -160,14 +160,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         if (constant.isNull()) {
             masm.mov64BitConstant(dst, 0x0);
         } else if (target.inlineObjects) {
-            tasm.recordDataReferenceInCode(constant);
-            masm.mov64BitConstant(dst, 0xDEADDEAD);
+            assert false : "Object inlining not supported";
         } else {
-            masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
-            int currentPC = masm.codeBuffer.position();
-            masm.adr(Aarch64.r17, currentPC);
-            masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r17);
-            masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
+            tasm.recordDataReferenceInCode(constant);
+            masm.adr(rscratch1, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+            masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(rscratch1));
         }
     }
 
@@ -858,6 +855,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 } else {
                     raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                 }
+                masm.adr(rscratch1, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
                 masm.load(Aarch64.d30, raddr, kind);
                 rreg = Aarch64.d30;
             }
@@ -1248,15 +1246,17 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         masm.cmp(32, reg1, c.asInt());
                         break;
                     case Float:
-                        masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
-                        masm.add(32, Aarch64.r16, Aarch64.r16, Aarch64.r15);
-                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
+                        assert false : "not tested";
+                        tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat()));
+                        masm.adr(rscratch1, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(rscratch1));
                         masm.ucomisd(32, reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
                     case Double:
-                        masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
-                        masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r15);
-                        masm.fldr(64, Aarch64.d15, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
+                        assert false : "not tested";
+                        tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble()));
+                        masm.adr(rscratch1, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                        masm.fldr(64, Aarch64.d15, Aarch64Address.createBaseRegisterOnlyAddress(rscratch1));
                         masm.ucomisd(64, reg1, Aarch64.d15, opr1.kind, CiKind.Double);
                         break;
                     case Long: {
@@ -2081,14 +2081,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             masm.xorq(dst, dst);
         } else {
             if (target.inlineObjects) {
-                assert false : "Not implemented yet!";
-                masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
-                masm.mov64BitConstant(Aarch64.r16, 0xdeaddead); // patched?
-                masm.mov(64, dst, Aarch64.r16);
+                assert false : "Object inlining not supported";
             } else {
-                masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
-                masm.add(64, Aarch64.r16, Aarch64.r16, Aarch64.r15);
-                masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
+                tasm.recordDataReferenceInCode(obj);
+                masm.adr(rscratch1, 0); // This gets patched
+                masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(rscratch1));
             }
         }
     }
