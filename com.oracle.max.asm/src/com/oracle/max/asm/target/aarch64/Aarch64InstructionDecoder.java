@@ -26,55 +26,17 @@ package com.oracle.max.asm.target.aarch64;
 
 public final class Aarch64InstructionDecoder {
 
-    private byte[] code;
-    private int currentEndOfInstruction;
-    private int currentDisplacementPosition;
-
-    private Aarch64InstructionDecoder(byte[] code) {
-        this.code = code;
-    }
-
-    public int currentEndOfInstruction() {
-        return currentEndOfInstruction;
-    }
-
-    public int currentDisplacementPosition() {
-        return currentDisplacementPosition;
-    }
-
-    public void decodePosition(int inst) {
-        assert inst >= 0 && inst < code.length;
-        int ip = inst;
-        currentEndOfInstruction = ip + 4; // Aarch64 has 32 bit instructions
-        currentDisplacementPosition = ip;
-    }
-
     public static void patchRelativeInstruction(byte[] code, int codePos, int relative) {
-        Aarch64InstructionDecoder decoder = new Aarch64InstructionDecoder(code);
-        decoder.decodePosition(codePos);
-        int patchPos = decoder.currentDisplacementPosition();
-        int endOfInstruction = decoder.currentEndOfInstruction();
-        int offset = relative - endOfInstruction + codePos;
-        patchDisp32(code, patchPos, offset);
+        patchDisp32(code, codePos, relative);
     }
 
     private static void patchDisp32(byte[] code, int pos, int offset) {
         assert pos + 4 <= code.length;
 
-        int instruction;
-        instruction = Aarch64Assembler.movzHelper(64, Aarch64.r16, offset & 0xFFFF, 0);
+        int instruction = Aarch64Assembler.adrHelper(Aarch64.r16, offset);
         code[pos] = (byte) (instruction & 0xFF);
         code[pos + 1] = (byte) ((instruction >> 8) & 0xFF);
         code[pos + 2] = (byte) ((instruction >> 16) & 0xFF);
         code[pos + 3] = (byte) ((instruction >> 24) & 0xFF);
-
-        offset = offset >> 16;
-        offset = offset & 0xffff;
-
-        instruction = Aarch64Assembler.movkHelper(64, Aarch64.r16, offset, 16);
-        code[pos + 4] = (byte) (instruction & 0xFF);
-        code[pos + 5] = (byte) ((instruction >> 8) & 0xFF);
-        code[pos + 6] = (byte) ((instruction >> 16) & 0xFF);
-        code[pos + 7] = (byte) ((instruction >> 24) & 0xFF);
     }
 }
