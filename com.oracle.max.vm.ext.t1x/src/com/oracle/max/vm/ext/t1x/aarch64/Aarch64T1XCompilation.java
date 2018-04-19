@@ -836,7 +836,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 //int disp = ldrDisp(dispPos, dispFromCodeStart); see below
                 // create a PC relative address in scratch
-                asm.adr(scratch, dispFromCodeStart - buf.position());
+                asm.adr(scratch, dispFromCodeStart - dispPos);
             } else {
                 throw new InternalError("Unknown PatchInfoAARCH64." + tag);
             }
