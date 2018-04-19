@@ -843,11 +843,24 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         }
     }
 
-
     @HOSTED_ONLY
     public static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
-
-        return null;
+        int[] result = {};
+        for (int pos = 0; pos < source.codeLength(); pos++) {
+            for (CiRegister reg : Aarch64.cpuRegisters) {
+                Aarch64Assembler asm = new Aarch64Assembler(target(), null);
+                asm.adr(scratch, dispFromCodeStart - pos);
+                asm.ldr(64, reg, Aarch64Address.createBaseRegisterOnlyAddress(scratch));
+                // pattern must be compatible with Aarch64InstructionDecoder.patchRelativeInstruction
+                byte[] pattern = asm.codeBuffer.close(true);
+                byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
+                if (Arrays.equals(pattern, instr)) {
+                    result = Arrays.copyOf(result, result.length + 1);
+                    result[result.length - 1] = pos;
+                }
+            }
+        }
+        return result;
     }
 
     static class PatchInfoAARCH64 extends PatchInfo {
