@@ -348,27 +348,32 @@ public class Aarch64T1XCompilation extends T1XCompilation {
 
     @Override
     protected int callDirect() {
+        assert false : "Unimplemented";
         return 0;
         // XXX Implement me
     }
 
     @Override
     protected int callDirect(int receiverStackIndex) {
+        assert false : "Unimplemented";
         return 0;
     }
 
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
+        assert false : "Unimplemented";
         return 0;
         // XXX Implement me
     }
 
     @Override
     protected void nullCheck(CiRegister src) {
+        assert false : "Unimplemented";
         // XXX Implement me
     }
 
     private void alignDirectCall(int callPos) {
+        assert false : "Unimplemented";
         // XXX Implement me
     }
 
