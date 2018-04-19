@@ -1571,28 +1571,28 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void store(CiRegister src, CiAddress addr, CiKind kind) {
-        CiAddress address = calculateAddress(addr, kind);
+        Aarch64Address address = calculateAddress(addr, kind);
         switch (kind) {
             case Char:
             case Short:
-                str(16, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                str(16, src, address);
                 break;
             case Object:
             case Long:
-                str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                str(64, src, address);
                 break;
             case Double:
-                fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                fstr(64, src, address);
                 break;
             case Float:
-                fstr(32, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                fstr(32, src, address);
                 break;
             case Int:
-                str(32, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                str(32, src, address);
                 break;
             case Byte:
             case Boolean:
-                str(8, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                str(8, src, address);
                 break;
             default:
                 assert false : "Unknown kind!";
@@ -1616,45 +1616,40 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
     public void load(CiRegister dest, CiAddress addr, CiKind kind) {
-        CiAddress address = calculateAddress(addr, kind);
+        Aarch64Address address = calculateAddress(addr, kind);
 
         switch (kind) {
             case Short:
-//                ldrshw(dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-//                ldrshw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
+                ldrs(64, 16, dest, address);
                 break;
             case Char:
-//                ldruhw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement()));
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                ldr(16, dest, address);
                 break;
             case Boolean:
-            case Byte:
-//                ldrsb(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                ldr(8, dest, address);
                 break;
+            case Byte:
+                ldrs(64, 8, dest, address);
+                break;
+            case Object:
             case Long:
-//                ldrd(ConditionFlag.Always, dest, address.base(), address.displacement);
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                ldr(64, dest, address);
                 break;
             case Double:
-//                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Double, CiKind.Int);
-                fldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                fldr(64, dest, address);
                 break;
             case Float:
-//                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Float, CiKind.Int);
-                fldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                fldr(32, dest, address);
                 break;
             case Int:
-            case Object:
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                ldrs(64, 32, dest, address);
                 break;
             default:
                 assert false : "Unknown kind!";
         }
     }
 
-    private CiAddress calculateAddress(CiAddress addr, CiKind kind) {
+    private Aarch64Address calculateAddress(CiAddress addr, CiKind kind) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
@@ -1732,7 +1727,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             default:
                 assert false : "Unknown state!";
         }
-        return new CiAddress(addr.kind, new CiRegisterValue(CiKind.Int, base), disp);
+        return Aarch64Address.createAddress(addr.kind, IMMEDIATE_UNSCALED, base, Aarch64.zr, disp, false, null);
     }
 
     public void setUpRegister(CiRegister dest, CiAddress addr) {
