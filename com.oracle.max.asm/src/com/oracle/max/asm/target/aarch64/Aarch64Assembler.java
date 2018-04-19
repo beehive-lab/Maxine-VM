@@ -1085,6 +1085,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         addressCalculationInstruction(dst, getPcRelativeImmEncoding(imm21), Instruction.ADRP);
     }
 
+    public static int adrHelper(CiRegister dst, int imm21) {
+        return Instruction.ADR.encoding | PcRelImmOp | rd(dst) | getPcRelativeImmEncoding(imm21);
+    }
+
     /**
      * Adds a 21-bit signed offset to the program counter and writes the result to dst.
      *
@@ -1092,7 +1096,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm21 Signed 21-bit offset.
      */
     public void adr(CiRegister dst, int imm21) {
-        emitInt(Instruction.ADR.encoding | PcRelImmOp | rd(dst) | getPcRelativeImmEncoding(imm21));
+        emitInt(adrHelper(dst, imm21));
     }
 
     /**
@@ -1104,7 +1108,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param pos the position at which to insert the instruction.
      */
     public void adr(CiRegister dst, int imm21, int pos) {
-        codeBuffer.emitInt(Instruction.ADR.encoding | PcRelImmOp | rd(dst) | getPcRelativeImmEncoding(imm21), pos);
+        codeBuffer.emitInt(adrHelper(dst, imm21), pos);
     }
 
     private void addressCalculationInstruction(CiRegister dst, int imm21, Instruction instr) {
