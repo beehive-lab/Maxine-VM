@@ -1514,8 +1514,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         if (C1XOptions.NullCheckUniquePc) {
             masm.nop();
         }
+        tasm.recordImplicitException(codePos(), info);
         masm.nullCheck(src.asRegister());
-        tasm.recordImplicitException(codePos() - 4, info);
     }
 
     @Override
@@ -1849,8 +1849,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 case NullCheck: {
                     CiValue pointer = operands[inst.x().index];
+                    tasm.recordImplicitException(codePos(), info);
                     masm.nullCheck(pointer.asRegister());
-                    tasm.recordImplicitException(codePos() - 4, info);
                     break;
                 }
                 case Align: {

@@ -1763,8 +1763,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
-
     public void nullCheck(CiRegister r) {
-        throw new Error("unimplemented");
+        Aarch64Address address = Aarch64Address.createBaseRegisterOnlyAddress(r);
+        ldr(64, zr, address);
     }
 }
