@@ -949,99 +949,45 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         }
     }
 
+    // TODO (fz): Optimize using logical immediates where possible
     @Override
     protected void emitLogicOp(LIROpcode code, CiValue left, CiValue right, CiValue dst) {
         assert left.isRegister();
         assert dst.isRegister();
-        if (left.kind.isInt()) {
-            CiRegister reg = left.asRegister();
-            if (right.isConstant()) {
+        int size = left.kind.isInt() ? 32 : 64;
+        CiRegister reg = left.asRegister();
+        CiRegister dest = dst.asRegister();
+        CiRegister rright;
+        if (right.isStackSlot()) {
+            // added support for stack operands
+            CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
+            masm.setUpScratch(raddr);
+            masm.ldr(size, rscratch1, Aarch64Address.createBaseRegisterOnlyAddress(rscratch1));
+            rright = rscratch1;
+        } else if (right.isConstant()) {
+            if (left.kind.isInt()) {
                 int val = ((CiConstant) right).asInt();
-                switch (code) {
-                    case LogicAnd:
-                        masm.and(32, dst.asRegister(), reg, val);
-                        break;
-                    case LogicOr:
-                        masm.or(32, dst.asRegister(), reg, val);
-                        break;
-                    case LogicXor:
-                        masm.eor(32, dst.asRegister(), reg, val);
-                        break;
-                    default:
-                        throw Util.shouldNotReachHere();
-                }
-            } else if (right.isStackSlot()) {
-                // added support for stack operands
-                CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
-                masm.setUpScratch(raddr);
-                masm.ldr(32,  Aarch64.r17, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
-                assert reg != Aarch64.r16;
-                switch (code) {
-                    case LogicAnd:
-                        masm.and(32, reg, reg, Aarch64.r17);
-                        break;
-                    case LogicOr:
-                        masm.orr(32, reg, reg, Aarch64.r17, ShiftType.ASR, 0);
-                        break;
-                    case LogicXor:
-                        masm.eor(32, reg, reg, Aarch64.r17);
-                        break;
-                    default:
-                        throw Util.shouldNotReachHere();
-                }
+                masm.mov32BitConstant(rscratch1, val);
             } else {
-                CiRegister rright = right.asRegister();
-                switch (code) {
-                    case LogicAnd:
-                        masm.and(32, dst.asRegister(), reg, rright);
-                        break;
-                    case LogicOr:
-                        masm.or(32, dst.asRegister(), reg, rright);
-                        break;
-                    case LogicXor:
-                        masm.eor(32, dst.asRegister(), reg, rright);
-                        break;
-                    default:
-                        throw Util.shouldNotReachHere();
-                }
-            }
-            moveRegs(reg, dst.asRegister());
-        } else {
-            CiRegister lreg = left.asRegister();
-            if (right.isConstant()) {
                 long val = ((CiConstant) right).asLong();
-                switch (code) {
-                    case LogicAnd:
-                        masm.and(64, dst.asRegister(), lreg, val);
-                        break;
-                    case LogicOr:
-                        masm.or(64, dst.asRegister(), lreg, val);
-                        break;
-                    case LogicXor:
-                        masm.eor(64, dst.asRegister(), lreg, val);
-                        break;
-                    default:
-                        throw Util.shouldNotReachHere();
-                }
-                masm.restoreFromFP(9);
-            } else {
-                CiRegister rreg = right.asRegister();
-                switch (code) {
-                    case LogicAnd:
-                        masm.and(64, dst.asRegister(), lreg, rreg);
-                        break;
-                    case LogicOr:
-                        masm.or(64, dst.asRegister(), lreg, rreg);
-                        break;
-                    case LogicXor:
-                        masm.eor(64, dst.asRegister(), lreg, rreg);
-                        break;
-                    default:
-                        throw Util.shouldNotReachHere();
-                }
+                masm.mov64BitConstant(rscratch1, val);
             }
-            CiRegister dreg = dst.asRegister();
-            moveRegs(lreg, dreg);
+            rright = rscratch1;
+        } else {
+            rright = right.asRegister();
+        }
+        switch (code) {
+            case LogicAnd:
+                masm.and(size, dest, reg, rright);
+                break;
+            case LogicOr:
+                masm.or(size, dest, reg, rright);
+                break;
+            case LogicXor:
+                masm.eor(size, dest, reg, rright);
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
     }
 
