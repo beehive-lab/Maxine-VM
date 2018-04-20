@@ -1186,16 +1186,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         masm.ucomisd(64, reg1, Aarch64.d15, opr1.kind, CiKind.Double);
                         break;
                     case Long: {
-                        if (true) {
-                            throw Util.unimplemented();
-                        }
-
-                        if (c.asLong() == 0) {
-                            masm.eor(64, Aarch64.r17, Aarch64.r17, Aarch64.r17);
-                        } else {
-                            masm.mov64BitConstant(Aarch64.r17, c.asLong());
-                        }
-//                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r17);
+                        masm.cmp(64, reg1, c.asLong());
                         break;
                     }
                     case Object: {
