@@ -1571,7 +1571,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void store(CiRegister src, CiAddress addr, CiKind kind) {
-        Aarch64Address address = calculateAddress(addr, kind);
+        Aarch64Address address = calculateAddress(addr);
         switch (kind) {
             case Char:
             case Short:
@@ -1616,7 +1616,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
     public void load(CiRegister dest, CiAddress addr, CiKind kind) {
-        Aarch64Address address = calculateAddress(addr, kind);
+        Aarch64Address address = calculateAddress(addr);
 
         switch (kind) {
             case Short:
@@ -1649,7 +1649,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
-    private Aarch64Address calculateAddress(CiAddress addr, CiKind kind) {
+    private Aarch64Address calculateAddress(CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
@@ -1663,71 +1663,21 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             base = frameRegister;
         }
 
-        switch (addr.format()) {
-            case BASE:
-                break;
-            case BASE_DISP:
-                if (Aarch64Immediates.isValidDisp(disp, kind)) {
-                    break;
-                } else if (Aarch64Immediates.isValidImmediate(Math.abs(disp))) {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    if (disp >= 0) {
-//                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
-//                    } else {
-//                        sub12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
-//                    }
-//                    base = scratchRegister;
-//                    disp = 0;
-                } else {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    movImmediate(ConditionFlag.Always, scratchRegister, disp);
-//                    addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
-//                    base = scratchRegister;
-//                    disp = 0;
-                }
-                break;
-            case BASE_INDEX:
-                addlsl(scratchRegister, base, index, scale.log2);
-                base = scratchRegister;
-                disp = 0;
-                break;
-            case BASE_INDEX_DISP:
-                if (Aarch64Immediates.isValidDisp(disp, kind)) {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
-//                    base = scratchRegister;
-                } else if (Aarch64Immediates.isValidImmediate(Math.abs(disp))) {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    if (disp > 0) {
-//                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
-//                    } else {
-//                        sub12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
-//                    }
-//                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
-//                    base = scratchRegister;
-//                    disp = 0;
-                } else {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    movImmediate(ConditionFlag.Always, scratchRegister, disp);
-//                    addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
-//                    base = scratchRegister;
-//                    disp = 0;
-                }
-                break;
-            default:
-                assert false : "Unknown state!";
+        if (addr.index.isLegal()) {
+            addlsl(scratchRegister, base, index, scale.log2);
+            base = scratchRegister;
         }
-        return Aarch64Address.createAddress(addr.kind, IMMEDIATE_UNSCALED, base, Aarch64.zr, disp, false, null);
+
+        if (disp != 0) {
+            if (NumUtil.isSignedNbit(9, disp)) {
+                return Aarch64Address.createUnscaledImmediateAddress(base, disp);
+            } else {
+                mov(r17, disp);
+                return Aarch64Address.createRegisterOffsetAddress(base, r17, false);
+            }
+        }
+
+        return Aarch64Address.createBaseRegisterOnlyAddress(base);
     }
 
     public void setUpRegister(CiRegister dest, CiAddress addr) {
