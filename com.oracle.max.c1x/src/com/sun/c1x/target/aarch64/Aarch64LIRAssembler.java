@@ -1319,39 +1319,38 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompare2Int(LIROpcode code, CiValue left, CiValue right, CiValue dst, LIROp2 op) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         if (code == LIROpcode.Cmpfd2i || code == LIROpcode.Ucmpfd2i) {
             if (left.kind.isFloat()) {
-//                masm.cmpss2int(left.asRegister(), right.asRegister(), dst.asRegister(), code == LIROpcode.Ucmpfd2i, left.kind, right.kind);
+                masm.fcmp(32, left.asRegister(), right.asRegister());
             } else if (left.kind.isDouble()) {
-//                masm.cmpsd2int(left.asRegister(), right.asRegister(), dst.asRegister(), code == LIROpcode.Ucmpfd2i, left.kind, right.kind);
+                masm.fcmp(64, left.asRegister(), right.asRegister());
             } else {
                 throw Util.unimplemented("no fpu stack");
             }
         } else {
             assert code == LIROpcode.Cmpl2i;
-            CiRegister dest = dst.asRegister();
-            Label high = new Label();
-            Label done = new Label();
-            Label isEqual = new Label();
-//            masm.lcmpl(ConditionFlag.Equal, left.asRegister(), right.asRegister());
-            masm.branchConditionally(ConditionFlag.EQ, isEqual);
-//            masm.lcmpl(ConditionFlag.SignedGreater, left.asRegister(), right.asRegister());
-            masm.branchConditionally(ConditionFlag.GT, high);
-            masm.xorptr(dest, dest);
-            masm.decrementl(dest, 1);
-            masm.b(done);
-            masm.bind(high);
-            masm.xorptr(dest, dest);
-            masm.incrementl(dest, 1);
-            masm.b(done);
-            masm.bind(isEqual);
-            masm.xorptr(dest, dest);
-            masm.bind(done);
+            masm.cmp(64, left.asRegister(), right.asRegister());
         }
+
+        CiRegister dest = dst.asRegister();
+        Label high = new Label();
+        Label done = new Label();
+        masm.eor(64, dest, dest, dest);
+        masm.branchConditionally(ConditionFlag.EQ, done);
+        masm.branchConditionally(ConditionFlag.GT, high);
+        if (code == LIROpcode.Ucmpfd2i) {
+            masm.add(64, dest, dest, 1);
+        } else {
+            masm.sub(64, dest, dest, 1);
+        }
+        masm.b(done);
+        masm.bind(high);
+        if (code == LIROpcode.Ucmpfd2i) {
+            masm.sub(64, dest, dest, 1);
+        } else {
+            masm.add(64, dest, dest, 1);
+        }
+        masm.bind(done);
     }
 
     @Override
