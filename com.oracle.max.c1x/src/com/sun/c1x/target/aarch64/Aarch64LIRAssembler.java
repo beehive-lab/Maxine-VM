@@ -329,10 +329,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             case Char:
             case Short:
             case Jsr:
-            case Object:
             case Int:
                 masm.store(src.asRegister(), addr, CiKind.Int);
                 break;
+            case Object:
             case Long:
                 masm.store(src.asRegister(), addr, CiKind.Long);
                 break;
@@ -410,7 +410,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     tasm.recordImplicitException(codePos() - 4, info);
                 }
                 break;
-            case Object:
             case Int:
                 if (safepoint) {
                     if (info != null) {
@@ -425,6 +424,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     }
                 }
                 break;
+            case Object:
             case Long:
                 masm.load(dest.asRegister(), addr, kind);
                 if (info != null) {
@@ -1101,8 +1101,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         masm.cmp(32, reg1, opr2.asRegister());
                         break;
                     case Object:
-                        masm.cmp(32, reg1, opr2.asRegister());
-                        break;
                     case Long:
                         assert (reg1 != Aarch64.r16);
                         masm.cmp(64, reg1, opr2.asRegister());
