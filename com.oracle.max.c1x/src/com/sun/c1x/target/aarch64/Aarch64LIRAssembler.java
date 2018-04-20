@@ -236,27 +236,23 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             case Short:
             case Jsr:
             case Int:
-                masm.mov64BitConstant(Aarch64.r17, c.asInt());
-                masm.store(Aarch64.r17, address, CiKind.Int);
+                masm.mov32BitConstant(rscratch1, c.asInt());
+                masm.store(rscratch1, address, CiKind.Int);
                 break;
             case Float:
-                masm.mov64BitConstant(Aarch64.r17, Float.floatToRawIntBits(c.asFloat()));
-                masm.store(Aarch64.r17, address, CiKind.Int);
+                masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(c.asFloat()));
+                masm.store(rscratch1, address, CiKind.Int);
                 break;
             case Object:
                 movoop(frameMap.toStackAddress(slot), c);
                 break;
             case Long:
-                masm.saveInFP(9);
-                masm.mov64BitConstant(Aarch64.r17, c.asLong());
-                masm.store(Aarch64.r17, address, CiKind.Long);
-                masm.restoreFromFP(9);
+                masm.mov64BitConstant(rscratch1, c.asLong());
+                masm.store(rscratch1, address, CiKind.Long);
                 break;
             case Double:
-                masm.saveInFP(9);
-                masm.mov64BitConstant(Aarch64.r17, Double.doubleToRawLongBits(c.asDouble()));
-                masm.store(Aarch64.r17, address, CiKind.Long);
-                masm.restoreFromFP(9);
+                masm.mov64BitConstant(rscratch1, Double.doubleToRawLongBits(c.asDouble()));
+                masm.store(rscratch1, address, CiKind.Long);
                 break;
             default:
                 throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
