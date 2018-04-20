@@ -1594,15 +1594,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         mrs(Aarch64.r15, SystemRegister.SPSR_EL1);
     }
 
-    public void restoreFromFP(int reg) {
-        fmov(64, Aarch64.cpuRegisters[reg], Aarch64.d28);
-    }
-
-    public void saveInFP(int reg) {
-        fmov(64, Aarch64.d28, Aarch64.cpuRegisters[reg]);
-    }
-
-    // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
     public void load(CiRegister dest, CiAddress addr, CiKind kind) {
         Aarch64Address address = calculateAddress(addr);
 

@@ -383,10 +383,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     @Override
     protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
         if (src.kind == CiKind.Long || src.kind == CiKind.Double) {
-            masm.saveInFP(9);
             masm.load(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) src), CiKind.Long);
             masm.store(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Long);
-            masm.restoreFromFP(9);
         } else {
             masm.load(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) src), CiKind.Int);
             masm.store(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Int);
@@ -1194,14 +1192,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                             throw Util.unimplemented();
                         }
 
-                        masm.saveInFP(9);
                         if (c.asLong() == 0) {
                             masm.eor(64, Aarch64.r17, Aarch64.r17, Aarch64.r17);
                         } else {
                             masm.mov64BitConstant(Aarch64.r17, c.asLong());
                         }
 //                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r17);
-                        masm.restoreFromFP(9);
                         break;
                     }
                     case Object: {
