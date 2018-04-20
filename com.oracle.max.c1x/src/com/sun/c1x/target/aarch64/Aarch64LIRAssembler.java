@@ -227,8 +227,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         CiStackSlot slot = (CiStackSlot) dst;
         CiConstant c = (CiConstant) src;
 
-        // Checkstyle: off
         CiAddress address = frameMap.toStackAddress(slot);
+        CiKind kind = CiKind.Long;
         switch (c.kind) {
             case Boolean:
             case Byte:
@@ -237,28 +237,25 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             case Jsr:
             case Int:
                 masm.mov32BitConstant(rscratch1, c.asInt());
-                masm.store(rscratch1, address, CiKind.Int);
+                kind = CiKind.Int;
                 break;
             case Float:
                 masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(c.asFloat()));
-                masm.store(rscratch1, address, CiKind.Int);
+                kind = CiKind.Int;
                 break;
             case Object:
                 movoop(rscratch1, c);
-                masm.store(rscratch1, address, CiKind.Long);
                 break;
             case Long:
                 masm.mov64BitConstant(rscratch1, c.asLong());
-                masm.store(rscratch1, address, CiKind.Long);
                 break;
             case Double:
                 masm.mov64BitConstant(rscratch1, Double.doubleToRawLongBits(c.asDouble()));
-                masm.store(rscratch1, address, CiKind.Long);
                 break;
             default:
                 throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
         }
-        // Checkstyle: on
+        masm.store(rscratch1, address, kind);
     }
 
     @Override
