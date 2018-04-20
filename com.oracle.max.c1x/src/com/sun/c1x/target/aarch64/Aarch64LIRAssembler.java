@@ -148,17 +148,17 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, int constant) {
-        masm.mov64BitConstant(dst, constant);
+        masm.mov32BitConstant(dst, constant);
     }
 
-    private void const2reg(CiRegister dst, long constant, CiKind dstKind) {
-        masm.movlong(dst, constant, dstKind);
+    private void const2reg(CiRegister dst, long constant) {
+        masm.mov64BitConstant(dst, constant);
     }
 
     private void const2reg(CiRegister dst, CiConstant constant) {
         assert constant.kind == CiKind.Object;
         if (constant.isNull()) {
-            masm.mov64BitConstant(dst, 0x0);
+            masm.eor(64, dst, dst, dst);
         } else if (target.inlineObjects) {
             assert false : "Object inlining not supported";
         } else {
@@ -176,13 +176,14 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         masm.nop(8);
     }
 
-    private void const2reg(CiRegister dst, float constant, CiKind dstKind) {
+    private void const2reg(CiRegister dst, float constant) {
         masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(constant));
         masm.fmov(32, dst, rscratch1);
     }
 
-    private void const2reg(CiRegister dst, double constant, CiKind dstKind) {
-        masm.movlong(dst, Double.doubleToRawLongBits(constant), dstKind);
+    private void const2reg(CiRegister dst, double constant) {
+        masm.mov64BitConstant(rscratch1, Double.doubleToRawLongBits(constant));
+        masm.fmov(64, dst, rscratch1);
     }
 
     @Override
@@ -202,16 +203,16 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 const2reg(dest.asRegister(), c.asInt());
                 break;
             case Long:
-                const2reg(dest.asRegister(), c.asLong(), dest.kind);
+                const2reg(dest.asRegister(), c.asLong());
                 break;
             case Object:
                 const2reg(dest.asRegister(), c);
                 break;
             case Float:
-                const2reg(dest.asRegister(), c.asFloat(), dest.kind);
+                const2reg(dest.asRegister(), c.asFloat());
                 break;
             case Double:
-                const2reg(dest.asRegister(), c.asDouble(), dest.kind);
+                const2reg(dest.asRegister(), c.asDouble());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -247,13 +248,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 break;
             case Long:
                 masm.saveInFP(9);
-                masm.movlong(Aarch64.r17, c.asLong(), CiKind.Long);
+                masm.mov64BitConstant(Aarch64.r17, c.asLong());
                 masm.store(Aarch64.r17, address, CiKind.Long);
                 masm.restoreFromFP(9);
                 break;
             case Double:
                 masm.saveInFP(9);
-                masm.movlong(Aarch64.r17, Double.doubleToRawLongBits(c.asDouble()), CiKind.Long);
+                masm.mov64BitConstant(Aarch64.r17, Double.doubleToRawLongBits(c.asDouble()));
                 masm.store(Aarch64.r17, address, CiKind.Long);
                 masm.restoreFromFP(9);
                 break;
@@ -299,14 +300,14 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 break;
             case Long:
                 masm.saveInFP(9);
-                masm.movlong(Aarch64.r17, constant.asLong(), CiKind.Long);
+                masm.mov64BitConstant(Aarch64.r17, constant.asLong());
                 masm.store(Aarch64.r17, addr, CiKind.Long);
                 nullCheckHere = codePos() - 4;
                 masm.restoreFromFP(9);
                 break;
             case Double:
                 masm.saveInFP(9);
-                masm.movlong(Aarch64.r17, Double.doubleToRawLongBits(constant.asDouble()), CiKind.Long);
+                masm.mov64BitConstant(Aarch64.r17, Double.doubleToRawLongBits(constant.asDouble()));
                 masm.store(Aarch64.r17, addr, CiKind.Long);
                 masm.restoreFromFP(9);
                 break;
@@ -1212,9 +1213,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
                         masm.saveInFP(9);
                         if (c.asLong() == 0) {
-                            masm.movlong(Aarch64.r17, 0, CiKind.Long);
+                            masm.eor(64, Aarch64.r17, Aarch64.r17, Aarch64.r17);
                         } else {
-                            masm.movlong(Aarch64.r17, c.asLong(), CiKind.Long);
+                            masm.mov64BitConstant(Aarch64.r17, c.asLong());
                         }
 //                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r17);
                         masm.restoreFromFP(9);

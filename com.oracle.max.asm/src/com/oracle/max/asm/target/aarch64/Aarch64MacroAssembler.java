@@ -1558,18 +1558,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         mov(64, src2, tmp);
     }
 
-    public void movlong(CiRegister dst, long src, CiKind dstKind) {
-        if (dstKind.isGeneral()) {
-            mov64BitConstant(dst, src);
-        } else {
-            assert dstKind.isDouble() : "Dst reg must be double";
-            saveInFP(9);
-            mov64BitConstant(Aarch64.r17, src);
-            fmov(64, dst, Aarch64.r17);
-            restoreFromFP(9);
-        }
-    }
-
     public void store(CiRegister src, CiAddress addr, CiKind kind) {
         Aarch64Address address = calculateAddress(addr);
         switch (kind) {
