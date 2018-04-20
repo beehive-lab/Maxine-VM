@@ -1304,7 +1304,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 super.subs(size, Aarch64.zr, x, (int) y);
             }
         } else {
-            if (y < Integer.MAX_VALUE && y > Integer.MIN_VALUE) {
+            if (y <= Integer.MAX_VALUE && y >= Integer.MIN_VALUE) {
                 mov32BitConstant(scratchRegister, y);
             } else {
                 assert size == 64;
