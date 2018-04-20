@@ -264,56 +264,44 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert dst.isAddress();
         CiConstant constant = (CiConstant) src;
         CiAddress addr = asAddress(dst);
-        int nullCheckHere = codePos();
+        CiKind storeKind = CiKind.Int;
 
-        // Checkstyle: off
         switch (kind) {
             case Boolean:
             case Byte:
+                masm.movz(64, rscratch1, constant.asInt() & 0xFF, 0);
+                break;
             case Char:
             case Short:
+                masm.movz(64, rscratch1, constant.asInt() & 0xFFFF, 0);
+                break;
             case Jsr:
             case Int:
-                if (kind == CiKind.Boolean || kind == CiKind.Byte) {
-                    masm.mov64BitConstant(Aarch64.r17, constant.asInt() & 0xFF);
-                } else if (kind == CiKind.Char || kind == CiKind.Short) {
-                    masm.mov64BitConstant(Aarch64.r17, constant.asInt() & 0xFFFF);
-                } else {
-                    masm.mov64BitConstant(Aarch64.r17, constant.asInt());
-                }
-                masm.store(Aarch64.r17, addr, CiKind.Int);
-                nullCheckHere = codePos() - 4;
+                masm.mov32BitConstant(rscratch1, constant.asInt());
                 break;
             case Float:
-                masm.mov64BitConstant(Aarch64.r17, Float.floatToRawIntBits(constant.asFloat()));
-                masm.store(Aarch64.r17, addr, CiKind.Int);
-                nullCheckHere = codePos() - 4;
+                masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(constant.asFloat()));
                 break;
             case Object:
                 movoop(rscratch1, constant);
-                masm.store(rscratch1, addr, CiKind.Int);
+                storeKind = CiKind.Long;
                 break;
             case Long:
-                masm.saveInFP(9);
-                masm.mov64BitConstant(Aarch64.r17, constant.asLong());
-                masm.store(Aarch64.r17, addr, CiKind.Long);
-                nullCheckHere = codePos() - 4;
-                masm.restoreFromFP(9);
+                masm.mov64BitConstant(rscratch1, constant.asLong());
+                storeKind = CiKind.Long;
                 break;
             case Double:
-                masm.saveInFP(9);
-                masm.mov64BitConstant(Aarch64.r17, Double.doubleToRawLongBits(constant.asDouble()));
-                masm.store(Aarch64.r17, addr, CiKind.Long);
-                masm.restoreFromFP(9);
+                masm.mov64BitConstant(rscratch1, Double.doubleToRawLongBits(constant.asDouble()));
+                storeKind = CiKind.Long;
                 break;
             default:
                 throw Util.shouldNotReachHere();
         }
-        // Checkstyle: on
 
         if (info != null) {
-            tasm.recordImplicitException(nullCheckHere, info);
+            tasm.recordImplicitException(codePos(), info);
         }
+        masm.store(rscratch1, addr, storeKind);
     }
 
     @Override
