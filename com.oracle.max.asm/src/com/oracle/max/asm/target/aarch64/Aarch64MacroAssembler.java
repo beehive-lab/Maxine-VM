@@ -1628,7 +1628,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         int disp = addr.displacement;
 
         assert addr != CiAddress.Placeholder;
-        assert !(base.isValid() && disp == 0 && base.compareTo(Aarch64.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
         if (base == CiRegister.Frame) {
