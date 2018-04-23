@@ -1925,10 +1925,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 movoop(scratchRegister, c);
                 masm.store(scratchRegister, dst, CiKind.Object);
             } else {
-                if (true) {
-                    throw Util.unimplemented();
-                }
-//                masm.movptr(dst, c.asInt());
+                masm.mov32BitConstant(scratchRegister, c.asInt());
+                masm.store(scratchRegister, dst, CiKind.Int);
             }
         } else if (registerOrConstant.isRegister()) {
             masm.store(registerOrConstant.asRegister(), dst, k);
