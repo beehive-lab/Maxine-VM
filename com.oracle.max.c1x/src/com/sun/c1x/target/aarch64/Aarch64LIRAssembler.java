@@ -395,65 +395,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     protected void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         assert src.isAddress();
         assert dest.isRegister() : "dest=" + dest;
+
         CiAddress addr = (CiAddress) src;
-        boolean safepoint = (addr.base().isValid() && addr.displacement == 0 && addr.base().compareTo(Aarch64.LATCH_REGISTER) == 0) ? true : false;
-        assert !(!safepoint && dest.asRegister().equals(Aarch64.LATCH_REGISTER));
-        if (addr.base().compareTo(Aarch64.LATCH_REGISTER) == 0 && addr.displacement == 0) {
-            assert dest.asRegister().equals(Aarch64.LATCH_REGISTER) : dest.asRegister().number;
+        if (info != null) {
+            tasm.recordImplicitException(codePos(), info);
         }
-        // Checkstyle: off
-        switch (kind) {
-            case Float:
-            case Double:
-                masm.load(dest.asRegister(), addr, kind);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos() - 4, info);
-                }
-                break;
-            case Int:
-                if (safepoint) {
-                    if (info != null) {
-                        tasm.recordImplicitException(codePos(), info);
-                    }
-                    masm.ldr(32, dest.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.LATCH_REGISTER));
-                } else {
-                    masm.setUpScratch(addr);
-                    masm.ldr(32, dest.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(safepoint ? Aarch64.LATCH_REGISTER : Aarch64.r16));
-                    if (info != null) {
-                        tasm.recordImplicitException(codePos() - 4, info);
-                    }
-                }
-                break;
-            case Object:
-            case Long:
-                masm.load(dest.asRegister(), addr, kind);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos() - 4, info);
-                }
-                break;
-            case Boolean:
-            case Byte:
-                masm.load(dest.asRegister(), addr, kind);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos() - 4, info);
-                }
-                break;
-            case Char:
-                masm.load(dest.asRegister(), addr, kind);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos() - 4, info);
-                }
-                break;
-            case Short:
-                masm.load(dest.asRegister(), addr, kind);
-                if (info != null) {
-                    tasm.recordImplicitException(codePos() - 4, info);
-                }
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
+        masm.load(dest.asRegister(), addr, kind);
     }
 
     @Override
