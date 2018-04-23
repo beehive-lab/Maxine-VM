@@ -2514,9 +2514,59 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.Aarch64) {
+            CiRegisterConfig registerConfig = registerConfigs.uncommonTrapStub;
+            Aarch64MacroAssembler masm = new Aarch64MacroAssembler(target(), registerConfig);
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = platform().target.alignFrameSize(csl.size);
+            int frameToCSA = csl.frameOffsetToCSA;
+
+            for (int i = 0; i < prologueSize; ++i) {
+                masm.nop();
+            }
+
+            // now allocate the frame for this method
+            masm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
+
+            // save all the registers
+            masm.save(csl, frameToCSA);
+
             String name = "uncommonTrap";
+
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-            return new Stub(UncommonTrapStub, "", 0, new byte[] {}, 0, 0, uncommonTrap.classMethodActor, 0);
+
+            CiValue[] args = registerConfig.getCallingConvention(JavaCall,
+                    new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()},
+                    target(), false).locations;
+
+            // Copy callee save area address into arg 0 (i.e. 'csa')
+            CiRegister arg0 = args[0].asRegister();
+            masm.leaq(arg0, new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameToCSA));
+
+            // Copy return address into arg 1 (i.e. 'ip')
+            CiRegister arg1 = args[1].asRegister();
+            masm.load(arg1, new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize), WordUtil.archKind());
+
+            // Copy stack pointer into arg 2 (i.e. 'sp')
+            CiRegister arg2 = args[2].asRegister();
+            masm.leaq(arg2, new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize + 8));
+
+            // Copy original frame pointer into arg 3 (i.e. 'fp')
+            CiRegister arg3 = args[3].asRegister();
+            masm.mov(64, arg3, Aarch64.fp);
+
+            masm.alignForPatchableDirectCall();
+            int callPos = masm.codeBuffer.position();
+            ClassMethodActor callee = uncommonTrap.classMethodActor;
+            masm.call();
+            int callSize = masm.codeBuffer.position() - callPos;
+
+            // Should never reach here
+            int registerRestoreEpilogueOffset = masm.codeBuffer.position();
+            masm.hlt();
+
+            String stubName = name + "Stub";
+            byte[] code = masm.codeBuffer.close(true);
+            return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
             throw FatalError.unimplemented();
         }
