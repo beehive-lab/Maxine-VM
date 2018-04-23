@@ -630,31 +630,28 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
     }
 
     private static void adapt(Aarch64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
-        // Checkstyle: stop
         switch(kind.asEnum) {
             case BYTE:
             case BOOLEAN:
             case SHORT:
             case CHAR:
             case INT:
-                masm.str(32, reg, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, offset32));
+                masm.str(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
                 break;
             case WORD:
             case REFERENCE:
             case LONG:
-                masm.str(64, reg, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, offset32));
+                masm.str(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
                 break;
             case FLOAT:
-                masm.fstr(32, reg, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, offset32));
+                masm.fstr(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
                 break;
             case DOUBLE:
-                masm.fstr(64, reg, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, offset32));
+                masm.fstr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
                 break;
             default :
                 throw ProgramError.unexpected("Bad case");
         }
-        // Checkstyle: resume
-
     }
 
     /**
