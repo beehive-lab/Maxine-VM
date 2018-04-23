@@ -38,6 +38,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.code.CodeManager.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.runtime.*;
@@ -296,6 +297,8 @@ public final class Stub extends TargetMethod {
             return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (platform().isa == ISA.Aarch64) {
+            return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
             throw FatalError.unimplemented();
         }
