@@ -1676,7 +1676,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 base = frameRegister;
             }
             if (disp != 0) {
-                mov64BitConstant(dest, disp);
+                mov32BitConstant(dest, disp);
                 add(64, dest, dest, base);
                 if (index.isValid()) {
                     addlsl(dest, dest, index, scale.log2);
