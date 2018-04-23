@@ -1664,30 +1664,32 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
         if (addr == CiAddress.Placeholder) {
-            nop(6);
+            nop(4);
             return;
         }
 
         assert !(base.isValid() && disp == 0 && base.compareTo(Aarch64.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
-        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
-            if (base == CiRegister.Frame) {
-                base = frameRegister;
-            }
-            if (disp != 0) {
+        if (base == CiRegister.Frame) {
+            base = frameRegister;
+        }
+
+        assert base.isValid();
+
+        if (disp != 0) {
+            if (isAimm(Math.abs(disp))) {
+                add(64, dest, base, disp);
+            } else {
                 mov32BitConstant(dest, disp);
                 add(64, dest, dest, base);
-                if (index.isValid()) {
-                    addlsl(dest, dest, index, scale.log2);
-                }
-            } else {
-                if (index.isValid()) {
-                    addlsl(dest, base, index, scale.log2);
-                } else {
-                    mov(64, dest, base);
-                }
             }
+            base = dest;
+        } else if (!index.isValid()) {
+            mov(64, dest, base);
+        }
+        if (index.isValid()) {
+            addlsl(dest, base, index, scale.log2);
         }
     }
 
