@@ -666,25 +666,23 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
-        CiRegisterValue frame = frameRegister.asValue();
         for (CiRegister r : csl.registers) {
-            int offset = csl.offsetOf(r);
-            int displacement = offset + frameToCSA;
-            int add = (displacement < 0) ? 0 : 1;
-            if (displacement < 1020 && displacement > -1020) {
-                if (r.isCpu()) {
-                    ldr(64, r, Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement));
-                } else if (r.isFpu()) {
-                    fldr(64, r, Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement));
-                }
-            } else {
-                setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
-                if (r.isCpu()) {
-                    ldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
-                } else if (r.isFpu()) {
-                    fldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
-                }
+            int displacement = csl.offsetOf(r) + frameToCSA;
+            final Aarch64Address address = getAddressInFrame(displacement);
+            if (r.isCpu()) {
+                ldr(64, r, address);
+            } else if (r.isFpu()) {
+                fldr(64, r, address);
             }
+        }
+    }
+
+    private Aarch64Address getAddressInFrame(int displacement) {
+        if (NumUtil.isSignedNbit(9, displacement)) {
+            return Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement);
+        } else {
+            mov32BitConstant(scratchRegister, displacement);
+            return Aarch64Address.createRegisterOffsetAddress(frameRegister, scratchRegister, false);
         }
     }
 
@@ -1418,17 +1416,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void save(CiCalleeSaveLayout csl, int frameToCSA) {
         for (CiRegister r : csl.registers) {
             int displacement = frameToCSA + csl.offsetOf(r);
-            Aarch64Address address;
-//            System.out.println("@save");
-//            System.out.println("@save reg: " + r.name + " num: " + r.number);
-//            System.out.println("@save frameToCSA: " + frameToCSA);
-//            System.out.println("@save offset:     " + csl.offsetOf(r));
-            if (NumUtil.isSignedNbit(9, displacement)) {
-                address = Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement);
-            } else {
-                mov32BitConstant(scratchRegister, displacement);
-                address = Aarch64Address.createRegisterOffsetAddress(frameRegister, scratchRegister, false);
-            }
+            final Aarch64Address address = getAddressInFrame(displacement);
             if (r.isCpu()) {
                 str(64, r, address);
             } else {
