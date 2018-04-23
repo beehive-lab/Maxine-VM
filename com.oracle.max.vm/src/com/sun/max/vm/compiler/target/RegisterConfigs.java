@@ -330,7 +330,7 @@ public class RegisterConfigs {
                                 Aarch64.r0,          // integral return value
                                 Aarch64.d0,          // floating point return value
                                 Aarch64.r16,         // scratch
-                                null,                // scratch 1
+                                Aarch64.r17,         // scratch 1
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
                                 parameters,          // parameter registers
