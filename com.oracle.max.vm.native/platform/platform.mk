@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, APT Group, School of Computer Science,
+# Copyright (c) 2017-2018, APT Group, School of Computer Science,
 # The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,9 +19,9 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-# Currently all Maxine target implementations are 64 bit. 
+# Currently all Maxine target implementations are 64 bit.
 # This is where you might change that for the native code; TARGET_WORD_SIZE is interpreted in word.h
-# N.B. There are no doubt still assumptions in the code that host and target word size are the same. 
+# N.B. There are no doubt still assumptions in the code that host and target word size are the same.
 # These should be fixed.
 
 TARGET_WORD_SIZE := w64
@@ -49,7 +49,7 @@ endif
 # HOSTOS is the platform we are compiling on
 HOSTOS = $(shell uname -s)
 # TARGETOS is the platform we are compiling for (usually the same as HOSTOS)
-# Set TARGETOS explicitly to cross-compile for a different target 
+# Set TARGETOS explicitly to cross-compile for a different target
 # (required for Maxine VE when building tele/inspector)
 TARGETOS ?= $(shell uname -s)
 DARWIN_RELEASE ?= $(shell echo $$(($$(uname -r | cut -d'.' -f 1) > 13 ? 1 : 0)))
@@ -60,15 +60,15 @@ ifeq ($(TARGETOS),Darwin)
     a := $(shell uname -p)
     ifeq ($a,i386)
         mach := $(shell ls /usr/include/mach/x86_64)
-        ifneq ($(mach), ) 
-    	        DARWIN_GCC_MFLAG := -m64
+        ifneq ($(mach), )
+            DARWIN_GCC_MFLAG := -m64
             ISA := amd64
         else
-        	    ifeq ($(DARWIN_RELEASE),1)
-        		    DARWIN_GCC_MFLAG := -m64 -DMaverick
-    	    	        ISA := amd64
-           	else
-            	    ISA := ia32
+            ifeq ($(DARWIN_RELEASE),1)
+                DARWIN_GCC_MFLAG := -m64 -DMaverick
+                ISA := amd64
+            else
+                ISA := ia32
             endif
         endif
     else
@@ -83,18 +83,19 @@ endif
 ifeq ($(TARGETOS),Linux)
     OS := linux
     a := $(shell uname -m)
-    ifeq ($a,x86_64)
+    ifeq ($a, x86_64)
         ISA := amd64
-    else 
-        ifeq ($a, x86)
-            ISA := ia32
-            $(shell echo $ISA)
-        else
-            ISA := $a
-            ISA := arm
-            OTHER_CFLAGS := -marm -O0 -g -mcpu=cortex-a9
-            TARGET_WORD_SIZE := w32
-        endif
+    endif
+    ifeq ($a, x86)
+        ISA := ia32
+    endif
+    ifeq ($a, aarch64)
+        ISA := aarch64
+    endif
+    ifeq ($a, armv7l)
+        ISA := arm
+        OTHER_CFLAGS := -marm -O0 -g -mcpu=cortex-a9
+        TARGET_WORD_SIZE := w32
     endif
 endif
 
@@ -162,7 +163,7 @@ ifndef OS
     $(error unknown OS)
 endif
 
-ifndef ISA 
+ifndef ISA
     $(error unknown ISA)
 endif
 
@@ -190,7 +191,7 @@ endif
 ifeq ($(OS),darwin)
     ifneq "$(findstring def, $(origin CC))" ""
         # origin of CC is either undefined or default, so set it here
-        CC = gcc 
+        CC = gcc
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
@@ -201,16 +202,16 @@ ifeq ($(OS),darwin)
     # The version linker flags below are required by libjava.jnilib which expects the jvm shared
     # library to have a certain version number.
     ifdef JDK
-    	LINK_LIB = $(CC) -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
-        	-Xlinker -compatibility_version -Xlinker 1.0.0 \
-        	-Xlinker -rpath -Xlinker $(shell mkdir -p $(PROJECT)/generated/$(OS) && cd $(PROJECT)/generated/$(OS) && /bin/pwd) \
-        	-Xlinker -current_version -Xlinker 1.0.0 \
-        	-lc -lm
+        LINK_LIB = $(CC) -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
+            -Xlinker -compatibility_version -Xlinker 1.0.0 \
+            -Xlinker -rpath -Xlinker $(shell mkdir -p $(PROJECT)/generated/$(OS) && cd $(PROJECT)/generated/$(OS) && /bin/pwd) \
+            -Xlinker -current_version -Xlinker 1.0.0 \
+            -lc -lm
     else
-    	LINK_LIB = $(CC) -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
-        	-Xlinker -compatibility_version -Xlinker 1.0.0 \
-        	-Xlinker -current_version -Xlinker 1.0.0 \
-        	-lc -lm
+        LINK_LIB = $(CC) -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
+            -Xlinker -compatibility_version -Xlinker 1.0.0 \
+            -Xlinker -current_version -Xlinker 1.0.0 \
+            -lc -lm
     endif
     LIB_PREFIX = lib
     LIB_SUFFIX = .dylib
@@ -234,22 +235,22 @@ ifeq ($(OS),linux)
     # yellow guard page (for detecting stack overflow) has been mprotected. Without
     # this flag, the main thread's complete stack (including the guard page) is
     # mprotected with PROT_READ, PROT_WRITE, PROT_EXEC when dlopen() is called to
-    # open libjava.so. 
+    # open libjava.so.
     LINK_MAIN = $(CC) -z execstack -g -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
     # Libraries must be specified after the actual source files, so the POSTFIX variable is used for that
     # (Introduced to solve a linking problem on Ubuntu 11.10)
-    ifeq ($(ISA),arm) 
-    	LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
+    ifeq ($(ISA),arm)
+        LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
     endif
     ifneq ($(ISA),arm)
-    	LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
+        LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
     endif
     LINK_LIB = $(CC) -g -shared
     ifeq ($(ISA),arm)
-    	LINK_LIB_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
+        LINK_LIB_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
     endif
     ifneq ($(ISA),arm)
-    	LINK_LIB_POSTFIX = -lc -lm -lpthread 
+        LINK_LIB_POSTFIX = -lc -lm -lpthread
     endif
     LIB_PREFIX = lib
     LIB_SUFFIX = .so
@@ -258,13 +259,13 @@ endif
 ifeq ($(OS),solaris)
     ifneq "$(findstring def, $(origin CC))" ""
         # origin of CC is either undefined or default, so set it here
-        CC = cc 
+        CC = cc
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
         CFLAGS = -g -xc99 -errwarn -errtags -errfmt=error $(KPIC_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) -D$(TARGET_WORD_SIZE) $(OTHER_CFLAGS) $(JDK)
     endif
-    C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) 
+    C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     # The '-R' linker option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
     # find Maxine's version of the libjvm.so library.
     LINK_MAIN = $(CC) $(ARCH_FLAG) -lc -lthread -ldl -R$(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
@@ -277,7 +278,7 @@ ifeq ($(OS),windows)
     # determine predefined macros: touch foo.c; gcc -E -dD foo.c
     ifneq "$(findstring def, $(origin CC))" ""
         # origin of CC is either undefined or default, so set it here
-        CC = gcc 
+        CC = gcc
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
@@ -304,7 +305,7 @@ ifeq ($(OS),maxve)
     endif
     ifneq "$(findstring def, $(origin CC))" ""
         # origin of CC is either undefined or default, so set it here
-        CC = gcc 
+        CC = gcc
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
@@ -315,7 +316,7 @@ ifeq ($(OS),maxve)
     endif
     C_DEPENDENCIES_FLAGS = -M -DMAXVE -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     ifeq ($(HOSTOS),Linux)
-        CFLAGS += -fno-stack-protector 
+        CFLAGS += -fno-stack-protector
     endif
     LIB_PREFIX = lib
     LIB_SUFFIX = .so
@@ -325,7 +326,7 @@ ifeq ($(OS),maxve)
     else
         AR = gar
     endif
-    
+
     LINK_AR = $(AR) r $(LIB_PREFIX)$(LIB)$(LIBA_SUFFIX)
     ifeq ($(GUK),1)
         XG_ROOT = $(XEN_ROOT)/tools/debugger/gdbsx/xg
@@ -345,7 +346,7 @@ endif
 
 
 ifeq ($(OS),maxve)
-    # no maxve in your typical JAVA_HOME so have to use host 
+    # no maxve in your typical JAVA_HOME so have to use host
     ifeq ($(HOSTOS),Darwin)
         HOSTOS_LC = darwin
     endif
@@ -358,25 +359,25 @@ ifeq ($(OS),maxve)
     JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(HOSTOS_LC)
     JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)
     # if we are building TELE need access to Xen debugger header
-    ifeq ($(TARGET),TELE) 
+    ifeq ($(TARGET),TELE)
         ifndef XEN_ROOT
             ignore := $(error "Must set XEN_ROOT environment variable to root of your Xen source tree")
         endif
         CFLAGS += -I $(XEN_ROOT)/tools/debugger/gdbsx/xg
     endif
-    
+
 else
     ifeq ($(OS),darwin)
-	ifdef JDK
+        ifdef JDK
              JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
              JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)
-	else
+        else
             JNI_H_PATH=$(shell ls $(foreach base, /Developer/SDKs/MacOSX10.*.sdk/ ,$(base)System/Library/Frameworks/JavaVM.framework/Versions/*/Headers/jni.h) 2>/dev/null | tail -1)
             ifeq "$(JNI_H_PATH)" ""
                  JNI_H_PATH=$(shell ls $(foreach base, / ,$(base)System/Library/Frameworks/JavaVM.framework/Versions/*/Headers/jni.h) 2>/dev/null | tail -1)
             endif
             JNI_INCLUDES = -I $(dir $(JNI_H_PATH))
-	endif
+        endif
     else
         JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
         JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)

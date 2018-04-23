@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -52,7 +54,7 @@
 #define GET_BIG_ENDIAN_DATUM(src, type) return *((type *) src);
 #define PUT_BIG_ENDIAN_DATUM(dst, type) do { *((type *) dst) = value; } while(0)
 #define GET_LITTLE_ENDIAN_DATUM(src, type) do { \
-        int i; \
+        unsigned int i; \
         type result = 0; \
         Byte *srcByte = (Byte *) src; \
         for (i = 0; i < sizeof(type); i++) { \
@@ -61,7 +63,7 @@
         return result; \
     } while(0)
 #define PUT_LITTLE_ENDIAN_DATUM(dst, type) do { \
-        int i; \
+        unsigned int i; \
         Byte *dstByte = (Byte *) dst; \
         for (i = 0; i < sizeof(type); i++) { \
             *dstByte++ = (value & 0xff); \

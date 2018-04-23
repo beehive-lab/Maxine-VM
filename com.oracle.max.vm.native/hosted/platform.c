@@ -91,8 +91,10 @@ Java_com_sun_max_platform_Platform_nativeGetISA(JNIEnv *env, jclass c)
     return (*env)->NewStringUTF(env, "PPC");
 #elif isa_SPARC
     return (*env)->NewStringUTF(env, "SPARC");
-#elif isa_ARM 
+#elif isa_ARM
     return (*env)->NewStringUTF(env, "ARM");
+#elif isa_AARCH64
+    return (*env)->NewStringUTF(env, "Aarch64");
 #else
 #   error
 #endif
@@ -136,4 +138,3 @@ Java_com_sun_max_platform_Platform_nativeJniHeaderFilePath(JNIEnv *env, jclass c
 #endif
     return (*env)->NewStringUTF(env, JNI_H_PATH);
 }
-
