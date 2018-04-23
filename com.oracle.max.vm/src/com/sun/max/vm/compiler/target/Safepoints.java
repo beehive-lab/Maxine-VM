@@ -155,7 +155,7 @@ public final class Safepoints {
     private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isARM() ? 23 : 25;
     public static final int POS_MASK = (1 << CAUSE_OFFSET_SHIFT) - 1;
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
-    // TODO (fz): Consider rasing MAX_CAUSE_OFFSET to 31 for ARM (this is the max we can handle in the reserved bits)
+    // TODO (fz): Consider raising MAX_CAUSE_OFFSET to 31 for ARM (this is the max we can handle in the reserved bits)
     private static final int MAX_CAUSE_OFFSET = Platform.target().arch.isARM() ? 16 : 7;
 
     /**
