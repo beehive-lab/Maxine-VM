@@ -23,72 +23,178 @@
  */
 package com.sun.max.vm.runtime.aarch64;
 
+import com.sun.cri.ci.CiCalleeSaveLayout;
+import com.sun.cri.ci.CiRegister;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.Log;
 import com.sun.max.vm.runtime.*;
+
+import static com.oracle.max.asm.target.aarch64.Aarch64.*;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.runtime.amd64.AMD64SafepointPoll.LATCH_REGISTER;
 
 
 public class Aarch64TrapFrameAccess extends TrapFrameAccess {
 
-    public static final int TRAP_NUMBER_OFFSET = 0;
+    public static final int TRAP_NUMBER_OFFSET;
+    private static final int FLAGS_OFFSET;
+
+    private static final CiCalleeSaveLayout CSL;
+    static {
+        final int cpuLength = cpuRegisters.length;
+        final int fpuLength = fpuRegisters.length;
+        CiRegister[] csaRegs = new CiRegister[cpuLength + fpuLength];
+        System.arraycopy(cpuRegisters, 0, csaRegs, 0, cpuLength);
+        System.arraycopy(fpuRegisters, 0, csaRegs, cpuLength, fpuLength);
+        int size = (8 * cpuLength) + (16 * fpuLength);
+        TRAP_NUMBER_OFFSET = size;
+        size += 8;
+        FLAGS_OFFSET = size;
+        size += 8;
+        CSL = new CiCalleeSaveLayout(0, size, 8, csaRegs);
+    }
 
     @Override
     public Pointer getPCPointer(Pointer trapFrame) {
-        // TODO Auto-generated method stub
-        assert false : "Unimplemented";
-        return null;
+        return trapFrame.plus(vm().stubs.trapStub().frameSize());
     }
 
     @Override
     public Pointer getSP(Pointer trapFrame) {
-        // TODO Auto-generated method stub
-        assert false : "Unimplemented";
-        return null;
+        return trapFrame.plus(vm().stubs.trapStub().frameSize() + 8);
     }
 
     @Override
     public Pointer getFP(Pointer trapFrame) {
-        // TODO Auto-generated method stub
-        assert false : "Unimplemented";
-        return null;
+        return trapFrame.readWord(CSL.offsetOf(fp)).asPointer();
     }
 
     @Override
     public Pointer getSafepointLatch(Pointer trapFrame) {
-        // TODO Auto-generated method stub
-        assert false : "Unimplemented";
-        return null;
+        Pointer csa = getCalleeSaveArea(trapFrame);
+        int offset = CSL.offsetOf(LATCH_REGISTER);
+        return csa.readWord(offset).asPointer();
     }
 
     @Override
     public void setSafepointLatch(Pointer trapFrame, Pointer value) {
-        // TODO Auto-generated method stub
-        assert false : "Unimplemented";
-    }
-
-    @Override
-    public int getTrapNumber(Pointer trapFrame) {
-        // TODO Auto-generated method stub
-        assert false : "Unimplemented";
-        return 0;
+        Pointer csa = getCalleeSaveArea(trapFrame);
+        int offset = CSL.offsetOf(LATCH_REGISTER);
+        csa.writeWord(offset, value);
     }
 
     @Override
     public Pointer getCalleeSaveArea(Pointer trapFrame) {
-        // TODO Auto-generated method stub
-        assert false : "Unimplemented";
-        return null;
+        return trapFrame.plus(CSL.frameOffsetToCSA);
+    }
+
+    @Override
+    public int getTrapNumber(Pointer trapFrame) {
+        return trapFrame.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
     }
 
     @Override
     public void setTrapNumber(Pointer trapFrame, int trapNumber) {
-        // TODO Auto-generated method stub
-        assert false : "Unimplemented";
+        trapFrame.writeWord(TRAP_NUMBER_OFFSET, Address.fromInt(trapNumber));
     }
 
     @Override
     public void logTrapFrame(Pointer trapFrame) {
-        // TODO Auto-generated method stub
-        assert false : "Unimplemented";
+        final Pointer csa = getCalleeSaveArea(trapFrame);
+        Log.println("Non-zero registers:");
+
+        for (CiRegister reg : CSL.registers) {
+            if (reg.isCpu()) {
+                int offset = CSL.offsetOf(reg);
+                final Word value = csa.readWord(offset);
+                if (!value.isZero()) {
+                    Log.print("  ");
+                    Log.print(reg.name);
+                    Log.print("=");
+                    Log.println(value);
+                }
+            }
+        }
+        Log.print("  PC =");
+        Log.println(getPC(trapFrame));
+        Log.print("  rflags=");
+        final Word flags = csa.readWord(FLAGS_OFFSET);
+        Log.print(flags);
+        Log.print(' ');
+        logFlags(flags.asAddress().toInt());
+        Log.println();
+        if (false) {
+            boolean seenNonZeroXMM = false;
+            for (CiRegister reg : CSL.registers) {
+                if (reg.isFpu()) {
+                    int offset = CSL.offsetOf(reg);
+                    final double value = csa.readDouble(offset);
+                    if (value != 0) {
+                        if (!seenNonZeroXMM) {
+                            Log.println("Non-zero FPU registers:");
+                            seenNonZeroXMM = true;
+                        }
+                        Log.print("  ");
+                        Log.print(reg.name);
+                        Log.print("=");
+                        Log.print(value);
+                        Log.print("  {bits: ");
+                        Log.print(Address.fromLong(Double.doubleToRawLongBits(value)));
+                        Log.println("}");
+                    }
+                }
+            }
+        }
+        final int trapNumber = getTrapNumber(trapFrame);
+        Log.print("Trap number: ");
+        Log.print(trapNumber);
+        Log.print(" == ");
+        Log.println(Trap.Number.toExceptionName(trapNumber));
+    }
+
+    private static final String[] rflags = {
+        "CF", // 0
+        null, // 1
+        "PF", // 2
+        null, // 3
+        "AF", // 4
+        null, // 5
+        "ZF", // 6
+        "SF", // 7
+        "TF", // 8
+        "IF", // 9
+        "DF", // 10
+        "OF", // 11
+        "IO", // 12
+        "PL", // 13
+        "NT", // 14
+        null, // 15
+        "RF", // 16
+        "VM", // 17
+        "AC", // 18
+        "VIF", // 19
+        "VIP", // 20
+        "ID" // 21
+    };
+
+    private static void logFlags(int flags) {
+        Log.print('{');
+        boolean first = true;
+        for (int i = rflags.length - 1; i >= 0; i--) {
+            int mask = 1 << i;
+            if ((flags & mask) != 0) {
+                final String flag = rflags[i];
+                if (flag != null) {
+                    if (!first) {
+                        Log.print(", ");
+                    } else {
+                        first = false;
+                    }
+                    Log.print(flag);
+                }
+            }
+        }
+        Log.print('}');
     }
 
 }
