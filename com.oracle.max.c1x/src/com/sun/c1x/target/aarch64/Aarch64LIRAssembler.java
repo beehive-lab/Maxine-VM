@@ -383,11 +383,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     @Override
     protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
         if (src.kind == CiKind.Long || src.kind == CiKind.Double) {
-            masm.load(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) src), CiKind.Long);
-            masm.store(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Long);
+            masm.load(rscratch1, frameMap.toStackAddress((CiStackSlot) src), CiKind.Long);
+            masm.store(rscratch1, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Long);
         } else {
-            masm.load(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) src), CiKind.Int);
-            masm.store(Aarch64.r17, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Int);
+            masm.load(rscratch1, frameMap.toStackAddress((CiStackSlot) src), CiKind.Int);
+            masm.store(rscratch1, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Int);
         }
     }
 
