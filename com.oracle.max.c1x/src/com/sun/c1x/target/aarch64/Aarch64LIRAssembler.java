@@ -1137,14 +1137,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         break;
                     }
                     case Object: {
-                        movoop(Aarch64.r17, c);
-                        if (oldOpr1.isConstant()) {
-                            CiValue newOpr1 = compilation.registerConfig.getScratchRegister().asValue(oldOpr1.kind);
-                            const2reg(oldOpr1, newOpr1, null);
-                            opr1 = newOpr1;
-                            reg1 = opr1.asRegister();
-                        }
-                        masm.cmp(64, reg1, Aarch64.r17);
+                        movoop(scratchRegister, c);
+                        masm.cmp(64, reg1, scratchRegister);
                         break;
                     }
                     default:
