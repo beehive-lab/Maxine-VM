@@ -122,7 +122,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitBreakpoint() {
-        masm.int3();
+        masm.brk();
     }
 
     @Override
@@ -171,7 +171,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     @Override
     public void emitTraps() {
         for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
-            masm.int3();
+            masm.brk();
         }
         masm.nop(8);
     }

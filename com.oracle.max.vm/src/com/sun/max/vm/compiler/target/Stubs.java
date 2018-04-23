@@ -2073,7 +2073,7 @@ public class Stubs {
              *   mov  rcx, rbp                                 // copy callee save area into arg3
              *   mov  [rsp + <frame size>], rdi                // restore deopt IP (i.e. original return address) into return address slot
              *   call <deopt routine>                          // call deoptimization routine
-             *   int3                                          // should not reach here
+             *   brk                                           // should not reach here
              */
             CiCalleeSaveLayout csl = registerConfig.csl;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
@@ -2169,7 +2169,7 @@ public class Stubs {
              *   mov  rcx, rbp                                 // copy callee save area into arg3
              *   mov  [rsp + <frame size>], rdi                // restore deopt IP (i.e. original return address) into return address slot
              *   call <deopt routine>                          // call deoptimization routine
-             *   int3                                          // should not reach here
+             *   brk                                           // should not reach here
              */
             CiCalleeSaveLayout csl = registerConfig.csl;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
@@ -2363,7 +2363,7 @@ public class Stubs {
             int callSize = asm.codeBuffer.position() - callPos;
 
             // should never reach here
-//            asm.int3();
+//            asm.brk();
 
             String stubName = runtimeRoutineName + "StubWithCSA";
 
@@ -2417,7 +2417,7 @@ public class Stubs {
              *   mov  rcx, rbp                                 // copy callee save area into arg3
              *   mov  [rsp + <frame size>], rdi                // restore deopt IP (i.e. original return address) into return address slot
              *   call <deopt routine>                          // call deoptimization routine
-             *   int3                                          // should not reach here
+             *   brk                                           // should not reach here
              */
 
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);

@@ -2577,6 +2577,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         exceptionInstruction(uimm16, Instruction.BRK);
     }
 
+    public void brk() {
+        brk(0);
+    }
+
     /* Architectural hints (5.9.4) */
     public enum SystemHint {
         NOP(0x0), YIELD(0x1), WFE(0x2), WFI(0x3), SEV(0x4), SEVL(0x5);
@@ -2588,10 +2592,8 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     }
 
-    // TODO Fix hlt
     public final void hlt() {
-        nop(4);
-        // int3();
+        hlt(0);
     }
 
 

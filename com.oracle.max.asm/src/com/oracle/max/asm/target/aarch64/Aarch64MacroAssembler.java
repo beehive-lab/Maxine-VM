@@ -1526,12 +1526,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         pop(1 | 2 | 4 | 8 | 128);
     }
 
-    // TODO: emit proper opcode
-    public void int3() {
-//        emitInt(0xFEDEFFE7);
-        throw new Error("unimplemented");
-    }
-
     public final void crashme() {
         eor(64, scratchRegister, scratchRegister, scratchRegister);
         insertForeverLoop();
