@@ -540,7 +540,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.push(1 << 14);
+            asm.push(Aarch64.LATCH_REGISTER);
 
             // now allocate the frame for this method
             asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
@@ -719,7 +719,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.push(1 << 14);
+            asm.push(Aarch64.LATCH_REGISTER);
             // now allocate the frame for this method
             asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
 
@@ -946,8 +946,8 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            // Push LR (r30) on the stack to make asm.ret work
-            asm.push(1 << 30);
+            // Push LR on the stack to make asm.ret work
+            asm.push(Aarch64.LATCH_REGISTER);
 
             // compute the static trampoline call site
             CiRegister callSite = Aarch64.r8;
@@ -1386,7 +1386,7 @@ public class Stubs {
 //            }
 //
 //            // called from Java so we should push the return address register
-//            asm.push(1 << 14);
+//            asm.push(Aarch64.LATCH_REGISTER);
 //
 //            CiValue[] args = unwindArgs;
 //            assert args.length == 3 || args.length == 4;
@@ -1594,7 +1594,7 @@ public class Stubs {
                 asm.nop();
             }
             // We are called from Java so we do need to push the LR.
-            asm.push(1 << 14);
+            asm.push(Aarch64.LATCH_REGISTER);
             asm.mov(64, asm.scratchRegister, Aarch64.sp);
             asm.sub(64, asm.scratchRegister, asm.scratchRegister, Aarch64.r1);
             asm.mov(64, Aarch64.sp, asm.scratchRegister);
