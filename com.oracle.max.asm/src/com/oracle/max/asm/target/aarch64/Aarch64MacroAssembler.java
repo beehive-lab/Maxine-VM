@@ -566,18 +566,49 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         mov(dst, (long) imm);
     }
 
+    public void add(CiRegister dest, CiRegister source, long delta, int size) {
+        if (delta == 0) {
+            mov(size, dest, source);
+        } else if (isArithmeticImmediate(delta)) {
+            assert delta == (int) delta;
+            if (delta < 0) {
+                sub(size, dest, source, -(int) delta);
+            } else {
+                add(size, dest, source, (int) delta);
+            }
+        } else {
+            assert dest != scratchRegister;
+            assert source != scratchRegister;
+            mov(scratchRegister, delta);
+            add(size, dest, source, scratchRegister);
+        }
+    }
+
+    public void sub(CiRegister dest, CiRegister source, long delta, int size) {
+        if (delta == 0) {
+            mov(size, dest, source);
+        } else if (isArithmeticImmediate(delta)) {
+            assert delta == (int) delta;
+            if (delta < 0) {
+                add(size, dest, source, -(int) delta);
+            } else {
+                sub(size, dest, source, (int) delta);
+            }
+        } else {
+            assert dest != scratchRegister;
+            assert source != scratchRegister;
+            mov(scratchRegister, delta);
+            sub(size, dest, source, scratchRegister);
+        }
+    }
+
     /**
      * Applies a delta value to the contents of reg as a 32bit quantity.
      * @param reg
      * @param delta
      */
     public void increment32(CiRegister reg, int delta) {
-        if (delta == 0) {
-            return;
-        }
-        assert reg != scratchRegister;
-        mov32BitConstant(scratchRegister, delta);
-        add(32, reg, reg, scratchRegister);
+        add(reg, reg, delta, 32);
     }
 
     public void increment32(CiAddress dst, int delta) {

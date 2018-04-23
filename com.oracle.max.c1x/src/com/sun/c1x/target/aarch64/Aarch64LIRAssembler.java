@@ -753,13 +753,22 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             CiRegister lreg = left.asRegister();
             CiRegister rreg;
             if (right.isConstant() && (kind.isInt() || kind.isLong())) {
+                long delta;
                 if (kind.isInt()) {
-                    final int delta = ((CiConstant) right).asInt();
-                    masm.increment32(dest.asRegister(), delta);
+                    delta = ((CiConstant) right).asInt();
                 } else {
                     assert kind.isLong();
-                    final long delta = ((CiConstant) right).asLong();
-                    masm.addq(dest.asRegister(), delta);
+                    delta = ((CiConstant) right).asLong();
+                }
+                switch (code) {
+                    case Add:
+                        masm.add(dest.asRegister(), lreg, delta, size);
+                        break;
+                    case Sub:
+                        masm.sub(dest.asRegister(), lreg, delta, size);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
                 return;
             }
@@ -778,15 +787,14 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             } else {
                 assert right.isConstant();
                 assert kind.isFloat() || kind.isDouble();
-                CiAddress raddr;
                 if (kind.isFloat()) {
-                    raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
+                    tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                 } else {
-                    raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
+                    tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                 }
                 masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
-                masm.load(Aarch64.d30, raddr, kind);
                 rreg = Aarch64.d30;
+                masm.fmov(size, rreg, scratchRegister);
             }
             if (kind.isInt() || kind.isLong()) {
                 switch (code) {
