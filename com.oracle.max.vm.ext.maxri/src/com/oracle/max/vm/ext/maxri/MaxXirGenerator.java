@@ -951,6 +951,33 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirPair(resolved, unresolved);
     }
 
+    private void alignArraySize(XirParameter length, XirOperand arraySize, int elemSize, Scale scale) {
+        if (Platform.target().arch.isARM()) {
+            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
+            XirLabel aligned = asm.createInlineLabel("aligned");
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
+            asm.jeq(aligned, scratch, asm.i(0));
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+            asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            asm.bindInline(aligned);
+        } else {
+            assert Platform.target().arch.isAarch64() || Platform.target().arch.isX86() : "Arch unimplemented!";
+            if (elemSize == vmConfig().heapScheme().objectAlignment()) {
+                // Assumed here that header size is already aligned.buildTLABAllocateArray
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+            } else {
+                // Very x86 / x64 way of doing alignment.
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+                asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            }
+        }
+    }
+
     @HOSTED_ONLY
     private XirTemplate buildTLABAllocateArrayIn(CiKind kind, XirOperand result, XirOperand hub) {
         XirParameter length = asm.createInputParameter("length", CiKind.Int);
@@ -974,42 +1001,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         int elemSize = target().sizeInBytes(kind);
         Scale scale = Scale.fromInt(elemSize);
-        if (Platform.target().arch.isX86()) {
-            if (elemSize == vmConfig().heapScheme().objectAlignment()) {
-                // Assumed here that header size is already aligned.
-                asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
-                asm.lea(arraySize, arraySize, length, 0, scale);
-            } else {
-                // Very x86 / x64 way of doing alignment.
-                asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
-                asm.lea(arraySize, arraySize, length, 0, scale);
-                asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
-            }
-        } else if (Platform.target().arch.isARM()) {
-            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
-            XirLabel aligned = asm.createInlineLabel("aligned");
-            asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
-            asm.lea(arraySize, arraySize, length, 0, scale);
-            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
-            asm.jeq(aligned, scratch, asm.i(0));
-            asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
-            asm.lea(arraySize, arraySize, length, 0, scale);
-            asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
-            asm.bindInline(aligned);
-        } else if (Platform.target().arch.isAarch64()) {
-            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), Aarch64.r8);
-            XirLabel aligned = asm.createInlineLabel("aligned");
-            asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
-            asm.lea(arraySize, arraySize, length, 0, scale);
-            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
-            asm.jeq(aligned, scratch, asm.i(0));
-            asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
-            asm.lea(arraySize, arraySize, length, 0, scale);
-            asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
-            asm.bindInline(aligned);
-        } else {
-            assert false : "Arch unimplemented!";
-        }
+        alignArraySize(length, arraySize, elemSize, scale);
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
@@ -1059,43 +1051,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         int elemSize = target().sizeInBytes(kind);
         Scale scale = Scale.fromInt(elemSize);
-
-        if (Platform.target().arch.isX86()) {
-            if (elemSize == vmConfig().heapScheme().objectAlignment()) {
-                // Assumed here that header size is already aligned.
-                asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
-                asm.lea(arraySize, arraySize, length, 0, scale);
-            } else {
-                // Very x86 / x64 way of doing alignment.
-                asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
-                asm.lea(arraySize, arraySize, length, 0, scale);
-                asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
-            }
-        } else if (Platform.target().arch.isARM()) {
-            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
-            XirLabel aligned = asm.createInlineLabel("aligned");
-            asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
-            asm.lea(arraySize, arraySize, length, 0, scale);
-            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
-            asm.jeq(aligned, scratch, asm.i(0));
-            asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
-            asm.lea(arraySize, arraySize, length, 0, scale);
-            asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
-            asm.bindInline(aligned);
-        } else if (Platform.target().arch.isAarch64()) {
-            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), Aarch64.r8);
-            XirLabel aligned = asm.createInlineLabel("aligned");
-            asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
-            asm.lea(arraySize, arraySize, length, 0, scale);
-            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
-            asm.jeq(aligned, scratch, asm.i(0));
-            asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
-            asm.lea(arraySize, arraySize, length, 0, scale);
-            asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
-            asm.bindInline(aligned);
-        } else {
-            assert false : "Arch unimplemented!";
-        }
+        alignArraySize(length, arraySize, elemSize, scale);
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
