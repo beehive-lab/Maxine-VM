@@ -699,7 +699,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
         for (CiRegister r : csl.registers) {
             int displacement = csl.offsetOf(r) + frameToCSA;
-            final Aarch64Address address = getAddressInFrame(displacement);
+            final Aarch64Address address = getAddressInFrame(frameRegister, displacement);
             if (r.isCpu()) {
                 ldr(64, r, address);
             } else if (r.isFpu()) {
@@ -708,7 +708,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
-    private Aarch64Address getAddressInFrame(int displacement) {
+    public Aarch64Address getAddressInFrame(CiRegister frameRegister, int displacement) {
         if (NumUtil.isSignedNbit(9, displacement)) {
             return Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement);
         } else {
@@ -1447,7 +1447,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void save(CiCalleeSaveLayout csl, int frameToCSA) {
         for (CiRegister r : csl.registers) {
             int displacement = frameToCSA + csl.offsetOf(r);
-            final Aarch64Address address = getAddressInFrame(displacement);
+            final Aarch64Address address = getAddressInFrame(frameRegister, displacement);
             if (r.isCpu()) {
                 str(64, r, address);
             } else {
