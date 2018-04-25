@@ -63,6 +63,7 @@ public final class C1XOptions {
      */
     public static String  PrintFilter                        = null;
     public static boolean DebugMethods                       = ____;
+    public static boolean DebugInlinedMethods                = ____;
 
 
     // printing settings
@@ -195,6 +196,12 @@ public final class C1XOptions {
             DebugMethods = false;
         } else {
             DebugMethods = true;
+        }
+        value = System.getenv("ENABLE_DEBUG_INLINED_METHODS_ID");
+        if (value == null || value.isEmpty()) {
+            DebugInlinedMethods = false;
+        } else {
+            DebugInlinedMethods = DebugMethods;
         }
     }
 
