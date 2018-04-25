@@ -52,13 +52,23 @@ HOSTOS = $(shell uname -s)
 # Set TARGETOS explicitly to cross-compile for a different target
 # (required for Maxine VE when building tele/inspector)
 TARGETOS ?= $(shell uname -s)
+# TARGETISA is the architecture we are compiling for
+# Set TARGETISA explicitly to cross-compile for a different target
+ifeq ($(TARGETOS),Darwin)
+    TARGETISA ?= $(shell uname -p)
+endif # Darwin
+ifeq ($(TARGETOS),Linux)
+    TARGETISA ?= $(shell uname -m)
+endif # Linux
+ifeq ($(TARGETOS),SunOS)
+    TARGETISA := $(shell isainfo -n)
+endif # SunOS
 DARWIN_RELEASE ?= $(shell echo $$(($$(uname -r | cut -d'.' -f 1) > 13 ? 1 : 0)))
 
 ifeq ($(TARGETOS),Darwin)
     OS := darwin
     DARWIN_GCC_MFLAG :=
-    a := $(shell uname -p)
-    ifeq ($a,i386)
+    ifeq ($(TARGETISA),i386)
         mach := $(shell ls /usr/include/mach/x86_64)
         ifneq ($(mach), )
             DARWIN_GCC_MFLAG := -m64
@@ -72,27 +82,26 @@ ifeq ($(TARGETOS),Darwin)
             endif
         endif
     else
-       ifeq ($a,powerpc)
+       ifeq ($(TARGETISA),powerpc)
            ISA := power
        else
-           ISA := $a
+           ISA := $(TARGETISA)
        endif
     endif
 endif
 
 ifeq ($(TARGETOS),Linux)
     OS := linux
-    a := $(shell uname -m)
-    ifeq ($a, x86_64)
+    ifeq ($(TARGETISA), x86_64)
         ISA := amd64
     endif
-    ifeq ($a, x86)
+    ifeq ($(TARGETISA), x86)
         ISA := ia32
     endif
-    ifeq ($a, aarch64)
+    ifeq ($(TARGETISA), aarch64)
         ISA := aarch64
     endif
-    ifeq ($a, armv7l)
+    ifeq ($(TARGETISA), armv7l)
         ISA := arm
         OTHER_CFLAGS := -marm -O0 -g -mcpu=cortex-a9
         TARGET_WORD_SIZE := w32
@@ -102,14 +111,13 @@ endif
 ifeq ($(TARGETOS),SunOS)
     OS := solaris
     OTHER_CFLAGS := -KPIC  -DLP64
-    a := $(shell isainfo -n)
-    ifeq ($a,amd64)
+    ifeq ($(TARGETISA),amd64)
         ISA := amd64
         ARCH := amd64
         ARCH_FLAG := "-m64"
         OTHER_CFLAGS := -Kpic
     else
-        ifeq ($a,sparcv9)
+        ifeq ($(TARGETISA),sparcv9)
             ISA := sparc
             ARCH := v9
             ARCH_FLAG := "-m64"
