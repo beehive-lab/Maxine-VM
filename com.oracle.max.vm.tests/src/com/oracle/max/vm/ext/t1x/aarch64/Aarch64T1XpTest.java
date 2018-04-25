@@ -183,7 +183,6 @@ public class Aarch64T1XpTest extends MaxTestCase {
             //graal.initialize(Phase.HOSTED_COMPILING);
             c1x.initialize(Phase.HOSTED_COMPILING);
             theCompiler = (Aarch64T1XCompilation) t1x.getT1XCompilation();
-            theCompiler.setDebug(false);
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();

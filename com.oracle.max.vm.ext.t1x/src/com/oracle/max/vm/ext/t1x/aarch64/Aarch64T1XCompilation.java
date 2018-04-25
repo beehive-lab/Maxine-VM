@@ -40,6 +40,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.DebugMethodWriter;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.aarch64.*;
@@ -49,56 +50,21 @@ import com.sun.max.vm.type.*;
 
 public class Aarch64T1XCompilation extends T1XCompilation {
 
-    public static AtomicInteger methodCounter = new AtomicInteger(536870912);
-    private static final Object fileLock = new Object();
-    private static File file;
-
-    private static boolean DEBUG_METHODS = true;
+    private DebugMethodWriter debugMethodWriter;
+    private static boolean debugMethodsEnabled = false;
 
     protected final Aarch64MacroAssembler asm;
     final PatchInfoAARCH64 patchInfo;
-    public static boolean FLOATDOUBLEREGISTERS = true;
 
     public Aarch64T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new Aarch64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoAARCH64();
-    }
-
-    public void setDebug(boolean value) {
-        DEBUG_METHODS = value;
-    }
-
-    static {
-        initDebugMethods();
-    }
-
-    public static void initDebugMethods() {
-        if ((file = new File(getDebugMethodsPath() + "debugT1Xmethods")).exists()) {
-            file.delete();
+        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
+            debugMethodWriter = new DebugMethodWriter("t1x");
+            debugMethodsEnabled = true;
         }
-        file = new File(getDebugMethodsPath() + "debugT1Xmethods");
-    }
-
-    public static void writeDebugMethod(String name, int index) throws Exception {
-        synchronized (fileLock) {
-            try {
-                assert DEBUG_METHODS;
-                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(index + " " + name + "\n");
-                bw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    public static String getDebugMethodsPath() {
-        return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
-
     }
 
     @Override
@@ -430,6 +396,15 @@ public class Aarch64T1XCompilation extends T1XCompilation {
                 // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
         }
+        if (T1XOptions.DebugMethods) {
+            int a = debugMethodWriter.getNextID();
+            asm.mov64BitConstant(scratch, a);
+            try {
+                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         return adapter;
     }
 
@@ -450,6 +425,13 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         asm.pop(64, Aarch64.fp);
         asm.pop(64, Aarch64.linkRegister);
         asm.ret(Aarch64.linkRegister);
+        if (T1XOptions.DebugMethods) {
+            try {
+                debugMethodWriter.flushDebugMethod();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /*

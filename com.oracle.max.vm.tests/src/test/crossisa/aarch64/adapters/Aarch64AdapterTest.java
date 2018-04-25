@@ -133,7 +133,6 @@ public abstract class Aarch64AdapterTest extends MaxTestCase {
         //c1x.initialize(Phase.HOSTED_TESTING);
         t1x.initialize(Phase.HOSTED_TESTING);
         t1xCompiler = (Aarch64T1XCompilationTest) t1x.getT1XCompilation();
-        t1xCompiler.setDebug(false);
         masm = new Aarch64MacroAssembler(Platform.target(), null);
     }
 

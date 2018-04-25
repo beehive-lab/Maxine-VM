@@ -174,7 +174,6 @@ public class Aarch64T1XTest extends MaxTestCase {
             // c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
             // c1x.initializeOffline(Phase.HOSTED_COMPILING);
             theCompiler = (Aarch64T1XCompilation) t1x.getT1XCompilation();
-            theCompiler.setDebug(false);
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();
