@@ -180,7 +180,7 @@ ifndef PLATFORM
 endif
 
 
-# identify the JDK version (there are differences in how Maxine is built between JDK 6 and 7)
+# identify the JDK version (there are differences in how Maxine is built between JDK 7 and 8)
 ifdef JAVA_HOME
 	javacmd := $(JAVA_HOME)/bin/java
 else
