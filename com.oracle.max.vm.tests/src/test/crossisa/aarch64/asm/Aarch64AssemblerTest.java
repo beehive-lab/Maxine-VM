@@ -152,12 +152,21 @@ public class Aarch64AssemblerTest {
         masm.mov(r0, Integer.MAX_VALUE);
         masm.mov(r1, Integer.MIN_VALUE);
         masm.mov(r2, Long.MAX_VALUE);
-        masm.mov(Aarch64.r3, Long.MIN_VALUE);
+        masm.mov(r3, Long.MIN_VALUE);
+        masm.mov(r4, 0x1234);
+        masm.mov(r5, 0xFFFF_FFFF_FFFF_FFFFL); // Both writes on r5 is intentional
+        masm.mov(r5, 0xFFFF_0000_1234_0000L); // Test forceMov optimization
+        masm.mov(r6, 0xFFFF_FFFF_FFFF_FFFFL); // Test 32bit sign-extend optimization
+        masm.mov(r7, 0); // Test zero optimization
 
         tester.setExpectedValue(r0, Integer.MAX_VALUE);
         tester.setExpectedValue(r1, Integer.MIN_VALUE);
         tester.setExpectedValue(r2, Long.MAX_VALUE);
         tester.setExpectedValue(r3, Long.MIN_VALUE);
+        tester.setExpectedValue(r4, 0x1234);
+        tester.setExpectedValue(r5, 0xFFFF_0000_1234_0000L);
+        tester.setExpectedValue(r6, 0xFFFF_FFFF_FFFF_FFFFL);
+        tester.setExpectedValue(r7, 0);
 
         generateAndTest(masm.codeBuffer);
     }
