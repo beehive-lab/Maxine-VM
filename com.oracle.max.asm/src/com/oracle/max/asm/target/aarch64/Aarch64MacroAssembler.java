@@ -554,7 +554,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             // If the higher 32-bit are 1s and the sign bit of the lower 32-bits is set *and* we can
             // represent the lower 32 bits as a logical immediate we can create the lower 32-bit and then sign extend
             // them. This allows us to cover immediates like ~1L with 2 instructions.
-            mov(dst, (int) imm);
+            mov32BitConstant(dst, (int) imm);
             sxt(64, 32, dst, dst);
         } else {
             forceMov(dst, imm, /* optimize move */true);
