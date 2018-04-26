@@ -56,7 +56,7 @@ public final class ARMISAInstructionDecoder {
         decoder.decodePosition(codePos);
         int patchPos = decoder.currentDisplacementPosition();
         int endOfInstruction = decoder.currentEndOfInstruction();
-        int offset = relative - endOfInstruction + codePos;
+        int offset = relative - endOfInstruction + codePos - 12;
         patchDisp32(code, patchPos, offset);
     }
 

@@ -705,16 +705,14 @@ public abstract class TargetMethod extends MemoryRegion {
                 case Float: // fall through
                 case Int: // fall through
                 case Long: {
-                    int offsetAdjustment = platform().target.arch.isARM() ? -12 : 0;
                     assert site.alignment == 0 || targetBundleLayout.firstElementPointer(start, ArrayField.scalarLiterals).plus(literals.scalarPos(dataIndex)).
                         isAligned(site.alignment) : "patching to a scalar address that is not aligned";
-                    patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt() + offsetAdjustment);
+                    patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt());
                     break;
                 }
                 case Object: {
                     int index = literals.objectPool.get(site.constant.asObject());
-                    int offsetAdjustment = platform().target.arch.isARM() ? -12 : 0;
-                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt() + offsetAdjustment);
+                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt());
                     break;
                 }
                 default:
