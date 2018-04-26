@@ -46,7 +46,7 @@ public class DebugMethodWriter {
     }
 
     public void appendDebugMethod(String name, int index) {
-        buffer.append(index + " " + name + "\n");
+        buffer.append(Integer.toHexString(index) + " " + name + "\n");
     }
 
     public void flushDebugMethod() {
