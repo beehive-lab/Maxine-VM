@@ -172,6 +172,32 @@ public class Aarch64AssemblerTest {
     }
 
     @Test
+    public void forceMov() throws Exception {
+        initialiseTest();
+        masm.mov(r0, 0xFFFFFFFF_FFFFFFFFL);
+        masm.forceMov(r0, 0xFFFF_0000_FFFF_0000L, true);
+        masm.mov(r1, 0xFFFFFFFF_FFFFFFFFL);
+        masm.forceMov(r1, 0xFFFF_0000_0000_0000L, true);
+        masm.mov(r2, 0xFFFFFFFF_FFFFFFFFL);
+        masm.forceMov(r2, 0x0000_1010_0000_0000L, true);
+        masm.mov(r3, 0xFFFFFFFF_FFFFFFFFL);
+        masm.forceMov(r3, 0xFFFF_0000_FFFF_0000L, false);
+        masm.mov(r4, 0xFFFFFFFF_FFFFFFFFL);
+        masm.forceMov(r4, 0xFFFF_0000_0000_0000L, false);
+        masm.mov(r5, 0xFFFFFFFF_FFFFFFFFL);
+        masm.forceMov(r5, 0x0000_1010_0000_0000L, false);
+
+        tester.setExpectedValue(r0, 0xFFFF_0000_FFFF_0000L);
+        tester.setExpectedValue(r1, 0xFFFF_0000_0000_0000L);
+        tester.setExpectedValue(r2, 0x0000_1010_0000_0000L);
+        tester.setExpectedValue(r3, 0xFFFF_0000_FFFF_0000L);
+        tester.setExpectedValue(r4, 0xFFFF_0000_0000_0000L);
+        tester.setExpectedValue(r5, 0x0000_1010_0000_0000L);
+
+        generateAndTest(masm.codeBuffer);
+    }
+
+    @Test
     public void add_register() throws Exception {
         initialiseTest();
         masm.mov64BitConstant(r0, 10);
