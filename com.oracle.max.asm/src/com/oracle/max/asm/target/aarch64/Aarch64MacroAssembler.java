@@ -312,11 +312,17 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         emitInt(instruction);
     }
 
+    /**
+     * Compare and swap implementation. In the end the scratchregister must hold the value stored in the address.
+     *
+     * @param size
+     * @param newValue
+     * @param cmpValue
+     * @param address
+     */
     public void cas(int size, CiRegister newValue, CiRegister cmpValue, Aarch64Address address) {
-        assert Aarch64.r17 != cmpValue;
-        assert Aarch64.r17 != newValue;
+        assert scratchRegister != cmpValue;
         assert newValue != cmpValue;
-        assert Aarch64.r0 == cmpValue;
 
         Label atomicFail = new Label();
         Label notEqualTocmpValue = new Label();
@@ -325,14 +331,13 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         membar(-1);
         ldxr(size, scratchRegister, address); // scratch has the current Value
         cmp(size, cmpValue, scratchRegister); // compare scratch with cmpValue
-        mov64BitConstant(scratchRegister, 1); // store 1 to r0/cmpValue to indicate failure (in case the branch is taken)
-        branchConditionally(ConditionFlag.NE, notEqualTocmpValue); // we were not equal to the cmpValue
+        branchConditionally(ConditionFlag.NE, notEqualTocmpValue); // value was not equal to the cmpValue
         stxr(size, scratchRegister, newValue, address); // store newValue to address and result to scratch register
 
-        // If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
+        // If the Condition is Equal then the stxr took place but it MIGHT have failed so we need to test for this.
         // If the scratch register is not 0 then there was an issue with atomicity so do the operation again
         cbnz(64, scratchRegister, atomicFail);
-        mov(64, cmpValue, Aarch64.zr); // store 0 to r0/cmpValue to indicate success
+        mov(64, scratchRegister, cmpValue); // stxr succeeded, set scratch register to the cmp value to indicate success
         bind(notEqualTocmpValue);
         dmb(BarrierKind.SY);
     }

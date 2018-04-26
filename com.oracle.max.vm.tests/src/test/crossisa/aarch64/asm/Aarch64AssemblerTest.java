@@ -1302,25 +1302,25 @@ public class Aarch64AssemblerTest {
         CiRegister cmpReg = r0;
 
         // r0=50, r1=10, r2=20, r3=30, r4=40, r5=50
-        masm.mov64BitConstant(r0, 50);
+        masm.mov(r0, 50);
         for (int i = 1; i < 6; i++) {
-            masm.mov64BitConstant(Aarch64.cpuRegisters[i], i * 10);
+            masm.mov(Aarch64.cpuRegisters[i], i * 10);
         }
-        masm.push(r0, r1, r2, Aarch64.r3, Aarch64.r4, Aarch64.r5);
+        masm.push(r0, r1, r2, r3, r4, r5);
 
         // Invoke a cas that fails
-        masm.add(64, Aarch64.r6, Aarch64.sp, 4 * 16); // point to r1 value in the stack
-        Aarch64Address addr = Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r6);
+        masm.add(64, r6, sp, 4 * 16); // point to r1 value in the stack
+        Aarch64Address addr = Aarch64Address.createBaseRegisterOnlyAddress(r6);
         masm.cas(32, r1, cmpReg, addr);
         masm.ldr(32, r1, addr);
         tester.setExpectedValue(r1, 10);
 
         // Invoke a cas that succeeds
-        addr = Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp); // point to r5 value in the stack
+        addr = Aarch64Address.createBaseRegisterOnlyAddress(sp); // point to r5 value in the stack
         masm.cas(32, Aarch64.r3, cmpReg, addr);
         masm.ldr(32, r2, addr);
         tester.setExpectedValue(r2, 30);
-        tester.setExpectedValue(r0, 0);
+        tester.setExpectedValue(masm.scratchRegister, 50);
         generateAndTest(masm.codeBuffer);
     }
 

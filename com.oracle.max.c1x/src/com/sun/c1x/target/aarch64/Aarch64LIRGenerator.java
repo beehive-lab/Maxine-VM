@@ -451,7 +451,7 @@ public class Aarch64LIRGenerator extends LIRGenerator {
         CiValue tempPointer = load(x.pointer());
         CiAddress addr = getAddressForPointerOp(x, dataKind, tempPointer);
 
-        CiValue expectedValue = force(x.expectedValue(), Aarch64.r0.asValue(dataKind));
+        CiValue expectedValue = load(x.expectedValue());
         CiValue newValue = load(x.newValue());
         assert Util.archKindsEqual(newValue.kind, dataKind) : "invalid type";
 
@@ -463,7 +463,7 @@ public class Aarch64LIRGenerator extends LIRGenerator {
         CiValue pointer = newVariable(compilation.target.wordKind);
         lir.lea(addr, pointer);
         CiValue result = createResultVariable(x);
-        CiValue resultReg = Aarch64.r0.asValue(dataKind);
+        CiValue resultReg = compilation.registerConfig.getScratchRegister().asValue(dataKind);
         if (dataKind.isObject()) {
             lir.casObj(pointer, expectedValue, newValue);
         } else if (dataKind.isInt()) {
@@ -497,13 +497,13 @@ public class Aarch64LIRGenerator extends LIRGenerator {
         offset.loadNonconstant();
         CiAddress addr;
         if (offset.result().isConstant()) {
-            addr = new CiAddress(kind, obj.result(), (int) ((CiConstant) offset.result()).asLong());
+            addr = new CiAddress(kind, obj.result(), ((CiConstant) offset.result()).asInt());
         } else {
             addr = new CiAddress(kind, obj.result(), offset.result());
         }
 
-        // Compare operand needs to be in RAX. WAS RAX
-        CiValue cmp = force(x.argumentAt(3), Aarch64.r0.asValue(kind));
+        // Compare operand needs to be in ScratchRegister
+        CiValue cmp = force(x.argumentAt(3), compilation.registerConfig.getScratchRegister().asValue(kind));
         val.loadItem();
 
         CiValue pointer = newVariable(compilation.target.wordKind);
