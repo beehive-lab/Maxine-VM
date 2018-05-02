@@ -250,4 +250,42 @@ public class RISCV64AssemblerTest {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
+    @Test
+    public void addi() throws Exception {
+        initialiseExpectedValues();
+        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        //store values
+        asm.lui(s1, 0x33333000);
+        asm.lui(s2, 0xFABF1000);
+        asm.lui(s3, 0x00);
+
+        asm.addi(t0, s1, 0x00000222);
+        asm.addi(t1, s2, 0x00000333);
+        asm.addi(t2, s3, 0x00000111);
+        setExpectedValue(t0, 0x33333222);
+        setExpectedValue(t1, 0xFABF1333);
+        setExpectedValue(t2, 0x00000111);
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+    @Test
+    public void andi() throws Exception {
+        initialiseExpectedValues();
+        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        //store values
+        asm.lui(s1, 0x33333000);
+        asm.addi(s2, s1, 0x00000343);
+        //s2 = 0x33333222
+
+        asm.andi(t0, s2, 0x3333FAF);
+        asm.andi(t1, s2, 0x3333000);
+        setExpectedValue(t0, 0x33333303);
+        setExpectedValue(t1, 0x00000000);
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 }
