@@ -31,6 +31,8 @@ public enum RISCVopCodes {
     XOR((byte) 0b0110011),
     OR((byte) 0b0110011),
     AND((byte) 0b0110011),
+    ADDI((byte) 0b0010011),
+    ANDI((byte) 0b0010011),
     // TODO: fill the rest
 
     // RV64I Base instruction set /////////////////////////////////////////////
