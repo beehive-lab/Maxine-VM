@@ -1529,7 +1529,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public final void call() {
-        nop();
+        bl(0);
     }
 
     public final void call(CiRegister src) {
