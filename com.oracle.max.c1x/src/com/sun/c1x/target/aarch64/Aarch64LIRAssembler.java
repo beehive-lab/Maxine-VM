@@ -1961,7 +1961,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         }
         tasm.recordDirectCall(before, after - before, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
-        masm.nop(4);
     }
 
     public void directJmp(Object target) {
