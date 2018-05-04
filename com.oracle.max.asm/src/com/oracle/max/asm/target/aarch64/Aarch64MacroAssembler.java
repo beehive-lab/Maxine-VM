@@ -1532,6 +1532,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         nop();
     }
 
+    public final void call(CiRegister src) {
+        blr(src);
+    }
+
     public final void ret() {
         pop(Aarch64.linkRegister);
         ret(Aarch64.linkRegister);

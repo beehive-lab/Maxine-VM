@@ -1980,6 +1980,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     public void indirectCall(CiRegister src, Object target, LIRDebugInfo info) {
         int before = masm.codeBuffer.position();
+        masm.call(src);
         int after = masm.codeBuffer.position();
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();
