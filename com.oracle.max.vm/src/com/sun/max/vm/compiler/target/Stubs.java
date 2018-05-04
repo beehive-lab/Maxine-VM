@@ -2359,7 +2359,7 @@ public class Stubs {
             // Call runtime routine
 //            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
-//            asm.call();
+            asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
             // should never reach here

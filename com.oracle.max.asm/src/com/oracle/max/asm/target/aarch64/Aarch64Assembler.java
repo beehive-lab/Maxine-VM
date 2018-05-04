@@ -686,7 +686,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     /**
      * Mask for the displacement bits of a branch immediate.
      */
-    private static final int B_IMM_ADDRESS_MASK = 0x3FFFFFF;
+    private static final int B_IMM_ADDRESS_MASK = NumUtil.getNbitNumberInt(26);
 
     /**
      * Return the displacement of the target of a branch immediate instruction.
@@ -694,7 +694,8 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @return
      */
     public static int bImmExtractDisplacement(int instruction) {
-        assert (UnconditionalBranchImmOp & instruction) != 0 : "Not a branch immediate instruction.";
+        assert (instruction & NumUtil.getNbitNumberInt(5) << 26) == UnconditionalBranchImmOp :
+                "Not a branch immediate instruction: 0x" + Integer.toHexString(instruction);
         int displacement = B_IMM_ADDRESS_MASK & instruction;
 
         // check the sign bit
@@ -752,10 +753,11 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @return
      */
     public static int bImmPatch(int instruction, int displacement) {
-        assert (UnconditionalBranchImmOp & instruction) != 0 : "Not a branch immediate instruction.";
+        assert (instruction & NumUtil.getNbitNumberInt(5) << 26) == UnconditionalBranchImmOp :
+                "Not a branch immediate instruction: 0x" + Integer.toHexString(instruction);
         assert NumUtil.isSignedNbit(28, displacement) && (displacement & 0x3) == 0
                         : "Immediate has to be 28bit signed number and word aligned";
-        return (instruction & ~B_IMM_ADDRESS_MASK) | (displacement >> 2);
+        return (instruction & ~B_IMM_ADDRESS_MASK) | ((displacement >> 2) & B_IMM_ADDRESS_MASK);
     }
 
     private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
