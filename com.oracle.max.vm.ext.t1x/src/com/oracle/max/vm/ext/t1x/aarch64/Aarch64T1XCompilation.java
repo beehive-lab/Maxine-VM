@@ -126,7 +126,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     @Override
     public void peekInt(CiRegister dst, int index) {
         CiAddress a = spInt(index);
-        asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.ldrs(64, 32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
