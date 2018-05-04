@@ -271,7 +271,7 @@ public class RegisterConfigs {
                 allocatable = new CiRegister[] {
                     Aarch64.r0,  Aarch64.r1,  Aarch64.r2,  Aarch64.r3,  Aarch64.r4,  Aarch64.r5,  Aarch64.r6,  Aarch64.r7,
                     Aarch64.r8,  Aarch64.r9,  Aarch64.r10, Aarch64.r11, Aarch64.r12, Aarch64.r13, Aarch64.r14, Aarch64.r15,
-                    /*Aarch64.r16, Aarch64.r17, Aarch64.r18,*/
+                    /*Aarch64.r16 : scratch, Aarch64.r17 : scratch2,*/ Aarch64.r18,
                     Aarch64.r19, Aarch64.r20, Aarch64.r21, Aarch64.r22, Aarch64.r23,
                     Aarch64.r24, Aarch64.r25,
                     //r26:latch register, r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
