@@ -1757,7 +1757,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     }
 
                     if (C1XOptions.DebugMethods) {
-                        masm.mov64BitConstant(Aarch64.r16, methodID);
+                        masm.mov32BitConstant(masm.scratchRegister, methodID);
                         debugMethodWriter.appendDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
                     }
                     break;
