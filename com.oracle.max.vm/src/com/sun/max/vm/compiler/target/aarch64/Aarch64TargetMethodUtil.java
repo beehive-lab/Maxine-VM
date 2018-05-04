@@ -88,7 +88,7 @@ public final class Aarch64TargetMethodUtil {
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
         CodePointer callSite = tm.codeAt(callOffset);
 
-        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_SIZE).toLong();
+        long disp64 = target.toLong() - callSite.toLong();
         int disp32 = (int) disp64;
         int oldDisplacement = 0;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
