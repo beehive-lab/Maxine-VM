@@ -158,7 +158,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     private void const2reg(CiRegister dst, CiConstant constant) {
         assert constant.kind == CiKind.Object;
         if (constant.isNull()) {
-            masm.eor(64, dst, dst, dst);
+            masm.mov(dst, 0);
         } else if (target.inlineObjects) {
             assert false : "Object inlining not supported";
         } else {
@@ -1199,20 +1199,19 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         CiRegister dest = dst.asRegister();
         Label high = new Label();
         Label done = new Label();
-        masm.eor(64, dest, dest, dest);
         masm.branchConditionally(ConditionFlag.EQ, done);
         masm.branchConditionally(ConditionFlag.GT, high);
         if (code == LIROpcode.Ucmpfd2i) {
-            masm.add(64, dest, dest, 1);
+            masm.mov(dest, 1);
         } else {
-            masm.sub(64, dest, dest, 1);
+            masm.mov(dest, -1);
         }
         masm.b(done);
         masm.bind(high);
         if (code == LIROpcode.Ucmpfd2i) {
-            masm.sub(64, dest, dest, 1);
+            masm.mov(dest, -1);
         } else {
-            masm.add(64, dest, dest, 1);
+            masm.mov(dest, 1);
         }
         masm.bind(done);
     }
@@ -1940,7 +1939,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     public void movoop(CiRegister dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
         if (obj.isNull()) {
-            masm.xorq(dst, dst);
+            masm.mov(dst, 0);
         } else {
             if (target.inlineObjects) {
                 assert false : "Object inlining not supported";

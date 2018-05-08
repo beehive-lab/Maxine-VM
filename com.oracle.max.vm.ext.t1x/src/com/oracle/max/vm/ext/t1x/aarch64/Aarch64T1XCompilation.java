@@ -194,7 +194,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     @Override
     protected void assignObject(CiRegister dst, Object value) {
         if (value == null) {
-            asm.eor(64, dst, dst, dst);
+            asm.mov(dst, 0);
             return;
         }
 

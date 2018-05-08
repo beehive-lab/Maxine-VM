@@ -1567,9 +1567,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public final void crashme() {
-        eor(64, scratchRegister, scratchRegister, scratchRegister);
         insertForeverLoop();
-        ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+        ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.zr));
     }
 
     public void insertForeverLoop() {
