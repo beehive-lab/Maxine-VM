@@ -599,37 +599,37 @@ public class Aarch64T1XCompilation extends T1XCompilation {
             case Bytecodes.IFEQ:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.EQ;
                 break;
             case Bytecodes.IFNE:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.NE;
                 break;
             case Bytecodes.IFLE:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.LE;
                 break;
             case Bytecodes.IFLT:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.LT;
                 break;
             case Bytecodes.IFGE:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.GE;
                 break;
             case Bytecodes.IFGT:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.GT;
                 break;
             case Bytecodes.IF_ICMPEQ:
