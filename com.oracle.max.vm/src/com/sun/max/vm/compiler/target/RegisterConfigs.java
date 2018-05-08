@@ -20,6 +20,8 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.oracle.max.asm.target.aarch64.Aarch64.calleeSavedRegisters;
+import static com.oracle.max.asm.target.aarch64.Aarch64.csaRegisters;
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
@@ -41,6 +43,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.aarch64.Aarch64TrapFrameAccess;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.runtime.arm.*;
 
@@ -302,16 +305,11 @@ public class RegisterConfigs {
                     //r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
                     Aarch64.r27, Aarch64.r28, Aarch64.r29, Aarch64.r30,
                     //r31:sp||zr
-                    Aarch64.r31, Aarch64.sp,  Aarch64.zr,
+                    //Aarch64.r31, Aarch64.sp,  Aarch64.zr,
                     Aarch64.d0,  Aarch64.d1,  Aarch64.d2,  Aarch64.d3,  Aarch64.d4,  Aarch64.d5,  Aarch64.d6,  Aarch64.d7,
                     Aarch64.d8,  Aarch64.d9,  Aarch64.d10, Aarch64.d11, Aarch64.d12, Aarch64.d13, Aarch64.d14, Aarch64.d15,
                     Aarch64.d16, Aarch64.d17, Aarch64.d18, Aarch64.d19, Aarch64.d20, Aarch64.d21, Aarch64.d22, Aarch64.d23,
                     Aarch64.d24, Aarch64.d25, Aarch64.d26, Aarch64.d27, Aarch64.d28, Aarch64.d29, Aarch64.d30, Aarch64.d31
-                };
-
-                CiRegister[] calleeSavedRegisters = {
-                    Aarch64.r19, Aarch64.r20, Aarch64.r21, Aarch64.r22, Aarch64.r23,
-                    Aarch64.r24, Aarch64.r25, Aarch64.r26, Aarch64.r27, Aarch64.r28,
                 };
 
                 roleMap.put(CPU_SP, Aarch64.sp);
@@ -350,9 +348,9 @@ public class RegisterConfigs {
 
                 setNonZero(standard.getAttributesMap(), Aarch64.LATCH_REGISTER, Aarch64.sp, Aarch64.fp);
 
-                CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, calleeSavedRegisters));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, Aarch64.calleeSavedRegisters));
-                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 34 * 8 + 32 * 16, 8, Aarch64.calleeSavedRegisters));
+                CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, csaRegisters));
+                CiRegisterConfig trapStub = new CiRegisterConfig(standard, Aarch64TrapFrameAccess.CSL);
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
                                 Aarch64.r0, Aarch64.r1, Aarch64.r2, Aarch64.r3, Aarch64.r4, Aarch64.r5, Aarch64.r6, Aarch64.r7, // parameters
                                 Aarch64.fp,   // must be preserved for baseline compiler ???frame pointer???

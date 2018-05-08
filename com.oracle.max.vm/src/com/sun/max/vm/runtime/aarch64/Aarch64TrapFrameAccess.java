@@ -39,7 +39,7 @@ public class Aarch64TrapFrameAccess extends TrapFrameAccess {
     public static final int TRAP_NUMBER_OFFSET;
     private static final int FLAGS_OFFSET;
 
-    private static final CiCalleeSaveLayout CSL;
+    public static final CiCalleeSaveLayout CSL;
     static {
         final int cpuLength = cpuRegisters.length;
         final int fpuLength = fpuRegisters.length;
