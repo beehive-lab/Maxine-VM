@@ -43,15 +43,13 @@ public class Aarch64TrapFrameAccess extends TrapFrameAccess {
     static {
         final int cpuLength = cpuRegisters.length;
         final int fpuLength = fpuRegisters.length;
-        CiRegister[] csaRegs = new CiRegister[cpuLength + fpuLength];
-        System.arraycopy(cpuRegisters, 0, csaRegs, 0, cpuLength);
-        System.arraycopy(fpuRegisters, 0, csaRegs, cpuLength, fpuLength);
+        assert cpuLength + fpuLength == csaRegisters.length;
         int size = (8 * cpuLength) + (16 * fpuLength);
         TRAP_NUMBER_OFFSET = size;
         size += 8;
         FLAGS_OFFSET = size;
         size += 8;
-        CSL = new CiCalleeSaveLayout(0, size, 8, csaRegs);
+        CSL = new CiCalleeSaveLayout(0, size, 8, csaRegisters);
     }
 
     @Override
