@@ -547,7 +547,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void mov(CiRegister dst, long imm) {
         assert Aarch64.isGeneralPurposeReg(dst);
         if (imm == 0L) {
-            movx(dst, Aarch64.zr);
+            movz(64, dst, 0, 0);
         } else if (Aarch64LogicalImmediateTable.isRepresentable(true, imm) != Aarch64LogicalImmediateTable.Representable.NO) {
             or(64, dst, Aarch64.zr, imm);
         } else if (imm >> 32 == -1L && (int) imm < 0 && Aarch64LogicalImmediateTable.isRepresentable((int) imm) != Aarch64LogicalImmediateTable.Representable.NO) {
