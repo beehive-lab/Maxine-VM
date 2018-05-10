@@ -19,14 +19,11 @@
  */
 package test.crossisa.aarch64.adapters;
 
-import java.lang.reflect.*;
-
 import org.junit.*;
 
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.AdapterGenerator.*;
 import com.sun.max.vm.compiler.target.aarch64.*;
 
 import static com.oracle.max.asm.target.aarch64.Aarch64.linkRegister;
@@ -36,7 +33,7 @@ import static com.sun.max.vm.compiler.target.aarch64.Aarch64AdapterGenerator.Bas
  * Tests a call from optimised to baseline with 9 int parameters returning an
  * int. This covers spilling the ninth argument to the stack.
  */
-public class TestOpt2Baseline_IIIIIIIII_I extends Aarch64AdapterTest {
+public class TestOpt2Baseline_IIIIIIIII_I extends Opt2BaselineAarch64AdapterTest {
 
     public TestOpt2Baseline_IIIIIIIII_I() throws Exception {
         super("(IIIIIIIII)I");
@@ -109,15 +106,6 @@ public class TestOpt2Baseline_IIIIIIIII_I extends Aarch64AdapterTest {
         testValues[0] = true;
         long [] values = generateAndTest(expectedValues, testValues, bitmasks);
         assert 45 == values[0] : "Expected 45, got " + values[0];
-    }
-
-    @Override
-    public Adapter createAdapter(Sig sig) throws Exception {
-        Aarch64AdapterGenerator adapterGenerator = new Aarch64AdapterGenerator.Opt2Baseline();
-        Method m = adapterGenerator.getClass().getDeclaredMethod("create", Sig.class);
-        m.setAccessible(true);
-        Adapter adapter = (Adapter) m.invoke(adapterGenerator, sig);
-        return adapter;
     }
 
 }

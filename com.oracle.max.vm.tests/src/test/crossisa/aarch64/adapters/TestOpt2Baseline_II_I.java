@@ -19,19 +19,16 @@
  */
 package test.crossisa.aarch64.adapters;
 
-import java.lang.reflect.*;
-
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.AdapterGenerator.*;
 import com.sun.max.vm.compiler.target.aarch64.*;
 
 /**
  * This class tests a call from optimised to baseline for a method
  * that takes 2 int parameters and returns an int.
  */
-public class TestOpt2Baseline_II_I extends Aarch64AdapterTest {
+public class TestOpt2Baseline_II_I extends Opt2BaselineAarch64AdapterTest {
 
     public TestOpt2Baseline_II_I() throws Exception {
         super("(II)I");
@@ -77,13 +74,5 @@ public class TestOpt2Baseline_II_I extends Aarch64AdapterTest {
         assert 3 == values[0] : "Expected 3, got " + values[0];
     }
 
-    @Override
-    public Adapter createAdapter(Sig sig) throws Exception {
-        Aarch64AdapterGenerator adapterGenerator = new Aarch64AdapterGenerator.Opt2Baseline();
-        Method m = adapterGenerator.getClass().getDeclaredMethod("create", Sig.class);
-        m.setAccessible(true);
-        Adapter adapter = (Adapter) m.invoke(adapterGenerator, sig);
-        return adapter;
-    }
 }
 
