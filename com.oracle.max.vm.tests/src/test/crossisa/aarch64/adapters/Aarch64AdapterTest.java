@@ -199,7 +199,7 @@ public abstract class Aarch64AdapterTest extends MaxTestCase {
      */
     protected void initMethod(byte [] code, String signature) {
         SignatureDescriptor sigDescriptor = SignatureDescriptor.create(signature);
-        int numLocals = sigDescriptor.numberOfParameters();
+        int numLocals = sigDescriptor.numberOfSlots;
         codeAttr = new CodeAttribute(null, code, (char) 2, (char) numLocals, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
         method = new StaticMethodActor(null, SignatureDescriptor.create(signature), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
     }
