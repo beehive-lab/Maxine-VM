@@ -1010,6 +1010,26 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         pokeInt(Aarch64.r0, 0);
     }
 
+    public void do_laddTests() {
+        peekLong(Aarch64.r0, 0);
+        decStack(2);
+        peekLong(Aarch64.r1, 0);
+        decStack(2);
+        asm.add(64, Aarch64.r0, Aarch64.r0, Aarch64.r1);
+        incStack(2);
+        pokeLong(Aarch64.r0, 0);
+    }
+
+    public void do_daddTests() {
+        peekDouble(Aarch64.d0, 0);
+        decStack(2);
+        peekDouble(Aarch64.d1, 0);
+        decStack(2);
+        asm.fadd(64, Aarch64.d0, Aarch64.d0, Aarch64.d1);
+        incStack(2);
+        pokeDouble(Aarch64.d0, 0);
+    }
+
     public void do_imulTests() {
         peekInt(Aarch64.r0, 0);
         decStack(1);
