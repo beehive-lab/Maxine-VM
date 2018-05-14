@@ -148,11 +148,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, int constant) {
-        masm.mov32BitConstant(dst, constant);
+        masm.mov(dst, constant);
     }
 
     private void const2reg(CiRegister dst, long constant) {
-        masm.mov64BitConstant(dst, constant);
+        masm.mov(dst, constant);
     }
 
     private void const2reg(CiRegister dst, CiConstant constant) {
@@ -177,12 +177,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, float constant) {
-        masm.mov32BitConstant(scratchRegister, Float.floatToRawIntBits(constant));
+        masm.mov(scratchRegister, Float.floatToRawIntBits(constant));
         masm.fmov(32, dst, scratchRegister);
     }
 
     private void const2reg(CiRegister dst, double constant) {
-        masm.mov64BitConstant(scratchRegister, Double.doubleToRawLongBits(constant));
+        masm.mov(scratchRegister, Double.doubleToRawLongBits(constant));
         masm.fmov(64, dst, scratchRegister);
     }
 
@@ -200,10 +200,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             case Short:
             case Jsr:
             case Int:
-                const2reg(dest.asRegister(), c.asInt());
+                masm.mov(dest.asRegister(), c.asInt());
                 break;
             case Long:
-                const2reg(dest.asRegister(), c.asLong());
+                masm.mov(dest.asRegister(), c.asLong());
                 break;
             case Object:
                 const2reg(dest.asRegister(), c);
@@ -220,53 +220,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         // Checkstyle: on
     }
 
-    @Override
-    protected void const2stack(CiValue src, CiValue dst) {
-        assert src.isConstant();
-        assert dst.isStackSlot();
-        CiStackSlot slot = (CiStackSlot) dst;
-        CiConstant c = (CiConstant) src;
-
-        CiAddress address = frameMap.toStackAddress(slot);
-        CiKind kind = CiKind.Long;
-        switch (c.kind) {
-            case Boolean:
-            case Byte:
-            case Char:
-            case Short:
-            case Jsr:
-            case Int:
-                masm.mov32BitConstant(scratchRegister, c.asInt());
-                kind = CiKind.Int;
-                break;
-            case Float:
-                masm.mov32BitConstant(scratchRegister, Float.floatToRawIntBits(c.asFloat()));
-                kind = CiKind.Int;
-                break;
-            case Object:
-                movoop(scratchRegister, c);
-                break;
-            case Long:
-                masm.mov64BitConstant(scratchRegister, c.asLong());
-                break;
-            case Double:
-                masm.mov64BitConstant(scratchRegister, Double.doubleToRawLongBits(c.asDouble()));
-                break;
-            default:
-                throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
-        }
-        masm.store(scratchRegister, address, kind);
-    }
-
-    @Override
-    protected void const2mem(CiValue src, CiValue dst, CiKind kind, LIRDebugInfo info) {
-        assert src.isConstant();
-        assert dst.isAddress();
-        CiConstant constant = (CiConstant) src;
-        CiAddress addr = asAddress(dst);
-        CiKind storeKind = CiKind.Int;
-
-        switch (kind) {
+    private CiKind setScratchRegister(CiConstant constant) {
+        CiKind kind = CiKind.Int;
+        switch (constant.kind) {
             case Boolean:
             case Byte:
                 masm.movz(64, scratchRegister, constant.asInt() & 0xFF, 0);
@@ -277,27 +233,48 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 break;
             case Jsr:
             case Int:
-                masm.mov32BitConstant(scratchRegister, constant.asInt());
+                masm.mov(scratchRegister, constant.asInt());
                 break;
             case Float:
-                masm.mov32BitConstant(scratchRegister, Float.floatToRawIntBits(constant.asFloat()));
+                masm.mov(scratchRegister, Float.floatToRawIntBits(constant.asFloat()));
                 break;
             case Object:
                 movoop(scratchRegister, constant);
-                storeKind = CiKind.Long;
+                kind = CiKind.Long;
                 break;
             case Long:
-                masm.mov64BitConstant(scratchRegister, constant.asLong());
-                storeKind = CiKind.Long;
+                masm.mov(scratchRegister, constant.asLong());
+                kind = CiKind.Long;
                 break;
             case Double:
-                masm.mov64BitConstant(scratchRegister, Double.doubleToRawLongBits(constant.asDouble()));
-                storeKind = CiKind.Long;
+                masm.mov(scratchRegister, Double.doubleToRawLongBits(constant.asDouble()));
+                kind = CiKind.Long;
                 break;
             default:
-                throw Util.shouldNotReachHere();
+                throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + constant.kind);
         }
+        return kind;
+    }
 
+    @Override
+    protected void const2stack(CiValue src, CiValue dst) {
+        assert src.isConstant();
+        assert dst.isStackSlot();
+        CiStackSlot slot = (CiStackSlot) dst;
+        CiConstant c = (CiConstant) src;
+
+        CiAddress address = frameMap.toStackAddress(slot);
+        CiKind kind = setScratchRegister(c);
+        masm.store(scratchRegister, address, kind);
+    }
+
+    @Override
+    protected void const2mem(CiValue src, CiValue dst, CiKind kind, LIRDebugInfo info) {
+        assert src.isConstant();
+        assert dst.isAddress();
+        CiConstant constant = (CiConstant) src;
+        CiAddress addr = asAddress(dst);
+        CiKind storeKind = setScratchRegister(constant);
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
