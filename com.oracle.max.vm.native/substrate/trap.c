@@ -451,6 +451,9 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #elif isa_ARM
     tla_store3(dtla,TRAP_LATCH_REGISTER, ucontext->uc_mcontext.arm_r10);
     ucontext->uc_mcontext.arm_r10 = (Address) dtla;
+#elif isa_AARCH64
+    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.regs[26]);
+    ucontext->uc_mcontext.regs[26] = (Address) dtla;
 #else
     c_UNIMPLEMENTED();
 #endif
