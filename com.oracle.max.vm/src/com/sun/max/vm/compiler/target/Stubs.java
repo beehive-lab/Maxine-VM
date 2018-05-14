@@ -724,7 +724,7 @@ public class Stubs {
             asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
 
             // Save the index in the scratch register
-            asm.mov32BitConstant(Aarch64.r8, index);
+            asm.mov32BitConstant(asm.scratchRegister, index);
             if (isHosted() && index == 0) {
                 indexMovInstrPos = asm.codeBuffer.position() - 8;
             }
@@ -762,11 +762,11 @@ public class Stubs {
             asm.restore(csl, frameToCSA);
 
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize - 4));
-            asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldr(64, Aarch64.r17, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
             asm.ldr(64, Aarch64.linkRegister, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
             asm.add(64, Aarch64.sp, Aarch64.sp, frameSize + 4);
-            asm.jmp(Aarch64.r8);
+            asm.jmp(Aarch64.r17);
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
@@ -950,7 +950,7 @@ public class Stubs {
             asm.push(Aarch64.LATCH_REGISTER);
 
             // compute the static trampoline call site
-            CiRegister callSite = Aarch64.r8;
+            CiRegister callSite = Aarch64.r17;
             asm.mov(64, asm.scratchRegister, Aarch64.sp);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue()));
             asm.ldr(64, callSite, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
@@ -1153,13 +1153,13 @@ public class Stubs {
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
-            asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldr(64, Aarch64.r17, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
             asm.add(64, asm.scratchRegister, Aarch64.sp, frameToCSA + csl.offsetOf(latch));
-            asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.str(64, Aarch64.r17, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
-            asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldr(64, Aarch64.r17, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
             asm.add(64, asm.scratchRegister, Aarch64.sp, frameSize);
-            asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.str(64, Aarch64.r17, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // load the trap number from the thread locals into the first parameter register
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
@@ -2024,8 +2024,8 @@ public class Stubs {
             // Put deopt method entry point into low slot
             asm.mov64BitConstant(asm.scratchRegister, 0xffffffff);
             final int patchPos = asm.codeBuffer.position() - 4;
-            asm.setUpRegister(Aarch64.r8, new CiAddress(WordUtil.archKind(), Aarch64.rsp));
-            asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r8));
+            asm.setUpRegister(Aarch64.r17, new CiAddress(WordUtil.archKind(), Aarch64.rsp));
+            asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r17));
 
             asm.mov64BitConstant(asm.scratchRegister, 0xfeeff00f);
             asm.ret(0);
