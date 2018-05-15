@@ -260,13 +260,20 @@ public class RISCV64AssemblerTest {
         asm.lui(s1, 0x33333000);
         asm.lui(s2, 0xFABF1000);
         asm.lui(s3, 0x00);
+        asm.lui(s4, 0xFABF1000);
+        asm.lui(s5, 0x99993000);
 
         asm.addi(t0, s1, 0x00000222);
         asm.addi(t1, s2, 0x00000333);
         asm.addi(t2, s3, 0x00000111);
+        asm.addi(t3, s4, 0x0000022A);
+        asm.addi(t4, s5, 0x00000AB3);
+
         setExpectedValue(t0, 0x33333222);
         setExpectedValue(t1, 0xFABF1333);
         setExpectedValue(t2, 0x00000111);
+        setExpectedValue(t3, 0xFABF122A);
+        setExpectedValue(t4, 0x99992AB3);
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
@@ -278,13 +285,15 @@ public class RISCV64AssemblerTest {
         asm.codeBuffer.reset();
         //store values
         asm.lui(s1, 0x33333000);
-        asm.addi(s2, s1, 0x00000343);
-        //s2 = 0x33333222
+        asm.addi(s2, s1, 0x00000B3A); // s2 = 0x33332B3A
+        asm.lui(s3, 0x11ABC000);
+        asm.addi(s4, s3, 0x000001B2); // s4 = 0x11ABC1B2
+        setExpectedValue(s4, 0x11ABC1B2);
 
-        asm.andi(t0, s2, 0x3333FAF);
-        asm.andi(t1, s2, 0x3333000);
-        setExpectedValue(t0, 0x33333303);
-        setExpectedValue(t1, 0x00000000);
+        asm.andi(t0, s2, 0x00000C22);
+        asm.andi(t1, s4, 0x00000BBC );
+        setExpectedValue(t0, 0x33332822);
+        setExpectedValue(t1, 0x11ABC1B0);
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 

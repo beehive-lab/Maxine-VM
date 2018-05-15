@@ -42,7 +42,7 @@ public class RISCVAssembler extends AbstractAssembler {
      *     |------------|----|--------|
      *     |     20     |  5 |    7   |
      * </pre>
-     *  @param opcode
+     * @param opcode
      * @param rd
      * @param imm32
      */
@@ -63,7 +63,7 @@ public class RISCVAssembler extends AbstractAssembler {
      *     |--------|-----|-----|--------|----|--------|
      *     |    7   |  5  |  5  |   3    |  5 |    7   |
      * </pre>
-     *  @param opcode
+     * @param opcode
      * @param rd
      * @param funct3
      * @param rs1
@@ -83,14 +83,14 @@ public class RISCVAssembler extends AbstractAssembler {
     }
 
     /**
-     * Emits an instruction of type R-type.
+     * Emits an instruction of type I-type.
      *
      * <pre>
-     *     | imm32 | rs1 | funct3 | rd | opcode |
-     *     |-------|-----|--------|----|--------|
-     *     |   12  |  5  |    3   |  5 |    7   |
+     *     | imm[11:0] | rs1 | funct3 | rd | opcode |
+     *     |-----------|-----|--------|----|--------|
+     *     |    12     |  5  |    3   |  5 |    7   |
      * </pre>
-     *  @param opcode
+     * @param opcode
      * @param rd
      * @param funct3
      * @param rs1
