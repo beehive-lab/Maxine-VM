@@ -291,7 +291,7 @@ public class RISCV64AssemblerTest {
         setExpectedValue(s4, 0x11ABC1B2);
 
         asm.andi(t0, s2, 0x00000C22);
-        asm.andi(t1, s4, 0x00000BBC );
+        asm.andi(t1, s4, 0x00000BBC);
         setExpectedValue(t0, 0x33332822);
         setExpectedValue(t1, 0x11ABC1B0);
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
