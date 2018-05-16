@@ -27,6 +27,8 @@ import com.oracle.max.asm.target.aarch64.Aarch64Address.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
+import java.util.EnumSet;
+
 public class Aarch64Assembler extends AbstractAssembler {
     private static final int RdOffset = 0;
     private static final int Rs1Offset = 5;
@@ -99,21 +101,19 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
 
         public static InstructionType generalFromSize(int size) {
-            for (InstructionType type : values()) {
-                if (type.isGeneral && type.width == size) {
-                    return type;
-                }
+            if (size == General32.width) {
+                return General32;
             }
-            throw new Error("should not reach here");
+            assert size == General64.width;
+            return General64;
         }
 
         public static InstructionType floatFromSize(int size) {
-            for (InstructionType type : values()) {
-                if (!type.isGeneral && type.width == size) {
-                    return type;
-                }
+            if (size == FP32.width) {
+                return FP32;
             }
-            throw new Error("should not reach here");
+            assert size == FP64.width;
+            return FP64;
         }
     }
 
