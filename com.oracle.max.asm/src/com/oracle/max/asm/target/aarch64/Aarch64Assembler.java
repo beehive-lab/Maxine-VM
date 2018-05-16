@@ -939,7 +939,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      *
      * @param size size of memory read in bits. Must be 8, 16, 32 or 64.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void ldxr(int size, CiRegister rt, Aarch64Address address) {
@@ -955,7 +955,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param rs general purpose register. Set to exclusive access status. 0 means success, everything else failure.
      *           May not be null, or stackpointer.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void stxr(int size, CiRegister rs, CiRegister rt, Aarch64Address address) {
@@ -972,7 +972,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      *
      * @param size size of memory read in bits. Must be 8, 16, 32 or 64.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void ldar(int size, CiRegister rt, Aarch64Address address) {
@@ -986,7 +986,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      *
      * @param size size of bits written to memory. Must be 8, 16, 32 or 64.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void stlr(int size, CiRegister rt, Aarch64Address address) {
@@ -1002,7 +1002,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      *
      * @param size size of memory read in bits. Must be 8, 16, 32 or 64.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void ldaxr(int size, CiRegister rt, Aarch64Address address) {
@@ -1017,7 +1017,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param size size of bits written to memory. Must be 8, 16, 32 or 64.
      * @param rs general purpose register. Set to exclusive access status. 0 means success, everything else failure. May not be null, or stackpointer.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void stlxr(int size, CiRegister rs, CiRegister rt, Aarch64Address address) {
@@ -1068,7 +1068,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * its bottom 12-bits cleared, writing the result to dst.
      *
      * @param dst general purpose register. May not be null, zero-register or stackpointer.
-     * @param imm the address whose relative page we want.
+     * @param imm21 the address whose relative page we want.
      */
     public void adrp(CiRegister dst, int imm21) {
         //assert (imm & NumUtil.getNbitNumberInt(12)) == 0 : "Lower 12-bit of immediate must be zero.";
