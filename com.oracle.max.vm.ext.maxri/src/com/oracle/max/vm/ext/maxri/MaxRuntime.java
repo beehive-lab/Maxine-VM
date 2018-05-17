@@ -237,7 +237,7 @@ public class MaxRuntime implements RiRuntime {
             fp = ARMV7.r13;
             refMapToFPOffset = 0;
         } else if (platform.isa == ISA.Aarch64) {
-            fp = Aarch64.fp;
+            fp = Aarch64.sp;
             refMapToFPOffset = 0;
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxRuntime.disassemble(com.sun.cri.ci.CiTargetMethod, com.oracle.max.vm.ext.maxri.MaxTargetMethod)");
