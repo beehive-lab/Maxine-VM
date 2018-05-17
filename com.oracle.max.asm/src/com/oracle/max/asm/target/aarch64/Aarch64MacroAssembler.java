@@ -1618,7 +1618,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         assert destKind.isFloatOrDouble();
         assert srcKind.isFloatOrDouble();
         fcmp(size, dst, src);
-        mrs(Aarch64.r15, SystemRegister.SPSR_EL1);
     }
 
     public void load(CiRegister dest, CiAddress addr, CiKind kind) {
