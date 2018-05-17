@@ -21,15 +21,22 @@
 package com.sun.max.vm.compiler.target.aarch64;
 
 import com.oracle.max.asm.target.aarch64.*;
+import com.sun.cri.ci.CiCalleeSaveLayout;
 import com.sun.max.annotate.C_FUNCTION;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.StackFrameCursor;
+import com.sun.max.vm.stack.StackFrameWalker;
 
 public final class Aarch64TargetMethodUtil {
 
     public static final int RIP_CALL_INSTRUCTION_SIZE = 4;
+    public static final int RET = 0xD65F_0000;
 
     /**
      * Extract an instruction from the code array which starts at index=idx.
@@ -108,4 +115,57 @@ public final class Aarch64TargetMethodUtil {
         final Address callSiteAddress = callSite.toAddress();
         return callSiteAddress.isWordAligned();
     }
+
+    @HOSTED_ONLY
+    private static boolean atFirstOrLastInstruction(StackFrameCursor current) {
+        // check whether the current ip is at the first instruction or a return
+        // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
+        TargetMethod tm = current.targetMethod();
+        CodePointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ? CallEntryPoint.C_ENTRY_POINT.in(tm) : CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
+        return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readInt(current.vmIP().toAddress(), 0) == RET;
+
+    }
+
+    /**
+     * Advances the stack walker such that {@code current} becomes the callee.
+     *
+     * @param current the frame just visited by the current stack walk
+     * @param csl the layout of the callee save area in {@code current}
+     * @param csa the address of the callee save area in {@code current}
+     */
+    public static void advance(StackFrameCursor current, CiCalleeSaveLayout csl, Pointer csa) {
+        assert csa.isZero() == (csl == null);
+        TargetMethod tm = current.targetMethod();
+        Pointer sp = current.sp();
+        Pointer ripPointer = sp.plus(tm.frameSize());
+        if (MaxineVM.isHosted()) {
+            // Only during a stack walk in the context of the Inspector can execution
+            // be anywhere other than at a safepoint.
+            AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
+            if (generator != null && generator.advanceIfInPrologue(current)) {
+                return;
+            }
+            if (atFirstOrLastInstruction(current)) {
+                ripPointer = sp;
+            }
+        }
+
+        StackFrameWalker sfw = current.stackFrameWalker();
+        Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
+        // Skip the saved link register. Skip stackAlignment bytes since the push is 16-byte aligned as well
+        Pointer callerSP = ripPointer.plus(Platform.target().stackAlignment);
+        Pointer callerFP;
+        if (!csa.isZero() && csl.contains(Aarch64.fp.getEncoding())) {
+            callerFP = sfw.readWord(csa, csl.offsetOf(Aarch64.fp.getEncoding())).asPointer();
+        } else {
+            callerFP = current.fp();
+        }
+        current.setCalleeSaveArea(csl, csa);
+        boolean wasDisabled = SafepointPoll.disable();
+        sfw.advance(callerIP, callerSP, callerFP);
+        if (!wasDisabled) {
+            SafepointPoll.enable();
+        }
+    }
+
 }

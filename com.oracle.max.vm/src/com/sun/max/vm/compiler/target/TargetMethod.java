@@ -47,6 +47,8 @@ import com.sun.max.vm.compiler.RuntimeCompiler.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
+import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
@@ -1215,6 +1217,29 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param current the current stack frame cursor
      */
     public abstract void advance(StackFrameCursor current);
+
+    /**
+     * AArchitecture specific part of {@link #advance(StackFrameCursor)}.
+     *
+     * @param current the current stack frame cursor
+     * @param csl the callee save layout
+     * @param csa the callee save area
+     */
+    protected void advanceHelper(StackFrameCursor current, CiCalleeSaveLayout csl, Pointer csa) {
+        switch (platform().isa) {
+            case Aarch64:
+                Aarch64TargetMethodUtil.advance(current, csl, csa);
+                break;
+            case ARM:
+                ARMTargetMethodUtil.advance(current, csl, csa);
+                break;
+            case AMD64:
+                AMD64TargetMethodUtil.advance(current, csl, csa);
+                break;
+            default:
+                throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.advance");
+        }
+    }
 
     /**
      * Gets a pointer to the memory word holding the return address in a frame of this target method.

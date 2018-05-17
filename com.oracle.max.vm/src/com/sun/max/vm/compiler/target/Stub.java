@@ -232,25 +232,13 @@ public final class Stub extends TargetMethod {
 
     @Override
     public void advance(StackFrameCursor current) {
-        if (platform().isa == ISA.AMD64) {
-            CiCalleeSaveLayout csl = calleeSaveLayout();
-            Pointer csa = Pointer.zero();
-            if (csl != null) {
-                assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
-                csa = current.sp().plus(csl.frameOffsetToCSA);
-            }
-            AMD64TargetMethodUtil.advance(current, csl, csa);
-        } else if (platform().isa == ISA.ARM) {
-            CiCalleeSaveLayout csl = calleeSaveLayout();
-            Pointer csa = Pointer.zero();
-            if (csl != null) {
-                assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
-                csa = current.sp().plus(csl.frameOffsetToCSA);
-            }
-            ARMTargetMethodUtil.advance(current, csl, csa);
-        } else {
-            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.advance");
+        CiCalleeSaveLayout csl = calleeSaveLayout();
+        Pointer csa = Pointer.zero();
+        if (csl != null) {
+            assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
+            csa = current.sp().plus(csl.frameOffsetToCSA);
         }
+        advanceHelper(current, csl, csa);
     }
 
     @Override

@@ -770,25 +770,13 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
      */
     @Override
     public void advance(StackFrameCursor current) {
-        if (platform().isa == ISA.AMD64) {
-            CiCalleeSaveLayout csl = calleeSaveLayout();
-            Pointer csa = Pointer.zero();
-            if (csl != null) {
-                // See FrameMap
-                csa = current.sp().plus(frameSize() - csl.size);
-            }
-            AMD64TargetMethodUtil.advance(current, csl, csa);
-        } else if (platform().isa == ISA.ARM) {
-            CiCalleeSaveLayout csl = calleeSaveLayout();
-            Pointer csa = Pointer.zero();
-            if (csl != null) {
-                // See FrameMap
-                csa = current.sp().plus(frameSize() - csl.size);
-            }
-            ARMTargetMethodUtil.advance(current, csl, csa);
-        } else {
-            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.advance");
+        CiCalleeSaveLayout csl = calleeSaveLayout();
+        Pointer csa = Pointer.zero();
+        if (csl != null) {
+            // See FrameMap
+            csa = current.sp().plus(frameSize() - csl.size);
         }
+        advanceHelper(current, csl, csa);
     }
 
     @Override
