@@ -300,7 +300,7 @@ public class RegisterConfigs {
                     Aarch64.r16, Aarch64.r17, Aarch64.r18,
                     Aarch64.r19, Aarch64.r20, Aarch64.r21, Aarch64.r22, Aarch64.r23,
                     Aarch64.r24, Aarch64.r25,
-                    // r26 is personally defined as latch register
+                    // r26 is defined as latch register
                     /*Aarch64.r26,*/
                     //r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
                     Aarch64.r27, Aarch64.r28, Aarch64.r29, Aarch64.r30,
