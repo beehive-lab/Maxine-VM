@@ -922,29 +922,30 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             if (C1XOptions.GenSpecialDivChecks) {
                 // check for special case of MIN_VALUE / -1
                 Label normalCase = new Label();
-                masm.mov64BitConstant(scratchRegister, size == 32 ? Integer.MIN_VALUE : Long.MIN_VALUE);
+                masm.mov(scratchRegister, size == 32 ? Integer.MIN_VALUE : Long.MIN_VALUE);
                 masm.cmp(size, numerator, scratchRegister);
                 masm.branchConditionally(ConditionFlag.NE, normalCase);
                 masm.cmp(size, denominator, -1);
                 if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
                     // prepare scratch for possible special case where remainder = 0
-                    masm.mov(size, scratchRegister, Aarch64.zr);
+                    masm.mov(quotient, 0);
                 }
                 masm.branchConditionally(ConditionFlag.EQ, continuation);
                 masm.bind(normalCase);
             }
             int offset = masm.codeBuffer.position();
-            masm.sdiv(size, quotient, numerator, denominator);
             if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
-                masm.msub(size, scratchRegister, quotient, denominator, numerator);
+                if (quotient == numerator || quotient == denominator) {
+                    quotient = scratchRegister;
+                }
+                masm.sdiv(size, quotient, numerator, denominator);
+                masm.msub(size, result.asRegister(), quotient, denominator, numerator);
+            } else {
+                assert code == LIROpcode.Idiv || code == LIROpcode.Ldiv;
+                masm.sdiv(size, quotient, numerator, denominator);
             }
             masm.bind(continuation);
             tasm.recordImplicitException(offset, info);
-            if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
-                masm.mov(size, quotient, scratchRegister);
-            } else {
-                assert code == LIROpcode.Idiv || code == LIROpcode.Ldiv;
-            }
         }
     }
 
@@ -959,11 +960,15 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
         int offset = masm.codeBuffer.position();
         tasm.recordImplicitException(offset, info);
-        masm.udiv(size, quotient, numerator, denominator);
         if (code == LIROpcode.Iurem || code == LIROpcode.Lurem) {
-            masm.msub(size, quotient, quotient, denominator, numerator);
+            if (quotient == numerator || quotient == denominator) {
+                quotient = scratchRegister;
+            }
+            masm.udiv(size, quotient, numerator, denominator);
+            masm.msub(size, result.asRegister(), quotient, denominator, numerator);
         } else {
             assert code == LIROpcode.Iudiv || code == LIROpcode.Ludiv;
+            masm.udiv(size, quotient, numerator, denominator);
         }
     }
 
