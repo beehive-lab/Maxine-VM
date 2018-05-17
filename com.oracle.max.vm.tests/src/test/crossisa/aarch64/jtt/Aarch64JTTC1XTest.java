@@ -1189,8 +1189,8 @@ public class Aarch64JTTC1XTest {
     @Test
     public void c1x_jtt_BC_irem() throws Exception {
         initialiseTest();
-        int[] argsOne = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        int[] argsTwo = {2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
+        int[] argsOne = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0x1000_0000};
+        int[] argsTwo = {2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 8};
         String klassName = getKlassName("jtt.bytecode.BC_irem");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_irem.java", "int test(int, int)");
@@ -1199,6 +1199,24 @@ public class Aarch64JTTC1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_irem.test(argsOne[i], argsTwo[i]);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
+            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            generateAndTest(functionPrototype, entryPoint, codeBytes);
+        }
+    }
+
+    @Test
+    public void c1x_jtt_BC_lrem() throws Exception {
+        initialiseTest();
+        long[] argsOne = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0x1000_0000};
+        long[] argsTwo = {2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 8};
+        String klassName = getKlassName("jtt.bytecode.BC_lrem");
+        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
+        initializeCodeBuffers(methods, "BC_lrem.java", "long test(long, long)");
+
+        long expectedValue;
+        for (int i = 0; i < argsOne.length; i++) {
+            expectedValue = BC_lrem.test(argsOne[i], argsTwo[i]);
+            String functionPrototype = Aarch64CodeWriter.preAmble("long", "long, long ", Long.toString(argsOne[i]) + "," + Long.toString(argsTwo[i]));
             tester.setExpectedValue(Aarch64.r0, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
         }
@@ -1269,7 +1287,7 @@ public class Aarch64JTTC1XTest {
     public void c1x_jtt_BC_idiv() throws Exception {
         initialiseTest();
         CompilationBroker.singleton.setSimulateAdapter(true);
-        int[] argsOne = {1, 2, 256, 135, -2147483648, -2147483648};
+        int[] argsOne = {1, 2, 256, 135, Integer.MIN_VALUE, Integer.MIN_VALUE};
         int[] argsTwo = {2, -1, 4, 7, -1, 1};
         String klassName = getKlassName("jtt.bytecode.BC_idiv");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
