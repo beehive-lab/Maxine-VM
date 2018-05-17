@@ -44,7 +44,7 @@ public final class TargetBreakpoint {
                 return new byte[] {(byte) 0xCC};
             }
             default: {
-                FatalError.unimplemented();
+                FatalError.unimplemented("com.sun.max.vm.tele.TargetBreakpoint.createBreakpointCode");
                 break;
             }
         }

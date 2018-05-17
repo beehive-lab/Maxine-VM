@@ -295,7 +295,7 @@ public final class CodeEviction extends VmOperation {
             byte int3 = (byte) 0xcc;
             Arrays.fill(code, int3);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.invalidateCode");
         }
         return true;
     }
@@ -387,7 +387,7 @@ public final class CodeEviction extends VmOperation {
                 } else if (platform().isa == ISA.ARM) {
                     target = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
-                    throw FatalError.unimplemented();
+                    throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.BaselineFixCalls.doTargetMethod");
                 }
 
                 final CodePointer itarget = target.minus(delta);
@@ -442,7 +442,7 @@ public final class CodeEviction extends VmOperation {
                 } else if (platform().isa == ISA.ARM) {
                     target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
-                    throw FatalError.unimplemented();
+                    throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.OptFixCalls.doTargetMethod");
                 }
                 if (CodeManager.runtimeBaselineCodeRegion.isInFromSpace(target.toAddress())) {
                     if (!haveLoggedMethod) {
@@ -850,7 +850,7 @@ public final class CodeEviction extends VmOperation {
             } else if (platform().isa == ISA.ARM) {
                 target = ARMTargetMethodUtil.readCall32Target(tm, callPos);
             } else {
-                throw FatalError.unimplemented();
+                throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.patchDirectCallsIn");
             }
             final TargetMethod callee = target.toTargetMethod();
             assert callee != null : "callee should not be null in " + tm + "@" + callPos + " " + target.to0xHexString();
@@ -1045,7 +1045,7 @@ public final class CodeEviction extends VmOperation {
                 } else if (platform().isa == ISA.ARM) {
                     target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
-                    throw FatalError.unimplemented();
+                    throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.DumpDirectCalls.doTargetMethod");
                 }
                 final TargetMethod callee = target.toTargetMethod();
                 assert callee != null : "callee should not be null in " + targetMethod + "@" + callPos + "->" + target.to0xHexString();

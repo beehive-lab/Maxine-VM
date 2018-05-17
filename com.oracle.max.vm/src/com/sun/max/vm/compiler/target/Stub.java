@@ -141,7 +141,7 @@ public final class Stub extends TargetMethod {
                     // Take into account return address adjustment in static trampoline
                     return ip.asPointer().equals(tm.codeStart().plus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
                 }
-                throw FatalError.unimplemented();
+                throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.isDeoptStubEntry");
             }
             return ip.asPointer().equals(tm.codeStart());
         } else {
@@ -226,7 +226,7 @@ public final class Stub extends TargetMethod {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.returnAddressPointer(frame);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.returnAddressPointer");
         }
     }
 
@@ -249,7 +249,7 @@ public final class Stub extends TargetMethod {
             }
             ARMTargetMethodUtil.advance(current, csl, csa);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.advance");
         }
     }
 
@@ -261,7 +261,7 @@ public final class Stub extends TargetMethod {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.acceptStackFrameVisitor");
         }
     }
 
@@ -272,7 +272,7 @@ public final class Stub extends TargetMethod {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.frameLayout(this);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.frameLayout");
         }
     }
 
@@ -300,7 +300,7 @@ public final class Stub extends TargetMethod {
         } else if (platform().isa == ISA.Aarch64) {
             return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.fixupCallSite");
         }
     }
 

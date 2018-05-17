@@ -175,8 +175,7 @@ public class Stubs {
         } else if (platform().isa == ISA.AMD64) {
             tmpindex = stub.codeStart().toPointer().readInt(indexMovInstrPos);
         } else {
-            throw FatalError.unimplemented();
-
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.getDispatchTableIndex");
         }
         final int index = tmpindex;
         assert stub.is(VirtualTrampoline) ? (virtualTrampolines.size() > index && virtualTrampolines.get(index) == stub)
@@ -344,7 +343,7 @@ public class Stubs {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.isJumpToStaticTrampoline");
         }
     }
 
@@ -582,7 +581,7 @@ public class Stubs {
             String stubName = "invokeBasic";
             return new Stub(InvokeBasic, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genResolveInvokeBasicTarget");
         }
     }
 
@@ -772,7 +771,7 @@ public class Stubs {
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genDynamicTrampoline");
         }
     }
 
@@ -992,7 +991,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genStaticTrampoline");
         }
     }
 
@@ -1193,7 +1192,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genTrapStub");
         }
     }
 
@@ -1515,7 +1514,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genUnwind");
         }
     }
 
@@ -1615,7 +1614,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genUnroll");
         }
     }
 
@@ -2040,7 +2039,7 @@ public class Stubs {
 
             return stub;
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genDeoptStub");
         }
     }
 
@@ -2373,7 +2372,7 @@ public class Stubs {
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genDeoptStubWithCSA");
         }
     }
 
@@ -2568,7 +2567,7 @@ public class Stubs {
             byte[] code = masm.codeBuffer.close(true);
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genUncommonTrapStub");
         }
     }
 

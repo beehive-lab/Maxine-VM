@@ -731,7 +731,7 @@ public abstract class TargetMethod extends MemoryRegion {
         } else if (platform().isa == ISA.Aarch64) {
             Aarch64InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.TargetMethod.patchRelativeInstruction");
         }
     }
 

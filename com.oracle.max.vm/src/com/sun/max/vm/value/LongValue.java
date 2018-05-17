@@ -93,7 +93,7 @@ public final class LongValue extends PrimitiveValue<LongValue> {
         if (Word.width() == 64) {
             return Address.fromLong(value).compareTo(Address.fromLong(other.value));
         }
-        throw FatalError.unimplemented();
+        throw FatalError.unimplemented("com.sun.max.vm.value.LongValue.unsignedCompareSameKind");
     }
 
     @Override

@@ -53,7 +53,7 @@ public final class Aarch64TargetMethodUtil {
      * @return the target of the call prior to patching
      */
     public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
-        throw FatalError.unimplemented();
+        throw FatalError.unimplemented("mtSafePatchCallDisplacement");
     }
 
     /**

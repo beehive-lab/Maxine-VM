@@ -379,7 +379,7 @@ public class RegisterConfigs {
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.RegisterConfigs.create");
         }
         return null;
     }

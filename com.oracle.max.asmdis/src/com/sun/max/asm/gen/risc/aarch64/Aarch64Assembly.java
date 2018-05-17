@@ -51,7 +51,7 @@ public final class Aarch64Assembly extends RiscAssembly {
 
     @Override
     protected List<RiscTemplate> createTemplates() {
-        assert false : "Unimplemented";
+        assert false : "Unimplemented T1X createTemplates";
         final RiscTemplateCreator creator = new RiscTemplateCreator();
         return creator.templates();
     }

@@ -463,7 +463,7 @@ public final class DebugInfo {
                     } else if (platform().isa == ISA.ARM) {
                         fp = ARMV7.r13;
                     } else {
-                        throw FatalError.unimplemented();
+                        throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.DebugInfo.decodeFrame");
                     }
                     final int offsetInFrame = ss.index() * target().spillSlotSize;
                     if (ss.inCallerFrame()) {
@@ -657,7 +657,7 @@ public final class DebugInfo {
                 retrievedData = memberIndex;
                 break;
             default:
-                FatalError.unimplemented();
+                FatalError.unimplemented("com.oracle.max.vm.ext.maxri.DebugInfo.retrieveDataFromDebugInfo");
         }
         return retrievedData;
     }

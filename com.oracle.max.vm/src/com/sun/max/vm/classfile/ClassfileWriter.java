@@ -273,7 +273,7 @@ public class ClassfileWriter {
 
         @Override
         protected void writeData(ClassfileWriter cf) throws IOException {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.classfile.ClassfileWriter.BootstrapMethodsAttribute.writeData");
 //            cf.writeUnsigned2(bootstrapMethods.length);
 //            for (BootstrapMethod bootstrapMethod : bootstrapMethods) {
 //                cf.writeUnsigned2(bootstrapMethod.bootstrapMethodRef);

@@ -385,7 +385,7 @@ public final class Safepoints {
         if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64) {
             return callPos + callSize;
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Safepoints.safepointPosForCall");
         }
     }
 

@@ -240,7 +240,7 @@ public class MaxRuntime implements RiRuntime {
             fp = Aarch64.fp;
             refMapToFPOffset = 0;
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxRuntime.disassemble(com.sun.cri.ci.CiTargetMethod, com.oracle.max.vm.ext.maxri.MaxTargetMethod)");
         }
         RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
         for (Safepoint safepoint : ciTM.safepoints) {

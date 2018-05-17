@@ -546,7 +546,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             return new XirSnippet(multiNewArrayTemplate[rank].unresolved, Utils.concat(lengths, guard));
         }
         if (rank >= multiNewArrayTemplate.length) {
-            FatalError.unimplemented();
+            FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxXirGenerator.genNewMultiArray");
         }
         XirArgument hub = XirArgument.forObject(hubFor(type));
         return new XirSnippet(multiNewArrayTemplate[rank].resolved, Utils.concat(lengths, hub));

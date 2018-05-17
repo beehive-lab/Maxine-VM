@@ -344,7 +344,7 @@ public class VmThread {
                 // Yellow zone was unprotected in the native trap handler - see nativeTrapHandlerUnprotectedYellowZone()
             }
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.thread.VmThread.checkYellowZoneForRaisingException");
         }
     }
 
@@ -1411,7 +1411,7 @@ public class VmThread {
 
     public final void stop0(Object throwable) {
         terminationCause = (Throwable) throwable;
-        FatalError.unimplemented();
+        FatalError.unimplemented("stop0");
         Throw.raise(this); // not a Throwable => uncatchable - see 'run()' above
     }
 

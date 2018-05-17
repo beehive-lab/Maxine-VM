@@ -231,7 +231,7 @@ public final class CodeCacheValidation extends VmOperation {
                 assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee +
                                 " (target: " + callTarget.to0xHexString() + ")";
             } else {
-                throw FatalError.unimplemented();
+                throw FatalError.unimplemented("com.sun.max.vm.code.CodeCacheValidation.validateDirectCallsOf");
             }
         }
     }
