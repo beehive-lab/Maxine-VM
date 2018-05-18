@@ -1536,15 +1536,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         ret(Aarch64.linkRegister);
     }
 
-    public final void ret(int imm16) {
-        if (imm16 == 0) {
-            ret();
-        } else {
-            add(64, Aarch64.sp, Aarch64.sp, imm16);
-            ret();
-        }
-    }
-
     public void leaq(CiRegister dest, CiAddress addr) {
         if (addr == CiAddress.Placeholder) {
             nop(4);

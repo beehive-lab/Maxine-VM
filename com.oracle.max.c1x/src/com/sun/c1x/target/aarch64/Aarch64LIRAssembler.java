@@ -85,7 +85,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitReturn(CiValue result) {
         // TODO: Consider adding safepoint polling at return!
-        masm.ret(0);
+        masm.ret();
     }
 
     @Override

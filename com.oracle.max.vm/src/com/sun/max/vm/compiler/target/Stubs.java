@@ -574,7 +574,7 @@ public class Stubs {
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
             asm.add(64, Aarch64.sp, Aarch64.sp, frameSize - 4);
-            asm.ret(0);
+            asm.ret();
 
             byte[] code = asm.codeBuffer.close(true);
 
@@ -986,7 +986,7 @@ public class Stubs {
             asm.subq(asm.scratchRegister, Aarch64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
             asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
 
-            asm.ret(0);
+            asm.ret();
             String stubName = "strampoline";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
@@ -1187,7 +1187,7 @@ public class Stubs {
             asm.msr(Aarch64Assembler.SystemRegister.SPSR_EL1, asm.scratchRegister);
             asm.pop(1 << 12);
             asm.clearex();
-            asm.ret(0);
+            asm.ret();
             asm.insertForeverLoop();
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
@@ -2027,7 +2027,7 @@ public class Stubs {
             asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r17));
 
             asm.mov64BitConstant(asm.scratchRegister, 0xfeeff00f);
-            asm.ret(0);
+            asm.ret();
 
             String stubName = runtimeRoutineName + "Stub";
             byte[] code = asm.codeBuffer.close(true);
