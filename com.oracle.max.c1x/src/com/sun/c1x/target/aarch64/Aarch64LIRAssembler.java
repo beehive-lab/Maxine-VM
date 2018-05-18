@@ -1127,8 +1127,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         break;
                     }
                     case Object: {
-                        movoop(scratchRegister, c);
-                        masm.cmp(64, reg1, scratchRegister);
+                        if (c.isNull()) {
+                            masm.cmp(64, reg1, 0);
+                        } else {
+                            movoop(scratchRegister, c);
+                            masm.cmp(64, reg1, scratchRegister);
+                        }
                         break;
                     }
                     default:
