@@ -313,9 +313,9 @@ public class RegisterConfigs {
                 };
 
                 roleMap.put(CPU_SP, Aarch64.sp);
-                roleMap.put(CPU_FP, Aarch64.r29);
+                roleMap.put(CPU_FP, Aarch64.fp);
                 roleMap.put(ABI_SP, Aarch64.sp);
-                roleMap.put(ABI_FP, Aarch64.r29);
+                roleMap.put(ABI_FP, Aarch64.fp);
                 roleMap.put(LATCH, Aarch64.LATCH_REGISTER);
 
                 /**
@@ -363,11 +363,11 @@ public class RegisterConfigs {
 
                 roleMap.put(ABI_FP, Aarch64.r29);
                 CiRegisterConfig template = new CiRegisterConfig(
-                                Aarch64.r29,         // frame???
+                                Aarch64.fp,          // frame???
                                 Aarch64.r0,          // integral return value
                                 Aarch64.d0,          // floating point return value
                                 Aarch64.r16,         // scratch
-                                null,                // scratch 1
+                                Aarch64.r17,         // scratch 1
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
                                 parameters,          // parameter registers
