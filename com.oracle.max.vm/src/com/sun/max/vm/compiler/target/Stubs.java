@@ -1376,95 +1376,6 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         } else if (platform().isa == ISA.Aarch64) {
-//            CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
-//            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
-//            int frameSize = platform().target.alignFrameSize(0);
-//
-//            for (int i = 0; i < prologueSize; ++i) {
-//                asm.nop();
-//            }
-//
-//            // called from Java so we should push the return address register
-//            asm.push(Aarch64.LATCH_REGISTER);
-//
-//            CiValue[] args = unwindArgs;
-//            assert args.length == 3 || args.length == 4;
-//
-//            // TODO: not sure this will work
-//            CiRegister pc = args[0].asRegister();
-//            CiRegister sp = args[1].asRegister();
-//            CiRegister fp = args[2].asRegister();
-//
-//            // TODO: below doesn't work in aarch64
-//            // asm.mov(64, asm.scratchRegister, pc);
-//            asm.mov(64, Aarch64.r8, sp);
-//            String name = "unwindStub";
-//            if (args.length == 4) {
-//                CiValue retValue = args[3];
-//                CiRegister reg = null;
-//                CiAddress stackAddr = null;
-//                CiKind kind = retValue.kind.stackKind();
-//                name = "unwind" + kind.name() + "Stub";
-//                switch (kind) {
-//                    case Long:
-//                        stackAddr = new CiAddress(kind, Aarch64.rsp, ((CiStackSlot) retValue).index() * Word.size());
-//                        asm.setUpRegister(asm.scratchRegister, stackAddr);
-//                        asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-//                        break;
-//                    case Int:
-//                    case Object:
-//                        assert args[3].isRegister() : " genUnwind args[3] is not a register?";
-//                        break;
-//                    case Float:
-//                        reg = retValue.asRegister();
-//                        asm.fmov(64, registerConfig.getReturnRegister(CiKind.Float), reg);
-//                        break;
-//                    case Double:
-//                        reg = retValue.asRegister();
-//                        asm.fmov(64, registerConfig.getReturnRegister(CiKind.Double), reg);
-//                        break;
-//
-//                    default:
-//                        FatalError.unexpected("unexpected kind: " + kind);
-//                }
-//            }
-//            // we have a problem with where to put the return value.
-//            // we need to clear space first, and finish using the registers
-//
-//            // Push 'pc' to the handler's stack frame and update RSP to point to the pushed value.
-//            // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
-//            // and the stack will be in the correct state for the handler.
-//            asm.subq(sp, Word.size());
-//            asm.setUpScratch(new CiAddress(WordUtil.archKind(), sp.asValue()));
-//            asm.str(64, pc, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-//            asm.mov(64, Aarch64.r11, fp);
-//            asm.mov(64, Aarch64.sp, sp);
-//
-//            if (args.length == 4) {
-//                CiValue retValue = args[3];
-//                CiKind kind = retValue.kind.stackKind();
-//                switch (kind) {
-//                    case Long:
-//                        asm.mov(64,Aarch64.r0, Aarch64.r8);
-//                        asm.mov(64, Aarch64.r1, Aarch64.r9);
-//                        break;
-//                    case Int:
-//                    case Object:
-//                        asm.mov(64, Aarch64.r0, args[3].asRegister());
-//                        break;
-//                    case Float:
-//                    case Double:
-//                        // nothing to do as already in the correct register
-//                        break;
-//                    default:
-//                        FatalError.unexpected("unexpected kind: " + kind);
-//                }
-//            }
-//
-//            asm.ret(0);
-//            byte[] code = asm.codeBuffer.close(true);
-//            return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
-
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
@@ -1501,14 +1412,12 @@ public class Stubs {
                 }
             }
 
-            // Push 'pc' to the handler's stack frame and update RSP to point to the pushed value.
+            // Push 'pc' to the handler's stack frame and update SP to point to the pushed value.
             // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
             // and the stack will be in the correct state for the handler.
-            asm.subq(sp, Word.size());
-//            asm.mov(64, new CiAddress(WordUtil.archKind(), sp.asValue()), pc);
+            asm.str(64, pc, Aarch64Address.createPreIndexedImmediateAddress(sp, -16));
             asm.mov(64, Aarch64.fp, fp);
             asm.mov(64, Aarch64.sp, sp);
-//            asm.ret(0);
             asm.ret();
 
             byte[] code = asm.codeBuffer.close(true);
