@@ -299,30 +299,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert src.isRegister();
         assert dst.isStackSlot();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) dst);
-        // Checkstyle: off
-        switch (src.kind) {
-            case Boolean:
-            case Byte:
-            case Char:
-            case Short:
-            case Jsr:
-            case Int:
-                masm.store(src.asRegister(), addr, CiKind.Int);
-                break;
-            case Object:
-            case Long:
-                masm.store(src.asRegister(), addr, CiKind.Long);
-                break;
-            case Float:
-                masm.store(src.asRegister(), addr, CiKind.Float);
-                break;
-            case Double:
-                masm.store(src.asRegister(), addr, CiKind.Double);
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
-        // Checkstyle: on
+        masm.store(src.asRegister(), addr, src.kind);
     }
 
     @Override
@@ -339,17 +316,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert src.isStackSlot();
         assert dest.isRegister();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
-        masm.load(dest.asRegister(), addr, dest.kind);
+        masm.load(dest.asRegister(), addr, src.kind);
     }
 
     @Override
     protected void mem2mem(CiValue src, CiValue dest, CiKind kind) {
-        if (dest.kind.isInt()) {
-            masm.load(Aarch64.r16, (CiAddress) src, CiKind.Int);
-            masm.store(Aarch64.r16, (CiAddress) dest, CiKind.Int);
-        } else {
-            assert false : "Not implemented yet";
-        }
+        masm.load(masm.scratchRegister, (CiAddress) src, kind);
+        masm.store(masm.scratchRegister, (CiAddress) dest, kind);
     }
 
     @Override
@@ -359,13 +332,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
-        if (src.kind == CiKind.Long || src.kind == CiKind.Double) {
-            masm.load(scratchRegister, frameMap.toStackAddress((CiStackSlot) src), CiKind.Long);
-            masm.store(scratchRegister, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Long);
-        } else {
-            masm.load(scratchRegister, frameMap.toStackAddress((CiStackSlot) src), CiKind.Int);
-            masm.store(scratchRegister, frameMap.toStackAddress((CiStackSlot) dest), CiKind.Int);
-        }
+        masm.load(scratchRegister, frameMap.toStackAddress((CiStackSlot) src), src.kind);
+        masm.store(scratchRegister, frameMap.toStackAddress((CiStackSlot) dest), src.kind);
     }
 
     @Override
@@ -818,7 +786,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             CiAddress laddr = asAddress(left);
             if (right.isRegister()) {
                 CiRegister rreg = right.asRegister();
-                masm.load(scratchRegister, laddr, CiKind.Int);
+                masm.load(scratchRegister, laddr, kind);
                 switch (code) {
                     case Add:
                         masm.add(32, scratchRegister, scratchRegister, rreg);
@@ -830,7 +798,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         throw Util.shouldNotReachHere();
 
                 }
-                masm.store(scratchRegister, laddr, CiKind.Int);
+                masm.store(scratchRegister, laddr, kind);
             } else {
                 assert right.isConstant();
                 int c = ((CiConstant) right).asInt();
@@ -1910,11 +1878,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             CiConstant c = (CiConstant) registerOrConstant;
             if (c.kind == CiKind.Object) {
                 movoop(scratchRegister, c);
-                masm.store(scratchRegister, dst, CiKind.Object);
             } else {
-                masm.mov32BitConstant(scratchRegister, c.asInt());
-                masm.store(scratchRegister, dst, CiKind.Int);
+                masm.mov(scratchRegister, c.asInt());
             }
+            masm.store(scratchRegister, dst, c.kind);
         } else if (registerOrConstant.isRegister()) {
             masm.store(registerOrConstant.asRegister(), dst, k);
         } else {

@@ -633,8 +633,12 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         switch(kind.asEnum) {
             case BYTE:
             case BOOLEAN:
+                masm.str(8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                break;
             case SHORT:
             case CHAR:
+                masm.str(16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                break;
             case INT:
                 masm.str(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
                 break;

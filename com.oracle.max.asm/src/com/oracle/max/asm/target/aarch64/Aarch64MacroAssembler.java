@@ -1579,26 +1579,26 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void store(CiRegister src, CiAddress addr, CiKind kind) {
         Aarch64Address address = calculateAddress(addr);
         switch (kind) {
+            case Boolean:
+            case Byte:
+                str(8, src, address);
+                break;
             case Char:
             case Short:
                 str(16, src, address);
+                break;
+            case Int:
+                str(32, src, address);
                 break;
             case Object:
             case Long:
                 str(64, src, address);
                 break;
-            case Double:
-                fstr(64, src, address);
-                break;
             case Float:
                 fstr(32, src, address);
                 break;
-            case Int:
-                str(32, src, address);
-                break;
-            case Byte:
-            case Boolean:
-                str(8, src, address);
+            case Double:
+                fstr(64, src, address);
                 break;
             default:
                 assert false : "Unknown kind!";
@@ -1615,30 +1615,32 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         Aarch64Address address = calculateAddress(addr);
 
         switch (kind) {
+            case Byte:
+                ldrs(64, 8, dest, address);
+                break;
+            case Boolean:
+                mov(dest, 0);
+                ldr(8, dest, address);
+                break;
+            case Char:
+                mov(dest, 0);
+                ldr(16, dest, address);
+                break;
             case Short:
                 ldrs(64, 16, dest, address);
                 break;
-            case Char:
-                ldr(16, dest, address);
-                break;
-            case Boolean:
-                ldr(8, dest, address);
-                break;
-            case Byte:
-                ldrs(64, 8, dest, address);
+            case Int:
+                ldrs(64, 32, dest, address);
                 break;
             case Object:
             case Long:
                 ldr(64, dest, address);
                 break;
-            case Double:
-                fldr(64, dest, address);
-                break;
             case Float:
                 fldr(32, dest, address);
                 break;
-            case Int:
-                ldrs(64, 32, dest, address);
+            case Double:
+                fldr(64, dest, address);
                 break;
             default:
                 assert false : "Unknown kind!";
