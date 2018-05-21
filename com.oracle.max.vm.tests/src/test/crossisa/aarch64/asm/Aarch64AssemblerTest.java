@@ -39,7 +39,7 @@ public class Aarch64AssemblerTest {
     private MaxineAarch64Tester tester = new MaxineAarch64Tester();
 
     public Aarch64AssemblerTest() {
-        CiTarget aarch64 = new CiTarget(new Aarch64(), true, 8, 0, 4096, 0, false, false, false, true);
+        CiTarget aarch64 = new CiTarget(new Aarch64(), true, 8, 16, 4096, 0, false, false, false, true);
         asm = new Aarch64Assembler(aarch64, null);
         masm = new Aarch64MacroAssembler(aarch64, null);
     }
