@@ -1482,22 +1482,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         super.br(dest);
     }
 
-    /**
-     * Immediate jump instruction fixed up by HotSpot c++ code.
-     */
-    public void jmp() {
-        // Offset has to be fixed up by c++ code.
-        super.b(0);
-    }
-
-    /**
-     *
-     * @return true if immediate offset can be used in a single branch instruction.
-     */
-    public static boolean isBranchImmediateOffset(long imm) {
-        return NumUtil.isSignedNbit(28, imm);
-    }
-
     /* system instructions */
 
     /**
