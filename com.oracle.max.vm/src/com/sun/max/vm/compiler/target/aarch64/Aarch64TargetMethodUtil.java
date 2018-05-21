@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.target.aarch64;
 
+import com.oracle.max.asm.NumUtil;
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.ci.CiCalleeSaveLayout;
 import com.sun.max.annotate.C_FUNCTION;
@@ -35,7 +36,9 @@ import com.sun.max.vm.stack.StackFrameWalker;
 
 public final class Aarch64TargetMethodUtil {
 
-    public static final int RIP_CALL_INSTRUCTION_SIZE = 4;
+    public static final int INSTRUCTION_SIZE = 4;
+    public static final int NUMBER_OF_NOPS = 4;
+    public static final int RIP_CALL_INSTRUCTION_SIZE = 5 * INSTRUCTION_SIZE;
     public static final int RET = 0xD65F_0000;
 
     /**
@@ -94,21 +97,54 @@ public final class Aarch64TargetMethodUtil {
      */
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
         CodePointer callSite = tm.codeAt(callOffset);
+        if (MaxineVM.isHosted()) {
+            long disp64 = target.toLong() - callSite.toLong();
+            int disp32 = (int) disp64;
+            FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+            assert NumUtil.isSignedNbit(28, disp32);
+            byte[] code = tm.code();
+            final int oldDisplacement = fixupCall28Site(code, callOffset, disp32);
+            return callSite.plus(oldDisplacement);
+        } else {
+            return fixupCall32Site(tm, callSite, target);
+        }
+    }
 
+    private static CodePointer fixupCall32Site(TargetMethod tm, CodePointer callSite, CodePointer target) {
         long disp64 = target.toLong() - callSite.toLong();
         int disp32 = (int) disp64;
-        int oldDisplacement = 0;
+        int oldDisplacement;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-        if (MaxineVM.isHosted()) {
-            byte [] code = tm.code();
-            oldDisplacement = fixupCall28Site(code, callOffset, disp32);
-        } else {
+        if (NumUtil.isSignedNbit(28, disp32)) {
             final Pointer callSitePointer = callSite.toPointer();
             int instruction = callSitePointer.readInt(0);
             oldDisplacement = Aarch64Assembler.bImmExtractDisplacement(instruction);
             callSitePointer.writeInt(0, Aarch64Assembler.bImmPatch(instruction, disp32));
+        } else {
+            final Pointer callSitePointer = callSite.toPointer();
+            final int instruction = callSitePointer.readInt(0);
+            oldDisplacement = Aarch64Assembler.bImmExtractDisplacement(instruction);
+            final boolean isLinked = Aarch64Assembler.isBImmInstructionLinked(instruction);
+
+            // Since adr is invoked NUMBER_OF_NOPS instructions before the actual branch we need to adjust the displacement
+            FatalError.check(disp32 <= Integer.MAX_VALUE - (NUMBER_OF_NOPS * INSTRUCTION_SIZE), "Code displacement out of 32-bit range");
+            disp32 += NUMBER_OF_NOPS * INSTRUCTION_SIZE;
+            final boolean isNegative = disp32 < 0;
+            if (isNegative) {
+                disp32 = -disp32;
+            }
+
+            // overwrite the four nops from com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.call()
+            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            nopSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r16, 0));
+            nopSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r17, disp32 & 0xFFFF, 0));
+            nopSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r17, (disp32 >> 16) & 0xFFFF, 16));
+            nopSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r16, Aarch64.r17,
+                                                                          isNegative));
+            // overwrote the immediate branch with a register branch
+            nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, isLinked));
         }
-        return callSite.plus(RIP_CALL_INSTRUCTION_SIZE).plus(oldDisplacement);
+        return callSite.plus(oldDisplacement);
     }
 
     public static boolean isPatchableCallSite(CodePointer callSite) {

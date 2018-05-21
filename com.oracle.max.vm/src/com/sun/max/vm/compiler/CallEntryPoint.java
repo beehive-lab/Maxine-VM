@@ -28,6 +28,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.aarch64.Aarch64AdapterGenerator;
 import com.sun.max.vm.compiler.target.arm.ARMAdapterGenerator;
 import com.sun.max.vm.jni.*;
 
@@ -137,6 +138,8 @@ public enum CallEntryPoint {
         if (vm().compilationBroker.needsAdapters()) {
             if (Platform.target().arch.is32bit()) {
                 OPTIMIZED_ENTRY_POINT.init(ARMAdapterGenerator.Baseline2Opt.PROLOGUE_SIZE);
+            } else if (Platform.target().arch.isAarch64()) {
+                OPTIMIZED_ENTRY_POINT.init(Aarch64AdapterGenerator.Baseline2Opt.PROLOGUE_SIZE);
             } else {
                 OPTIMIZED_ENTRY_POINT.init(8);
             }

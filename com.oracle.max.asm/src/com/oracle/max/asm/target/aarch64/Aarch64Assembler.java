@@ -1594,20 +1594,26 @@ public class Aarch64Assembler extends AbstractAssembler {
         addSubShiftedInstruction(dst, src1, src2, shiftType, imm, generalFromSize(size), Instruction.SUBS);
     }
 
-    private void addSubShiftedInstruction(CiRegister dst, CiRegister src1,
-                                          CiRegister src2, ShiftType shiftType, int imm,
-                                          InstructionType type, Instruction instr) {
+    public static int addSubInstructionHelper(CiRegister dst, CiRegister src1, CiRegister src2, boolean isSub) {
+        return addSubShiftedInstructionHelper(dst, src1, src2, ShiftType.LSL, 0,
+                                              InstructionType.General64, isSub ? Instruction.SUB : Instruction.ADD);
+    }
+
+    private static int addSubShiftedInstructionHelper(CiRegister dst, CiRegister src1,
+                                                      CiRegister src2, ShiftType shiftType, int imm,
+                                                      InstructionType type, Instruction instr) {
         assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src1, src2);
         assert shiftType != ShiftType.ROR;
         assert imm >= 0 && imm < type.width;
         int instrEncoding = instr.encoding | AddSubShiftedOp;
-        emitInt(type.encoding |
-                instrEncoding |
-                imm << ImmediateOffset |
-                shiftType.encoding << ShiftTypeOffset |
-                rd(dst) |
-                rs1(src1) |
-                rs2(src2));
+        return type.encoding | instrEncoding | imm << ImmediateOffset | shiftType.encoding << ShiftTypeOffset |
+               rd(dst) | rs1(src1) | rs2(src2);
+    }
+
+    private void addSubShiftedInstruction(CiRegister dst, CiRegister src1,
+                                          CiRegister src2, ShiftType shiftType, int imm,
+                                          InstructionType type, Instruction instr) {
+        emitInt(addSubShiftedInstructionHelper(dst, src1, src2, shiftType, imm, type, instr));
     }
 
     /* Arithmetic (extended register) (5.5.2) */

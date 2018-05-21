@@ -272,7 +272,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         /**
          * The size in bytes of the prologue, see {@link Baseline2Opt#emitPrologue(Object, Adapter)}.
          */
-        private static final int PROLOGUE_SIZE = 8;
+        public static final int PROLOGUE_SIZE = 6 * 4;
 
         @Override
         public int prologueSizeForCallee(ClassMethodActor callee) {
@@ -294,7 +294,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected int emitPrologue(Object out, Adapter adapter) {
             Aarch64MacroAssembler masm = out instanceof OutputStream ? new Aarch64MacroAssembler(Platform.target(), null) : (Aarch64MacroAssembler) out;
             if (adapter == null) {
-                masm.nop(2);
+                masm.nop(6);
             } else {
                 masm.push(64, Aarch64.linkRegister);
                 masm.call();

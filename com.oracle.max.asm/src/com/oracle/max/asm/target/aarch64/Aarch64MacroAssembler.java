@@ -1508,6 +1508,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public final void call() {
+        nop(4);
         bl(0);
     }
 
