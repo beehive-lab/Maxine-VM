@@ -716,23 +716,25 @@ public class Stubs {
             // now allocate the frame for this method
             asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
 
-            // Save the index in the scratch register
-            asm.mov32BitConstant(asm.scratchRegister, index);
+            // save the index in the scratch register. This register is then callee-saved
+            // so that the stack walker can find it.
             if (isHosted() && index == 0) {
-                indexMovInstrPos = asm.codeBuffer.position() - 8;
+                indexMovInstrPos = asm.codeBuffer.position();
             }
+            asm.mov(registerConfig.getScratchRegister(), index);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
 
             CiValue[] args = isInterface ? resolveInterfaceCallArgs : resolveVirtualCallArgs;
 
-            // load the index into the second arg register
-            asm.mov32BitConstant(args[1].asRegister(), index);
+            // the receiver is already in the first arg register
 
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize));
-            asm.ldr(64, args[2].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            // load the index into the second arg register
+            asm.mov(args[1].asRegister(), index);
+
+            // load the return address into the third arg register
+            asm.ldr(64, args[2].asRegister(), Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, frameSize));
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -740,26 +742,19 @@ public class Stubs {
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
-            // Put the entry point of the resolved method on the stack just below the
-            // return address of the trampoline itself. By adjusting RSP to point at
-            // this second return address and executing a 'ret' instruction, execution
-            // continues in the resolved method as if it was called by the trampoline's
-            // caller which is exactly what we want.
+            // Store the result in the second scratch register (the first will be restored) before restoring
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize - 4));
-            asm.str(64, returnReg, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.mov(64, registerConfig.getScratchRegister1(), returnReg);
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(csl, frameToCSA);
 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize - 4));
-            asm.ldr(64, Aarch64.r17, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
-            asm.ldr(64, Aarch64.linkRegister, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize + 4);
-            asm.jmp(Aarch64.r17);
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
+            asm.pop(Aarch64.linkRegister);
+
+            // Jump to the entry point of the resolved method
+            asm.jmp(registerConfig.getScratchRegister1());
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
