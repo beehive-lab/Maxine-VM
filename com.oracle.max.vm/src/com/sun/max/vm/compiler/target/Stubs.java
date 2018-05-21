@@ -1630,14 +1630,18 @@ public class Stubs {
         @Override
         void apply() {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
-            int disp = runtimeRoutine.address().toInt();
+            long disp = runtimeRoutine.address().toLong();
 
-            int instruction = Aarch64MacroAssembler.movzHelper(64, Aarch64.r16, disp & 0xffff, 0);
+            int instruction = Aarch64MacroAssembler.movzHelper(64, Aarch64.r16, (int) disp & 0xffff, 0);
             patchAddr.writeInt(0, instruction);
-            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (disp >> 16) & 0xffff, 16);
+            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 16) & 0xffff, 16);
             patchAddr.writeInt(4, instruction);
+            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 32) & 0xffff, 32);
+            patchAddr.writeInt(8, instruction);
+            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 48) & 0xffff, 48);
+            patchAddr.writeInt(12, instruction);
 
-            Aarch64TargetMethodUtil.maxine_cache_flush(patchAddr, 8);
+//            Aarch64TargetMethodUtil.maxine_cache_flush(patchAddr, 8);
         }
     }
 
