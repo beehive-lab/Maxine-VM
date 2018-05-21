@@ -27,8 +27,6 @@ import com.oracle.max.asm.target.aarch64.Aarch64Address.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
-import java.util.EnumSet;
-
 public class Aarch64Assembler extends AbstractAssembler {
     private static final int RdOffset = 0;
     private static final int Rs1Offset = 5;
@@ -650,7 +648,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm28 Signed 28-bit offset, has to be word aligned.
      */
     public void b(int imm28) {
-        unconditionalBranchImmInstruction(imm28, Instruction.B, -1);
+        unconditionalBranchImmInstruction(imm28, Instruction.B);
     }
 
     /**
@@ -668,7 +666,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm28 Signed 28-bit offset, has to be word aligned.
      */
     public void bl(int imm28) {
-        unconditionalBranchImmInstruction(imm28, Instruction.BL, -1);
+        unconditionalBranchImmInstruction(imm28, Instruction.BL);
     }
 
 
@@ -704,6 +702,17 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
         // negative number -- sign extend.
         return (displacement << 2) | 0xF0000000;
+    }
+
+    /**
+     * Return the instruction type of a branch immediate instruction.
+     * @param instruction the machine code of the original instruction
+     * @return the instruction type
+     */
+    public static boolean isBImmInstructionLinked(int instruction) {
+        assert (instruction & NumUtil.getNbitNumberInt(5) << 26) == UnconditionalBranchImmOp :
+                "Not a branch immediate instruction: 0x" + Integer.toHexString(instruction);
+        return instruction >> 31 != 0;
     }
 
     /**
@@ -756,8 +765,12 @@ public class Aarch64Assembler extends AbstractAssembler {
         assert (instruction & NumUtil.getNbitNumberInt(5) << 26) == UnconditionalBranchImmOp :
                 "Not a branch immediate instruction: 0x" + Integer.toHexString(instruction);
         assert NumUtil.isSignedNbit(28, displacement) && (displacement & 0x3) == 0
-                        : "Immediate has to be 28bit signed number and word aligned";
+                        : "Immediate has to be 28bit signed number and word aligned: " + Integer.toHexString(displacement);
         return (instruction & ~B_IMM_ADDRESS_MASK) | ((displacement >> 2) & B_IMM_ADDRESS_MASK);
+    }
+
+    private void unconditionalBranchImmInstruction(int imm28, Instruction instr) {
+        unconditionalBranchImmInstruction(imm28, instr, -1);
     }
 
     private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
@@ -801,11 +814,17 @@ public class Aarch64Assembler extends AbstractAssembler {
         unconditionalBranchRegInstruction(target, Instruction.RET);
     }
 
-    private void unconditionalBranchRegInstruction(CiRegister target, Instruction instr) {
+    public static int unconditionalBranchRegInstructionHelper(CiRegister target, boolean linked) {
+        return unconditionalBranchRegInstructionHelper(target, linked ? Instruction.BLR : Instruction.BR);
+    }
+
+    private static int unconditionalBranchRegInstructionHelper(CiRegister target, Instruction instr) {
         assert Aarch64.isGeneralPurposeReg(target);
-        int instrEncoding = instr.encoding | UnconditionalBranchRegOp;
-        emitInt(instrEncoding |
-                rs1(target));
+        return instr.encoding | UnconditionalBranchRegOp | rs1(target);
+    }
+
+    private void unconditionalBranchRegInstruction(CiRegister target, Instruction instr) {
+        emitInt(unconditionalBranchRegInstructionHelper(target, instr));
     }
 
     /* Load-Store Single Register (5.3.1) */
