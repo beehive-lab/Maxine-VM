@@ -309,14 +309,14 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             Aarch64MacroAssembler masm = new Aarch64MacroAssembler(Platform.target(), null);
-            final int rbpSlotSize = OPT_SLOT_SIZE;
-            final int baselineCallerRIPSlotSize = OPT_SLOT_SIZE;
-            final int implicitlyAllocatedFrameSize = baselineCallerRIPSlotSize + rbpSlotSize;
-            int adapterFrameSize = target().alignFrameSize(stackArgumentsSize + implicitlyAllocatedFrameSize - baselineCallerRIPSlotSize);
+
+            // On Entry x30 holds the return address of the call in the OPT callee's prologue (which is also the entry
+            // to the main body of the OPT callee) and [SP] holds the return address in the baseline caller.
+
             int stackArgumentsSize = getStackArgumentsSize(optArgs);
+            int adapterFrameSize = target().alignFrameSize(stackArgumentsSize);
             // The amount by which RSP must be explicitly adjusted to create the adapter frame
-            final int explicitlyAllocatedFrameSize = adapterFrameSize - rbpSlotSize;
-            assert explicitlyAllocatedFrameSize >= 0 && explicitlyAllocatedFrameSize <= Short.MAX_VALUE;
+            assert adapterFrameSize >= 0 && adapterFrameSize <= Short.MAX_VALUE;
 
             // stack the baseline caller's frame pointer
             masm.push(64, Aarch64.fp);
@@ -325,11 +325,11 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             masm.mov(64, Aarch64.fp, Aarch64.sp);
 
             // allocate the adapter frame
-            masm.sub(64, Aarch64.sp, Aarch64.sp, explicitlyAllocatedFrameSize);
+            masm.sub(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
-            // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize + OPT_SLOT_SIZE.
-            int baselineStackOffset = adapterFrameSize + OPT_SLOT_SIZE;
+            // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize.
+            int baselineStackOffset = adapterFrameSize;
             int baselineArgsSize = 0;
             CiBitMap refMap = null;
             for (int i = optArgs.length - 1; i >= 0;  i--) {
