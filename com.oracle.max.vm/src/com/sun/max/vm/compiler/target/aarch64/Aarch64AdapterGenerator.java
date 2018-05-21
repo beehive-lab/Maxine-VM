@@ -309,23 +309,11 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             Aarch64MacroAssembler masm = new Aarch64MacroAssembler(Platform.target(), null);
-            // Compute the number of stack args needed for the call (i.e. the args that won't
-            // be put into registers)
-            int stackArgumentsSize = 0;
-            for (int i = optArgs.length - 1; i >= 0; i--) {
-                if (optArgs[i].isStackSlot()) {
-                    CiStackSlot slot = (CiStackSlot) optArgs[i];
-                    int offset = slot.index() * OPT_SLOT_SIZE;
-                    int end = offset + OPT_SLOT_SIZE;
-                    if (end > stackArgumentsSize) {
-                        stackArgumentsSize = end;
-                    }
-                }
-            }
             final int rbpSlotSize = OPT_SLOT_SIZE;
             final int baselineCallerRIPSlotSize = OPT_SLOT_SIZE;
             final int implicitlyAllocatedFrameSize = baselineCallerRIPSlotSize + rbpSlotSize;
             int adapterFrameSize = target().alignFrameSize(stackArgumentsSize + implicitlyAllocatedFrameSize - baselineCallerRIPSlotSize);
+            int stackArgumentsSize = getStackArgumentsSize(optArgs);
             // The amount by which RSP must be explicitly adjusted to create the adapter frame
             final int explicitlyAllocatedFrameSize = adapterFrameSize - rbpSlotSize;
             assert explicitlyAllocatedFrameSize >= 0 && explicitlyAllocatedFrameSize <= Short.MAX_VALUE;

@@ -331,6 +331,27 @@ public abstract class AdapterGenerator {
     }
 
     /**
+     * Computes the number of stack args needed for the call (i.e. the args that won't be put into registers).
+     *
+     * @param optArgs
+     * @return
+     */
+    protected int getStackArgumentsSize(CiValue[] optArgs) {
+        int stackArgumentsSize = 0;
+        for (int i = optArgs.length - 1; i >= 0; i--) {
+            if (optArgs[i].isStackSlot()) {
+                CiStackSlot slot = (CiStackSlot) optArgs[i];
+                int offset = slot.index() * OPT_SLOT_SIZE;
+                int end = offset + OPT_SLOT_SIZE;
+                if (end > stackArgumentsSize) {
+                    stackArgumentsSize = end;
+                }
+            }
+        }
+        return stackArgumentsSize;
+    }
+
+    /**
      * Creates an adapter based on a given signature.
      */
     protected abstract Adapter create(Sig sig);
