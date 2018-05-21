@@ -548,8 +548,7 @@ public class Stubs {
             asm.save(csl, frameToCSA);
 
             CiValue[] args = resolveInvokeBasicCallArgs;
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
-            asm.ldr(64, args[1].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldr(64, args[1].asRegister(), Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, frameSize));
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -557,24 +556,19 @@ public class Stubs {
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
-            // Put the entry point of the resolved method on the stack just below the
-            // return address of the trampoline itself. By adjusting RSP to point at
-            // this second return address and executing a 'ret' instruction, execution
-            // continues in the resolved method as if it was called by the trampoline's
-            // caller which is exactly what we want.
+            // Store the result in the second scratch register (the first will be restored) before restoring
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize - 4));
-            asm.ldr(64, returnReg, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.mov(64, registerConfig.getScratchRegister1(), returnReg);
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(csl, frameToCSA);
 
-            // Adjust RSP as mentioned above and do the 'ret' that lands us in the
-            // trampolined-to method.
-            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize - 4);
-            asm.ret();
+            // pop this method's frame
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
+
+            // jump to the resolved method
+            asm.jmp(registerConfig.getScratchRegister1());
 
             byte[] code = asm.codeBuffer.close(true);
 
