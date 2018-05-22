@@ -1224,7 +1224,6 @@ public class Stubs {
         FatalError.unexpected("stub should be overwritten");
     }
 
-    // TODO: Fix ARM version
     @HOSTED_ONLY
     private Stub genUnwind(CiValue[] unwindArgs) {
         if (platform().isa == ISA.AMD64) {
@@ -1277,7 +1276,7 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
-        } else if (platform().isa == ISA.ARM) {
+        } else if (platform().isa == ISA.ARM) {  // TODO (ck): Fix ARM version
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
@@ -1393,21 +1392,19 @@ public class Stubs {
                         asm.mov(64, registerConfig.getReturnRegister(CiKind.Int), reg);
                         break;
                     case Float:
+                        asm.fmov(32, registerConfig.getReturnRegister(CiKind.Float), reg);
+                        break;
                     case Double:
-                        asm.fmov(64, registerConfig.getReturnRegister(CiKind.Float), reg);
+                        asm.fmov(64, registerConfig.getReturnRegister(CiKind.Double), reg);
                         break;
                     default:
                         FatalError.unexpected("unexpected kind: " + kind);
                 }
             }
 
-            // Push 'pc' to the handler's stack frame and update SP to point to the pushed value.
-            // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
-            // and the stack will be in the correct state for the handler.
-            asm.str(64, pc, Aarch64Address.createPreIndexedImmediateAddress(sp, -16));
             asm.mov(64, Aarch64.fp, fp);
             asm.mov(64, Aarch64.sp, sp);
-            asm.ret();
+            asm.jmp(pc);
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
