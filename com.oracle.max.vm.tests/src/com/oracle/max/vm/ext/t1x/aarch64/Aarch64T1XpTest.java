@@ -189,7 +189,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_AssignWordReg() throws Exception {
+    public void test_AssignWordReg() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -215,7 +215,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_AssignDouble() throws Exception {
+    public void test_AssignDouble() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -242,7 +242,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_AssignInt() throws Exception {
+    public void test_AssignInt() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -268,7 +268,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_AssignLong() throws Exception {
+    public void test_AssignLong() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -292,7 +292,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_AssignFloat() throws Exception {
+    public void test_AssignFloat() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -319,7 +319,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_do_swap() throws Exception {
+    public void fails_do_swap() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -349,7 +349,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_do_dup2_x2_4() throws Exception {
+    public void test_do_dup2_x2_4() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -380,7 +380,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
     // category 1/1/2
-    public void work_do_dup2_x2_3() throws Exception {
+    public void test_do_dup2_x2_3() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -418,7 +418,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
     }
 
     // category 2/1/1
-    public void work_do_dup2_x2_2() throws Exception {
+    public void test_do_dup2_x2_2() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -453,7 +453,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
     // all category 1 types
-    public void work_do_dup2_x2() throws Exception {
+    public void test_do_dup2_x2() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -495,7 +495,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
     }
 
     // category 2 and 1 computational types
-    public void work_do_dup2_x1_2() throws Exception {
+    public void test_do_dup2_x1_2() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -529,7 +529,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
 
 
     // category 1 computational types.
-    public void work_do_dup2_x1() throws Exception {
+    public void test_do_dup2_x1() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -569,7 +569,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
     }
 
     // category 2 & 1 computational type test.
-    public void work_do_dup_x2_2() throws Exception {
+    public void test_do_dup_x2_2() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -602,7 +602,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
     }
 
     // category 1 test
-    public void work_do_dup_x2_1() throws Exception {
+    public void fails_do_dup_x2_1() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -634,7 +634,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_do_dup_x1() throws Exception {
+    public void fails_do_dup_x1() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -666,7 +666,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
     }
 
     // category 2 type test
-    public void work_do_dup2_2() throws Exception {
+    public void test_do_dup2_2() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -694,7 +694,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
     }
 
     // category 1 type test
-    public void work_do_dup2_1() throws Exception {
+    public void fails_do_dup2_1() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -727,7 +727,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_do_dup() throws Exception {
+    public void test_do_dup() throws Exception {
         int testVal = (int) Math.random();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(Aarch64.r16, testVal);
@@ -745,7 +745,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         assert simValues[0] == expectedValues[0];
         assert simValues[1] == expectedValues[1];
     }
-    public void work_do_dconst() throws Exception {
+    public void test_do_dconst() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -772,7 +772,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_do_lconst() throws Exception {
+    public void test_do_lconst() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -799,7 +799,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
                 : i + "; Simulated: " + simValues[i] + ", expected: " + expectedValues[i];
         }
     }
-    public void work_do_fconst() throws Exception {
+    public void test_do_fconst() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -824,7 +824,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
                 : i + "; Simulated: " + Float.intBitsToFloat((int) simValues[i]) + ", expected: " + values[i];
         }
     }
-    public void work_do_iconst() throws Exception {
+    public void test_do_iconst() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -847,7 +847,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_do_iinc() throws Exception {
+    public void test_do_iinc() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -884,7 +884,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_LoadStoreObject() throws Exception {
+    public void test_LoadStoreObject() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -911,7 +911,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
                             : "Register " + i + " " + simulatedValues[i] + " expected " + expectedValues[i];
         }
     }
-    public void work_LoadStoreWord() throws Exception {
+    public void test_LoadStoreWord() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -938,7 +938,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
                             : "Register " + i + " " + simulatedValues[i] + " expected " + expectedValues[i];
         }
     }
-    public void work_LoadStoreLong() throws Exception {
+    public void test_LoadStoreLong() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -968,7 +968,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_bcond() throws Exception {
+    public void test_bcond() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -989,7 +989,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
 
     }
 
-    public void work_LoadStoreInt() throws Exception {
+    public void test_LoadStoreInt() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -1023,7 +1023,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
 
     }
 
-    public void work_emitPrologueTests() throws Exception {
+    public void test_emitPrologueTests() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         theCompiler.emitPrologueTests();
@@ -1033,7 +1033,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         return;
     }
 
-    public void work_iinc() throws Exception {
+    public void test_iinc() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
