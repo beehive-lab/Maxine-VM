@@ -58,7 +58,7 @@ public class TestOpt2Baseline_II_I extends Aarch64AdapterTest {
         // add them
         t1xCompiler.do_iaddTests();
         // place the result in the return register
-        masm.pop(32, Aarch64.r0);
+        masm.pop(Aarch64.r0);
         t1xCompiler.decStack(1);
         t1xCompiler.emitEpilogueTests();
         byte [] code = masm.codeBuffer.close(true);

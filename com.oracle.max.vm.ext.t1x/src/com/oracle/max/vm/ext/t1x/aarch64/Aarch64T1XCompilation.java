@@ -25,9 +25,7 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
-import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.*;
 
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.aarch64.Aarch64Assembler.*;
@@ -37,7 +35,6 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.DebugMethodWriter;
@@ -371,8 +368,8 @@ public class Aarch64T1XCompilation extends T1XCompilation {
          * of the other machinery e.g. stack walking if there is the assumption that the caller's FP lives
          * in a single JVMS_STACK_SLOT.
          */
-        asm.push(64, Aarch64.linkRegister);
-        asm.push(64, Aarch64.fp);
+        asm.push(Aarch64.linkRegister);
+        asm.push(Aarch64.fp);
         asm.sub(64, Aarch64.fp, Aarch64.sp, framePointerAdjustment()); // fp set relative to sp
         /*
          * Extend the stack pointer past the frame size minus the slot used for the callers
@@ -422,8 +419,8 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     protected void emitEpilogue() {
         // rewind stack pointer
         asm.add(64, Aarch64.sp, Aarch64.fp, framePointerAdjustment());
-        asm.pop(64, Aarch64.fp);
-        asm.pop(64, Aarch64.linkRegister);
+        asm.pop(Aarch64.fp);
+        asm.pop(Aarch64.linkRegister);
         asm.ret(Aarch64.linkRegister);
         if (T1XOptions.DebugMethods) {
             try {
@@ -469,7 +466,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
             throw verifyError("Low must be less than or equal to high in TABLESWITCH");
         }
 
-        asm.pop(32, scratch); // Pop index from stack
+        asm.pop(scratch); // Pop index from stack
 
         // Jump to default target if index is not within the jump table
         asm.cmp(32, scratch, lowMatch); // Check if index is lower than lowMatch
@@ -539,9 +536,9 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         } else {
             // r1 = loop counter
             // r2 = key from the lookup table under test.
-            asm.pop(32, scratch);                               // key
-            asm.push(64, Aarch64.r1);
-            asm.push(64, Aarch64.r2);
+            asm.pop(scratch);                                   // key
+            asm.push(Aarch64.r1);
+            asm.push(Aarch64.r2);
             asm.adr(scratch2, 16 * 4);                          // lookup table base (+16 instructions from here)
             asm.mov(Aarch64.r1, (ls.numberOfCases() - 1) * 2);  // loop counter
             int loopPos = buf.position();
@@ -551,16 +548,16 @@ public class Aarch64T1XCompilation extends T1XCompilation {
             asm.subs(32, Aarch64.r1, Aarch64.r1, 2);            // decrement loop counter
             jcc(ConditionFlag.PL, loopPos);                     // iterate again if >= 0
             startBlock(ls.defaultTarget());                     // No match, jump to default target
-            asm.pop(64, Aarch64.r2);                            // after restoring registers r2
-            asm.pop(64, Aarch64.r1);                            // and r1.
+            asm.pop(Aarch64.r2);                                // after restoring registers r2
+            asm.pop(Aarch64.r1);                                // and r1.
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
             jmp(0);
             // load offset, add to lookup table base and jump.
             asm.add(32, Aarch64.r1, Aarch64.r1, 1);             // increment r1 to get the offset
             asm.ldr(32, scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r1, true));
             asm.add(64, scratch, scratch, scratch2);
-            asm.pop(64, Aarch64.r2);
-            asm.pop(64, Aarch64.r1);
+            asm.pop(Aarch64.r2);
+            asm.pop(Aarch64.r1);
             asm.jmp(scratch);
             int lookupTablePos = buf.position();
             // Emit lookup table entries

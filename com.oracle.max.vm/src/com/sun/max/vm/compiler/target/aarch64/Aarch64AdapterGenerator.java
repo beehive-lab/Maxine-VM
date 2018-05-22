@@ -296,7 +296,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             if (adapter == null) {
                 masm.nop(6);
             } else {
-                masm.push(64, Aarch64.linkRegister);
+                masm.push(Aarch64.linkRegister);
                 masm.call();
             }
             int size = masm.codeBuffer.position();
@@ -319,7 +319,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             assert adapterFrameSize >= 0 && adapterFrameSize <= Short.MAX_VALUE;
 
             // stack the baseline caller's frame pointer
-            masm.push(64, Aarch64.fp);
+            masm.push(Aarch64.fp);
 
             // the adapter frame pointer = the current stack pointer
             masm.mov(64, Aarch64.fp, Aarch64.sp);
@@ -364,10 +364,10 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             masm.mov(64, Aarch64.sp, Aarch64.fp);
 
             // and the caller's frame pointer,
-            masm.pop(64, Aarch64.fp);
+            masm.pop(Aarch64.fp);
 
             // and the baseline return address.
-            masm.pop(64, Aarch64.linkRegister);
+            masm.pop(Aarch64.linkRegister);
 
             // roll the stack pointer back before the first argument on the caller's stack.
             masm.add(64, Aarch64.sp, Aarch64.sp, baselineArgsSize);
@@ -565,7 +565,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             masm.nop();
             // stack the return address in the caller, i.e. the instruction following the branch to
             // here in the optimised caller.
-            masm.push(64, Aarch64.linkRegister);
+            masm.push(Aarch64.linkRegister);
             masm.bl(0);
             masm.bind(end);
             int size = masm.codeBuffer.position();
@@ -609,7 +609,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             // contains the address of the baseline method body, go there.
             masm.blr(Aarch64.linkRegister);
             int callSize = masm.codeBuffer.position() - callPos;
-            masm.pop(64, Aarch64.linkRegister);
+            masm.pop(Aarch64.linkRegister);
             masm.ret(Aarch64.linkRegister);
             final byte [] code = masm.codeBuffer.close(true);
             String description = Type.OPT2BASELINE + "-Adapter" + sig;

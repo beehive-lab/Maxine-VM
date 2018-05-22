@@ -426,8 +426,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * Push a register onto the stack using 16byte alignment.
      * @param reg
      */
-    public void push(int size, CiRegister reg) {
-        str(size, reg, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -16));
+    public void push(CiRegister reg) {
+        str(64, reg, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -16));
     }
 
     public void push(CiRegister... registers) {
@@ -465,11 +465,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     /**
      * Pop the value from the top of the stack into register. Uses 16byte alignment.
-     * @param size
      * @param reg
      */
-    public void pop(int size, CiRegister reg) {
-        ldr(size, reg, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
+    public void pop(CiRegister reg) {
+        ldr(64, reg, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
     }
 
     public void pop(CiRegister... registers) {

@@ -1048,7 +1048,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
 
         initialiseFrameForCompilation(instructions, "(II)I");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 5);
-        masm.pop(32, Aarch64.r0);
+        masm.pop(Aarch64.r0);
         long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
     }
 
