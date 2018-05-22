@@ -42,6 +42,7 @@ import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.*;
 import com.sun.max.platform.*;
+import com.sun.max.unsafe.Word;
 import com.sun.max.vm.compiler.*;
 
 public final class Aarch64LIRAssembler extends LIRAssembler {
@@ -1692,14 +1693,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
                     masm.push(Aarch64.linkRegister);
 
-                    masm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
                     if (C1XOptions.ZapStackOnMethodEntry) {
-                        final int intSize = 4;
-                        for (int i = 0; i < frameSize / intSize; ++i) {
-                            masm.setUpScratch(new CiAddress(CiKind.Int, Aarch64.sp.asValue(), i * intSize));
-                            masm.mov64BitConstant(Aarch64.r17, 0xC1C1C1C1);
-                            masm.str(64, Aarch64.r17, Aarch64Address.createRegisterOffsetAddress(Aarch64.r16, Aarch64.r0, false));
+                        masm.mov(scratchRegister, 0xC1C1C1C1_C1C1C1C1L);
+                        for (int i = 0; i < frameSize / (2 * Word.size()); ++i) {
+                            masm.stp(Word.width(), scratchRegister, scratchRegister, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -2 * Word.size()));
                         }
+                    } else {
+                        masm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
                     }
 
                     CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
