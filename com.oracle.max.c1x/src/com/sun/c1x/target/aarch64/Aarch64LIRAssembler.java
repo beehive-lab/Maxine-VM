@@ -708,10 +708,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 switch (code) {
                     case Add:
-                        masm.add(dest.asRegister(), lreg, delta, size);
+                        masm.add(size, dest.asRegister(), lreg, delta);
                         break;
                     case Sub:
-                        masm.sub(dest.asRegister(), lreg, delta, size);
+                        masm.sub(size, dest.asRegister(), lreg, delta);
                         break;
                     default:
                         throw Util.shouldNotReachHere();

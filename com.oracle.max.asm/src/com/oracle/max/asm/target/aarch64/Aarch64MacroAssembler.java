@@ -570,15 +570,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         mov(dst, (long) imm);
     }
 
-    public void add(CiRegister dest, CiRegister source, long delta, int size) {
+    public void add(int size, CiRegister dest, CiRegister source, long delta) {
         if (delta == 0) {
             mov(size, dest, source);
         } else if (isArithmeticImmediate(delta)) {
             assert delta == (int) delta;
             if (delta < 0) {
-                sub(size, dest, source, -(int) delta);
+                super.sub(size, dest, source, -(int) delta);
             } else {
-                add(size, dest, source, (int) delta);
+                super.add(size, dest, source, (int) delta);
             }
         } else {
             assert dest != scratchRegister;
@@ -588,15 +588,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
-    public void sub(CiRegister dest, CiRegister source, long delta, int size) {
+    public void sub(int size, CiRegister dest, CiRegister source, long delta) {
         if (delta == 0) {
             mov(size, dest, source);
         } else if (isArithmeticImmediate(delta)) {
             assert delta == (int) delta;
             if (delta < 0) {
-                add(size, dest, source, -(int) delta);
+                super.add(size, dest, source, -(int) delta);
             } else {
-                sub(size, dest, source, (int) delta);
+                super.sub(size, dest, source, (int) delta);
             }
         } else {
             assert dest != scratchRegister;
@@ -612,7 +612,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param delta
      */
     public void increment32(CiRegister reg, int delta) {
-        add(reg, reg, delta, 32);
+        add(32, reg, reg, (long) delta);
     }
 
     public void increment32(CiAddress dst, int delta) {
