@@ -54,9 +54,10 @@ public final class Aarch64TargetMethodUtil {
      */
     private static int extractInstruction(byte [] code, int idx) {
         assert code.length >= idx + 4 : "Insufficient space in code buffer";
-        int instruction = 0;
-        instruction = ((code[idx + 3] & 0xFF) << 24) | ((code[idx + 2] & 0xFF) << 16) | ((code[idx + 1] & 0xFF) << 8) | (code[idx + 0] & 0xFF);
-        return instruction;
+        return ((code[idx + 3] & 0xFF) << 24) |
+               ((code[idx + 2] & 0xFF) << 16) |
+               ((code[idx + 1] & 0xFF) << 8) |
+               (code[idx + 0] & 0xFF);
     }
 
     @C_FUNCTION
