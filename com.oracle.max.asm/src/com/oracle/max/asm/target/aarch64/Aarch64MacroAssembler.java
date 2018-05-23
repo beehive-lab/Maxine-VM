@@ -1542,9 +1542,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void insertForeverLoop() {
-        Label forever = new Label();
-        bind(forever);
-        branchConditionally(ConditionFlag.AL, forever);
+        b(0);
     }
 
     public void asr(CiRegister ciRegister, CiRegister dest, int i) {
