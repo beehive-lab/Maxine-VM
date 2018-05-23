@@ -36,6 +36,11 @@ import com.sun.max.vm.stack.StackFrameWalker;
 
 public final class Aarch64TargetMethodUtil {
 
+    /**
+     * Lock to avoid race on concurrent icache invalidation when patching target methods.
+     */
+    private static final Object PatchingLock = new Object();
+
     public static final int INSTRUCTION_SIZE = 4;
     public static final int NUMBER_OF_NOPS = 4;
     public static final int RIP_CALL_INSTRUCTION_SIZE = 5 * INSTRUCTION_SIZE;
@@ -63,7 +68,22 @@ public final class Aarch64TargetMethodUtil {
      * @return the target of the call prior to patching
      */
     public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
-        throw FatalError.unimplemented("mtSafePatchCallDisplacement");
+        if (!isPatchableCallSite(callSite)) {
+            throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
+        }
+        final long disp64 = target.toLong() - callSite.toLong();
+        final Pointer callSitePointer = callSite.toPointer();
+        final int instruction = callSitePointer.readInt(0);
+        final int oldDisp32 = Aarch64Assembler.bImmExtractDisplacement(instruction);
+        if (oldDisp32 != disp64) {
+            synchronized (PatchingLock) {
+                // Just to prevent concurrent writing and invalidation to the same instruction cache line
+                // (although the lock excludes ALL concurrent patching)
+                return fixupCall32Site(tm, callSite, target);
+                // TODO (fz): invalidate icache?
+            }
+        }
+        return callSite.plus(oldDisp32);
     }
 
     /**
