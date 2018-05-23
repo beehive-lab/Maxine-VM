@@ -28,11 +28,20 @@ public enum RISCVopCodes {
     SUB((byte) 0b0110011),
     SLT((byte) 0b0110011),
     SLTU((byte) 0b0110011),
+    SLTI((byte) 0b0010011),
     XOR((byte) 0b0110011),
     OR((byte) 0b0110011),
     AND((byte) 0b0110011),
     ADDI((byte) 0b0010011),
     ANDI((byte) 0b0010011),
+    ORI((byte) 0b0010011),
+    XORI((byte) 0b0010011),
+    LW((byte) 0b0000011),
+    LH((byte) 0b0000011),
+    LB((byte) 0b0000011),
+    SW((byte) 0b0100011),
+    SH((byte) 0b0100011),
+    SB((byte) 0b0100011),
     // TODO: fill the rest
 
     // RV64I Base instruction set /////////////////////////////////////////////
