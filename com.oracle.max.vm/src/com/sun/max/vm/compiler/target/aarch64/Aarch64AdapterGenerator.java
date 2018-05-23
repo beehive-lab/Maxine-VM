@@ -396,7 +396,12 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
      */
     public static class Opt2Baseline extends Aarch64AdapterGenerator {
 
-        static final int PROLOGUE_SIZE = 16;
+        /**
+         * The offset in the prologue of the call to the adapter.
+         */
+        private static final int CALL_OFFSET_IN_PROLOGUE = +12;
+
+        static final int PROLOGUE_SIZE = CALL_OFFSET_IN_PROLOGUE + RIP_CALL_INSTRUCTION_SIZE;
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 8;
 
         public Opt2Baseline() {
@@ -404,11 +409,6 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         }
 
         static final class Opt2BaselineAdapter extends Adapter {
-
-            /**
-             * The offset in the prologue of the call to the adapter.
-             */
-            private static final int CALL_OFFSET_IN_PROLOGUE = +12;
 
             Opt2BaselineAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPos, int callSize) {
                 super(generator, description, frameSize, code, callPos, callSize);
@@ -566,7 +566,8 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             // stack the return address in the caller, i.e. the instruction following the branch to
             // here in the optimised caller.
             masm.push(Aarch64.linkRegister);
-            masm.bl(0);
+            assert masm.codeBuffer.position() == CALL_OFFSET_IN_PROLOGUE;
+            masm.call();
             masm.bind(end);
             int size = masm.codeBuffer.position();
             assert size == PROLOGUE_SIZE : "Bad prologue";
