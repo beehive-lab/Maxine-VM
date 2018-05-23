@@ -136,7 +136,7 @@ public enum CallEntryPoint {
 
     static {
         if (vm().compilationBroker.needsAdapters()) {
-            if (Platform.target().arch.is32bit()) {
+            if (Platform.target().arch.isARM()) {
                 OPTIMIZED_ENTRY_POINT.init(ARMAdapterGenerator.Baseline2Opt.PROLOGUE_SIZE);
             } else if (Platform.target().arch.isAarch64()) {
                 OPTIMIZED_ENTRY_POINT.init(Aarch64AdapterGenerator.Baseline2Opt.PROLOGUE_SIZE);
