@@ -71,10 +71,40 @@ public final class Aarch64TargetMethodUtil {
             final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
             int movzInstruction = nopSite.readInt(4);
             int movkInstruction = nopSite.readInt(8);
+            int addSubInstruction = nopSite.readInt(12);
             short low = Aarch64Assembler.movExtractImmediate(movzInstruction);
             short high = Aarch64Assembler.movExtractImmediate(movkInstruction);
-            return high << 16 | low;
+            int oldDisplacement = high << 16 | low;
+            if (Aarch64Assembler.isAddInstruction(addSubInstruction)) {
+                return oldDisplacement;
+            } else {
+                return -oldDisplacement;
+            }
         }
+    }
+
+    /**
+     * Gets the target of a 32-bit relative CALL instruction.
+     *
+     * @param tm the method containing the CALL instruction
+     * @param callPos the offset within the code of {@code targetMethod} of the CALL
+     * @return the absolute target address of the CALL
+     */
+    public static CodePointer readCall32Target(TargetMethod tm, int callPos) {
+        final CodePointer callSite = tm.codeAt(callPos);
+        final Pointer callSitePointer = callSite.toPointer();
+        final int disp32 = getOldDisplacement(callSitePointer);
+        return callSite.plus(disp32);
+    }
+
+    public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
+        final CodePointer callSite = tm.codeAt(pos);
+        final Pointer callSitePointer = callSite.toPointer();
+        final int instruction = callSitePointer.readInt(0);
+        if (Aarch64Assembler.isBranchInstruction(instruction)) {
+            return readCall32Target(tm, pos).equals(jumpTarget);
+        }
+        return false;
     }
 
     /**

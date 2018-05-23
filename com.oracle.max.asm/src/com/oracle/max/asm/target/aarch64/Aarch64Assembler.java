@@ -718,6 +718,13 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     }
 
+    public static boolean isBranchInstruction(int instruction) {
+        final int immOp = instruction & (NumUtil.getNbitNumberInt(5) << 26);
+        final int regOp = instruction & (NumUtil.getNbitNumberInt(7) << 25);
+        return immOp == UnconditionalBranchImmOp || regOp == UnconditionalBranchRegOp;
+    }
+
+
     /**
      * Checks if the given branch instruction is a branch immediate or branch register.
      *
@@ -725,10 +732,8 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @return the instruction type
      */
     public static boolean isBimmInstruction(int instruction) {
-        final int immOp = instruction & (NumUtil.getNbitNumberInt(5) << 26);
-        final int regOp = instruction & (NumUtil.getNbitNumberInt(7) << 25);
-        assert immOp == UnconditionalBranchImmOp || regOp == UnconditionalBranchRegOp : instruction;
-        return immOp == UnconditionalBranchImmOp;
+        assert isBranchInstruction(instruction) : instruction;
+        return (instruction & (NumUtil.getNbitNumberInt(5) << 26)) == UnconditionalBranchImmOp;
     }
 
     /**
@@ -1629,6 +1634,11 @@ public class Aarch64Assembler extends AbstractAssembler {
     public void subs(int size, CiRegister dst, CiRegister src1, CiRegister src2, ShiftType shiftType, int imm) {
         // TODO how to access cpsr in unit test
         addSubShiftedInstruction(dst, src1, src2, shiftType, imm, generalFromSize(size), Instruction.SUBS);
+    }
+
+    public static boolean isAddInstruction(int instruction) {
+        assert (instruction & (NumUtil.getNbitNumberInt(5) << 24)) == AddSubShiftedOp : instruction;
+        return (instruction & (1 << 30)) == Instruction.ADD.encoding;
     }
 
     public static int addSubInstructionHelper(CiRegister dst, CiRegister src1, CiRegister src2, boolean isSub) {

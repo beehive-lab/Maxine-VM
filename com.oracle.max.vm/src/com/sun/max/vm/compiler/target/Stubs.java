@@ -342,6 +342,8 @@ public class Stubs {
             return AMD64TargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
+        } else if (platform().isa == ISA.Aarch64) {
+            return Aarch64TargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else {
             throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.isJumpToStaticTrampoline");
         }
