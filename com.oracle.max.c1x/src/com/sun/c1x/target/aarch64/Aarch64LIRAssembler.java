@@ -699,13 +699,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             CiRegister lreg = left.asRegister();
             CiRegister rreg;
             if (right.isConstant() && (kind.isInt() || kind.isLong())) {
-                long delta;
-                if (kind.isInt()) {
-                    delta = ((CiConstant) right).asInt();
-                } else {
-                    assert kind.isLong();
-                    delta = ((CiConstant) right).asLong();
-                }
+                assert kind.isInt() || kind.isLong();
+                final long delta = ((CiConstant) right).asLong();
                 switch (code) {
                     case Add:
                         masm.add(size, dest.asRegister(), lreg, delta);
