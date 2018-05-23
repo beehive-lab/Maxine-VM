@@ -112,7 +112,7 @@ public final class Aarch64TargetMethodUtil {
      *
      * @return the target of the call prior to patching
      */
-    public static void mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
+    public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
@@ -127,6 +127,7 @@ public final class Aarch64TargetMethodUtil {
                 // TODO (fz): invalidate icache?
             }
         }
+        return callSite.plus(oldDisp32);
     }
 
     /**

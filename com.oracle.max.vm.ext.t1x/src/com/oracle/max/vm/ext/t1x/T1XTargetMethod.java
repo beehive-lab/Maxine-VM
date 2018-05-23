@@ -57,6 +57,7 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.aarch64.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.object.*;
@@ -392,6 +393,8 @@ public class T1XTargetMethod extends TargetMethod {
             return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
         } else if (isARM()) {
             return ARMTargetMethodUtil.isPatchableCallSite(callSite);
+        } else if (isAARCH64()) {
+            return Aarch64TargetMethodUtil.isPatchableCallSite(callSite);
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.t1x.T1XTargetMethod.isPatchableCallSite");
         }
@@ -403,6 +406,8 @@ public class T1XTargetMethod extends TargetMethod {
             return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else if (isARM()) {
             return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (isAARCH64()) {
+            return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.t1x.T1XTargetMethod.fixupCallSite");
         }
@@ -444,6 +449,8 @@ public class T1XTargetMethod extends TargetMethod {
             return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else if (isARM()) {
             return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
+        } else if (isAARCH64()) {
+            return Aarch64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.t1x.T1XTargetMethod.patchCallSite");
         }
