@@ -23,6 +23,7 @@ package com.oracle.max.vm.ext.t1x.aarch64;
 import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import java.util.*;
@@ -311,33 +312,46 @@ public class Aarch64T1XCompilation extends T1XCompilation {
 
     @Override
     protected int callDirect() {
-        assert false : "Unimplemented T1X callDirect";
-        return 0;
-        // XXX Implement me
+        alignDirectCall(buf.position());
+        int causePos = buf.position();
+        asm.call();
+        int safepointPos = buf.position();
+        asm.nop();
+        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
     }
 
     @Override
     protected int callDirect(int receiverStackIndex) {
-        assert false : "Unimplemented T1X callDirect";
-        return 0;
+        if (receiverStackIndex >= 0) {
+            peekObject(Aarch64.r0, receiverStackIndex);
+        }
+        alignDirectCall(buf.position());
+        int causePos = buf.position();
+        asm.call();
+        int safepointPos = buf.position();
+        asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
+        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
     }
 
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
-        assert false : "Unimplemented T1X callIndirect";
-        return 0;
-        // XXX Implement me
+        if (receiverStackIndex >= 0) {
+            peekObject(Aarch64.r0, receiverStackIndex);
+        }
+        int causePos = buf.position();
+        asm.call(target);
+        int safepointPos = buf.position();
+        asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
+        return Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
     }
 
     @Override
     protected void nullCheck(CiRegister src) {
-        assert false : "Unimplemented T1X nullCheck";
-        // XXX Implement me
+        asm.nullCheck(src);
     }
 
     private void alignDirectCall(int callPos) {
-        assert false : "Unimplemented T1X alignDirectCall";
-        // XXX Implement me
+        asm.alignForPatchableDirectCall();
     }
 
     /**
