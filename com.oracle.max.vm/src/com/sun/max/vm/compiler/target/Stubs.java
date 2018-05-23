@@ -934,18 +934,18 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            // Push LR on the stack to make asm.ret work
+
+            // compute the static trampoline call site. Since the call to the static trampoline is un-patched the
+            // callSite will be the last command executed before jumping in the trampoline. As a result, we can get the
+            // callsite by subtracting the size of a single instruction from the link register.
+            CiRegister callSite = registerConfig.getScratchRegister();
+            asm.sub(64, callSite, Aarch64.linkRegister, Aarch64TargetMethodUtil.INSTRUCTION_SIZE);
+
+            // Push the link register
             asm.push(Aarch64.linkRegister);
 
-            // compute the static trampoline call site
-            CiRegister callSite = Aarch64.r17;
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue()));
-            asm.ldr(64, callSite, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-
             // now allocate the frame for this method
-            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
+            asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
@@ -970,12 +970,14 @@ public class Stubs {
             // undo the frame
             asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
 
-            // patch the return address to re-execute the static call
-            asm.ldr(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
-            asm.subq(asm.scratchRegister, Aarch64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-            asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
+            // Pop the link register
+            asm.pop(Aarch64.linkRegister);
 
-            asm.ret();
+            // re-execute the static call. Now that the call has been patched we need to return to the beginning of the
+            // patched call site, thus we need to subtract the whole RIP_CALL_INSTRUCTION_SIZE from the link register
+            asm.sub(64, callSite, Aarch64.linkRegister, Aarch64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+            asm.ret(callSite);
+
             String stubName = "strampoline";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
