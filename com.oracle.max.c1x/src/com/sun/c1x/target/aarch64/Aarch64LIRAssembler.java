@@ -1676,7 +1676,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     for (int i = 0; i <= lastFramePage; i++) {
                         int offset = (i + C1XOptions.StackShadowPages) * target.pageSize;
                         // Deduct 'frameSize' to handle frames larger than the shadow
-                        bangStackWithOffset(offset - frameSize);
+                        masm.bangStackWithOffset(offset - frameSize);
                     }
                     break;
                 }
@@ -1781,18 +1781,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     throw Util.unimplemented("XIR operation " + inst.op);
             }
         }
-    }
-
-    /**
-     * @param offset the offset RSP at which to bang. Note that this offset is relative to RSP after RSP has been
-     *            adjusted to allocated the frame for the method. It denotes an offset "down" the stack. For very large
-     *            frames, this means that the offset may actually be negative (i.e. denoting a slot "up" the stack above
-     *            RSP).
-     */
-    private void bangStackWithOffset(int offset) {
-        masm.mov32BitConstant(scratchRegister, offset);
-        masm.sub(64, scratchRegister, Aarch64.sp, scratchRegister, ExtendType.UXTX, 0);
-        masm.str(64, Aarch64.r0, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
     }
 
     private CiRegisterValue assureInRegister(CiValue pointer) {

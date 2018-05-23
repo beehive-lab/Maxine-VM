@@ -39,6 +39,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.DebugMethodWriter;
+import com.sun.max.vm.compiler.WordUtil;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.aarch64.*;
@@ -400,11 +401,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
                 int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
                 // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
                 offset = offset - frameSize;
-                // RSP is r13!
-                //asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
-                //asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, asm.scratchRegister, 0); // was LR
-                // APN guessing rax is return address.
-                // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
+                asm.bangStackWithOffset(offset);
             }
         }
         if (T1XOptions.DebugMethods) {

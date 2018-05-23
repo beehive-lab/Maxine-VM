@@ -1698,4 +1698,16 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         Aarch64Address address = Aarch64Address.createBaseRegisterOnlyAddress(r);
         ldr(64, zr, address);
     }
+
+    /**
+     * @param offset the offset RSP at which to bang. Note that this offset is relative to RSP after RSP has been
+     *            adjusted to allocated the frame for the method. It denotes an offset "down" the stack. For very large
+     *            frames, this means that the offset may actually be negative (i.e. denoting a slot "up" the stack above
+     *            RSP).
+     */
+    public void bangStackWithOffset(int offset) {
+        mov32BitConstant(scratchRegister, offset);
+        sub(64, scratchRegister, Aarch64.sp, scratchRegister, ExtendType.UXTX, 0);
+        str(64, Aarch64.r0, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+    }
 }
