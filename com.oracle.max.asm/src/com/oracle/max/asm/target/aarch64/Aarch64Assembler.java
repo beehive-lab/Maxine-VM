@@ -705,14 +705,30 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /**
-     * Return the instruction type of a branch immediate instruction.
+     * Checks if the given branch instruction is a linked branch or not.
+     *
+     * @param instruction the machine code of the original instruction
+     * @return {@code true} if the instruction is a linked branch
+     */
+    public static boolean isBranchInstructionLinked(int instruction) {
+        if (isBimmInstruction(instruction)) {
+            return instruction >> 31 != 0;
+        } else {
+            return (instruction >> 21 & NumUtil.getNbitNumberInt(2)) == 1;
+        }
+    }
+
+    /**
+     * Checks if the given branch instruction is a branch immediate or branch register.
+     *
      * @param instruction the machine code of the original instruction
      * @return the instruction type
      */
-    public static boolean isBImmInstructionLinked(int instruction) {
-        assert (instruction & NumUtil.getNbitNumberInt(5) << 26) == UnconditionalBranchImmOp :
-                "Not a branch immediate instruction: 0x" + Integer.toHexString(instruction);
-        return instruction >> 31 != 0;
+    public static boolean isBimmInstruction(int instruction) {
+        final int immOp = instruction & (NumUtil.getNbitNumberInt(5) << 26);
+        final int regOp = instruction & (NumUtil.getNbitNumberInt(7) << 25);
+        assert immOp == UnconditionalBranchImmOp || regOp == UnconditionalBranchRegOp : instruction;
+        return immOp == UnconditionalBranchImmOp;
     }
 
     /**
@@ -773,15 +789,23 @@ public class Aarch64Assembler extends AbstractAssembler {
         unconditionalBranchImmInstruction(imm28, instr, -1);
     }
 
-    private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
+    public static int unconditionalBranchImmInstructionHelper(int imm28, boolean linked) {
+        return unconditionalBranchImmInstructionHelper(imm28, linked ? Instruction.BL : Instruction.B);
+    }
+
+    private static int unconditionalBranchImmInstructionHelper(int imm28, Instruction instr) {
         assert NumUtil.isSignedNbit(28, imm28) && (imm28 & 0x3) == 0
                 : "Immediate has to be 28bit signed number and word aligned";
         int imm = (imm28 & NumUtil.getNbitNumberInt(28)) >> 2;
-        int instrEncoding = instr.encoding | UnconditionalBranchImmOp;
+        return instr.encoding | UnconditionalBranchImmOp | imm;
+    }
+
+    private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
+        int instruction = unconditionalBranchImmInstructionHelper(imm28, instr);
         if (pos == -1) {
-            codeBuffer.emitInt(instrEncoding | imm);
+            codeBuffer.emitInt(instruction);
         } else {
-            codeBuffer.emitInt(instrEncoding | imm, pos);
+            codeBuffer.emitInt(instruction, pos);
         }
     }
 
@@ -1354,6 +1378,19 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /* Move (wide immediate) (5.4.3) */
+
+    /**
+     * Extracts the 16bit immediate from a movz/movk instruction.
+     * @param instruction
+     * @return
+     */
+    public static short movExtractImmediate(int instruction) {
+        final int op = instruction & (NumUtil.getNbitNumberInt(6) << 23);
+        assert op == MoveWideImmOp : instruction;
+        final int opc = instruction & (NumUtil.getNbitNumberInt(2) << 29);
+        assert (opc == Instruction.MOVZ.encoding) || (opc == Instruction.MOVK.encoding) : instruction;
+        return (short) ((instruction >> MoveWideImmOffset) & NumUtil.getNbitNumberInt(16));
+    }
 
     /**
      * dst = uimm16 << shiftAmt.
@@ -2631,14 +2668,21 @@ public class Aarch64Assembler extends AbstractAssembler {
         hint(SystemHint.NOP);
     }
 
+    public static int nopHelper() {
+        return hintHelper(SystemHint.NOP);
+    }
+
+    private static int hintHelper(SystemHint hint) {
+        return Instruction.HINT.encoding | hint.encoding << SystemImmediateOffset;
+    }
+
     /**
      * Architectural hints.
      *
      * @param hint Can be any of the defined hints. May not be null.
      */
     public void hint(SystemHint hint) {
-        emitInt(Instruction.HINT.encoding |
-                hint.encoding << SystemImmediateOffset);
+        emitInt(hintHelper(hint));
     }
 
     private void exceptionInstruction(int uimm16, Instruction instr) {

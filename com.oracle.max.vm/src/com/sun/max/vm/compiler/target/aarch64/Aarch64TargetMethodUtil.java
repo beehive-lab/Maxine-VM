@@ -62,28 +62,40 @@ public final class Aarch64TargetMethodUtil {
     @C_FUNCTION
     public static native void maxine_cache_flush(Pointer start, int length);
 
+    private static int getOldDisplacement(Pointer callSitePointer) {
+        final int instruction = callSitePointer.readInt(0);
+        if (Aarch64Assembler.isBimmInstruction(instruction)) {
+            return Aarch64Assembler.bImmExtractDisplacement(instruction);
+        } else {
+            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            int movzInstruction = nopSite.readInt(4);
+            int movkInstruction = nopSite.readInt(8);
+            short low = Aarch64Assembler.movExtractImmediate(movzInstruction);
+            short high = Aarch64Assembler.movExtractImmediate(movkInstruction);
+            return high << 16 | low;
+        }
+    }
+
     /**
      * Thread safe patching of the displacement field in a direct call.
      *
      * @return the target of the call prior to patching
      */
-    public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
+    public static void mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
         final long disp64 = target.toLong() - callSite.toLong();
         final Pointer callSitePointer = callSite.toPointer();
-        final int instruction = callSitePointer.readInt(0);
-        final int oldDisp32 = Aarch64Assembler.bImmExtractDisplacement(instruction);
+        final int oldDisp32 = getOldDisplacement(callSitePointer);
         if (oldDisp32 != disp64) {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
                 // (although the lock excludes ALL concurrent patching)
-                return fixupCall32Site(tm, callSite, target);
+                fixupCall32Site(tm, callSite, target);
                 // TODO (fz): invalidate icache?
             }
         }
-        return callSite.plus(oldDisp32);
     }
 
     /**
@@ -133,19 +145,21 @@ public final class Aarch64TargetMethodUtil {
     private static CodePointer fixupCall32Site(TargetMethod tm, CodePointer callSite, CodePointer target) {
         long disp64 = target.toLong() - callSite.toLong();
         int disp32 = (int) disp64;
-        int oldDisplacement;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-        if (NumUtil.isSignedNbit(28, disp32)) {
-            final Pointer callSitePointer = callSite.toPointer();
-            int instruction = callSitePointer.readInt(0);
-            oldDisplacement = Aarch64Assembler.bImmExtractDisplacement(instruction);
-            callSitePointer.writeInt(0, Aarch64Assembler.bImmPatch(instruction, disp32));
-        } else {
-            final Pointer callSitePointer = callSite.toPointer();
-            final int instruction = callSitePointer.readInt(0);
-            oldDisplacement = Aarch64Assembler.bImmExtractDisplacement(instruction);
-            final boolean isLinked = Aarch64Assembler.isBImmInstructionLinked(instruction);
+        final Pointer callSitePointer = callSite.toPointer();
+        int oldDisplacement = getOldDisplacement(callSitePointer);
+        final int instruction = callSitePointer.readInt(0);
+        final boolean isLinked = Aarch64Assembler.isBranchInstructionLinked(instruction);
 
+        if (NumUtil.isSignedNbit(28, disp32)) {
+            // overwrite the four nops from com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.call()
+            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            nopSite.writeInt(0, Aarch64Assembler.nopHelper());
+            nopSite.writeInt(4, Aarch64Assembler.nopHelper());
+            nopSite.writeInt(8, Aarch64Assembler.nopHelper());
+            nopSite.writeInt(12, Aarch64Assembler.nopHelper());
+            nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchImmInstructionHelper(disp32, isLinked));
+        } else {
             // Since adr is invoked NUMBER_OF_NOPS instructions before the actual branch we need to adjust the displacement
             FatalError.check(disp32 <= Integer.MAX_VALUE - (NUMBER_OF_NOPS * INSTRUCTION_SIZE), "Code displacement out of 32-bit range");
             disp32 += NUMBER_OF_NOPS * INSTRUCTION_SIZE;
@@ -164,6 +178,7 @@ public final class Aarch64TargetMethodUtil {
             // overwrote the immediate branch with a register branch
             nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, isLinked));
         }
+
         return callSite.plus(oldDisplacement);
     }
 
