@@ -233,7 +233,11 @@ public final class CodeCacheValidation extends VmOperation {
                     + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
             assert actualCallee != null && validEntryPoint(callTarget, actualCallee)
                     : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee
-                    + " (target: " + callTarget.to0xHexString() + ")";
+                    + "\n (target: " + callTarget.to0xHexString() + ")"
+                    + "\n Entry points: Baseline:  " + actualCallee.getEntryPoint(BASELINE_ENTRY_POINT)
+                    + "\n               Optimized: " + actualCallee.getEntryPoint(OPTIMIZED_ENTRY_POINT)
+                    + "\n               vtable:    " + actualCallee.getEntryPoint(VTABLE_ENTRY_POINT)
+                    + "\n               c_entry:   " + actualCallee.getEntryPoint(C_ENTRY_POINT);
         }
     }
 
