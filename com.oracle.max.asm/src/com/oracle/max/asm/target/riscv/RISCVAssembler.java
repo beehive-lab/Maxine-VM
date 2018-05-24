@@ -271,7 +271,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lbu(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(LOAD, rd, 4, rs, imm32);
     }
 
     /**
@@ -281,7 +281,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lhu(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(LOAD, rd, 5, rs, imm32);
     }
 
     /**
