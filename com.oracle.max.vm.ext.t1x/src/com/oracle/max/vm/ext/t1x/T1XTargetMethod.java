@@ -1005,39 +1005,30 @@ public class T1XTargetMethod extends TargetMethod {
     @Override
     @HOSTED_ONLY
     public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
+        StackFrameWalker sfw = current.stackFrameWalker();
+        Pointer localVariablesBase;
+        CodePointer startOfPrologue;
+        AdapterGenerator generator = AdapterGenerator.forCallee(this);
+        StackFrame stackFrame;
+        if (generator != null) {
+            startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
+        } else {
+            startOfPrologue = codeStart();
+        }
         if (isAMD64()) {
-            StackFrameWalker sfw = current.stackFrameWalker();
-            Pointer localVariablesBase = current.fp();
-            CodePointer startOfPrologue;
-            AdapterGenerator generator = AdapterGenerator.forCallee(this);
-            if (generator != null) {
-                startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
-            } else {
-                startOfPrologue = codeStart();
-            }
             CodePointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateAMD64.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
             FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
             localVariablesBase = framePointerState.localVariablesBase(current);
-            StackFrame stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
-            return visitor.visitFrame(stackFrame);
+            stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
         } else if (isARM()) {
-            StackFrameWalker sfw = current.stackFrameWalker();
-            Pointer localVariablesBase = current.fp();
-            CodePointer startOfPrologue;
-            AdapterGenerator generator = AdapterGenerator.forCallee(this);
-            if (generator != null) {
-                startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
-            } else {
-                startOfPrologue = codeStart();
-            }
             CodePointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateARMV7.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
             FramePointerStateARMV7 framePointerState = computeFramePointerStateARMV7(current, sfw, lastPrologueInstruction);
             localVariablesBase = framePointerState.localVariablesBase(current);
-            StackFrame stackFrame = new ARMV7JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
-            return visitor.visitFrame(stackFrame);
+            stackFrame = new ARMV7JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
         } else {
             throw unimplISA();
         }
+        return visitor.visitFrame(stackFrame);
     }
 
     @Override
