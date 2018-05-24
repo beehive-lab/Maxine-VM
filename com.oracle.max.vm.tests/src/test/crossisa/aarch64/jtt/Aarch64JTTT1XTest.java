@@ -139,7 +139,8 @@ public class Aarch64JTTT1XTest {
         initTests();
     }
 
-    private void initTests() {
+    @Before
+    public void initTests() {
         try {
             String[] args = new String[2];
             args[0] = new String("t1x");
@@ -177,7 +178,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iadd() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_iadd.test(50, -49);
@@ -198,7 +198,6 @@ public class Aarch64JTTT1XTest {
     public void t1x_jtt_BC_iadd2() throws Exception {
         byte[] argsOne = {1, 0, 33, 1, -128, 127};
         byte[] argsTwo = {2, -1, 67, -1, 1, 1};
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
@@ -219,7 +218,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iadd3() throws Exception {
-        initTests();
         short[] argsOne = {1, 0, 33, 1, -128, 127, -32768, 32767};
         short[] argsTwo = {2, -1, 67, -1, 1, 1, 1, 1};
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -243,7 +241,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_imul() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_imul.test(10, 12);
@@ -262,7 +259,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_isub() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_isub.test(100, 50);
@@ -281,7 +277,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ineg() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ineg.test(100);
@@ -299,7 +294,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ineg_1() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ineg.test(-100);
@@ -317,7 +311,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ior() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ior.test(50, 100);
@@ -336,7 +329,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ixor() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ixor.test(50, 39);
@@ -355,7 +347,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iand() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_iand.test(50, 39);
@@ -374,7 +365,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ishl() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ishl.test(10, 2);
@@ -393,7 +383,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ishr() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ishr.test(2048, 2);
@@ -412,7 +401,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ishr_1() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ishr.test(-2147483648, 16);
@@ -431,7 +419,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iushr() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_iushr.test(-2147483648, 16);
@@ -450,7 +437,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_i2b() throws Exception {
-        initTests();
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -472,7 +458,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_i2b_1() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         byte answer = jtt.bytecode.BC_i2b.test(-1);
@@ -490,7 +475,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_i2b_2() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         byte answer = jtt.bytecode.BC_i2b.test(128);
@@ -508,7 +492,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_i2s() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         short answer = jtt.bytecode.BC_i2s.test(65535);
@@ -526,7 +509,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_i2s_1() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         short answer = jtt.bytecode.BC_i2s.test(32768);
@@ -544,7 +526,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_i2s_2() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         short answer = jtt.bytecode.BC_i2s.test(-1);
@@ -562,7 +543,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_i2c() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         char answer = jtt.bytecode.BC_i2c.test(-1);
@@ -580,7 +560,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_i2c_1() throws Exception {
-        initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         char answer = jtt.bytecode.BC_i2c.test(65535);
@@ -598,7 +577,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ireturn() throws Exception {
-        initTests();
         int[] args = {-1, 256};
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -618,7 +596,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_tableswitch() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(-1, 42));
         pairs.add(new Args(0, 10));
@@ -646,7 +623,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_tableswitch_2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(-1, 11));
         pairs.add(new Args(0, 11));
@@ -673,7 +649,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_fdiv() throws Exception {
-        initTests();
         float[] argOne = {14.0f};
         float[] argTwo = {7.0f};
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "freturn");
@@ -697,7 +672,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_tableswitch_3() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(-1, 11));
         pairs.add(new Args(-2, 22));
@@ -724,7 +698,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_tableswitch_4() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(-1, 11));
         pairs.add(new Args(0, 11));
@@ -751,7 +724,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_lookupswitch_1() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 42));
         pairs.add(new Args(1, 42));
@@ -788,7 +760,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_lookupswitch_2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 42));
         pairs.add(new Args(1, 42));
@@ -828,7 +799,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_lookupswitch_3() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 42));
         pairs.add(new Args(1, 42));
@@ -869,7 +839,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_lookupswitch_4() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 42));
         pairs.add(new Args(1, 42));
@@ -910,7 +879,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iinc_1() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(1, 2));
         pairs.add(new Args(2, 3));
@@ -936,7 +904,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iinc_2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(1, 3));
         pairs.add(new Args(2, 4));
@@ -961,7 +928,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iinc_3() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(1, 52));
         pairs.add(new Args(2, 53));
@@ -986,7 +952,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iinc_4() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(1, 513));
         pairs.add(new Args(2, 514));
@@ -1011,7 +976,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iload_0() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(-1, -1));
@@ -1036,7 +1000,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iload_0_1() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 1));
         pairs.add(new Args(-1, 0));
@@ -1062,7 +1025,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iload_0_2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(-1, -1));
@@ -1087,7 +1049,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iload_1() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(1, 0));
         pairs.add(new Args(1, -1));
@@ -1113,7 +1074,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iload_1_1() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(-1, -1));
@@ -1139,7 +1099,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iload_1_2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(1, 0));
         pairs.add(new Args(1, -1));
@@ -1164,7 +1123,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iload_2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(1, 1, 0));
         pairs.add(new Args(1, 1, -1));
@@ -1193,7 +1151,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iload_3() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(1, 1, 1, 0));
         pairs.add(new Args(1, 1, 1, -1));
@@ -1224,7 +1181,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iconst() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(2, 2));
@@ -1252,7 +1208,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ifeq() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 2));
         pairs.add(new Args(1, -2));
@@ -1277,7 +1232,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ifeq_2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 1));
         pairs.add(new Args(1, 0));
@@ -1299,7 +1253,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ifeq_3() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1323,7 +1276,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ifge() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1348,7 +1300,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ifgt() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1373,7 +1324,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ifle() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1398,7 +1348,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ifne() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1423,7 +1372,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_iflt() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1448,7 +1396,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ificmplt1() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1473,7 +1420,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ificmplt2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1498,7 +1444,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ificmpne1() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1523,7 +1468,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ificmpne2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(1, 1));
@@ -1548,7 +1492,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ifge_3() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 1));
         pairs.add(new Args(1, -0));
@@ -1577,7 +1520,6 @@ public class Aarch64JTTT1XTest {
 
     @Test
     public void t1x_jtt_BC_ifge_2() throws Exception {
-        initTests();
         List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0, 2));
         pairs.add(new Args(1, -2));
