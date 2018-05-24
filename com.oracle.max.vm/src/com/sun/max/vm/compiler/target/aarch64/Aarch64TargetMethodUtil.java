@@ -216,7 +216,7 @@ public final class Aarch64TargetMethodUtil {
 
     public static boolean isPatchableCallSite(CodePointer callSite) {
         final Address callSiteAddress = callSite.toAddress();
-        return callSiteAddress.isWordAligned();
+        return callSiteAddress.isAligned(4);
     }
 
     @HOSTED_ONLY
