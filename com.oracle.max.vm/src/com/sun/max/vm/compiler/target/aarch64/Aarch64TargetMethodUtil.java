@@ -75,11 +75,11 @@ public final class Aarch64TargetMethodUtil {
             short low = Aarch64Assembler.movExtractImmediate(movzInstruction);
             short high = Aarch64Assembler.movExtractImmediate(movkInstruction);
             int oldDisplacement = high << 16 | low;
-            if (Aarch64Assembler.isAddInstruction(addSubInstruction)) {
-                return oldDisplacement;
-            } else {
-                return -oldDisplacement;
+            if (!Aarch64Assembler.isAddInstruction(addSubInstruction)) {
+                oldDisplacement = -oldDisplacement;
             }
+            oldDisplacement -= NUMBER_OF_NOPS * INSTRUCTION_SIZE;
+            return oldDisplacement;
         }
     }
 
