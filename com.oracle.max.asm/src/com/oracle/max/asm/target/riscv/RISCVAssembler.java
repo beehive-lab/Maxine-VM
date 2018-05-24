@@ -241,7 +241,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lb(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LB, rd, 0, rs, imm32);
+        itype(LOAD, rd, 0, rs, imm32);
     }
 
     /**
@@ -251,7 +251,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lh(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LH, rd, 1, rs, imm32);
+        itype(LOAD, rd, 1, rs, imm32);
     }
 
     /**
@@ -261,7 +261,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LW, rd, 2, rs, imm32);
+        itype(LOAD, rd, 2, rs, imm32);
     }
 
     /**
@@ -291,7 +291,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void sb(CiRegister rs1, CiRegister rs2, int imm32) {
-        stype(SB, 0, rs1, rs2, imm32);
+        stype(STORE, 0, rs1, rs2, imm32);
     }
 
     /**
@@ -301,7 +301,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void sh(CiRegister rs1, CiRegister rs2, int imm32) {
-        stype(SH, 1, rs1, rs2, imm32);
+        stype(STORE, 1, rs1, rs2, imm32);
     }
 
     /**
@@ -311,7 +311,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void sw(CiRegister rs1, CiRegister rs2, int imm32) {
-        stype(SW, 2, rs1, rs2, imm32);
+        stype(STORE, 2, rs1, rs2, imm32);
     }
 
     /**
