@@ -81,7 +81,7 @@ public class T1XTargetMethod extends TargetMethod {
 
     /**
      * This is the max number of slots used by any template and is computed when the templates are
-     * {@linkplain T1X#createTemplates(Class, T1X, com.oracle.max.vm.ext.t1x.T1X.Templates, boolean) created}.
+     * {@linkplain T1X#createTemplates(RuntimeCompiler, Class, boolean, T1XTemplate[])}  created}.
      */
     static int templateSlots;
 
@@ -602,7 +602,7 @@ public class T1XTargetMethod extends TargetMethod {
      * a spin loop is used instead.
      * <p/>
      * If this method is called while preparing the stack reference map for a thread that has taken a safepoint
-     * for GC, then safepoints are currently disabled and so there is no need to use the {@link NO_SAFEPOINTS}
+     * for GC, then safepoints are currently disabled and so there is no need to use the {@link T1XTemplate#NO_SAFEPOINTS}
      * annotation on this method.
      */
     @Override
