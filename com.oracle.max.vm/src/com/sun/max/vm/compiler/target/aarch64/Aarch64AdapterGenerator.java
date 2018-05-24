@@ -601,16 +601,15 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             Aarch64MacroAssembler masm = new Aarch64MacroAssembler(Platform.target(), null);
-            final int baselineArgsSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
-            assert baselineArgsSize % Platform.target().stackAlignment == 0 : "Bad stack alignment";
-            /* XXX Review this
-             */
-            final int optCallerRIPSlotSize = OPT_SLOT_SIZE;
-            final int adapterFrameSize = baselineArgsSize + optCallerRIPSlotSize;
+            final int adapterFrameSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
+            assert adapterFrameSize % Platform.target().stackAlignment == 0 : "Bad stack alignment";
+
+            // On entry to the frame, there is 1 return address in the link register and another at [SP]. The one at the
+            // link register is the return address of the call in the baseline callee's prologue (which is also the
+            // entry to the main body of the baseline callee) and one at [SP] is the return address in the OPT caller.
 
             // adjust stack pointer to accommodate baseline args
-            masm.sub(64, Aarch64.sp, Aarch64.sp, baselineArgsSize);
-
+            masm.sub(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
 
             int baselineStackOffset = 0;
 
@@ -628,8 +627,10 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             // contains the address of the baseline method body, go there.
             masm.blr(Aarch64.linkRegister);
             int callSize = masm.codeBuffer.position() - callPos;
-            masm.pop(Aarch64.linkRegister);
-            masm.ret(Aarch64.linkRegister);
+
+            // restore stack pointer and return
+            masm.add(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
+            masm.ret();
             final byte [] code = masm.codeBuffer.close(true);
             String description = Type.OPT2BASELINE + "-Adapter" + sig;
             return new Opt2BaselineAdapter(this, description, adapterFrameSize, code, callPos, callSize);
