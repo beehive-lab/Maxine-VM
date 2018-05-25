@@ -331,6 +331,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
             // allocate the adapter frame
             masm.sub(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
+            adapterFrameSize += BASELINE_SLOT_SIZE; // Account for the slot holding the FP
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
             // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize.
