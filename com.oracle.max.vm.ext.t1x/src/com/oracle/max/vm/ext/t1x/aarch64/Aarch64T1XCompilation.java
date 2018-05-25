@@ -207,49 +207,49 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     @Override
     protected void loadInt(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
-        asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Int);
     }
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     protected void loadWord(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     protected void loadObject(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     protected void storeInt(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
-        asm.str(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Int);
     }
 
     @Override
     protected void storeLong(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     protected void storeWord(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     protected void storeObject(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
