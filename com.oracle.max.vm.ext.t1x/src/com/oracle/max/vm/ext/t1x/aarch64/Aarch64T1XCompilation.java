@@ -337,6 +337,10 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
         if (receiverStackIndex >= 0) {
+            if (target == Aarch64.r0) {
+                asm.mov(64, asm.scratchRegister, target);
+                target = asm.scratchRegister;
+            }
             peekObject(Aarch64.r0, receiverStackIndex);
         }
         int causePos = buf.position();
