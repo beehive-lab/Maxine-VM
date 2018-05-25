@@ -73,6 +73,8 @@ public class RISCVAssembler extends AbstractAssembler {
     private void rtype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
+        assert rs1.number >> 5 == 0;
+        assert rs2.number >> 5 == 0;
         int instruction = opcode.getValue();
         instruction |= rd.number << 7;
         instruction |= funct3 << 12;
@@ -99,6 +101,7 @@ public class RISCVAssembler extends AbstractAssembler {
     private void itype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
+        assert rs1.number >> 5 == 0;
         int instruction = opcode.getValue();
         instruction |= rd.number << 7;
         instruction |= funct3 << 12;
@@ -127,12 +130,12 @@ public class RISCVAssembler extends AbstractAssembler {
         assert rs1.number >> 5 == 0;
         assert rs2.number >> 5 == 0;
         int instruction = opcode.getValue();
-        instruction |= (imm32 & 0x1F) << 7; // 10000
+        instruction |= (imm32 & 0x1F) << 7;
         instruction |= funct3 << 12;
         instruction |= rs1.number << 15;
         instruction |= rs2.number << 20;
-        instruction |= ((imm32 >> 5) & 0x7F) << 25; // 10000000 =
-        emitInt(instruction); // 1000000 10000 = 129
+        instruction |= ((imm32 >> 5) & 0x7F) << 25;
+        emitInt(instruction);
     }
 
     // RV32I Base instruction set /////////////////////////////////////////////
