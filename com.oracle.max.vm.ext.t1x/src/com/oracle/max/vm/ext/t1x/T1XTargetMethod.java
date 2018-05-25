@@ -1036,7 +1036,11 @@ public class T1XTargetMethod extends TargetMethod {
         StackFrameWalker sfw = current.stackFrameWalker();
         int dispToRip = frameSize() - sizeOfNonParameterLocals();
         Pointer returnRIP = current.fp().plus(dispToRip);
-        Pointer callerFP = sfw.readWord(returnRIP, -Word.size()).asPointer();
+        int slotSize = Word.size();
+        if (isAARCH64()) {
+            slotSize *= 2;
+        }
+        Pointer callerFP = sfw.readWord(returnRIP, -slotSize).asPointer();
         if (MaxineVM.isHosted()) {
             // Inspector context only
             CodePointer startOfPrologue;
@@ -1066,7 +1070,7 @@ public class T1XTargetMethod extends TargetMethod {
 
         }
         Pointer callerIP = sfw.readWord(returnRIP, 0).asPointer();
-        Pointer callerSP = returnRIP.plus(Word.size()); // Skip the rip
+        Pointer callerSP = returnRIP.plus(slotSize); // Skip the rip
 
         int stackAmountInBytes = classMethodActor.numberOfParameterSlots() * JVMSFrameLayout.JVMS_SLOT_SIZE;
         if (stackAmountInBytes != 0) {
