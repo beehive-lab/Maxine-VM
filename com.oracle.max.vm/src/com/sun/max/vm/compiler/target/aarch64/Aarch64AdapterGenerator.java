@@ -484,7 +484,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             @Override
             @HOSTED_ONLY
             public boolean acceptStackFrameVisitor(StackFrameCursor cursor, StackFrameVisitor visitor) {
-                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
+                int ripAdjustment = computeRipAdjustment(cursor);
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
@@ -511,7 +511,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public Pointer returnAddressPointer(StackFrameCursor frame) {
-                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(frame) : Word.size();
+                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(frame) : 0;
                 return frame.sp().plus(ripAdjustment);
             }
 
