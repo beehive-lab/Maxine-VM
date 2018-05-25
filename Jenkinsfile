@@ -46,6 +46,8 @@ pipeline {
                 parallel 'image': {
                     dir(env.MAXINE_HOME) {
                         sh '$MX image @c1xgraal'
+                        sh '$MX image -platform linux-aarch64 -isa Aarch64 --build=DEBUG'
+                        sh '$MX image -platform linux-arm -isa ARMV7 --build=DEBUG'
                         sh '$MX image'
                     }
                 }, 'test-init': {
