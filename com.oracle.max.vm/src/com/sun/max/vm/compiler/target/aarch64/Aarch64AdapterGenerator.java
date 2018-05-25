@@ -351,7 +351,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
                 int refMapIndex = adaptArgument(masm, kind, optArgs[i], baselineStackOffset, 0);
                 if (refMapIndex != -1) {
                     if (refMap == null) {
-                        refMap = new CiBitMap(adapterFrameSize / Word.size());
+                        refMap = new CiBitMap(adapterFrameSize / OPT_SLOT_SIZE);
                     }
                     refMap.set(refMapIndex);
                 }
@@ -733,7 +733,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             int optStackOffset32 = ((CiStackSlot) optArg).index() * OPT_SLOT_SIZE;
             adapt(asm, kind, optStackOffset32, baselineStackOffset32, adapterFrameSize);
             if (kind.isReference) {
-                return optStackOffset32 / Word.size();
+                return optStackOffset32 / OPT_SLOT_SIZE;
             }
         } else {
             throw FatalError.unexpected("Unadaptable parameter location type: " + optArg.getClass().getSimpleName());
