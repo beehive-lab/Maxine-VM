@@ -855,7 +855,7 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     private Pointer adjustSPForHandler(Pointer sp, Pointer fp) {
-        if (isAMD64() || isARM()) {
+        if (isAMD64() || isARM() || isAARCH64()) {
             Pointer localVariablesBase = fp;
             // The Java operand stack of the T1X method that handles the exception is cleared
             // when unwinding. The T1X generated handler is responsible for loading the
@@ -930,7 +930,7 @@ public class T1XTargetMethod extends TargetMethod {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            if (isAMD64() || isARM()) {
+            if (isAMD64() || isARM() || isAARCH64()) {
                 Pointer localVariablesBase = current.fp();
                 Pointer catcherSP = adjustSPForHandler(current.sp(), current.fp());
 
