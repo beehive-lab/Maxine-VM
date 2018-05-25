@@ -247,7 +247,9 @@ public abstract class AdapterGenerator {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
                     Log.print(": Created adapter  ");
-                    Log.println(adapter.regionName());
+                    Log.print(adapter.regionName());
+                    Log.print(" @ ");
+                    Log.println(adapter.codeStart());
                     Log.unlock(lockDisabledSafepoints);
                 }
                 adapters.put(sig, adapter);
