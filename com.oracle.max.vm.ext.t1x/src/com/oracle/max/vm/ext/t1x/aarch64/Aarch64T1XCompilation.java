@@ -477,7 +477,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
             throw verifyError("Low must be less than or equal to high in TABLESWITCH");
         }
 
-        asm.pop(scratch); // Pop index from stack
+        asm.pop(32, scratch); // Pop index from stack
 
         // Jump to default target if index is not within the jump table
         asm.cmp(32, scratch, lowMatch); // Check if index is lower than lowMatch
@@ -547,7 +547,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         } else {
             // r1 = loop counter
             // r2 = key from the lookup table under test.
-            asm.pop(scratch);                                   // key
+            asm.pop(32, scratch);                                   // key
             asm.push(Aarch64.r1);
             asm.push(Aarch64.r2);
             asm.adr(scratch2, 16 * 4);                          // lookup table base (+16 instructions from here)
