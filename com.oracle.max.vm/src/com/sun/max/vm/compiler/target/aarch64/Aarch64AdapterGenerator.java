@@ -114,6 +114,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
                 int ripAdjustment = frameSize();
                 boolean rbpSaved = true;
                 if (MaxineVM.isHosted()) {
+                    assert false : "Not implemented yet in Aarch64";
                     // Inspector context only
                     int state = computeFrameState(current);
                     ripAdjustment = state & ~1;
@@ -122,8 +123,8 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
                 Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
-                Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
-                Pointer callerFP = rbpSaved ? sfw.readWord(ripPointer, -Word.size() * 2).asPointer() : current.fp();
+                Pointer callerSP = ripPointer.plus(BASELINE_SLOT_SIZE); // Skip RIP
+                Pointer callerFP = rbpSaved ? sfw.readWord(ripPointer, -BASELINE_SLOT_SIZE).asPointer() : current.fp();
 
                 boolean wasDisabled = SafepointPoll.disable();
                 sfw.advance(callerIP, callerSP, callerFP);
@@ -453,12 +454,12 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public void advance(StackFrameCursor cursor) {
-                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
+                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : 0;
                 StackFrameWalker sfw = cursor.stackFrameWalker();
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
-                Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
+                Pointer callerSP = ripPointer.plus(BASELINE_SLOT_SIZE); // Skip RIP word
                 Pointer callerFP = cursor.fp();
 
                 boolean wasDisabled = SafepointPoll.disable();
