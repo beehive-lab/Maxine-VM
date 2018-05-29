@@ -36,6 +36,7 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.Word;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.DebugMethodWriter;
@@ -546,32 +547,50 @@ public class Aarch64T1XCompilation extends T1XCompilation {
                 asm.jmp(Aarch64.zr);
             }
         } else {
-            // r1 = loop counter
-            // r2 = key from the lookup table under test.
-            asm.pop(32, scratch);                                   // key
-            asm.push(Aarch64.r1);
-            asm.push(Aarch64.r2);
-            asm.adr(scratch2, 16 * 4);                          // lookup table base (+16 instructions from here)
-            asm.mov(Aarch64.r1, (ls.numberOfCases() - 1) * 2);  // loop counter
+            asm.pop(32, scratch);  // Pop the key we are looking for
+
+            asm.push(Aarch64.r19); // Use r19 as the loop counter
+            asm.push(Aarch64.r20); // Use r20 as the current key
+
+            int adrPos = buf.position();
+            asm.adr(scratch2, 0);  // lookup table base
+
+            // Initialize loop counter to number of cases x2 to account for pairs of integers (key-offset)
+            asm.mov(Aarch64.r19, (ls.numberOfCases() - 1) * 2);
+
             int loopPos = buf.position();
-            asm.ldr(32, Aarch64.r2, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r1, true));
-            asm.cmp(32, scratch, Aarch64.r2);
-            asm.b(ConditionFlag.EQ, 6 * 4);                     // break out of loop (+6 instructions)
-            asm.subs(32, Aarch64.r1, Aarch64.r1, 2);            // decrement loop counter
-            jcc(ConditionFlag.PL, loopPos);                     // iterate again if >= 0
-            startBlock(ls.defaultTarget());                     // No match, jump to default target
-            asm.pop(Aarch64.r2);                                // after restoring registers r2
-            asm.pop(Aarch64.r1);                                // and r1.
+            asm.load(Aarch64.r20, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r19, true), CiKind.Int);
+            asm.cmp(32, scratch, Aarch64.r20);
+            int branchPos = buf.position();
+            asm.b(ConditionFlag.EQ, 0);                             // break out of loop
+            asm.subs(32, Aarch64.r19, Aarch64.r19, 2);              // decrement loop counter (1 pair at a time)
+            jcc(ConditionFlag.PL, loopPos);                         // iterate again if >= 0
+            startBlock(ls.defaultTarget());                         // No match, jump to default target
+            asm.pop(Aarch64.r20);                                   // after restoring registers r20
+            asm.pop(Aarch64.r19);                                   // and r19.
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
             jmp(0);
+
+            // Patch b instruction above
+            int branchTargetPos = buf.position();
+            buf.setPosition(branchPos);
+            asm.b(ConditionFlag.EQ, branchTargetPos - branchPos);
+            buf.setPosition(branchTargetPos);
+
             // load offset, add to lookup table base and jump.
-            asm.add(32, Aarch64.r1, Aarch64.r1, 1);             // increment r1 to get the offset
-            asm.ldr(32, scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r1, true));
+            asm.add(32, Aarch64.r19, Aarch64.r19, 1); // increment r19 to get the offset (instead of the key)
+            asm.load(scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r19, true), CiKind.Int);
             asm.add(64, scratch, scratch, scratch2);
-            asm.pop(Aarch64.r2);
-            asm.pop(Aarch64.r1);
+            asm.pop(Aarch64.r20);
+            asm.pop(Aarch64.r19);
             asm.jmp(scratch);
             int lookupTablePos = buf.position();
+
+            // Patch adr instruction above now that we know the position of the jump table
+            buf.setPosition(adrPos);
+            asm.adr(scratch2, lookupTablePos - adrPos);
+            buf.setPosition(lookupTablePos);
+
             // Emit lookup table entries
             for (int i = 0; i < ls.numberOfCases(); i++) {
                 int key = ls.keyAt(i);
