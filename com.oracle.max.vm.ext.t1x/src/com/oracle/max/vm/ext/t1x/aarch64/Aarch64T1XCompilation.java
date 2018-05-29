@@ -101,77 +101,77 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     @Override
     public void peekObject(CiRegister dst, int index) {
         CiAddress a = spWord(index);
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Object);
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
         CiAddress a = spWord(index);
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Object);
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
-        CiAddress address = spWord(index);
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+        CiAddress a = spWord(index);
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     public void pokeWord(CiRegister src, int index) {
-        CiAddress address = spWord(index);
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+        CiAddress a = spWord(index);
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     public void peekInt(CiRegister dst, int index) {
         CiAddress a = spInt(index);
-        asm.ldrs(64, 32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Int);
     }
 
     @Override
     public void pokeInt(CiRegister src, int index) {
         CiAddress a = spInt(index);
-        asm.str(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Int);
     }
 
     @Override
     public void peekLong(CiRegister dst, int index) {
         CiAddress a = spLong(index);
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     public void pokeLong(CiRegister src, int index) {
         CiAddress a = spLong(index);
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
         CiAddress a = spLong(index);
-        asm.fldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Double);
     }
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
         assert src.isFpu();
         CiAddress a = spLong(index);
-        asm.fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Double);
     }
 
     @Override
     public void peekFloat(CiRegister dst, int index) {
         assert dst.isFpu();
         CiAddress a = spInt(index);
-        asm.fldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Float);
     }
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
         assert src.isFpu();
         CiAddress a = spInt(index);
-        asm.fstr(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Float);
     }
 
     @Override
