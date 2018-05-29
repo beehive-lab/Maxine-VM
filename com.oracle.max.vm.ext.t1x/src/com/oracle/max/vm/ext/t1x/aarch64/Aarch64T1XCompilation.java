@@ -284,13 +284,6 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     }
 
     @Override
-    protected void do_iinc(int index, int increment) {
-        loadInt(Aarch64.r15, index);
-        adjustReg(Aarch64.r15, increment);
-        storeInt(Aarch64.r15, index);
-    }
-
-    @Override
     protected void do_fconst(float value) {
         super.do_fconst(value);
     }

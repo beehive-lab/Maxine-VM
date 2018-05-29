@@ -847,43 +847,6 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void test_do_iinc() throws Exception {
-        initialiseFrameForCompilation();
-        theCompiler.initFrame(anMethod, codeAttr);
-        initialiseExpectedValues();
-        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.codeBuffer.reset();
-        int[] iValues = {Integer.MAX_VALUE, Integer.MIN_VALUE, 0, 1, 123456789, -123456789, 1};
-        int[] dValues = {1, -1, Integer.MIN_VALUE, Integer.MAX_VALUE, -123456789, 123456789, -1};
-        CiRegister [] regs = {Aarch64.r0, Aarch64.r1, Aarch64.r2, Aarch64.r3, Aarch64.r4, Aarch64.r5, Aarch64.r6};
-        expectedValues [0] = Integer.MIN_VALUE;
-        expectedValues [1] = Integer.MAX_VALUE;
-        expectedValues [2] = Integer.MIN_VALUE;
-        expectedValues [3] = Integer.MIN_VALUE;
-        expectedValues [4] = 0;
-        expectedValues [5] = 0;
-        expectedValues [6] = 0;
-
-
-        for (int i = 0; i < iValues.length; i++) {
-            masm.mov32BitConstant(Aarch64.r16, iValues[i]);
-            theCompiler.storeInt(Aarch64.r16, i);
-        }
-
-        for (int i = 0; i < iValues.length; i++) {
-            theCompiler.do_iinc(i, dValues[i]);
-            theCompiler.loadInt(regs[i], i);
-        }
-
-        long[] simValues = generateAndTest(expectedValues, testValues, bitmasks);
-
-        for (int i = 0; i < iValues.length; i++) {
-            System.out.println(iValues.length + " " + i + " " + (int) simValues[i]);
-            assert expectedValues[i] == (int) simValues[i]
-                : i + "; Simulated: " + (int) simValues[i] + ", expected: " + expectedValues[i];
-        }
-    }
-
     public void test_LoadStoreObject() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
