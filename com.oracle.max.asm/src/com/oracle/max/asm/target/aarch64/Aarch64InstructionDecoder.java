@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,36 +22,21 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.runtime.aarch64;
+package com.oracle.max.asm.target.aarch64;
 
-import static com.sun.max.platform.Platform.*;
+public final class Aarch64InstructionDecoder {
 
-import com.oracle.max.asm.target.aarch64.*;
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.runtime.*;
-
-/**
- * The safepoint poll implementation for Aarch64.
- *
- * @see Aarch64TrapFrameAccess
- */
-public final class Aarch64SafepointPoll extends SafepointPoll {
-
-    /**
-     * ATTENTION: must be callee-saved by all C ABIs in use.
-     */
-    public static final CiRegister LATCH_REGISTER = Aarch64.LATCH_REGISTER;
-
-    @HOSTED_ONLY
-    public Aarch64SafepointPoll() {
+    public static void patchRelativeInstruction(byte[] code, int codePos, int relative) {
+        patchDisp32(code, codePos, relative);
     }
 
-    @HOSTED_ONLY
-    @Override
-    protected byte[] createCode() {
-        final Aarch64Assembler asm = new Aarch64Assembler(target(), null);
-        asm.ldr(64, LATCH_REGISTER, Aarch64Address.createBaseRegisterOnlyAddress(LATCH_REGISTER));
-        return asm.codeBuffer.close(true);
+    private static void patchDisp32(byte[] code, int pos, int offset) {
+        assert pos + 4 <= code.length;
+
+        int instruction = Aarch64Assembler.adrHelper(Aarch64.r16, offset);
+        code[pos] = (byte) (instruction & 0xFF);
+        code[pos + 1] = (byte) ((instruction >> 8) & 0xFF);
+        code[pos + 2] = (byte) ((instruction >> 16) & 0xFF);
+        code[pos + 3] = (byte) ((instruction >> 24) & 0xFF);
     }
 }

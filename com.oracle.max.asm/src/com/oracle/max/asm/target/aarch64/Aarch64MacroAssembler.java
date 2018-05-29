@@ -312,11 +312,17 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         emitInt(instruction);
     }
 
+    /**
+     * Compare and swap implementation. In the end the scratchregister must hold the value stored in the address.
+     *
+     * @param size
+     * @param newValue
+     * @param cmpValue
+     * @param address
+     */
     public void cas(int size, CiRegister newValue, CiRegister cmpValue, Aarch64Address address) {
-        assert Aarch64.r17 != cmpValue;
-        assert Aarch64.r17 != newValue;
+        assert scratchRegister != cmpValue;
         assert newValue != cmpValue;
-        assert Aarch64.r0 == cmpValue;
 
         Label atomicFail = new Label();
         Label notEqualTocmpValue = new Label();
@@ -325,14 +331,13 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         membar(-1);
         ldxr(size, scratchRegister, address); // scratch has the current Value
         cmp(size, cmpValue, scratchRegister); // compare scratch with cmpValue
-        mov64BitConstant(scratchRegister, 1); // store 1 to r0/cmpValue to indicate failure (in case the branch is taken)
-        branchConditionally(ConditionFlag.NE, notEqualTocmpValue); // we were not equal to the cmpValue
+        branchConditionally(ConditionFlag.NE, notEqualTocmpValue); // value was not equal to the cmpValue
         stxr(size, scratchRegister, newValue, address); // store newValue to address and result to scratch register
 
-        // If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
+        // If the Condition is Equal then the stxr took place but it MIGHT have failed so we need to test for this.
         // If the scratch register is not 0 then there was an issue with atomicity so do the operation again
         cbnz(64, scratchRegister, atomicFail);
-        mov(64, cmpValue, Aarch64.zr); // store 0 to r0/cmpValue to indicate success
+        mov(64, scratchRegister, cmpValue); // stxr succeeded, set scratch register to the cmp value to indicate success
         bind(notEqualTocmpValue);
         dmb(BarrierKind.SY);
     }
@@ -421,6 +426,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * Push a register onto the stack using 16byte alignment.
      * @param reg
      */
+    public void push(CiRegister reg) {
+        push(64, reg);
+    }
+
     public void push(int size, CiRegister reg) {
         str(size, reg, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -16));
     }
@@ -460,9 +469,12 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     /**
      * Pop the value from the top of the stack into register. Uses 16byte alignment.
-     * @param size
      * @param reg
      */
+    public void pop(CiRegister reg) {
+        pop(64, reg);
+    }
+
     public void pop(int size, CiRegister reg) {
         ldr(size, reg, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
     }
@@ -542,14 +554,14 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void mov(CiRegister dst, long imm) {
         assert Aarch64.isGeneralPurposeReg(dst);
         if (imm == 0L) {
-            movx(dst, Aarch64.zr);
+            movz(64, dst, 0, 0);
         } else if (Aarch64LogicalImmediateTable.isRepresentable(true, imm) != Aarch64LogicalImmediateTable.Representable.NO) {
             or(64, dst, Aarch64.zr, imm);
         } else if (imm >> 32 == -1L && (int) imm < 0 && Aarch64LogicalImmediateTable.isRepresentable((int) imm) != Aarch64LogicalImmediateTable.Representable.NO) {
             // If the higher 32-bit are 1s and the sign bit of the lower 32-bits is set *and* we can
             // represent the lower 32 bits as a logical immediate we can create the lower 32-bit and then sign extend
             // them. This allows us to cover immediates like ~1L with 2 instructions.
-            mov(dst, (int) imm);
+            mov32BitConstant(dst, (int) imm);
             sxt(64, 32, dst, dst);
         } else {
             forceMov(dst, imm, /* optimize move */true);
@@ -566,18 +578,49 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         mov(dst, (long) imm);
     }
 
+    public void add(int size, CiRegister dest, CiRegister source, long delta) {
+        if (delta == 0) {
+            mov(size, dest, source);
+        } else if (isArithmeticImmediate(delta)) {
+            assert delta == (int) delta;
+            if (delta < 0) {
+                super.sub(size, dest, source, -(int) delta);
+            } else {
+                super.add(size, dest, source, (int) delta);
+            }
+        } else {
+            assert dest != scratchRegister;
+            assert source != scratchRegister;
+            mov(scratchRegister, delta);
+            add(size, dest, source, scratchRegister);
+        }
+    }
+
+    public void sub(int size, CiRegister dest, CiRegister source, long delta) {
+        if (delta == 0) {
+            mov(size, dest, source);
+        } else if (isArithmeticImmediate(delta)) {
+            assert delta == (int) delta;
+            if (delta < 0) {
+                super.add(size, dest, source, -(int) delta);
+            } else {
+                super.sub(size, dest, source, (int) delta);
+            }
+        } else {
+            assert dest != scratchRegister;
+            assert source != scratchRegister;
+            mov(scratchRegister, delta);
+            sub(size, dest, source, scratchRegister);
+        }
+    }
+
     /**
      * Applies a delta value to the contents of reg as a 32bit quantity.
      * @param reg
      * @param delta
      */
     public void increment32(CiRegister reg, int delta) {
-        if (delta == 0) {
-            return;
-        }
-        assert reg != scratchRegister;
-        mov32BitConstant(scratchRegister, delta);
-        add(32, reg, reg, scratchRegister);
+        add(32, reg, reg, (long) delta);
     }
 
     public void increment32(CiAddress dst, int delta) {
@@ -666,25 +709,23 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
-        CiRegisterValue frame = frameRegister.asValue();
         for (CiRegister r : csl.registers) {
-            int offset = csl.offsetOf(r);
-            int displacement = offset + frameToCSA;
-            int add = (displacement < 0) ? 0 : 1;
-            if (displacement < 1020 && displacement > -1020) {
-                if (r.isCpu()) {
-                    ldr(64, r, Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement));
-                } else if (r.isFpu()) {
-                    fldr(64, r, Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement));
-                }
-            } else {
-                setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
-                if (r.isCpu()) {
-                    ldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
-                } else if (r.isFpu()) {
-                    fldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
-                }
+            int displacement = csl.offsetOf(r) + frameToCSA;
+            final Aarch64Address address = getAddressInFrame(frameRegister, displacement);
+            if (r.isCpu()) {
+                ldr(64, r, address);
+            } else if (r.isFpu()) {
+                fldr(64, r, address);
             }
+        }
+    }
+
+    public Aarch64Address getAddressInFrame(CiRegister frameRegister, int displacement) {
+        if (NumUtil.isSignedNbit(9, displacement)) {
+            return Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement);
+        } else {
+            mov32BitConstant(scratchRegister, displacement);
+            return Aarch64Address.createRegisterOffsetAddress(frameRegister, scratchRegister, false);
         }
     }
 
@@ -1304,12 +1345,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 super.subs(size, Aarch64.zr, x, (int) y);
             }
         } else {
-            if (y < Integer.MAX_VALUE && y > Integer.MIN_VALUE) {
-                mov32BitConstant(scratchRegister, y);
-            } else {
-                assert size == 64;
-                mov64BitConstant(scratchRegister, y);
-            }
+            mov(scratchRegister, y);
             cmp(size, x, scratchRegister);
         }
     }
@@ -1417,12 +1453,13 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     public void save(CiCalleeSaveLayout csl, int frameToCSA) {
         for (CiRegister r : csl.registers) {
-            int offset = csl.offsetOf(r);
-//            System.out.println("@save");
-//            System.out.println("@save reg: " + r.name + " num: " + r.number);
-//            System.out.println("@save frameToCSA: " + frameToCSA);
-//            System.out.println("@save offset:     " + offset);
-            str(64, r, Aarch64Address.createUnscaledImmediateAddress(frameRegister, frameToCSA + offset));
+            int displacement = frameToCSA + csl.offsetOf(r);
+            final Aarch64Address address = getAddressInFrame(frameRegister, displacement);
+            if (r.isCpu()) {
+                str(64, r, address);
+            } else {
+                fstr(64, r, address);
+            }
         }
     }
 
@@ -1452,22 +1489,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         super.br(dest);
     }
 
-    /**
-     * Immediate jump instruction fixed up by HotSpot c++ code.
-     */
-    public void jmp() {
-        // Offset has to be fixed up by c++ code.
-        super.b(0);
-    }
-
-    /**
-     *
-     * @return true if immediate offset can be used in a single branch instruction.
-     */
-    public static boolean isBranchImmediateOffset(long imm) {
-        return NumUtil.isSignedNbit(28, imm);
-    }
-
     /* system instructions */
 
     /**
@@ -1494,21 +1515,17 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public final void call() {
-        nop();
+        nop(4);
+        bl(0);
+    }
+
+    public final void call(CiRegister src) {
+        blr(src);
     }
 
     public final void ret() {
         pop(Aarch64.linkRegister);
         ret(Aarch64.linkRegister);
-    }
-
-    public final void ret(int imm16) {
-        if (imm16 == 0) {
-            ret();
-        } else {
-            add(64, Aarch64.sp, Aarch64.sp, imm16);
-            ret();
-        }
     }
 
     public void leaq(CiRegister dest, CiAddress addr) {
@@ -1527,22 +1544,13 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         pop(1 | 2 | 4 | 8 | 128);
     }
 
-    // TODO: emit proper opcode
-    public void int3() {
-//        emitInt(0xFEDEFFE7);
-        throw new Error("unimplemented");
-    }
-
     public final void crashme() {
-        eor(64, scratchRegister, scratchRegister, scratchRegister);
         insertForeverLoop();
-        ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+        ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.zr));
     }
 
     public void insertForeverLoop() {
-        Label forever = new Label();
-        bind(forever);
-        branchConditionally(ConditionFlag.AL, forever);
+        b(0);
     }
 
     public void asr(CiRegister ciRegister, CiRegister dest, int i) {
@@ -1558,41 +1566,29 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         mov(64, src2, tmp);
     }
 
-    public void movlong(CiRegister dst, long src, CiKind dstKind) {
-        if (dstKind.isGeneral()) {
-            mov64BitConstant(dst, src);
-        } else {
-            assert dstKind.isDouble() : "Dst reg must be double";
-            saveInFP(9);
-            mov64BitConstant(Aarch64.r17, src);
-            fmov(64, dst, Aarch64.r17);
-            restoreFromFP(9);
-        }
-    }
-
     public void store(CiRegister src, CiAddress addr, CiKind kind) {
-        CiAddress address = calculateAddress(addr, kind);
+        Aarch64Address address = calculateAddress(addr);
         switch (kind) {
+            case Boolean:
+            case Byte:
+                str(8, src, address);
+                break;
             case Char:
             case Short:
-                str(16, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                str(16, src, address);
+                break;
+            case Int:
+                str(32, src, address);
                 break;
             case Object:
             case Long:
-                str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-                break;
-            case Double:
-                fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                str(64, src, address);
                 break;
             case Float:
-                fstr(32, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                fstr(32, src, address);
                 break;
-            case Int:
-                str(32, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-                break;
-            case Byte:
-            case Boolean:
-                str(8, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+            case Double:
+                fstr(64, src, address);
                 break;
             default:
                 assert false : "Unknown kind!";
@@ -1603,136 +1599,72 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         assert destKind.isFloatOrDouble();
         assert srcKind.isFloatOrDouble();
         fcmp(size, dst, src);
-        mrs(Aarch64.r15, SystemRegister.SPSR_EL1);
     }
 
-    public void restoreFromFP(int reg) {
-        fmov(64, Aarch64.cpuRegisters[reg], Aarch64.d28);
-    }
-
-    public void saveInFP(int reg) {
-        fmov(64, Aarch64.d28, Aarch64.cpuRegisters[reg]);
-    }
-
-    // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
     public void load(CiRegister dest, CiAddress addr, CiKind kind) {
-        CiAddress address = calculateAddress(addr, kind);
+        Aarch64Address address = calculateAddress(addr);
 
         switch (kind) {
-            case Short:
-//                ldrshw(dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-//                ldrshw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
-                break;
-            case Char:
-//                ldruhw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement()));
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+            case Byte:
+                ldrs(64, 8, dest, address);
                 break;
             case Boolean:
-            case Byte:
-//                ldrsb(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                mov(dest, 0);
+                ldr(8, dest, address);
                 break;
-            case Long:
-//                ldrd(ConditionFlag.Always, dest, address.base(), address.displacement);
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+            case Char:
+                mov(dest, 0);
+                ldr(16, dest, address);
                 break;
-            case Double:
-//                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Double, CiKind.Int);
-                fldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
-                break;
-            case Float:
-//                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Float, CiKind.Int);
-                fldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+            case Short:
+                ldrs(64, 16, dest, address);
                 break;
             case Int:
+                ldrs(64, 32, dest, address);
+                break;
             case Object:
-                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+            case Long:
+                ldr(64, dest, address);
+                break;
+            case Float:
+                fldr(32, dest, address);
+                break;
+            case Double:
+                fldr(64, dest, address);
                 break;
             default:
                 assert false : "Unknown kind!";
         }
     }
 
-    private CiAddress calculateAddress(CiAddress addr, CiKind kind) {
+    private Aarch64Address calculateAddress(CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
 
         assert addr != CiAddress.Placeholder;
-        assert !(base.isValid() && disp == 0 && base.compareTo(Aarch64.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
         if (base == CiRegister.Frame) {
             base = frameRegister;
         }
 
-        switch (addr.format()) {
-            case BASE:
-                break;
-            case BASE_DISP:
-                if (Aarch64Immediates.isValidDisp(disp, kind)) {
-                    break;
-                } else if (Aarch64Immediates.isValidImmediate(Math.abs(disp))) {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    if (disp >= 0) {
-//                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
-//                    } else {
-//                        sub12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
-//                    }
-//                    base = scratchRegister;
-//                    disp = 0;
-                } else {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    movImmediate(ConditionFlag.Always, scratchRegister, disp);
-//                    addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
-//                    base = scratchRegister;
-//                    disp = 0;
-                }
-                break;
-            case BASE_INDEX:
-                addlsl(scratchRegister, base, index, scale.log2);
-                base = scratchRegister;
-                disp = 0;
-                break;
-            case BASE_INDEX_DISP:
-                if (Aarch64Immediates.isValidDisp(disp, kind)) {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
-//                    base = scratchRegister;
-                } else if (Aarch64Immediates.isValidImmediate(Math.abs(disp))) {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    if (disp > 0) {
-//                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
-//                    } else {
-//                        sub12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
-//                    }
-//                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
-//                    base = scratchRegister;
-//                    disp = 0;
-                } else {
-                    if (true) {
-                        throw new Error("unimplemented");
-                    }
-//                    movImmediate(ConditionFlag.Always, scratchRegister, disp);
-//                    addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
-//                    base = scratchRegister;
-//                    disp = 0;
-                }
-                break;
-            default:
-                assert false : "Unknown state!";
+        if (addr.index.isLegal()) {
+            addlsl(scratchRegister, base, index, scale.log2);
+            base = scratchRegister;
         }
-        return new CiAddress(addr.kind, new CiRegisterValue(CiKind.Int, base), disp);
+
+        if (disp != 0) {
+            if (NumUtil.isSignedNbit(9, disp)) {
+                return Aarch64Address.createUnscaledImmediateAddress(base, disp);
+            } else {
+                mov(r17, disp);
+                return Aarch64Address.createRegisterOffsetAddress(base, r17, false);
+            }
+        }
+
+        return Aarch64Address.createBaseRegisterOnlyAddress(base);
     }
 
     public void setUpRegister(CiRegister dest, CiAddress addr) {
@@ -1741,35 +1673,49 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
         if (addr == CiAddress.Placeholder) {
-            nop(6);
+            nop(4);
             return;
         }
 
         assert !(base.isValid() && disp == 0 && base.compareTo(Aarch64.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
-        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
-            if (base == CiRegister.Frame) {
-                base = frameRegister;
-            }
-            if (disp != 0) {
-                mov64BitConstant(dest, disp);
-                add(64, dest, dest, base);
-                if (index.isValid()) {
-                    addlsl(dest, dest, index, scale.log2);
-                }
+        if (base == CiRegister.Frame) {
+            base = frameRegister;
+        }
+
+        assert base.isValid();
+
+        if (disp != 0) {
+            if (isAimm(Math.abs(disp))) {
+                add(64, dest, base, disp);
             } else {
-                if (index.isValid()) {
-                    addlsl(dest, base, index, scale.log2);
-                } else {
-                    mov(64, dest, base);
-                }
+                mov32BitConstant(dest, disp);
+                add(64, dest, dest, base);
             }
+            base = dest;
+        } else if (!index.isValid()) {
+            mov(64, dest, base);
+        }
+        if (index.isValid()) {
+            addlsl(dest, base, index, scale.log2);
         }
     }
 
-
     public void nullCheck(CiRegister r) {
-        throw new Error("unimplemented");
+        Aarch64Address address = Aarch64Address.createBaseRegisterOnlyAddress(r);
+        ldr(64, zr, address);
+    }
+
+    /**
+     * @param offset the offset RSP at which to bang. Note that this offset is relative to RSP after RSP has been
+     *            adjusted to allocated the frame for the method. It denotes an offset "down" the stack. For very large
+     *            frames, this means that the offset may actually be negative (i.e. denoting a slot "up" the stack above
+     *            RSP).
+     */
+    public void bangStackWithOffset(int offset) {
+        mov32BitConstant(scratchRegister, offset);
+        sub(64, scratchRegister, Aarch64.sp, scratchRegister, ExtendType.UXTX, 0);
+        str(64, Aarch64.r0, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
     }
 }

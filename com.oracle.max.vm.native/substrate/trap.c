@@ -168,8 +168,10 @@ static Address getInstructionPointer(UContext *ucontext) {
     return ucontext->uc_mcontext.gregs[REG_RIP];
 #   elif isa_IA32
     return ucontext->uc_mcontext.gregs[REG_EIP];
-#elif isa_ARM
-	return ucontext->uc_mcontext.arm_pc ; 
+#   elif isa_ARM
+    return ucontext->uc_mcontext.arm_pc;
+#   elif isa_AARCH64
+    return ucontext->uc_mcontext.pc;
 #   endif
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rip;
@@ -195,6 +197,8 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
         ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
 #	elif isa_ARM
 	    ucontext->uc_mcontext.arm_pc = (greg_t) (stub);
+#   elif isa_AARCH64
+	    ucontext->uc_mcontext.pc = (greg_t) stub;
 #   endif
 #elif os_MAXVE
     ucontext->rip = (unsigned long) stub;
@@ -447,6 +451,9 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #elif isa_ARM
     tla_store3(dtla,TRAP_LATCH_REGISTER, ucontext->uc_mcontext.arm_r10);
     ucontext->uc_mcontext.arm_r10 = (Address) dtla;
+#elif isa_AARCH64
+    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.regs[26]);
+    ucontext->uc_mcontext.regs[26] = (Address) dtla;
 #else
     c_UNIMPLEMENTED();
 #endif

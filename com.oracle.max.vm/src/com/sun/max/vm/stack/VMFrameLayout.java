@@ -75,7 +75,7 @@ public abstract class VMFrameLayout {
      *         variables array
      */
     public int localVariableOffset(int localVariableIndex) {
-        throw FatalError.unimplemented();
+        throw FatalError.unimplemented("com.sun.max.vm.stack.VMFrameLayout.localVariableOffset");
     }
 
     /**
@@ -86,7 +86,7 @@ public abstract class VMFrameLayout {
      *         bottom of the operand stack
      */
     public int operandStackOffset(int operandStackIndex) {
-        throw FatalError.unimplemented();
+        throw FatalError.unimplemented("com.sun.max.vm.stack.VMFrameLayout.operandStackOffset");
     }
 
     /**

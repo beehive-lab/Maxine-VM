@@ -687,7 +687,7 @@ public class Deoptimization extends VmOperation {
             if (platform().isa == ISA.AMD64) {
                 to = to.plus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
             } else {
-                throw FatalError.unimplemented();
+                throw FatalError.unimplemented("com.sun.max.vm.compiler.deopt.Deoptimization.patchReturnAddress");
             }
         }
         patch.writeWord(0, to.toAddress());

@@ -29,6 +29,7 @@ import java.lang.annotation.*;
 import java.util.*;
 
 import com.oracle.max.vm.ext.maxri.*;
+import com.oracle.max.vm.ext.t1x.aarch64.Aarch64T1XCompilation;
 import com.oracle.max.vm.ext.t1x.amd64.*;
 import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.sun.cri.ci.*;
@@ -585,6 +586,8 @@ public class T1XTemplate {
             return AMD64T1XCompilation.findDataPatchPosns(source, dispFromCodeStart);
         } else if (T1X.isARM()) {
             return ARMV7T1XCompilation.findDataPatchPosns(source, dispFromCodeStart);
+        } else if (T1X.isAARCH64()) {
+            return Aarch64T1XCompilation.findDataPatchPosns(source, dispFromCodeStart);
         } else {
             throw T1X.unimplISA();
         }

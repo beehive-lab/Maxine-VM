@@ -175,8 +175,7 @@ public class Stubs {
         } else if (platform().isa == ISA.AMD64) {
             tmpindex = stub.codeStart().toPointer().readInt(indexMovInstrPos);
         } else {
-            throw FatalError.unimplemented();
-
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.getDispatchTableIndex");
         }
         final int index = tmpindex;
         assert stub.is(VirtualTrampoline) ? (virtualTrampolines.size() > index && virtualTrampolines.get(index) == stub)
@@ -343,8 +342,10 @@ public class Stubs {
             return AMD64TargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
+        } else if (platform().isa == ISA.Aarch64) {
+            return Aarch64TargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.isJumpToStaticTrampoline");
         }
     }
 
@@ -540,7 +541,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.push(1 << 14);
+            asm.push(Aarch64.linkRegister);
 
             // now allocate the frame for this method
             asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
@@ -549,8 +550,7 @@ public class Stubs {
             asm.save(csl, frameToCSA);
 
             CiValue[] args = resolveInvokeBasicCallArgs;
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
-            asm.ldr(64, args[1].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldr(64, args[1].asRegister(), Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, frameSize));
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -558,31 +558,26 @@ public class Stubs {
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
-            // Put the entry point of the resolved method on the stack just below the
-            // return address of the trampoline itself. By adjusting RSP to point at
-            // this second return address and executing a 'ret' instruction, execution
-            // continues in the resolved method as if it was called by the trampoline's
-            // caller which is exactly what we want.
+            // Store the result in the second scratch register (the first will be restored) before restoring
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize - 4));
-            asm.ldr(64, returnReg, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.mov(64, registerConfig.getScratchRegister1(), returnReg);
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(csl, frameToCSA);
 
-            // Adjust RSP as mentioned above and do the 'ret' that lands us in the
-            // trampolined-to method.
-            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize - 4);
-            asm.ret(0);
+            // pop this method's frame
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
+
+            // jump to the resolved method
+            asm.jmp(registerConfig.getScratchRegister1());
 
             byte[] code = asm.codeBuffer.close(true);
 
             String stubName = "invokeBasic";
             return new Stub(InvokeBasic, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genResolveInvokeBasicTarget");
         }
     }
 
@@ -719,27 +714,29 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.push(1 << 14);
+            asm.push(Aarch64.linkRegister);
             // now allocate the frame for this method
             asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
 
-            // Save the index in the scratch register
-            asm.mov32BitConstant(Aarch64.r8, index);
+            // save the index in the scratch register. This register is then callee-saved
+            // so that the stack walker can find it.
             if (isHosted() && index == 0) {
-                indexMovInstrPos = asm.codeBuffer.position() - 8;
+                indexMovInstrPos = asm.codeBuffer.position();
             }
+            asm.mov(registerConfig.getScratchRegister(), index);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
 
             CiValue[] args = isInterface ? resolveInterfaceCallArgs : resolveVirtualCallArgs;
 
-            // load the index into the second arg register
-            asm.mov32BitConstant(args[1].asRegister(), index);
+            // the receiver is already in the first arg register
 
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize));
-            asm.ldr(64, args[2].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            // load the index into the second arg register
+            asm.mov(args[1].asRegister(), index);
+
+            // load the return address into the third arg register
+            asm.ldr(64, args[2].asRegister(), Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, frameSize));
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -747,32 +744,25 @@ public class Stubs {
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
-            // Put the entry point of the resolved method on the stack just below the
-            // return address of the trampoline itself. By adjusting RSP to point at
-            // this second return address and executing a 'ret' instruction, execution
-            // continues in the resolved method as if it was called by the trampoline's
-            // caller which is exactly what we want.
+            // Store the result in the second scratch register (the first will be restored) before restoring
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize - 4));
-            asm.str(64, returnReg, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.mov(64, registerConfig.getScratchRegister1(), returnReg);
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(csl, frameToCSA);
 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize - 4));
-            asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
-            asm.ldr(64, Aarch64.linkRegister, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize + 4);
-            asm.jmp(Aarch64.r8);
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
+            asm.pop(Aarch64.linkRegister);
+
+            // Jump to the entry point of the resolved method
+            asm.jmp(registerConfig.getScratchRegister1());
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genDynamicTrampoline");
         }
     }
 
@@ -946,18 +936,18 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            // Push LR (r30) on the stack to make asm.ret work
-            asm.push(1 << 30);
 
-            // compute the static trampoline call site
-            CiRegister callSite = Aarch64.r8;
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue()));
-            asm.ldr(64, callSite, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+            // compute the static trampoline call site. Since the call to the static trampoline is un-patched the
+            // callSite will be the last command executed before jumping in the trampoline. As a result, we can get the
+            // callsite by subtracting the size of a single instruction from the link register.
+            CiRegister callSite = registerConfig.getScratchRegister();
+            asm.sub(64, callSite, Aarch64.linkRegister, Aarch64TargetMethodUtil.INSTRUCTION_SIZE);
+
+            // Push the link register
+            asm.push(Aarch64.linkRegister);
 
             // now allocate the frame for this method
-            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
+            asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
@@ -982,17 +972,19 @@ public class Stubs {
             // undo the frame
             asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
 
-            // patch the return address to re-execute the static call
-            asm.ldr(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
-            asm.subq(asm.scratchRegister, Aarch64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-            asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
+            // Pop the link register
+            asm.pop(Aarch64.linkRegister);
 
-            asm.ret(0);
+            // re-execute the static call. Now that the call has been patched we need to return to the beginning of the
+            // patched call site, thus we need to subtract from the link register the size of the segment preparing the call
+            asm.sub(64, callSite, Aarch64.linkRegister, 5 * Aarch64TargetMethodUtil.INSTRUCTION_SIZE);
+            asm.ret(callSite);
+
             String stubName = "strampoline";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genStaticTrampoline");
         }
     }
 
@@ -1141,40 +1133,36 @@ public class Stubs {
             CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
-            asm.push(1 << 12);
-            asm.push(1 << 12);
-            // should be: mrs r0, CPSR
-            asm.mrs(Aarch64.r0, Aarch64Assembler.SystemRegister.SPSR_EL1);
-            asm.push(1 << 12);
+            // the very first instruction must save the flags.
+            // we save them twice and overwrite the first copy with the trap instruction/return address.
+            asm.push(registerConfig.getScratchRegister());
+            asm.push(registerConfig.getScratchRegister());
 
-            asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize - 8);
+            // now allocate the frame for this method (first word of which was allocated by the second push above)
+            asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize - platform().target.stackAlignment);
+
+            // save all the callee save registers
             asm.save(csl, frameToCSA);
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
-            asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.add(64, asm.scratchRegister, Aarch64.sp, frameToCSA + csl.offsetOf(latch));
-            asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
-            asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.add(64, asm.scratchRegister, Aarch64.sp, frameSize);
-            asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldr(64, registerConfig.getScratchRegister(), Aarch64Address.createUnscaledImmediateAddress(latch, TRAP_LATCH_REGISTER.offset));
+            asm.str(64, registerConfig.getScratchRegister(), Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, frameToCSA + csl.offsetOf(latch)));
+
+            // write the return address pointer to the end of the frame
+            asm.ldr(64, registerConfig.getScratchRegister1(), Aarch64Address.createUnscaledImmediateAddress(latch, TRAP_INSTRUCTION_POINTER.offset));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize));
+            asm.str(64, registerConfig.getScratchRegister1(), Aarch64Address.createBaseRegisterOnlyAddress(registerConfig.getScratchRegister()));
 
             // load the trap number from the thread locals into the first parameter register
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
-            asm.ldr(64, args[0].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-
+            asm.ldr(64, args[0].asRegister(), Aarch64Address.createUnscaledImmediateAddress(latch, TRAP_NUMBER.offset));
             // also save the trap number into the trap frame
-            asm.add(64, asm.scratchRegister, Aarch64.sp, frameToCSA + Aarch64TrapFrameAccess.TRAP_NUMBER_OFFSET);
-            asm.str(64, args[0].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameToCSA + Aarch64TrapFrameAccess.TRAP_NUMBER_OFFSET));
+            asm.str(64, args[0].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(registerConfig.getScratchRegister()));
             // load the trap frame pointer into the second parameter register
             asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameToCSA));
-
             // load the fault address from the thread locals into the third parameter register
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
-            asm.ldr(64, args[2].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldr(64, args[2].asRegister(), Aarch64Address.createUnscaledImmediateAddress(latch, TRAP_FAULT_ADDRESS.offset));
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -1183,17 +1171,15 @@ public class Stubs {
             int callSize = asm.codeBuffer.position() - callPos;
             asm.restore(csl, frameToCSA);
 
-            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize - 8);
-            asm.pop(1 << 12);
-            asm.msr(Aarch64Assembler.SystemRegister.SPSR_EL1, asm.scratchRegister);
-            asm.pop(1 << 12);
-            asm.clearex();
-            asm.ret(0);
-            asm.insertForeverLoop();
+            // now pop the flags register off the stack before returning
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize - platform().target.stackAlignment);
+            asm.pop(registerConfig.getScratchRegister());
+            asm.ret();
+
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genTrapStub");
         }
     }
 
@@ -1236,7 +1222,6 @@ public class Stubs {
         FatalError.unexpected("stub should be overwritten");
     }
 
-    // TODO: Fix ARM version
     @HOSTED_ONLY
     private Stub genUnwind(CiValue[] unwindArgs) {
         if (platform().isa == ISA.AMD64) {
@@ -1289,7 +1274,7 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
-        } else if (platform().isa == ISA.ARM) {
+        } else if (platform().isa == ISA.ARM) {  // TODO (ck): Fix ARM version
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
@@ -1377,95 +1362,6 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         } else if (platform().isa == ISA.Aarch64) {
-//            CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
-//            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
-//            int frameSize = platform().target.alignFrameSize(0);
-//
-//            for (int i = 0; i < prologueSize; ++i) {
-//                asm.nop();
-//            }
-//
-//            // called from Java so we should push the return address register
-//            asm.push(1 << 14);
-//
-//            CiValue[] args = unwindArgs;
-//            assert args.length == 3 || args.length == 4;
-//
-//            // TODO: not sure this will work
-//            CiRegister pc = args[0].asRegister();
-//            CiRegister sp = args[1].asRegister();
-//            CiRegister fp = args[2].asRegister();
-//
-//            // TODO: below doesn't work in aarch64
-//            // asm.mov(64, asm.scratchRegister, pc);
-//            asm.mov(64, Aarch64.r8, sp);
-//            String name = "unwindStub";
-//            if (args.length == 4) {
-//                CiValue retValue = args[3];
-//                CiRegister reg = null;
-//                CiAddress stackAddr = null;
-//                CiKind kind = retValue.kind.stackKind();
-//                name = "unwind" + kind.name() + "Stub";
-//                switch (kind) {
-//                    case Long:
-//                        stackAddr = new CiAddress(kind, Aarch64.rsp, ((CiStackSlot) retValue).index() * Word.size());
-//                        asm.setUpRegister(asm.scratchRegister, stackAddr);
-//                        asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-//                        break;
-//                    case Int:
-//                    case Object:
-//                        assert args[3].isRegister() : " genUnwind args[3] is not a register?";
-//                        break;
-//                    case Float:
-//                        reg = retValue.asRegister();
-//                        asm.fmov(64, registerConfig.getReturnRegister(CiKind.Float), reg);
-//                        break;
-//                    case Double:
-//                        reg = retValue.asRegister();
-//                        asm.fmov(64, registerConfig.getReturnRegister(CiKind.Double), reg);
-//                        break;
-//
-//                    default:
-//                        FatalError.unexpected("unexpected kind: " + kind);
-//                }
-//            }
-//            // we have a problem with where to put the return value.
-//            // we need to clear space first, and finish using the registers
-//
-//            // Push 'pc' to the handler's stack frame and update RSP to point to the pushed value.
-//            // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
-//            // and the stack will be in the correct state for the handler.
-//            asm.subq(sp, Word.size());
-//            asm.setUpScratch(new CiAddress(WordUtil.archKind(), sp.asValue()));
-//            asm.str(64, pc, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-//            asm.mov(64, Aarch64.r11, fp);
-//            asm.mov(64, Aarch64.sp, sp);
-//
-//            if (args.length == 4) {
-//                CiValue retValue = args[3];
-//                CiKind kind = retValue.kind.stackKind();
-//                switch (kind) {
-//                    case Long:
-//                        asm.mov(64,Aarch64.r0, Aarch64.r8);
-//                        asm.mov(64, Aarch64.r1, Aarch64.r9);
-//                        break;
-//                    case Int:
-//                    case Object:
-//                        asm.mov(64, Aarch64.r0, args[3].asRegister());
-//                        break;
-//                    case Float:
-//                    case Double:
-//                        // nothing to do as already in the correct register
-//                        break;
-//                    default:
-//                        FatalError.unexpected("unexpected kind: " + kind);
-//                }
-//            }
-//
-//            asm.ret(0);
-//            byte[] code = asm.codeBuffer.close(true);
-//            return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
-
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
@@ -1494,28 +1390,24 @@ public class Stubs {
                         asm.mov(64, registerConfig.getReturnRegister(CiKind.Int), reg);
                         break;
                     case Float:
+                        asm.fmov(32, registerConfig.getReturnRegister(CiKind.Float), reg);
+                        break;
                     case Double:
-                        asm.fmov(64, registerConfig.getReturnRegister(CiKind.Float), reg);
+                        asm.fmov(64, registerConfig.getReturnRegister(CiKind.Double), reg);
                         break;
                     default:
                         FatalError.unexpected("unexpected kind: " + kind);
                 }
             }
 
-            // Push 'pc' to the handler's stack frame and update RSP to point to the pushed value.
-            // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
-            // and the stack will be in the correct state for the handler.
-            asm.subq(sp, Word.size());
-//            asm.mov(64, new CiAddress(WordUtil.archKind(), sp.asValue()), pc);
             asm.mov(64, Aarch64.fp, fp);
             asm.mov(64, Aarch64.sp, sp);
-//            asm.ret(0);
-            asm.ret();
+            asm.jmp(pc);
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genUnwind");
         }
     }
 
@@ -1594,7 +1486,7 @@ public class Stubs {
                 asm.nop();
             }
             // We are called from Java so we do need to push the LR.
-            asm.push(1 << 14);
+            asm.push(Aarch64.linkRegister);
             asm.mov(64, asm.scratchRegister, Aarch64.sp);
             asm.sub(64, asm.scratchRegister, asm.scratchRegister, Aarch64.r1);
             asm.mov(64, Aarch64.sp, asm.scratchRegister);
@@ -1615,7 +1507,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genUnroll");
         }
     }
 
@@ -1733,14 +1625,18 @@ public class Stubs {
         @Override
         void apply() {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
-            int disp = runtimeRoutine.address().toInt();
+            long disp = runtimeRoutine.address().toLong();
 
-            int instruction = Aarch64MacroAssembler.movzHelper(64, Aarch64.r16, disp & 0xffff, 0);
+            int instruction = Aarch64MacroAssembler.movzHelper(64, Aarch64.r16, (int) disp & 0xffff, 0);
             patchAddr.writeInt(0, instruction);
-            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (disp >> 16) & 0xffff, 16);
+            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 16) & 0xffff, 16);
             patchAddr.writeInt(4, instruction);
+            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 32) & 0xffff, 32);
+            patchAddr.writeInt(8, instruction);
+            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 48) & 0xffff, 48);
+            patchAddr.writeInt(12, instruction);
 
-            Aarch64TargetMethodUtil.maxine_cache_flush(patchAddr, 8);
+//            Aarch64TargetMethodUtil.maxine_cache_flush(patchAddr, 8);
         }
     }
 
@@ -2024,11 +1920,11 @@ public class Stubs {
             // Put deopt method entry point into low slot
             asm.mov64BitConstant(asm.scratchRegister, 0xffffffff);
             final int patchPos = asm.codeBuffer.position() - 4;
-            asm.setUpRegister(Aarch64.r8, new CiAddress(WordUtil.archKind(), Aarch64.rsp));
-            asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r8));
+            asm.setUpRegister(Aarch64.r17, new CiAddress(WordUtil.archKind(), Aarch64.rsp));
+            asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r17));
 
             asm.mov64BitConstant(asm.scratchRegister, 0xfeeff00f);
-            asm.ret(0);
+            asm.ret();
 
             String stubName = runtimeRoutineName + "Stub";
             byte[] code = asm.codeBuffer.close(true);
@@ -2040,7 +1936,7 @@ public class Stubs {
 
             return stub;
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genDeoptStub");
         }
     }
 
@@ -2073,7 +1969,7 @@ public class Stubs {
              *   mov  rcx, rbp                                 // copy callee save area into arg3
              *   mov  [rsp + <frame size>], rdi                // restore deopt IP (i.e. original return address) into return address slot
              *   call <deopt routine>                          // call deoptimization routine
-             *   int3                                          // should not reach here
+             *   brk                                           // should not reach here
              */
             CiCalleeSaveLayout csl = registerConfig.csl;
             AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
@@ -2169,7 +2065,7 @@ public class Stubs {
              *   mov  rcx, rbp                                 // copy callee save area into arg3
              *   mov  [rsp + <frame size>], rdi                // restore deopt IP (i.e. original return address) into return address slot
              *   call <deopt routine>                          // call deoptimization routine
-             *   int3                                          // should not reach here
+             *   brk                                           // should not reach here
              */
             CiCalleeSaveLayout csl = registerConfig.csl;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
@@ -2359,11 +2255,11 @@ public class Stubs {
             // Call runtime routine
 //            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
-//            asm.call();
+            asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
             // should never reach here
-//            asm.int3();
+//            asm.brk();
 
             String stubName = runtimeRoutineName + "StubWithCSA";
 
@@ -2373,7 +2269,7 @@ public class Stubs {
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genDeoptStubWithCSA");
         }
     }
 
@@ -2417,7 +2313,7 @@ public class Stubs {
              *   mov  rcx, rbp                                 // copy callee save area into arg3
              *   mov  [rsp + <frame size>], rdi                // restore deopt IP (i.e. original return address) into return address slot
              *   call <deopt routine>                          // call deoptimization routine
-             *   int3                                          // should not reach here
+             *   brk                                           // should not reach here
              */
 
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
@@ -2514,11 +2410,61 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.Aarch64) {
+            CiRegisterConfig registerConfig = registerConfigs.uncommonTrapStub;
+            Aarch64MacroAssembler masm = new Aarch64MacroAssembler(target(), registerConfig);
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = platform().target.alignFrameSize(csl.size);
+            int frameToCSA = csl.frameOffsetToCSA;
+
+            for (int i = 0; i < prologueSize; ++i) {
+                masm.nop();
+            }
+
+            // now allocate the frame for this method
+            masm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
+
+            // save all the registers
+            masm.save(csl, frameToCSA);
+
             String name = "uncommonTrap";
+
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
-            return new Stub(UncommonTrapStub, "", 0, new byte[] {}, 0, 0, uncommonTrap.classMethodActor, 0);
+
+            CiValue[] args = registerConfig.getCallingConvention(JavaCall,
+                    new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()},
+                    target(), false).locations;
+
+            // Copy callee save area address into arg 0 (i.e. 'csa')
+            CiRegister arg0 = args[0].asRegister();
+            masm.leaq(arg0, new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameToCSA));
+
+            // Copy return address into arg 1 (i.e. 'ip')
+            CiRegister arg1 = args[1].asRegister();
+            masm.load(arg1, new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize), WordUtil.archKind());
+
+            // Copy stack pointer into arg 2 (i.e. 'sp')
+            CiRegister arg2 = args[2].asRegister();
+            masm.leaq(arg2, new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize + 8));
+
+            // Copy original frame pointer into arg 3 (i.e. 'fp')
+            CiRegister arg3 = args[3].asRegister();
+            masm.mov(64, arg3, Aarch64.fp);
+
+            masm.alignForPatchableDirectCall();
+            int callPos = masm.codeBuffer.position();
+            ClassMethodActor callee = uncommonTrap.classMethodActor;
+            masm.call();
+            int callSize = masm.codeBuffer.position() - callPos;
+
+            // Should never reach here
+            int registerRestoreEpilogueOffset = masm.codeBuffer.position();
+            masm.hlt();
+
+            String stubName = name + "Stub";
+            byte[] code = masm.codeBuffer.close(true);
+            return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genUncommonTrapStub");
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -43,6 +43,9 @@
 #ifdef __arm__
 typedef struct user_fpregs user_fpregs_structure;
 typedef struct user_regs user_regs_structure;
+#elif defined __aarch64__
+typedef struct user_fpsimd_struct user_fpregs_structure;
+typedef struct user_regs_struct user_regs_structure;
 #else
 typedef struct user_fpregs_struct user_fpregs_structure;
 typedef struct user_regs_struct user_regs_structure;
@@ -925,10 +928,12 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSetInstructionPointer(JNIEnv *
     if (ptrace(PT_GETREGS, tid, 0, &registers) != 0) {
         return false;
     }
-#ifndef __arm__
-    registers.rip = instructionPointer;
-#else
+#ifdef __arm__
     registers.uregs[13] = instructionPointer;
+#elif defined __aarch64__
+    registers.pc = instructionPointer;
+#else
+    registers.rip = instructionPointer;
 #endif
     return ptrace(PT_SETREGS, tid, 0, &registers) == 0;
 }

@@ -274,7 +274,7 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.GenericCallback)
     public static Object genericCallback(CiGenericCallback cb, Object arg) {
-        throw FatalError.unimplemented();
+        throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxRuntimeCalls.genericCallback");
     }
 
     @HOSTED_ONLY

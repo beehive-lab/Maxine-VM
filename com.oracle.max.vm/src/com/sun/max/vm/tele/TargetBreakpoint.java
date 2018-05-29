@@ -35,16 +35,14 @@ public final class TargetBreakpoint {
     @HOSTED_ONLY
     public static byte[] createBreakpointCode(ISA isa) {
         switch (isa) {
+            case Aarch64:
             case AMD64:
             case ARM:
             case IA32: {
                 return new byte[] {(byte) 0xCC};
             }
-            case Aarch64: {
-                return new byte[] {(byte) 0xCC};
-            }
             default: {
-                FatalError.unimplemented();
+                FatalError.unimplemented("com.sun.max.vm.tele.TargetBreakpoint.createBreakpointCode");
                 break;
             }
         }

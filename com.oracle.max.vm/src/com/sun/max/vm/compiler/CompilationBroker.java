@@ -961,7 +961,7 @@ public class CompilationBroker {
                 }
                 return true;
             }
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.CompilationBroker.DirectCallPatcher.visitFrame");
         }
     }
 

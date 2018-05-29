@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,36 +22,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.runtime.aarch64;
 
-import static com.sun.max.platform.Platform.*;
+package com.sun.max.asm.gen.risc.aarch64;
 
-import com.oracle.max.asm.target.aarch64.*;
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.max.asm.gen.risc.RiscAssembly;
+import com.sun.max.asm.gen.risc.RiscTemplate;
+import com.sun.max.asm.gen.risc.RiscTemplateCreator;
+import com.sun.max.asm.gen.risc.bitRange.BitRangeOrder;
+import com.sun.max.lang.ISA;
+
+import java.util.List;
 
 /**
- * The safepoint poll implementation for Aarch64.
- *
- * @see Aarch64TrapFrameAccess
  */
-public final class Aarch64SafepointPoll extends SafepointPoll {
 
-    /**
-     * ATTENTION: must be callee-saved by all C ABIs in use.
-     */
-    public static final CiRegister LATCH_REGISTER = Aarch64.LATCH_REGISTER;
+public final class Aarch64Assembly extends RiscAssembly {
 
-    @HOSTED_ONLY
-    public Aarch64SafepointPoll() {
+    public static final Aarch64Assembly ASSEMBLY = new Aarch64Assembly();
+
+    private Aarch64Assembly() {
+        super(ISA.Aarch64, RiscTemplate.class);
     }
 
-    @HOSTED_ONLY
     @Override
-    protected byte[] createCode() {
-        final Aarch64Assembler asm = new Aarch64Assembler(target(), null);
-        asm.ldr(64, LATCH_REGISTER, Aarch64Address.createBaseRegisterOnlyAddress(LATCH_REGISTER));
-        return asm.codeBuffer.close(true);
+    public BitRangeOrder bitRangeEndianness() {
+        return BitRangeOrder.DESCENDING;
+    }
+
+    @Override
+    protected List<RiscTemplate> createTemplates() {
+        assert false : "Unimplemented T1X createTemplates";
+        final RiscTemplateCreator creator = new RiscTemplateCreator();
+        return creator.templates();
     }
 }

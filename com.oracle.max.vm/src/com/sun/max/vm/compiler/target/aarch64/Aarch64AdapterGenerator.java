@@ -21,6 +21,7 @@ package com.sun.max.vm.compiler.target.aarch64;
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil.*;
 
@@ -84,7 +85,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
              */
             @Override
             public int callOffsetInPrologue() {
-                return 4;
+                return 5 * INSTRUCTION_SIZE;
             }
 
             @Override
@@ -113,6 +114,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
                 int ripAdjustment = frameSize();
                 boolean rbpSaved = true;
                 if (MaxineVM.isHosted()) {
+                    assert false : "Not implemented yet in Aarch64";
                     // Inspector context only
                     int state = computeFrameState(current);
                     ripAdjustment = state & ~1;
@@ -121,8 +123,8 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
                 Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
-                Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
-                Pointer callerFP = rbpSaved ? sfw.readWord(ripPointer, -Word.size() * 2).asPointer() : current.fp();
+                Pointer callerSP = ripPointer.plus(BASELINE_SLOT_SIZE); // Skip RIP
+                Pointer callerFP = rbpSaved ? sfw.readWord(ripPointer, -BASELINE_SLOT_SIZE).asPointer() : current.fp();
 
                 boolean wasDisabled = SafepointPoll.disable();
                 sfw.advance(callerIP, callerSP, callerFP);
@@ -272,7 +274,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         /**
          * The size in bytes of the prologue, see {@link Baseline2Opt#emitPrologue(Object, Adapter)}.
          */
-        private static final int PROLOGUE_SIZE = 8;
+        public static final int PROLOGUE_SIZE = 6 * 4;
 
         @Override
         public int prologueSizeForCallee(ClassMethodActor callee) {
@@ -286,17 +288,21 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
          * The assembler code is as follows:
          * <pre>
          *     +0:  str lr, [sp,#-16]!
-         *     +4:  bl <adapter>
-         *     +8:  optimised method body
+         *     +4:  nop
+         *     +8:  nop
+         *     +12: nop
+         *     +16: nop
+         *     +20: bl <adapter>
+         *     +24: optimised method body
          * </pre>
          */
         @Override
         protected int emitPrologue(Object out, Adapter adapter) {
             Aarch64MacroAssembler masm = out instanceof OutputStream ? new Aarch64MacroAssembler(Platform.target(), null) : (Aarch64MacroAssembler) out;
             if (adapter == null) {
-                masm.nop(2);
+                masm.nop(6);
             } else {
-                masm.push(64, Aarch64.linkRegister);
+                masm.push(Aarch64.linkRegister);
                 masm.call();
             }
             int size = masm.codeBuffer.position();
@@ -309,39 +315,28 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             Aarch64MacroAssembler masm = new Aarch64MacroAssembler(Platform.target(), null);
-            // Compute the number of stack args needed for the call (i.e. the args that won't
-            // be put into registers)
-            int stackArgumentsSize = 0;
-            for (int i = optArgs.length - 1; i >= 0; i--) {
-                if (optArgs[i].isStackSlot()) {
-                    CiStackSlot slot = (CiStackSlot) optArgs[i];
-                    int offset = slot.index() * OPT_SLOT_SIZE;
-                    int end = offset + OPT_SLOT_SIZE;
-                    if (end > stackArgumentsSize) {
-                        stackArgumentsSize = end;
-                    }
-                }
-            }
-            final int rbpSlotSize = OPT_SLOT_SIZE;
-            final int baselineCallerRIPSlotSize = OPT_SLOT_SIZE;
-            final int implicitlyAllocatedFrameSize = baselineCallerRIPSlotSize + rbpSlotSize;
-            int adapterFrameSize = target().alignFrameSize(stackArgumentsSize + implicitlyAllocatedFrameSize - baselineCallerRIPSlotSize);
+
+            // On Entry x30 holds the return address of the call in the OPT callee's prologue (which is also the entry
+            // to the main body of the OPT callee) and [SP] holds the return address in the baseline caller.
+
+            int stackArgumentsSize = getStackArgumentsSize(optArgs);
+            int adapterFrameSize = target().alignFrameSize(stackArgumentsSize);
             // The amount by which RSP must be explicitly adjusted to create the adapter frame
-            final int explicitlyAllocatedFrameSize = adapterFrameSize - rbpSlotSize;
-            assert explicitlyAllocatedFrameSize >= 0 && explicitlyAllocatedFrameSize <= Short.MAX_VALUE;
+            assert adapterFrameSize >= 0 && adapterFrameSize <= Short.MAX_VALUE;
 
             // stack the baseline caller's frame pointer
-            masm.push(64, Aarch64.fp);
+            masm.push(Aarch64.fp);
 
             // the adapter frame pointer = the current stack pointer
             masm.mov(64, Aarch64.fp, Aarch64.sp);
 
             // allocate the adapter frame
-            masm.sub(64, Aarch64.sp, Aarch64.sp, explicitlyAllocatedFrameSize);
+            masm.sub(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
+            adapterFrameSize += BASELINE_SLOT_SIZE; // Account for the slot holding the FP
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
-            // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize + OPT_SLOT_SIZE.
-            int baselineStackOffset = adapterFrameSize + OPT_SLOT_SIZE;
+            // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize.
+            int baselineStackOffset = adapterFrameSize + BASELINE_SLOT_SIZE;
             int baselineArgsSize = 0;
             CiBitMap refMap = null;
             for (int i = optArgs.length - 1; i >= 0;  i--) {
@@ -356,7 +351,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
                 int refMapIndex = adaptArgument(masm, kind, optArgs[i], baselineStackOffset, 0);
                 if (refMapIndex != -1) {
                     if (refMap == null) {
-                        refMap = new CiBitMap(adapterFrameSize / Word.size());
+                        refMap = new CiBitMap(adapterFrameSize / OPT_SLOT_SIZE);
                     }
                     refMap.set(refMapIndex);
                 }
@@ -376,10 +371,10 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             masm.mov(64, Aarch64.sp, Aarch64.fp);
 
             // and the caller's frame pointer,
-            masm.pop(64, Aarch64.fp);
+            masm.pop(Aarch64.fp);
 
             // and the baseline return address.
-            masm.pop(64, Aarch64.linkRegister);
+            masm.pop(Aarch64.linkRegister);
 
             // roll the stack pointer back before the first argument on the caller's stack.
             masm.add(64, Aarch64.sp, Aarch64.sp, baselineArgsSize);
@@ -398,6 +393,45 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             return new Baseline2OptAdapter(this, description, adapterFrameSize, code, callPos, callSize);
         }
 
+        protected void adapt(Aarch64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
+            switch(kind.asEnum) {
+                case BYTE:
+                    masm.ldrs(64, 8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case BOOLEAN:
+                    masm.ldr(8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case SHORT:
+                    masm.ldrs(64, 16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case CHAR:
+                    masm.ldr(16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case INT:
+                    masm.ldrs(64, 32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case WORD:
+                case REFERENCE:
+                case LONG:
+                    masm.ldr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case FLOAT:
+                    masm.fldr(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case DOUBLE:
+                    masm.fldr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                default :
+                    throw ProgramError.unexpected("Bad case");
+            }
+        }
+
+        protected void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
+            int src = baselineStackOffset32;
+            int dst = optStackOffset32;
+            stackCopy(asm, kind, src, dst);
+        }
+
     }
 
 
@@ -408,19 +442,19 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
      */
     public static class Opt2Baseline extends Aarch64AdapterGenerator {
 
-        static final int PROLOGUE_SIZE = 16;
-        static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 8;
+        /**
+         * The offset in the prologue of the call to the adapter.
+         */
+        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + 5 * INSTRUCTION_SIZE;
+
+        static final int PROLOGUE_SIZE = CALL_OFFSET_IN_PROLOGUE + RIP_CALL_INSTRUCTION_SIZE;
+        static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = OPTIMIZED_ENTRY_POINT.offset();
 
         public Opt2Baseline() {
             super(Adapter.Type.OPT2BASELINE);
         }
 
         static final class Opt2BaselineAdapter extends Adapter {
-
-            /**
-             * The offset in the prologue of the call to the adapter.
-             */
-            private static final int CALL_OFFSET_IN_PROLOGUE = +12;
 
             Opt2BaselineAdapter(AdapterGenerator generator, String description, int frameSize, byte[] code, int callPos, int callSize) {
                 super(generator, description, frameSize, code, callPos, callSize);
@@ -450,7 +484,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             @Override
             @HOSTED_ONLY
             public boolean acceptStackFrameVisitor(StackFrameCursor cursor, StackFrameVisitor visitor) {
-                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
+                int ripAdjustment = computeRipAdjustment(cursor);
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
@@ -459,12 +493,12 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public void advance(StackFrameCursor cursor) {
-                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
+                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : 0;
                 StackFrameWalker sfw = cursor.stackFrameWalker();
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
-                Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
+                Pointer callerSP = ripPointer.plus(BASELINE_SLOT_SIZE); // Skip RIP word
                 Pointer callerFP = cursor.fp();
 
                 boolean wasDisabled = SafepointPoll.disable();
@@ -477,7 +511,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
             @Override
             public Pointer returnAddressPointer(StackFrameCursor frame) {
-                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(frame) : Word.size();
+                int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(frame) : 0;
                 return frame.sp().plus(ripAdjustment);
             }
 
@@ -548,18 +582,31 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
          * @return
          * No Adaptation:
          * <pre>
-         *      +0: nop                 <- baseline entry point
-         *      +4: nop
-         *      +8: method body         <- optimised e.p.
+         * <pre>
+         *     +0:  nop           <- baseline entry point
+         *     +4:  nop
+         *     +8:  nop
+         *     +12: nop
+         *     +16: nop
+         *     +20: nop
+         *     +24: method body   <- optimized entry point
          * </pre>
          *
          * With Adaptation:
          * <pre>
-         *      +0: b   L1              <- baseline e.p.
-         *      +4: nop
-         *      +8: str lr, [sp,#-16]!  <- optimised e.p.
-         *     +12: bl  <adapter>
-         * L1  +16: method body
+         *     +0:  b L1                <- baseline entry point
+         *     +4:  nop
+         *     +8:  nop
+         *     +12: nop
+         *     +16: nop
+         *     +20: nop
+         *     +24: str lr, [sp,#-16]!  <- optimized entry point
+         *     +28: nop
+         *     +32: nop
+         *     +36: nop
+         *     +40: nop
+         *     +44: bl <adapter>
+         * L1  +48: method body
          * </pre>
          *
          */
@@ -567,18 +614,19 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected int emitPrologue(Object out, Adapter adapter) {
             Aarch64MacroAssembler masm = out instanceof OutputStream ? new Aarch64MacroAssembler(Platform.target(), null) : (Aarch64MacroAssembler) out;
             if (adapter == null) {
-                masm.nop(CallEntryPoint.OPTIMIZED_ENTRY_POINT.offset());
+                masm.align(OPTIMIZED_ENTRY_POINT.offset());
                 assert masm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
                 copyIfOutputStream(masm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
             Label end = new Label();
             masm.b(end);
-            masm.nop();
+            // Pad with nops up to the OPT entry point
+            masm.align(OPTIMIZED_ENTRY_POINT.offset());
             // stack the return address in the caller, i.e. the instruction following the branch to
             // here in the optimised caller.
-            masm.push(64, Aarch64.linkRegister);
-            masm.bl(0);
+            masm.push(Aarch64.linkRegister);
+            masm.call();
             masm.bind(end);
             int size = masm.codeBuffer.position();
             assert size == PROLOGUE_SIZE : "Bad prologue";
@@ -594,16 +642,15 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             Aarch64MacroAssembler masm = new Aarch64MacroAssembler(Platform.target(), null);
-            final int baselineArgsSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
-            assert baselineArgsSize % Platform.target().stackAlignment == 0 : "Bad stack alignment";
-            /* XXX Review this
-             */
-            final int optCallerRIPSlotSize = OPT_SLOT_SIZE;
-            final int adapterFrameSize = baselineArgsSize + optCallerRIPSlotSize;
+            final int adapterFrameSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
+            assert adapterFrameSize % Platform.target().stackAlignment == 0 : "Bad stack alignment";
+
+            // On entry to the frame, there is 1 return address in the link register and another at [SP]. The one at the
+            // link register is the return address of the call in the baseline callee's prologue (which is also the
+            // entry to the main body of the baseline callee) and one at [SP] is the return address in the OPT caller.
 
             // adjust stack pointer to accommodate baseline args
-            masm.sub(64, Aarch64.sp, Aarch64.sp, baselineArgsSize);
-
+            masm.sub(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
 
             int baselineStackOffset = 0;
 
@@ -621,39 +668,50 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             // contains the address of the baseline method body, go there.
             masm.blr(Aarch64.linkRegister);
             int callSize = masm.codeBuffer.position() - callPos;
-            masm.pop(64, Aarch64.linkRegister);
-            masm.ret(Aarch64.linkRegister);
+
+            // restore stack pointer and return
+            masm.add(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
+            masm.ret();
             final byte [] code = masm.codeBuffer.close(true);
             String description = Type.OPT2BASELINE + "-Adapter" + sig;
             return new Opt2BaselineAdapter(this, description, adapterFrameSize, code, callPos, callSize);
         }
-    }
 
-    private static void adapt(Aarch64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
-        // Checkstyle: stop
-        switch(kind.asEnum) {
-            case BYTE:
-            case BOOLEAN:
-            case SHORT:
-            case CHAR:
-            case INT:
-                masm.str(32, reg, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, offset32));
-                break;
-            case WORD:
-            case REFERENCE:
-            case LONG:
-                masm.str(64, reg, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, offset32));
-                break;
-            case FLOAT:
-                masm.fstr(32, reg, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, offset32));
-                break;
-            case DOUBLE:
-                masm.fstr(64, reg, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, offset32));
-                break;
-            default :
-                throw ProgramError.unexpected("Bad case");
+        protected void adapt(Aarch64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
+            switch(kind.asEnum) {
+                case BYTE:
+                case BOOLEAN:
+                    masm.str(8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case SHORT:
+                case CHAR:
+                    masm.str(16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case INT:
+                    masm.str(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case WORD:
+                case REFERENCE:
+                case LONG:
+                    masm.str(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case FLOAT:
+                    masm.fstr(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                case DOUBLE:
+                    masm.fstr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    break;
+                default :
+                    throw ProgramError.unexpected("Bad case");
+            }
         }
-        // Checkstyle: resume
+
+        protected void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
+            // Add word size to take into account the slot used by the RIP of the caller
+            int src = adapterFrameSize + optStackOffset32 + Word.size();
+            int dst = baselineStackOffset32;
+            stackCopy(asm, kind, src, dst);
+        }
 
     }
 
@@ -676,7 +734,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             int optStackOffset32 = ((CiStackSlot) optArg).index() * OPT_SLOT_SIZE;
             adapt(asm, kind, optStackOffset32, baselineStackOffset32, adapterFrameSize);
             if (kind.isReference) {
-                return optStackOffset32 / Word.size();
+                return optStackOffset32 / OPT_SLOT_SIZE;
             }
         } else {
             throw FatalError.unexpected("Unadaptable parameter location type: " + optArg.getClass().getSimpleName());
@@ -692,11 +750,8 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
      * @param baselineStackOffset32
      * @param adapterFrameSize
      */
-    private void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
-        int src = adapterFrameSize + optStackOffset32 + Word.size();
-        int dst = baselineStackOffset32;
-        stackCopy(asm, kind, src, dst);
-    }
+    protected abstract void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize);
+    protected abstract void adapt(Aarch64MacroAssembler asm, Kind kind, CiRegister reg, int offset32);
 
     /**
      * Copy one of the optimised callers arguments which has been spilled to the stack to the position
@@ -706,14 +761,10 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
      * @param sourceStackOffset
      * @param destStackOffset
      */
-    private void stackCopy(Aarch64MacroAssembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
-        if (kind.width == WordWidth.BITS_64) {
-            asm.ldr(64, scratch, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, sourceStackOffset));
-            asm.str(64, scratch, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, destStackOffset));
-        } else {
-            asm.ldr(32, scratch, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, sourceStackOffset));
-            asm.str(32, scratch, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, destStackOffset));
-        }
+    void stackCopy(Aarch64MacroAssembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
+        final int size = kind.width.numberOfBits;
+        asm.ldr(size, scratch, asm.getAddressInFrame(Aarch64.sp, sourceStackOffset));
+        asm.str(size, scratch, asm.getAddressInFrame(Aarch64.sp, destStackOffset));
     }
 
 }

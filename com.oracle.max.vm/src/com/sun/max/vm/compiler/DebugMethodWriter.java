@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,7 +30,7 @@ public class DebugMethodWriter {
     private StringBuffer buffer;
 
     public DebugMethodWriter(String prefix) {
-        methodCounter = new AtomicInteger(536870912);
+        methodCounter = new AtomicInteger(0x2000_0000);
         fileLock = new Object();
         file = initDebugMethods(prefix + "_method_id.txt");
         buffer = new StringBuffer();
@@ -46,16 +46,17 @@ public class DebugMethodWriter {
     }
 
     public void appendDebugMethod(String name, int index) {
-        buffer.append(index + " " + name + "\n");
+        buffer.append(Integer.toHexString(index) + " " + name + "\n");
     }
 
-    public void flushDebugMethod() throws Exception {
+    public void flushDebugMethod() {
         synchronized (fileLock) {
             try {
                 FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
                 BufferedWriter bw = new BufferedWriter(fw);
                 bw.write(buffer.toString());
                 bw.close();
+                buffer.setLength(0);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -26,7 +26,7 @@
 #undef word_LITTLE_ENDIAN
 #undef word_BIG_ENDIAN
 
-#if defined(__x86) || defined(__x86_64) || defined(_X86_) || defined(i386) || defined (arm)
+#if defined(__x86) || defined(__x86_64) || defined(_X86_) || defined(i386) || defined (arm) || defined(__aarch64__)
 #   define word_LITTLE_ENDIAN 1
 #   define word_BIG_ENDIAN    0
 #   define MATH_HI(x) *(1+(int*)&x)

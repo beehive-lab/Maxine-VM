@@ -85,7 +85,8 @@ public class Aarch64 extends CiArchitecture {
     // Register used to store metaspace method.
     // see definition in sharedRuntime_aarch64.cpp:gen_c2i_adapter
     public static final CiRegister metaspaceMethodRegister = r12;
-    public static final CiRegister LATCH_REGISTER = r10;
+    // ATTENTION: must be callee-saved by all C ABIs in use.
+    public static final CiRegister LATCH_REGISTER = r26;
 /********************************************************************************************************/
 
     // Floating point and SIMD registers
@@ -125,10 +126,19 @@ public class Aarch64 extends CiArchitecture {
     public static final CiRegister[] cpuRegisters = {
         r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13,
         r14, r15, r16, r17, r18, r19, r20, r21, r22, r23, r24,
-        r25, r26, r27, r28, r29, r30, r31, sp, zr
+        r25, r26, r27, r28, r29, r30, // Exclude special register 31 /* r31, sp, zr */
     };
 
     public static final CiRegister[] fpuRegisters = {
+        d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13,
+        d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24,
+        d25, d26, d27, d28, d29, d30, d31
+    };
+
+    public static final CiRegister[] csaRegisters = {
+        r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13,
+        r14, r15, r16, r17, r18, r19, r20, r21, r22, r23, r24,
+        r25, r26, r27, r28, r29, r30, // Exclude special register 31 /* r31, sp, zr */
         d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13,
         d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24,
         d25, d26, d27, d28, d29, d30, d31

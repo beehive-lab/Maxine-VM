@@ -99,21 +99,19 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
 
         public static InstructionType generalFromSize(int size) {
-            for (InstructionType type : values()) {
-                if (type.isGeneral && type.width == size) {
-                    return type;
-                }
+            if (size == General32.width) {
+                return General32;
             }
-            throw new Error("should not reach here");
+            assert size == General64.width;
+            return General64;
         }
 
         public static InstructionType floatFromSize(int size) {
-            for (InstructionType type : values()) {
-                if (!type.isGeneral && type.width == size) {
-                    return type;
-                }
+            if (size == FP32.width) {
+                return FP32;
             }
-            throw new Error("should not reach here");
+            assert size == FP64.width;
+            return FP64;
         }
     }
 
@@ -605,14 +603,8 @@ public class Aarch64Assembler extends AbstractAssembler {
         conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBZ, pos);
     }
 
-    //TODO: Fix later
     public final void alignForPatchableDirectCall() {
-        int dispStart = codeBuffer.position() + 1;
-        int mask = target.wordSize - 1;
-        if ((dispStart & ~mask) != ((dispStart + 3) & ~mask)) {
-            nop(target.wordSize - (dispStart & mask));
-           // assert ((codeBuffer.position() + 1) & mask) == 0;
-        }
+        // Aarch64 instructions are 4-byte aligned, there is no need for special alignment
     }
 
     public void nop(int number) {
@@ -650,7 +642,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm28 Signed 28-bit offset, has to be word aligned.
      */
     public void b(int imm28) {
-        unconditionalBranchImmInstruction(imm28, Instruction.B, -1);
+        unconditionalBranchImmInstruction(imm28, Instruction.B);
     }
 
     /**
@@ -668,7 +660,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm28 Signed 28-bit offset, has to be word aligned.
      */
     public void bl(int imm28) {
-        unconditionalBranchImmInstruction(imm28, Instruction.BL, -1);
+        unconditionalBranchImmInstruction(imm28, Instruction.BL);
     }
 
 
@@ -686,7 +678,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     /**
      * Mask for the displacement bits of a branch immediate.
      */
-    private static final int B_IMM_ADDRESS_MASK = 0x3FFFFFF;
+    private static final int B_IMM_ADDRESS_MASK = NumUtil.getNbitNumberInt(26);
 
     /**
      * Return the displacement of the target of a branch immediate instruction.
@@ -694,7 +686,8 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @return
      */
     public static int bImmExtractDisplacement(int instruction) {
-        assert (UnconditionalBranchImmOp & instruction) != 0 : "Not a branch immediate instruction.";
+        assert (instruction & NumUtil.getNbitNumberInt(5) << 26) == UnconditionalBranchImmOp :
+                "Not a branch immediate instruction: 0x" + Integer.toHexString(instruction);
         int displacement = B_IMM_ADDRESS_MASK & instruction;
 
         // check the sign bit
@@ -703,6 +696,38 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
         // negative number -- sign extend.
         return (displacement << 2) | 0xF0000000;
+    }
+
+    /**
+     * Checks if the given branch instruction is a linked branch or not.
+     *
+     * @param instruction the machine code of the original instruction
+     * @return {@code true} if the instruction is a linked branch
+     */
+    public static boolean isBranchInstructionLinked(int instruction) {
+        if (isBimmInstruction(instruction)) {
+            return instruction >> 31 != 0;
+        } else {
+            return (instruction >> 21 & NumUtil.getNbitNumberInt(2)) == 1;
+        }
+    }
+
+    public static boolean isBranchInstruction(int instruction) {
+        final int immOp = instruction & (NumUtil.getNbitNumberInt(5) << 26);
+        final int regOp = instruction & (NumUtil.getNbitNumberInt(7) << 25);
+        return immOp == UnconditionalBranchImmOp || regOp == UnconditionalBranchRegOp;
+    }
+
+
+    /**
+     * Checks if the given branch instruction is a branch immediate or branch register.
+     *
+     * @param instruction the machine code of the original instruction
+     * @return the instruction type
+     */
+    public static boolean isBimmInstruction(int instruction) {
+        assert isBranchInstruction(instruction) : instruction;
+        return (instruction & (NumUtil.getNbitNumberInt(5) << 26)) == UnconditionalBranchImmOp;
     }
 
     /**
@@ -752,21 +777,34 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @return
      */
     public static int bImmPatch(int instruction, int displacement) {
-        assert (UnconditionalBranchImmOp & instruction) != 0 : "Not a branch immediate instruction.";
+        assert (instruction & NumUtil.getNbitNumberInt(5) << 26) == UnconditionalBranchImmOp :
+                "Not a branch immediate instruction: 0x" + Integer.toHexString(instruction);
         assert NumUtil.isSignedNbit(28, displacement) && (displacement & 0x3) == 0
-                        : "Immediate has to be 28bit signed number and word aligned";
-        return (instruction & ~B_IMM_ADDRESS_MASK) | (displacement >> 2);
+                        : "Immediate has to be 28bit signed number and word aligned: " + Integer.toHexString(displacement);
+        return (instruction & ~B_IMM_ADDRESS_MASK) | ((displacement >> 2) & B_IMM_ADDRESS_MASK);
     }
 
-    private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
+    private void unconditionalBranchImmInstruction(int imm28, Instruction instr) {
+        unconditionalBranchImmInstruction(imm28, instr, -1);
+    }
+
+    public static int unconditionalBranchImmInstructionHelper(int imm28, boolean linked) {
+        return unconditionalBranchImmInstructionHelper(imm28, linked ? Instruction.BL : Instruction.B);
+    }
+
+    private static int unconditionalBranchImmInstructionHelper(int imm28, Instruction instr) {
         assert NumUtil.isSignedNbit(28, imm28) && (imm28 & 0x3) == 0
                 : "Immediate has to be 28bit signed number and word aligned";
         int imm = (imm28 & NumUtil.getNbitNumberInt(28)) >> 2;
-        int instrEncoding = instr.encoding | UnconditionalBranchImmOp;
+        return instr.encoding | UnconditionalBranchImmOp | imm;
+    }
+
+    private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
+        int instruction = unconditionalBranchImmInstructionHelper(imm28, instr);
         if (pos == -1) {
-            codeBuffer.emitInt(instrEncoding | imm);
+            codeBuffer.emitInt(instruction);
         } else {
-            codeBuffer.emitInt(instrEncoding | imm, pos);
+            codeBuffer.emitInt(instruction, pos);
         }
     }
 
@@ -799,11 +837,17 @@ public class Aarch64Assembler extends AbstractAssembler {
         unconditionalBranchRegInstruction(target, Instruction.RET);
     }
 
-    private void unconditionalBranchRegInstruction(CiRegister target, Instruction instr) {
+    public static int unconditionalBranchRegInstructionHelper(CiRegister target, boolean linked) {
+        return unconditionalBranchRegInstructionHelper(target, linked ? Instruction.BLR : Instruction.BR);
+    }
+
+    private static int unconditionalBranchRegInstructionHelper(CiRegister target, Instruction instr) {
         assert Aarch64.isGeneralPurposeReg(target);
-        int instrEncoding = instr.encoding | UnconditionalBranchRegOp;
-        emitInt(instrEncoding |
-                rs1(target));
+        return instr.encoding | UnconditionalBranchRegOp | rs1(target);
+    }
+
+    private void unconditionalBranchRegInstruction(CiRegister target, Instruction instr) {
+        emitInt(unconditionalBranchRegInstructionHelper(target, instr));
     }
 
     /* Load-Store Single Register (5.3.1) */
@@ -937,7 +981,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      *
      * @param size size of memory read in bits. Must be 8, 16, 32 or 64.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void ldxr(int size, CiRegister rt, Aarch64Address address) {
@@ -953,7 +997,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param rs general purpose register. Set to exclusive access status. 0 means success, everything else failure.
      *           May not be null, or stackpointer.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void stxr(int size, CiRegister rs, CiRegister rt, Aarch64Address address) {
@@ -970,7 +1014,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      *
      * @param size size of memory read in bits. Must be 8, 16, 32 or 64.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void ldar(int size, CiRegister rt, Aarch64Address address) {
@@ -984,7 +1028,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      *
      * @param size size of bits written to memory. Must be 8, 16, 32 or 64.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void stlr(int size, CiRegister rt, Aarch64Address address) {
@@ -1000,7 +1044,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      *
      * @param size size of memory read in bits. Must be 8, 16, 32 or 64.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void ldaxr(int size, CiRegister rt, Aarch64Address address) {
@@ -1015,7 +1059,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param size size of bits written to memory. Must be 8, 16, 32 or 64.
      * @param rs general purpose register. Set to exclusive access status. 0 means success, everything else failure. May not be null, or stackpointer.
      * @param rt general purpose register. May not be null or stackpointer.
-     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     * @param address Has to be {@link Aarch64Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
      *                May not be null.
      */
     public void stlxr(int size, CiRegister rs, CiRegister rt, Aarch64Address address) {
@@ -1066,7 +1110,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * its bottom 12-bits cleared, writing the result to dst.
      *
      * @param dst general purpose register. May not be null, zero-register or stackpointer.
-     * @param imm the address whose relative page we want.
+     * @param imm21 the address whose relative page we want.
      */
     public void adrp(CiRegister dst, int imm21) {
         //assert (imm & NumUtil.getNbitNumberInt(12)) == 0 : "Lower 12-bit of immediate must be zero.";
@@ -1085,6 +1129,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         addressCalculationInstruction(dst, getPcRelativeImmEncoding(imm21), Instruction.ADRP);
     }
 
+    public static int adrHelper(CiRegister dst, int imm21) {
+        return Instruction.ADR.encoding | PcRelImmOp | rd(dst) | getPcRelativeImmEncoding(imm21);
+    }
+
     /**
      * Adds a 21-bit signed offset to the program counter and writes the result to dst.
      *
@@ -1092,7 +1140,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm21 Signed 21-bit offset.
      */
     public void adr(CiRegister dst, int imm21) {
-        emitInt(Instruction.ADR.encoding | PcRelImmOp | rd(dst) | getPcRelativeImmEncoding(imm21));
+        emitInt(adrHelper(dst, imm21));
     }
 
     /**
@@ -1104,7 +1152,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param pos the position at which to insert the instruction.
      */
     public void adr(CiRegister dst, int imm21, int pos) {
-        codeBuffer.emitInt(Instruction.ADR.encoding | PcRelImmOp | rd(dst) | getPcRelativeImmEncoding(imm21), pos);
+        codeBuffer.emitInt(adrHelper(dst, imm21), pos);
     }
 
     private void addressCalculationInstruction(CiRegister dst, int imm21, Instruction instr) {
@@ -1319,9 +1367,9 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /**
-     * Unoptimised (4 instruction) move of a 32bit constant into register.
+     * Unoptimised (2 instruction) move of a 32bit constant into register.
      * @param reg
-     * @param imm64
+     * @param imm32
      */
     public void mov32BitConstant(CiRegister reg, long imm32) {
         movz(64, reg, (int) imm32 & 0xFFFF, 0);
@@ -1329,6 +1377,19 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /* Move (wide immediate) (5.4.3) */
+
+    /**
+     * Extracts the 16bit immediate from a movz/movk instruction.
+     * @param instruction
+     * @return
+     */
+    public static short movExtractImmediate(int instruction) {
+        final int op = instruction & (NumUtil.getNbitNumberInt(6) << 23);
+        assert op == MoveWideImmOp : instruction;
+        final int opc = instruction & (NumUtil.getNbitNumberInt(2) << 29);
+        assert (opc == Instruction.MOVZ.encoding) || (opc == Instruction.MOVK.encoding) : instruction;
+        return (short) ((instruction >> MoveWideImmOffset) & NumUtil.getNbitNumberInt(16));
+    }
 
     /**
      * dst = uimm16 << shiftAmt.
@@ -1569,20 +1630,31 @@ public class Aarch64Assembler extends AbstractAssembler {
         addSubShiftedInstruction(dst, src1, src2, shiftType, imm, generalFromSize(size), Instruction.SUBS);
     }
 
-    private void addSubShiftedInstruction(CiRegister dst, CiRegister src1,
-                                          CiRegister src2, ShiftType shiftType, int imm,
-                                          InstructionType type, Instruction instr) {
+    public static boolean isAddInstruction(int instruction) {
+        assert (instruction & (NumUtil.getNbitNumberInt(5) << 24)) == AddSubShiftedOp : instruction;
+        return (instruction & (1 << 30)) == Instruction.ADD.encoding;
+    }
+
+    public static int addSubInstructionHelper(CiRegister dst, CiRegister src1, CiRegister src2, boolean isSub) {
+        return addSubShiftedInstructionHelper(dst, src1, src2, ShiftType.LSL, 0,
+                                              InstructionType.General64, isSub ? Instruction.SUB : Instruction.ADD);
+    }
+
+    private static int addSubShiftedInstructionHelper(CiRegister dst, CiRegister src1,
+                                                      CiRegister src2, ShiftType shiftType, int imm,
+                                                      InstructionType type, Instruction instr) {
         assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src1, src2);
         assert shiftType != ShiftType.ROR;
         assert imm >= 0 && imm < type.width;
         int instrEncoding = instr.encoding | AddSubShiftedOp;
-        emitInt(type.encoding |
-                instrEncoding |
-                imm << ImmediateOffset |
-                shiftType.encoding << ShiftTypeOffset |
-                rd(dst) |
-                rs1(src1) |
-                rs2(src2));
+        return type.encoding | instrEncoding | imm << ImmediateOffset | shiftType.encoding << ShiftTypeOffset |
+               rd(dst) | rs1(src1) | rs2(src2);
+    }
+
+    private void addSubShiftedInstruction(CiRegister dst, CiRegister src1,
+                                          CiRegister src2, ShiftType shiftType, int imm,
+                                          InstructionType type, Instruction instr) {
+        emitInt(addSubShiftedInstructionHelper(dst, src1, src2, shiftType, imm, type, instr));
     }
 
     /* Arithmetic (extended register) (5.5.2) */
@@ -2573,6 +2645,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         exceptionInstruction(uimm16, Instruction.BRK);
     }
 
+    public void brk() {
+        brk(0);
+    }
+
     /* Architectural hints (5.9.4) */
     public enum SystemHint {
         NOP(0x0), YIELD(0x1), WFE(0x2), WFI(0x3), SEV(0x4), SEVL(0x5);
@@ -2584,10 +2660,8 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     }
 
-    // TODO Fix hlt
     public final void hlt() {
-        nop(4);
-        // int3();
+        hlt(0);
     }
 
 
@@ -2598,14 +2672,21 @@ public class Aarch64Assembler extends AbstractAssembler {
         hint(SystemHint.NOP);
     }
 
+    public static int nopHelper() {
+        return hintHelper(SystemHint.NOP);
+    }
+
+    private static int hintHelper(SystemHint hint) {
+        return Instruction.HINT.encoding | hint.encoding << SystemImmediateOffset;
+    }
+
     /**
      * Architectural hints.
      *
      * @param hint Can be any of the defined hints. May not be null.
      */
     public void hint(SystemHint hint) {
-        emitInt(Instruction.HINT.encoding |
-                hint.encoding << SystemImmediateOffset);
+        emitInt(hintHelper(hint));
     }
 
     private void exceptionInstruction(int uimm16, Instruction instr) {

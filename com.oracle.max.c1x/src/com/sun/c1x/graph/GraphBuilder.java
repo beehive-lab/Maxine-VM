@@ -1855,7 +1855,8 @@ public final class GraphBuilder {
     private void inline(RiResolvedMethod target, Value[] args, boolean forcedInline) {
         if (!forcedInline && C1XOptions.UseAssumptions) {
             compilation.assumptions.recordInlinedMethod(compilation.method, target);
-            if (C1XOptions.DebugMethods) {
+            if (C1XOptions.DebugInlinedMethods) {
+                assert C1XOptions.DebugMethods;
                 append(new DebugMethodID(bci(), compilation.method.name(), target.toString()));
             }
         }

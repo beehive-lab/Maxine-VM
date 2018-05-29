@@ -19,6 +19,8 @@
  */
 package test.crossisa.aarch64.adapters;
 
+import org.junit.*;
+
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
@@ -28,24 +30,32 @@ import static com.oracle.max.asm.target.aarch64.Aarch64.linkRegister;
 import static com.sun.max.vm.compiler.target.aarch64.Aarch64AdapterGenerator.Baseline2Opt.PROLOGUE_SIZE;
 
 /**
- * This class tests a call from optimised to baseline for a method
- * that takes 2 int parameters and returns an int.
+ * Tests a call from optimised to baseline with 9 int parameters returning an
+ * int. This covers spilling the ninth argument to the stack.
  */
-public class TestOpt2Baseline_II_I extends Opt2BaselineAarch64AdapterTest {
+public class TestOpt2Baseline_IIIIIIIII_I extends Opt2BaselineAarch64AdapterTest {
 
-    public TestOpt2Baseline_II_I() throws Exception {
-        super("(II)I");
+    public TestOpt2Baseline_IIIIIIIII_I() throws Exception {
+        super("(IIIIIIIII)I");
     }
 
-
     @Override
-    public byte [] createPrelude()  {
+    public byte[] createPrelude() {
         masm.codeBuffer.reset();
         masm.push(linkRegister);
-        masm.mov(Aarch64.r0, 1);        // r0 := 1
-        masm.mov(Aarch64.r1, 2);        // r1 := 2
+        masm.mov(Aarch64.r0, 1);
+        masm.mov(Aarch64.r1, 2);
+        masm.mov(Aarch64.r2, 3);
+        masm.mov(Aarch64.r3, 4);
+        masm.mov(Aarch64.r4, 5);
+        masm.mov(Aarch64.r5, 6);
+        masm.mov(Aarch64.r6, 7);
+        masm.mov(Aarch64.r7, 8);
+        masm.mov(masm.scratchRegister, 9);
+        masm.push(masm.scratchRegister);
         // Branch to optimised entry point +16 for the bl, pops and ret below.
-        masm.bl(PROLOGUE_SIZE + 3 * 4);
+        masm.bl(PROLOGUE_SIZE + 4 * 4);
+        masm.pop(masm.scratchRegister);
         masm.pop(linkRegister);
         masm.ret(linkRegister);
         byte [] code = masm.codeBuffer.close(true);
@@ -53,13 +63,30 @@ public class TestOpt2Baseline_II_I extends Opt2BaselineAarch64AdapterTest {
     }
 
     @Override
-    public byte [] createMethod(Adapter adapter)  {
+    public byte[] createMethod(Adapter adapter) {
         Aarch64MacroAssembler masm = t1xCompiler.getMacroAssembler();
-        byte [] instructions = {Bytecodes.ILOAD_0, Bytecodes.ILOAD_1};
-        // compile the 2 iloads
+        byte [] instructions = {
+            Bytecodes.ILOAD, 0,
+            Bytecodes.ILOAD, 1,
+            Bytecodes.ILOAD, 2,
+            Bytecodes.ILOAD, 3,
+            Bytecodes.ILOAD, 4,
+            Bytecodes.ILOAD, 5,
+            Bytecodes.ILOAD, 6,
+            Bytecodes.ILOAD, 7,
+            Bytecodes.ILOAD, 8
+        };
+        // compile the iloads
         t1xCompiler.offlineT1XCompileNoEpilogue(method(), codeAttribute(), instructions);
         // add them
-        t1xCompiler.do_iaddTests();
+        t1xCompiler.do_iaddTests(); // 1 + 2
+        t1xCompiler.do_iaddTests(); // 3 + 3
+        t1xCompiler.do_iaddTests(); // 6 + 4
+        t1xCompiler.do_iaddTests(); // 10 + 5
+        t1xCompiler.do_iaddTests(); // 15 + 6
+        t1xCompiler.do_iaddTests(); // 21 + 7
+        t1xCompiler.do_iaddTests(); // 28 + 8
+        t1xCompiler.do_iaddTests(); // 36 + 9
         // place the result in the return register
         masm.pop(32, Aarch64.r0);
         t1xCompiler.decStack(1);
@@ -71,14 +98,14 @@ public class TestOpt2Baseline_II_I extends Opt2BaselineAarch64AdapterTest {
     }
 
     /**
-     * Test a method taking 2 ints returning an int.
+     * Test a method taking 9 ints returning an int.
      * @throws Exception
      */
-    public void test_ii_i() throws Exception {
+    @Test
+    public void test_iiiiiiiii_i() throws Exception {
         testValues[0] = true;
         long [] values = generateAndTest(expectedValues, testValues, bitmasks);
-        assert 3 == values[0] : "Expected 3, got " + values[0];
+        assert 45 == values[0] : "Expected 45, got " + values[0];
     }
 
 }
-

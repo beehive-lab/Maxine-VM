@@ -28,6 +28,7 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.asm.target.aarch64.Aarch64InstructionDecoder;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
@@ -46,6 +47,8 @@ import com.sun.max.vm.compiler.RuntimeCompiler.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
+import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
@@ -704,16 +707,14 @@ public abstract class TargetMethod extends MemoryRegion {
                 case Float: // fall through
                 case Int: // fall through
                 case Long: {
-                    int offsetAdjustment = platform().target.arch.isARM() ? -12 : 0;
                     assert site.alignment == 0 || targetBundleLayout.firstElementPointer(start, ArrayField.scalarLiterals).plus(literals.scalarPos(dataIndex)).
                         isAligned(site.alignment) : "patching to a scalar address that is not aligned";
-                    patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt() + offsetAdjustment);
+                    patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt());
                     break;
                 }
                 case Object: {
                     int index = literals.objectPool.get(site.constant.asObject());
-                    int offsetAdjustment = platform().target.arch.isARM() ? -12 : 0;
-                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt() + offsetAdjustment);
+                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt());
                     break;
                 }
                 default:
@@ -729,8 +730,10 @@ public abstract class TargetMethod extends MemoryRegion {
             X86InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
         } else if (platform().isa == ISA.ARM) {
             ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
+        } else if (platform().isa == ISA.Aarch64) {
+            Aarch64InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.TargetMethod.patchRelativeInstruction");
         }
     }
 
@@ -1214,6 +1217,29 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param current the current stack frame cursor
      */
     public abstract void advance(StackFrameCursor current);
+
+    /**
+     * AArchitecture specific part of {@link #advance(StackFrameCursor)}.
+     *
+     * @param current the current stack frame cursor
+     * @param csl the callee save layout
+     * @param csa the callee save area
+     */
+    protected void advanceHelper(StackFrameCursor current, CiCalleeSaveLayout csl, Pointer csa) {
+        switch (platform().isa) {
+            case Aarch64:
+                Aarch64TargetMethodUtil.advance(current, csl, csa);
+                break;
+            case ARM:
+                ARMTargetMethodUtil.advance(current, csl, csa);
+                break;
+            case AMD64:
+                AMD64TargetMethodUtil.advance(current, csl, csa);
+                break;
+            default:
+                throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.advance");
+        }
+    }
 
     /**
      * Gets a pointer to the memory word holding the return address in a frame of this target method.

@@ -247,7 +247,9 @@ public abstract class AdapterGenerator {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
                     Log.print(": Created adapter  ");
-                    Log.println(adapter.regionName());
+                    Log.print(adapter.regionName());
+                    Log.print(" @ ");
+                    Log.println(adapter.codeStart());
                     Log.unlock(lockDisabledSafepoints);
                 }
                 adapters.put(sig, adapter);
@@ -328,6 +330,27 @@ public abstract class AdapterGenerator {
      */
     public boolean inPrologue(CodePointer ip, TargetMethod targetMethod) {
         return targetMethod.classMethodActor != null && ip.minus(targetMethod.codeStart()).toPointer().lessThan(prologueSizeForCallee(targetMethod.classMethodActor));
+    }
+
+    /**
+     * Computes the number of stack args needed for the call (i.e. the args that won't be put into registers).
+     *
+     * @param optArgs
+     * @return
+     */
+    protected int getStackArgumentsSize(CiValue[] optArgs) {
+        int stackArgumentsSize = 0;
+        for (int i = optArgs.length - 1; i >= 0; i--) {
+            if (optArgs[i].isStackSlot()) {
+                CiStackSlot slot = (CiStackSlot) optArgs[i];
+                int offset = slot.index() * OPT_SLOT_SIZE;
+                int end = offset + OPT_SLOT_SIZE;
+                if (end > stackArgumentsSize) {
+                    stackArgumentsSize = end;
+                }
+            }
+        }
+        return stackArgumentsSize;
     }
 
     /**

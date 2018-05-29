@@ -174,7 +174,6 @@ public class Aarch64T1XTest extends MaxTestCase {
             // c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
             // c1x.initializeOffline(Phase.HOSTED_COMPILING);
             theCompiler = (Aarch64T1XCompilation) t1x.getT1XCompilation();
-            theCompiler.setDebug(false);
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();
@@ -316,8 +315,8 @@ public class Aarch64T1XTest extends MaxTestCase {
         for (int i = 0; i < 10; i += 2) {
             testValues[i] = true;
             masm.mov64BitConstant(Aarch64.r16, expectedValues[i]);
-            masm.push(64, Aarch64.r16);
-            masm.push(64, Aarch64.zr);
+            masm.push(Aarch64.r16);
+            masm.push(Aarch64.zr);
         }
 
         theCompiler.peekLong(Aarch64.r8, 0);
@@ -684,14 +683,14 @@ public class Aarch64T1XTest extends MaxTestCase {
             expectedValues[i] = i;
             testValues[i] = true;
             masm.mov64BitConstant(Aarch64.r16, i);
-            masm.push(64, Aarch64.r16);
+            masm.push(Aarch64.r16);
         }
-        masm.pop(64, Aarch64.r5);
-        masm.pop(64, Aarch64.r4);
-        masm.pop(64, Aarch64.r3);
-        masm.pop(64, Aarch64.r2);
-        masm.pop(64, Aarch64.r1);
-        masm.pop(64, Aarch64.r0);
+        masm.pop(Aarch64.r5);
+        masm.pop(Aarch64.r4);
+        masm.pop(Aarch64.r3);
+        masm.pop(Aarch64.r2);
+        masm.pop(Aarch64.r1);
+        masm.pop(Aarch64.r0);
 
         long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
 
@@ -716,7 +715,7 @@ public class Aarch64T1XTest extends MaxTestCase {
         for (int i = 0; i < 5; i++) {
             testValues[i] = true;
             masm.mov64BitConstant(Aarch64.r16, expectedValues[i]);
-            masm.push(64, Aarch64.r16);
+            masm.push(Aarch64.r16);
         }
 
         theCompiler.peekWord(Aarch64.r4, 0);
@@ -778,7 +777,7 @@ public class Aarch64T1XTest extends MaxTestCase {
 
         for (int i = 0; i < 4; i++) {
             masm.mov64BitConstant(Aarch64.r16, expectedValues[i]);
-            masm.push(64, Aarch64.r16);
+            masm.push(Aarch64.r16);
         }
 
         theCompiler.peekObject(Aarch64.r3, 0);

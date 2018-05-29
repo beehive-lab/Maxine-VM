@@ -301,6 +301,22 @@ public final class FatalError extends Error {
     }
 
     /**
+     * Reports that an unimplemented piece of VM functionality was encountered.
+     * <p/>
+     * This method never returns normally.
+     * <p/>
+     * This method does not perform any synchronization or heap allocation.
+     *
+     * @param message The message to be appended to the "Unimplemented: " exception
+     * @return never
+     * @see #unexpected(String, boolean, Throwable, Pointer)
+     */
+    @NEVER_INLINE
+    public static FatalError unimplemented(String message) {
+        throw unexpected(message, false, null, Pointer.zero());
+    }
+
+    /**
      * Dumps the stack and thread locals of a given thread to the log stream.
      *
      * @param tla             VM thread locals of a thread

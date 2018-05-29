@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -57,6 +57,7 @@ import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.aarch64.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.object.*;
@@ -80,7 +81,7 @@ public class T1XTargetMethod extends TargetMethod {
 
     /**
      * This is the max number of slots used by any template and is computed when the templates are
-     * {@linkplain T1X#createTemplates(Class, T1X, com.oracle.max.vm.ext.t1x.T1X.Templates, boolean) created}.
+     * {@linkplain T1X#createTemplates(RuntimeCompiler, Class, boolean, T1XTemplate[])}  created}.
      */
     static int templateSlots;
 
@@ -392,8 +393,10 @@ public class T1XTargetMethod extends TargetMethod {
             return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
         } else if (isARM()) {
             return ARMTargetMethodUtil.isPatchableCallSite(callSite);
+        } else if (isAARCH64()) {
+            return Aarch64TargetMethodUtil.isPatchableCallSite(callSite);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.t1x.T1XTargetMethod.isPatchableCallSite");
         }
     }
 
@@ -403,8 +406,10 @@ public class T1XTargetMethod extends TargetMethod {
             return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else if (isARM()) {
             return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (isAARCH64()) {
+            return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.t1x.T1XTargetMethod.fixupCallSite");
         }
     }
 
@@ -444,8 +449,10 @@ public class T1XTargetMethod extends TargetMethod {
             return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else if (isARM()) {
             return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
+        } else if (isAARCH64()) {
+            return Aarch64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.t1x.T1XTargetMethod.patchCallSite");
         }
     }
 
@@ -595,7 +602,7 @@ public class T1XTargetMethod extends TargetMethod {
      * a spin loop is used instead.
      * <p/>
      * If this method is called while preparing the stack reference map for a thread that has taken a safepoint
-     * for GC, then safepoints are currently disabled and so there is no need to use the {@link NO_SAFEPOINTS}
+     * for GC, then safepoints are currently disabled and so there is no need to use the {@link T1XTemplate#NO_SAFEPOINTS}
      * annotation on this method.
      */
     @Override
@@ -848,7 +855,7 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     private Pointer adjustSPForHandler(Pointer sp, Pointer fp) {
-        if (isAMD64() || isARM()) {
+        if (isAMD64() || isARM() || isAARCH64()) {
             Pointer localVariablesBase = fp;
             // The Java operand stack of the T1X method that handles the exception is cleared
             // when unwinding. The T1X generated handler is responsible for loading the
@@ -923,7 +930,7 @@ public class T1XTargetMethod extends TargetMethod {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            if (isAMD64() || isARM()) {
+            if (isAMD64() || isARM() || isAARCH64()) {
                 Pointer localVariablesBase = current.fp();
                 Pointer catcherSP = adjustSPForHandler(current.sp(), current.fp());
 
@@ -998,119 +1005,82 @@ public class T1XTargetMethod extends TargetMethod {
     @Override
     @HOSTED_ONLY
     public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
+        StackFrameWalker sfw = current.stackFrameWalker();
+        Pointer localVariablesBase;
+        CodePointer startOfPrologue;
+        AdapterGenerator generator = AdapterGenerator.forCallee(this);
+        StackFrame stackFrame;
+        if (generator != null) {
+            startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
+        } else {
+            startOfPrologue = codeStart();
+        }
         if (isAMD64()) {
-            StackFrameWalker sfw = current.stackFrameWalker();
-            Pointer localVariablesBase = current.fp();
-            CodePointer startOfPrologue;
-            AdapterGenerator generator = AdapterGenerator.forCallee(this);
-            if (generator != null) {
-                startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
-            } else {
-                startOfPrologue = codeStart();
-            }
             CodePointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateAMD64.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
             FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
             localVariablesBase = framePointerState.localVariablesBase(current);
-            StackFrame stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
-            return visitor.visitFrame(stackFrame);
+            stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
         } else if (isARM()) {
-            StackFrameWalker sfw = current.stackFrameWalker();
-            Pointer localVariablesBase = current.fp();
-            CodePointer startOfPrologue;
-            AdapterGenerator generator = AdapterGenerator.forCallee(this);
-            if (generator != null) {
-                startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
-            } else {
-                startOfPrologue = codeStart();
-            }
             CodePointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateARMV7.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
             FramePointerStateARMV7 framePointerState = computeFramePointerStateARMV7(current, sfw, lastPrologueInstruction);
             localVariablesBase = framePointerState.localVariablesBase(current);
-            StackFrame stackFrame = new ARMV7JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
-            return visitor.visitFrame(stackFrame);
+            stackFrame = new ARMV7JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
         } else {
             throw unimplISA();
         }
+        return visitor.visitFrame(stackFrame);
     }
 
     @Override
     public void advance(StackFrameCursor current) {
-        if (isAMD64()) {
-            StackFrameWalker sfw = current.stackFrameWalker();
-            int dispToRip = frameSize() - sizeOfNonParameterLocals();
-            Pointer returnRIP = current.fp().plus(dispToRip);
-            Pointer callerFP = sfw.readWord(returnRIP, -Word.size()).asPointer();
-            if (MaxineVM.isHosted()) {
-                // Inspector context only
-                CodePointer startOfPrologue;
-                AdapterGenerator generator = AdapterGenerator.forCallee(this);
-                if (generator != null) {
-                    if (generator.advanceIfInPrologue(current)) {
-                        return;
-                    }
-                    startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
-                } else {
-                    startOfPrologue = codeStart();
+        StackFrameWalker sfw = current.stackFrameWalker();
+        int dispToRip = frameSize() - sizeOfNonParameterLocals();
+        Pointer returnRIP = current.fp().plus(dispToRip);
+        int slotSize = Word.size();
+        if (isAARCH64()) { // On Aarch64 stack is 16-byte aligned, so we use this as the slot size
+            slotSize = platform().target.stackAlignment;
+        }
+        Pointer callerFP = sfw.readWord(returnRIP, -slotSize).asPointer();
+        if (MaxineVM.isHosted()) {
+            // Inspector context only
+            CodePointer startOfPrologue;
+            AdapterGenerator generator = AdapterGenerator.forCallee(this);
+            if (generator != null) {
+                if (generator.advanceIfInPrologue(current)) {
+                    return;
                 }
+                startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
+            } else {
+                startOfPrologue = codeStart();
+            }
 
+            if (isAMD64()) {
                 CodePointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateAMD64.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
                 FramePointerStateAMD64 framePointerState = computeFramePointerState(current, sfw, lastPrologueInstruction);
                 returnRIP = framePointerState.returnIP(current);
                 callerFP = framePointerState.callerFP(current);
-
-            }
-            Pointer callerIP = sfw.readWord(returnRIP, 0).asPointer();
-            Pointer callerSP = returnRIP.plus(Word.size()); // Skip the rip
-
-            int stackAmountInBytes = classMethodActor.numberOfParameterSlots() * JVMSFrameLayout.JVMS_SLOT_SIZE;
-            if (stackAmountInBytes != 0) {
-                callerSP = callerSP.plus(stackAmountInBytes);
-            }
-
-            boolean wasDisabled = SafepointPoll.disable();
-            sfw.advance(callerIP, callerSP, callerFP);
-            if (!wasDisabled) {
-                SafepointPoll.enable();
-            }
-        } else if (isARM()) {
-            StackFrameWalker sfw = current.stackFrameWalker();
-            int dispToRip = frameSize() - sizeOfNonParameterLocals();
-            Pointer returnRIP = current.fp().plus(dispToRip);
-            Pointer callerFP = sfw.readWord(returnRIP, -Word.size()).asPointer();
-            if (MaxineVM.isHosted()) {
-                // Inspector context only
-                CodePointer startOfPrologue;
-                AdapterGenerator generator = AdapterGenerator.forCallee(this);
-                if (generator != null) {
-                    if (generator.advanceIfInPrologue(current)) {
-                        return;
-                    }
-                    startOfPrologue = codeAt(generator.prologueSizeForCallee(classMethodActor));
-                } else {
-                    startOfPrologue = codeStart();
-                }
-
+            } else if (isARM()) {
                 CodePointer lastPrologueInstruction = startOfPrologue.plus(FramePointerStateARMV7.OFFSET_TO_LAST_PROLOGUE_INSTRUCTION);
                 FramePointerStateARMV7 framePointerState = computeFramePointerStateARMV7(current, sfw, lastPrologueInstruction);
                 returnRIP = framePointerState.returnIP(current);
                 callerFP = framePointerState.callerFP(current);
-
-            }
-            Pointer callerIP = sfw.readWord(returnRIP, 0).asPointer();
-            Pointer callerSP = returnRIP.plus(Word.size()); // Skip the rip
-
-            int stackAmountInBytes = classMethodActor.numberOfParameterSlots() * JVMSFrameLayout.JVMS_SLOT_SIZE;
-            if (stackAmountInBytes != 0) {
-                callerSP = callerSP.plus(stackAmountInBytes);
+            } else {
+                unimplISA();
             }
 
-            boolean wasDisabled = SafepointPoll.disable();
-            sfw.advance(callerIP, callerSP, callerFP);
-            if (!wasDisabled) {
-                SafepointPoll.enable();
-            }
-        } else {
-            unimplISA();
+        }
+        Pointer callerIP = sfw.readWord(returnRIP, 0).asPointer();
+        Pointer callerSP = returnRIP.plus(slotSize); // Skip the rip
+
+        int stackAmountInBytes = classMethodActor.numberOfParameterSlots() * JVMSFrameLayout.JVMS_SLOT_SIZE;
+        if (stackAmountInBytes != 0) {
+            callerSP = callerSP.plus(stackAmountInBytes);
+        }
+
+        boolean wasDisabled = SafepointPoll.disable();
+        sfw.advance(callerIP, callerSP, callerFP);
+        if (!wasDisabled) {
+            SafepointPoll.enable();
         }
     }
 

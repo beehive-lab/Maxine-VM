@@ -70,6 +70,7 @@ public final class VMRegister {
      * The register denoting the currently active {@link VmThreadLocal thread locals}.
      * AMD64: R14
      * ARMV7 r10
+     * AARCH64 r26
      */
     public static final int LATCH = 7;
 

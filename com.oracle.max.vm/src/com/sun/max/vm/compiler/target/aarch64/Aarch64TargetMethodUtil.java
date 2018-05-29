@@ -20,16 +20,31 @@
  */
 package com.sun.max.vm.compiler.target.aarch64;
 
+import com.oracle.max.asm.NumUtil;
 import com.oracle.max.asm.target.aarch64.*;
+import com.sun.cri.ci.CiCalleeSaveLayout;
 import com.sun.max.annotate.C_FUNCTION;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.StackFrameCursor;
+import com.sun.max.vm.stack.StackFrameWalker;
 
 public final class Aarch64TargetMethodUtil {
 
-    public static final int RIP_CALL_INSTRUCTION_SIZE = 4;
+    /**
+     * Lock to avoid race on concurrent icache invalidation when patching target methods.
+     */
+    private static final Object PatchingLock = new Object();
+
+    public static final int INSTRUCTION_SIZE = 4;
+    public static final int NUMBER_OF_NOPS = 4;
+    public static final int RIP_CALL_INSTRUCTION_SIZE = INSTRUCTION_SIZE;
+    public static final int RET = 0xD65F_0000;
 
     /**
      * Extract an instruction from the code array which starts at index=idx.
@@ -39,13 +54,58 @@ public final class Aarch64TargetMethodUtil {
      */
     private static int extractInstruction(byte [] code, int idx) {
         assert code.length >= idx + 4 : "Insufficient space in code buffer";
-        int instruction = 0;
-        instruction = ((code[idx + 3] & 0xFF) << 24) | ((code[idx + 2] & 0xFF) << 16) | ((code[idx + 1] & 0xFF) << 8) | (code[idx + 0] & 0xFF);
-        return instruction;
+        return ((code[idx + 3] & 0xFF) << 24) |
+               ((code[idx + 2] & 0xFF) << 16) |
+               ((code[idx + 1] & 0xFF) << 8) |
+               (code[idx + 0] & 0xFF);
     }
 
     @C_FUNCTION
     public static native void maxine_cache_flush(Pointer start, int length);
+
+    private static int getOldDisplacement(Pointer callSitePointer) {
+        final int instruction = callSitePointer.readInt(0);
+        if (Aarch64Assembler.isBimmInstruction(instruction)) {
+            return Aarch64Assembler.bImmExtractDisplacement(instruction);
+        } else {
+            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            int movzInstruction = nopSite.readInt(4);
+            int movkInstruction = nopSite.readInt(8);
+            int addSubInstruction = nopSite.readInt(12);
+            short low = Aarch64Assembler.movExtractImmediate(movzInstruction);
+            short high = Aarch64Assembler.movExtractImmediate(movkInstruction);
+            int oldDisplacement = high << 16 | low;
+            if (!Aarch64Assembler.isAddInstruction(addSubInstruction)) {
+                oldDisplacement = -oldDisplacement;
+            }
+            oldDisplacement -= NUMBER_OF_NOPS * INSTRUCTION_SIZE;
+            return oldDisplacement;
+        }
+    }
+
+    /**
+     * Gets the target of a 32-bit relative CALL instruction.
+     *
+     * @param tm the method containing the CALL instruction
+     * @param callPos the offset within the code of {@code targetMethod} of the CALL
+     * @return the absolute target address of the CALL
+     */
+    public static CodePointer readCall32Target(TargetMethod tm, int callPos) {
+        final CodePointer callSite = tm.codeAt(callPos);
+        final Pointer callSitePointer = callSite.toPointer();
+        final int disp32 = getOldDisplacement(callSitePointer);
+        return callSite.plus(disp32);
+    }
+
+    public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
+        final CodePointer callSite = tm.codeAt(pos);
+        final Pointer callSitePointer = callSite.toPointer();
+        final int instruction = callSitePointer.readInt(0);
+        if (Aarch64Assembler.isBranchInstruction(instruction)) {
+            return readCall32Target(tm, pos).equals(jumpTarget);
+        }
+        return false;
+    }
 
     /**
      * Thread safe patching of the displacement field in a direct call.
@@ -53,7 +113,21 @@ public final class Aarch64TargetMethodUtil {
      * @return the target of the call prior to patching
      */
     public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
-        throw FatalError.unimplemented();
+        if (!isPatchableCallSite(callSite)) {
+            throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
+        }
+        final long disp64 = target.toLong() - callSite.toLong();
+        final Pointer callSitePointer = callSite.toPointer();
+        final int oldDisp32 = getOldDisplacement(callSitePointer);
+        if (oldDisp32 != disp64) {
+            synchronized (PatchingLock) {
+                // Just to prevent concurrent writing and invalidation to the same instruction cache line
+                // (although the lock excludes ALL concurrent patching)
+                fixupCall32Site(tm, callSite, target);
+                // TODO (fz): invalidate icache?
+            }
+        }
+        return callSite.plus(oldDisp32);
     }
 
     /**
@@ -87,25 +161,114 @@ public final class Aarch64TargetMethodUtil {
      */
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
         CodePointer callSite = tm.codeAt(callOffset);
-
-        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_SIZE).toLong();
-        int disp32 = (int) disp64;
-        int oldDisplacement = 0;
-        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         if (MaxineVM.isHosted()) {
-            byte [] code = tm.code();
-            oldDisplacement = fixupCall28Site(code, callOffset, disp32);
+            long disp64 = target.toLong() - callSite.toLong();
+            int disp32 = (int) disp64;
+            FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+            assert NumUtil.isSignedNbit(28, disp32);
+            byte[] code = tm.code();
+            final int oldDisplacement = fixupCall28Site(code, callOffset, disp32);
+            return callSite.plus(oldDisplacement);
         } else {
-            final Pointer callSitePointer = callSite.toPointer();
-            int instruction = callSitePointer.readInt(0);
-            oldDisplacement = Aarch64Assembler.bImmExtractDisplacement(instruction);
-            callSitePointer.writeInt(0, Aarch64Assembler.bImmPatch(instruction, disp32));
+            return fixupCall32Site(tm, callSite, target);
         }
-        return callSite.plus(RIP_CALL_INSTRUCTION_SIZE).plus(oldDisplacement);
+    }
+
+    private static CodePointer fixupCall32Site(TargetMethod tm, CodePointer callSite, CodePointer target) {
+        long disp64 = target.toLong() - callSite.toLong();
+        int disp32 = (int) disp64;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+        final Pointer callSitePointer = callSite.toPointer();
+        int oldDisplacement = getOldDisplacement(callSitePointer);
+        final int instruction = callSitePointer.readInt(0);
+        final boolean isLinked = Aarch64Assembler.isBranchInstructionLinked(instruction);
+
+        if (NumUtil.isSignedNbit(28, disp32)) {
+            // overwrite the four nops from com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.call()
+            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            nopSite.writeInt(0, Aarch64Assembler.nopHelper());
+            nopSite.writeInt(4, Aarch64Assembler.nopHelper());
+            nopSite.writeInt(8, Aarch64Assembler.nopHelper());
+            nopSite.writeInt(12, Aarch64Assembler.nopHelper());
+            nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchImmInstructionHelper(disp32, isLinked));
+        } else {
+            // Since adr is invoked NUMBER_OF_NOPS instructions before the actual branch we need to adjust the displacement
+            FatalError.check(disp32 <= Integer.MAX_VALUE - (NUMBER_OF_NOPS * INSTRUCTION_SIZE), "Code displacement out of 32-bit range");
+            disp32 += NUMBER_OF_NOPS * INSTRUCTION_SIZE;
+            final boolean isNegative = disp32 < 0;
+            if (isNegative) {
+                disp32 = -disp32;
+            }
+
+            // overwrite the four nops from com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.call()
+            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            nopSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r16, 0));
+            nopSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r17, disp32 & 0xFFFF, 0));
+            nopSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r17, (disp32 >> 16) & 0xFFFF, 16));
+            nopSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r16, Aarch64.r17,
+                                                                          isNegative));
+            // overwrote the immediate branch with a register branch
+            nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, isLinked));
+        }
+
+        return callSite.plus(oldDisplacement);
     }
 
     public static boolean isPatchableCallSite(CodePointer callSite) {
         final Address callSiteAddress = callSite.toAddress();
-        return callSiteAddress.isWordAligned();
+        return callSiteAddress.isAligned(4);
     }
+
+    @HOSTED_ONLY
+    private static boolean atFirstOrLastInstruction(StackFrameCursor current) {
+        // check whether the current ip is at the first instruction or a return
+        // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
+        TargetMethod tm = current.targetMethod();
+        CodePointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ? CallEntryPoint.C_ENTRY_POINT.in(tm) : CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
+        return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readInt(current.vmIP().toAddress(), 0) == RET;
+
+    }
+
+    /**
+     * Advances the stack walker such that {@code current} becomes the callee.
+     *
+     * @param current the frame just visited by the current stack walk
+     * @param csl the layout of the callee save area in {@code current}
+     * @param csa the address of the callee save area in {@code current}
+     */
+    public static void advance(StackFrameCursor current, CiCalleeSaveLayout csl, Pointer csa) {
+        assert csa.isZero() == (csl == null);
+        TargetMethod tm = current.targetMethod();
+        Pointer sp = current.sp();
+        Pointer ripPointer = sp.plus(tm.frameSize());
+        if (MaxineVM.isHosted()) {
+            // Only during a stack walk in the context of the Inspector can execution
+            // be anywhere other than at a safepoint.
+            AdapterGenerator generator = AdapterGenerator.forCallee(current.targetMethod());
+            if (generator != null && generator.advanceIfInPrologue(current)) {
+                return;
+            }
+            if (atFirstOrLastInstruction(current)) {
+                ripPointer = sp;
+            }
+        }
+
+        StackFrameWalker sfw = current.stackFrameWalker();
+        Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
+        // Skip the saved link register. Skip stackAlignment bytes since the push is 16-byte aligned as well
+        Pointer callerSP = ripPointer.plus(Platform.target().stackAlignment);
+        Pointer callerFP;
+        if (!csa.isZero() && csl.contains(Aarch64.fp.getEncoding())) {
+            callerFP = sfw.readWord(csa, csl.offsetOf(Aarch64.fp.getEncoding())).asPointer();
+        } else {
+            callerFP = current.fp();
+        }
+        current.setCalleeSaveArea(csl, csa);
+        boolean wasDisabled = SafepointPoll.disable();
+        sfw.advance(callerIP, callerSP, callerFP);
+        if (!wasDisabled) {
+            SafepointPoll.enable();
+        }
+    }
+
 }

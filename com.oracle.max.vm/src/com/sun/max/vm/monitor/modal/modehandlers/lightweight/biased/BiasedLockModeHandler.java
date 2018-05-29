@@ -332,7 +332,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
 
         public int createHash(Object object) {
-            FatalError.unimplemented();
+            FatalError.unimplemented("com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.BiasedLockModeHandler.FastPathNoEpoch.createHash");
             return 0;
         }
 
@@ -559,7 +559,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
 
         public int createHash(Object object) {
-            FatalError.unimplemented();
+            FatalError.unimplemented("com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.BiasedLockModeHandler.FastPathWithEpoch.createHash");
             return 0;
         }
     }
