@@ -976,8 +976,8 @@ public class Stubs {
             asm.pop(Aarch64.linkRegister);
 
             // re-execute the static call. Now that the call has been patched we need to return to the beginning of the
-            // patched call site, thus we need to subtract the whole RIP_CALL_INSTRUCTION_SIZE from the link register
-            asm.sub(64, callSite, Aarch64.linkRegister, Aarch64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+            // patched call site, thus we need to subtract from the link register the size of the segment preparing the call
+            asm.sub(64, callSite, Aarch64.linkRegister, 5 * Aarch64TargetMethodUtil.INSTRUCTION_SIZE);
             asm.ret(callSite);
 
             String stubName = "strampoline";

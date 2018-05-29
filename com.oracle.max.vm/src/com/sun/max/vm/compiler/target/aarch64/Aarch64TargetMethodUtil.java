@@ -43,7 +43,7 @@ public final class Aarch64TargetMethodUtil {
 
     public static final int INSTRUCTION_SIZE = 4;
     public static final int NUMBER_OF_NOPS = 4;
-    public static final int RIP_CALL_INSTRUCTION_SIZE = 5 * INSTRUCTION_SIZE;
+    public static final int RIP_CALL_INSTRUCTION_SIZE = INSTRUCTION_SIZE;
     public static final int RET = 0xD65F_0000;
 
     /**

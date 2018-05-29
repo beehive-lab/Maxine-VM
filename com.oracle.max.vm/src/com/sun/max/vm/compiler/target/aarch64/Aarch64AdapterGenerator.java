@@ -85,7 +85,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
              */
             @Override
             public int callOffsetInPrologue() {
-                return 4;
+                return 5 * INSTRUCTION_SIZE;
             }
 
             @Override
@@ -445,7 +445,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         /**
          * The offset in the prologue of the call to the adapter.
          */
-        private static final int CALL_OFFSET_IN_PROLOGUE = 28;
+        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + 5 * INSTRUCTION_SIZE;
 
         static final int PROLOGUE_SIZE = CALL_OFFSET_IN_PROLOGUE + RIP_CALL_INSTRUCTION_SIZE;
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = OPTIMIZED_ENTRY_POINT.offset();
@@ -707,7 +707,8 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         }
 
         protected void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
-            int src = adapterFrameSize + optStackOffset32;
+            // Add word size to take into account the slot used by the RIP of the caller
+            int src = adapterFrameSize + optStackOffset32 + Word.size();
             int dst = baselineStackOffset32;
             stackCopy(asm, kind, src, dst);
         }
