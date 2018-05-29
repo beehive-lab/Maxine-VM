@@ -1037,8 +1037,8 @@ public class T1XTargetMethod extends TargetMethod {
         int dispToRip = frameSize() - sizeOfNonParameterLocals();
         Pointer returnRIP = current.fp().plus(dispToRip);
         int slotSize = Word.size();
-        if (isAARCH64()) {
-            slotSize *= 2;
+        if (isAARCH64()) { // On Aarch64 stack is 16-byte aligned, so we use this as the slot size
+            slotSize = platform().target.stackAlignment;
         }
         Pointer callerFP = sfw.readWord(returnRIP, -slotSize).asPointer();
         if (MaxineVM.isHosted()) {
