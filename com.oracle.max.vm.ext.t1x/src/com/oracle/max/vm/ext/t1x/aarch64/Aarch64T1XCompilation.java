@@ -502,12 +502,16 @@ public class Aarch64T1XCompilation extends T1XCompilation {
          * into the scratch register. Add the jump table base address to the offset and
          * jump to it.
          */
-        asm.adr(scratch2, 16);
-        asm.ldr(32, scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, scratch, true));
-        asm.add(64, scratch2, scratch2, scratch);
+        final int adrPos = buf.position();
+        asm.adr(scratch2, 0); // Get the jump table adress
+        asm.load(scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, scratch, true), CiKind.Int);
+        asm.add(64, scratch2, scratch2, scratch); // Add target offset to jump table address to get the target address
         asm.jmp(scratch2);
 
         int jumpTablePos = buf.position();
+        buf.setPosition(adrPos);
+        asm.adr(scratch2, jumpTablePos - adrPos);
+        buf.setPosition(jumpTablePos);
 
         for (int i = 0; i < ts.numberOfCases(); i++) {
             int targetBCI = ts.targetAt(i);

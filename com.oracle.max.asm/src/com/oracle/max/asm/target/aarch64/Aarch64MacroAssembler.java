@@ -1638,6 +1638,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     private Aarch64Address calculateAddress(CiAddress addr) {
+        if (addr instanceof Aarch64Address) {
+            return (Aarch64Address) addr;
+        }
+
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
