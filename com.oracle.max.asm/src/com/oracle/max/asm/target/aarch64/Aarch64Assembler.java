@@ -912,6 +912,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     private void loadStoreInstruction(CiRegister reg, Aarch64Address address, InstructionType type,
                                       Instruction instr, int log2TransferSize) {
         assert log2TransferSize >= 0 && log2TransferSize < 4;
+        assert !Aarch64.isSp(reg);
         int transferSizeEncoding = log2TransferSize << LoadStoreTransferSizeOffset;
         int is32Bit = type.width == 32 ? 1 << ImmediateSizeOffset : 0;
         int isFloat = !type.isGeneral ? 1 << LoadStoreFpFlagOffset : 0;
