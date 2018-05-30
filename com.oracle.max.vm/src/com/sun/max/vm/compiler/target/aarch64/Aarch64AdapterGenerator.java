@@ -300,7 +300,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected int emitPrologue(Object out, Adapter adapter) {
             Aarch64MacroAssembler masm = out instanceof OutputStream ? new Aarch64MacroAssembler(Platform.target(), null) : (Aarch64MacroAssembler) out;
             if (adapter == null) {
-                masm.nop(6);
+                masm.nop(PROLOGUE_SIZE / 4);
             } else {
                 masm.push(Aarch64.linkRegister);
                 masm.call();
@@ -582,7 +582,6 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
          * @return
          * No Adaptation:
          * <pre>
-         * <pre>
          *     +0:  nop           <- baseline entry point
          *     +4:  nop
          *     +8:  nop
@@ -614,8 +613,8 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected int emitPrologue(Object out, Adapter adapter) {
             Aarch64MacroAssembler masm = out instanceof OutputStream ? new Aarch64MacroAssembler(Platform.target(), null) : (Aarch64MacroAssembler) out;
             if (adapter == null) {
-                masm.align(OPTIMIZED_ENTRY_POINT.offset());
-                assert masm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
+                masm.nop(PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE / INSTRUCTION_SIZE);
+                assert masm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE : masm.codeBuffer.position();
                 copyIfOutputStream(masm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
@@ -669,8 +668,8 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             masm.blr(Aarch64.linkRegister);
             int callSize = masm.codeBuffer.position() - callPos;
 
-            // restore stack pointer and return
-            masm.add(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
+            // The baseline method will have popped the args off the stack so now
+            // RSP is pointing to the RIP of the OPT caller.
             masm.ret();
             final byte [] code = masm.codeBuffer.close(true);
             String description = Type.OPT2BASELINE + "-Adapter" + sig;
