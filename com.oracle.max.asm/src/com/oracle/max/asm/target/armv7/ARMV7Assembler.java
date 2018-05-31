@@ -31,7 +31,6 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final CiRegister frameRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig registerConfig;
-    public static boolean ASM_DEBUG_MARKERS = false;
 
     public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
@@ -1651,7 +1650,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0);
     }
 
-    // TODO: Document
+    /**
+     * Emits an instruction that causes an interrupt. Since ARMv7 has no special interrupts for debuggers this method
+     * emits an undefined instruction which will eventually cause an interrupt.
+     */
     public final void int3() {
         emitInt(0xFEDEFFE7);
     }

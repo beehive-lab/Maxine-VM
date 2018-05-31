@@ -332,20 +332,17 @@ public class VmThread {
      * handler will reset the guard pages when it calls {@link #loadExceptionForHandler()}.
      */
     public void checkYellowZoneForRaisingException() {
-        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM) {
-            if (!yellowZoneUnprotected) {
-                Pointer sp = VMRegister.getCpuStackPointer();
-                int safetyMargin = (1 + STACK_SHADOW_PAGES) * platform().pageSize;
-                if (sp.minus(yellowZoneEnd()).toInt() < safetyMargin) {
-                    VirtualMemory.unprotectPages(yellowZone, YELLOW_ZONE_PAGES);
-                    yellowZoneUnprotected = true;
-                }
-            } else {
-                // Yellow zone was unprotected in the native trap handler - see nativeTrapHandlerUnprotectedYellowZone()
+        assert platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64 :
+                "Unimplemented: com.sun.max.vm.thread.VmThread.checkYellowZoneForRaisingException for " + platform().isa;
+        if (!yellowZoneUnprotected) {
+            Pointer sp = VMRegister.getCpuStackPointer();
+            int safetyMargin = (1 + STACK_SHADOW_PAGES) * platform().pageSize;
+            if (sp.minus(yellowZoneEnd()).toInt() < safetyMargin) {
+                VirtualMemory.unprotectPages(yellowZone, YELLOW_ZONE_PAGES);
+                yellowZoneUnprotected = true;
             }
-        } else {
-            throw FatalError.unimplemented();
         }
+        // Else Yellow zone was unprotected in the native trap handler - see nativeTrapHandlerUnprotectedYellowZone()
     }
 
     /**
@@ -1411,7 +1408,7 @@ public class VmThread {
 
     public final void stop0(Object throwable) {
         terminationCause = (Throwable) throwable;
-        FatalError.unimplemented();
+        FatalError.unimplemented("stop0");
         Throw.raise(this); // not a Throwable => uncatchable - see 'run()' above
     }
 

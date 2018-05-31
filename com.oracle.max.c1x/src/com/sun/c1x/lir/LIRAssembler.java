@@ -353,8 +353,6 @@ public abstract class LIRAssembler {
                 break;
             case Add:
             case Mul:
-                assert op.operand1().equals(op.result());
-                // fall through
             case Sub:
             case Div:
             case Rem:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -30,6 +30,7 @@
 #define isa_AMD64              0
 #define isa_POWER              0
 #define isa_ARM                0
+#define isa_AARCH64            0
 
 #if defined(__sparc) || defined(sparc)
 #   undef  isa_SPARC
@@ -115,6 +116,22 @@
     typedef arm_OsTeleStateRegisters isa_OsTeleStateRegisters;
     typedef struct arm_CanonicalStateRegisters isa_CanonicalStateRegistersStruct;
     typedef arm_CanonicalStateRegisters isa_CanonicalStateRegisters;
+#elif defined (__aarch64__) || defined (AARCH64)
+#undef isa_AARCH64
+#define isa_AARCH64	1
+#define isa_IDENTIFIER	AARCH64
+#include "aarch64.h"
+    typedef aarch64_OsTeleIntegerRegisters isa_OsTeleIntegerRegisters;
+    typedef struct aarch64_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
+    typedef aarch64_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
+
+    typedef aarch64_OsTeleFloatingPointRegisters isa_OsTeleFloatingPointRegisters;
+    typedef struct aarch64_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegistersStruct;
+    typedef aarch64_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegisters;
+
+    typedef aarch64_OsTeleStateRegisters isa_OsTeleStateRegisters;
+    typedef struct aarch64_CanonicalStateRegisters isa_CanonicalStateRegistersStruct;
+    typedef aarch64_CanonicalStateRegisters isa_CanonicalStateRegisters;
 #else
 #   error
 #endif

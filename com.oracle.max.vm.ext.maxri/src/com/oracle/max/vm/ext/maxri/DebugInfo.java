@@ -30,6 +30,7 @@ import static com.sun.max.vm.MaxineVM.*;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.asm.target.aarch64.Aarch64;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
@@ -462,8 +463,10 @@ public final class DebugInfo {
                         fp = AMD64.rsp;
                     } else if (platform().isa == ISA.ARM) {
                         fp = ARMV7.r13;
+                    } else if (platform().isa == ISA.Aarch64) {
+                        fp = Aarch64.sp;
                     } else {
-                        throw FatalError.unimplemented();
+                        throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.DebugInfo.decodeFrame");
                     }
                     final int offsetInFrame = ss.index() * target().spillSlotSize;
                     if (ss.inCallerFrame()) {
@@ -657,7 +660,7 @@ public final class DebugInfo {
                 retrievedData = memberIndex;
                 break;
             default:
-                FatalError.unimplemented();
+                FatalError.unimplemented("com.oracle.max.vm.ext.maxri.DebugInfo.retrieveDataFromDebugInfo");
         }
         return retrievedData;
     }

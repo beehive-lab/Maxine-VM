@@ -29,6 +29,7 @@ import com.sun.cri.ci.CiArchitecture.*;
 public abstract class AbstractAssembler {
     public final CiTarget target;
     public final Buffer codeBuffer;
+    public static boolean ASM_DEBUG_MARKERS = false;
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;

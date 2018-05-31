@@ -192,7 +192,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.frameLayout(this);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.frameLayout");
         }
     }
 
@@ -243,7 +243,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         } else if (platform().target.arch.isAarch64()) {
             return Aarch64TargetMethodUtil.isPatchableCallSite(callSite);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.isPatchableCallSite");
         }
     }
 
@@ -256,7 +256,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         } else if (platform().target.arch.isAarch64()) {
             return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.fixupCallSite");
         }
     }
 
@@ -267,7 +267,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.patchCallSite");
         }
     }
 
@@ -286,7 +286,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             }
             FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.redirectTo");
         }
     }
 
@@ -761,7 +761,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         }
-        throw FatalError.unimplemented();
+        throw FatalError.unimplemented("acceptStackFrameVisitor");
     }
 
     /**
@@ -770,25 +770,13 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
      */
     @Override
     public void advance(StackFrameCursor current) {
-        if (platform().isa == ISA.AMD64) {
-            CiCalleeSaveLayout csl = calleeSaveLayout();
-            Pointer csa = Pointer.zero();
-            if (csl != null) {
-                // See FrameMap
-                csa = current.sp().plus(frameSize() - csl.size);
-            }
-            AMD64TargetMethodUtil.advance(current, csl, csa);
-        } else if (platform().isa == ISA.ARM) {
-            CiCalleeSaveLayout csl = calleeSaveLayout();
-            Pointer csa = Pointer.zero();
-            if (csl != null) {
-                // See FrameMap
-                csa = current.sp().plus(frameSize() - csl.size);
-            }
-            ARMTargetMethodUtil.advance(current, csl, csa);
-        } else {
-            throw FatalError.unimplemented();
+        CiCalleeSaveLayout csl = calleeSaveLayout();
+        Pointer csa = Pointer.zero();
+        if (csl != null) {
+            // See FrameMap
+            csa = current.sp().plus(frameSize() - csl.size);
         }
+        advanceHelper(current, csl, csa);
     }
 
     @Override
@@ -798,7 +786,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.returnAddressPointer(frame);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.returnAddressPointer");
         }
     }
 

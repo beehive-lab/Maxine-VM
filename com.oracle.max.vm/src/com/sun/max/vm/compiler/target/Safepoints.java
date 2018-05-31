@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
 
 /**
  * A set of safepoints sorted by their {@linkplain #posAt(int) positions}. The information for each safepoint
- * is encoded in an {@code int} as shown below.
+ * is encoded in an {@code int} as shown below for non-ARMv7.
  * <pre>
  *
  *   0                                            25 26 27 28 29 30 31
@@ -52,7 +52,23 @@ import com.sun.max.vm.runtime.*;
  *
  * The width of the 'position' field supports a code array of up to 32Mb
  *
- * OK so we have to change this for ARM we now ....
+ * And as shown below for ARMv7.
+ * <pre>
+ *
+ *   0                                      23 24 25 26 27 28 29 30 31
+ *  +--------------------------------------+--------------+--+--+--+--+
+ *  |                         position     |              |  |  |  |  |
+ *  +--------------------------------------+--------------+--+--+--+--+
+ *                                                 ^       ^  ^  ^  ^
+ *                                                 |       |  |  |  |
+ *                                                 |       |  |  |  +---- NATIVE_CALL
+ *                                                 |       |  |  +------- INDIRECT_CALL
+ *                                                 |       |  +---------- DIRECT_CALL
+ *                                                 |       +------------- TEMPLATE_CALL
+ *                                                 +--------------------- cause position offset
+ * </pre>
+ *
+ * The width of the 'position' field supports a code array of up to 8Mb
  */
 public final class Safepoints {
 
@@ -136,10 +152,10 @@ public final class Safepoints {
      * Mask for extracting position.
      */
 
-    public static final int POS_MASK = Platform.target().arch.isX86() ? (1 << 25) - 1 : (1 << 23) - 1;
+    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isARM() ? 23 : 25;
+    public static final int POS_MASK = (1 << CAUSE_OFFSET_SHIFT) - 1;
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
-    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isX86() ? 25 : 23;
-    private static final int MAX_CAUSE_OFFSET = Platform.target().arch.isX86() ? 7 : 16;
+    private static final int MAX_CAUSE_OFFSET = Platform.target().arch.isARM() || Platform.target().arch.isAarch64() ? 31 : 7;
 
     /**
      * Mask for extracting attributes.
@@ -365,12 +381,10 @@ public final class Safepoints {
      * @param callSize size of the call instruction
      */
     public static int safepointPosForCall(int callPos, int callSize) {
-        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM) {
-            return callPos + callSize;
-        } else if (platform().isa == ISA.Aarch64) {
+        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64) {
             return callPos + callSize;
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Safepoints.safepointPosForCall");
         }
     }
 
@@ -418,8 +432,9 @@ public final class Safepoints {
         assert pos(safepointPos) == safepointPos : "safepoint position out of range";
         assert (attrs & ATTRS_MASK) == attrs;
         int causeOffset = safepointPos - causePos;
+        // TODO (fz): Consider removing the if, since the assertion should hold for online compilation as well
         if (vm().compilationBroker.isOffline()) {
-            assert causeOffset >= 0 && causeOffset <= MAX_CAUSE_OFFSET : "cause position out of range";
+            assert causeOffset >= 0 && causeOffset <= MAX_CAUSE_OFFSET : "cause position out of range " + causeOffset;
         }
         return safepointPos | (causeOffset << CAUSE_OFFSET_SHIFT) | attrs;
     }

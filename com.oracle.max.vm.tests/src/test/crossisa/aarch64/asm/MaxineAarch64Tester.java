@@ -23,7 +23,7 @@ import test.crossisa.CrossISATester;
 
 public class MaxineAarch64Tester extends CrossISATester {
 
-    public static final int NUM_REGS = 31;
+    public static final int NUM_REGS = 32;
 
     /*
      * arm-unknown-eabi-gcc -c -march=armv8-a -g test_aarch64.c -o test_aarch64.o
@@ -60,6 +60,11 @@ public class MaxineAarch64Tester extends CrossISATester {
         expectedFloatRegisters = expectedFloats;
         testLongRegisters = test;
         testFloatRegisters = testFloats;
+    }
+
+    public MaxineAarch64Tester() {
+        super();
+        initializeQemu();
     }
 
     /**

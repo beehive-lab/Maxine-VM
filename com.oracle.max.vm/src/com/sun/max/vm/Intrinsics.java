@@ -52,10 +52,7 @@ public class Intrinsics {
     @INTRINSIC(MSB)
     public static int mostSignificantBit(Word value) {
         long l = value.asAddress().toLong();
-        if (l == 0) {
-            return -1;
-        }
-        return Long.numberOfTrailingZeros(l);
+        return Word.size() * 8 - 1 - Long.numberOfLeadingZeros(l);
     }
 
     /**

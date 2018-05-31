@@ -23,11 +23,10 @@ package com.oracle.max.vm.ext.t1x.aarch64;
 import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
-import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.*;
 
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.aarch64.Aarch64Assembler.*;
@@ -37,68 +36,32 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.DebugMethodWriter;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.aarch64.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-// import java.io.PrintWriter;
 
 public class Aarch64T1XCompilation extends T1XCompilation {
 
-    public static AtomicInteger methodCounter = new AtomicInteger(536870912);
-    private static final Object fileLock = new Object();
-    private static File file;
-
-    private static boolean DEBUG_METHODS = true;
+    private DebugMethodWriter debugMethodWriter;
+    private static boolean debugMethodsEnabled = false;
 
     protected final Aarch64MacroAssembler asm;
     final PatchInfoAARCH64 patchInfo;
-    public static boolean FLOATDOUBLEREGISTERS = true;
 
     public Aarch64T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new Aarch64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoAARCH64();
-    }
-
-    public void setDebug(boolean value) {
-        DEBUG_METHODS = value;
-    }
-
-    static {
-        initDebugMethods();
-    }
-
-    public static void initDebugMethods() {
-        if ((file = new File(getDebugMethodsPath() + "debugT1Xmethods")).exists()) {
-            file.delete();
+        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
+            debugMethodWriter = new DebugMethodWriter("t1x");
+            debugMethodsEnabled = true;
         }
-        file = new File(getDebugMethodsPath() + "debugT1Xmethods");
-    }
-
-    public static void writeDebugMethod(String name, int index) throws Exception {
-        synchronized (fileLock) {
-            try {
-                assert DEBUG_METHODS;
-                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(index + " " + name + "\n");
-                bw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    public static String getDebugMethodsPath() {
-        return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
-
     }
 
     @Override
@@ -136,77 +99,77 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     @Override
     public void peekObject(CiRegister dst, int index) {
         CiAddress a = spWord(index);
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Object);
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
         CiAddress a = spWord(index);
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Object);
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
-        CiAddress address = spWord(index);
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+        CiAddress a = spWord(index);
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     public void pokeWord(CiRegister src, int index) {
-        CiAddress address = spWord(index);
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+        CiAddress a = spWord(index);
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     public void peekInt(CiRegister dst, int index) {
         CiAddress a = spInt(index);
-        asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Int);
     }
 
     @Override
     public void pokeInt(CiRegister src, int index) {
         CiAddress a = spInt(index);
-        asm.str(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Int);
     }
 
     @Override
     public void peekLong(CiRegister dst, int index) {
         CiAddress a = spLong(index);
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     public void pokeLong(CiRegister src, int index) {
         CiAddress a = spLong(index);
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
         CiAddress a = spLong(index);
-        asm.fldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Double);
     }
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
         assert src.isFpu();
         CiAddress a = spLong(index);
-        asm.fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Double);
     }
 
     @Override
     public void peekFloat(CiRegister dst, int index) {
         assert dst.isFpu();
         CiAddress a = spInt(index);
-        asm.fldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Float);
     }
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
         assert src.isFpu();
         CiAddress a = spInt(index);
-        asm.fstr(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Float);
     }
 
     @Override
@@ -227,63 +190,64 @@ public class Aarch64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignObject(CiRegister dst, Object value) {
-        // XXX Test me
         if (value == null) {
-            asm.eor(64, dst, dst, dst);
+            asm.mov(dst, 0);
             return;
         }
+
         int index = objectLiterals.size();
         objectLiterals.add(value);
         patchInfo.addObjectLiteral(buf.position(), index);
-        asm.ldr(64, dst, Aarch64Address.Placeholder);
+        asm.adr(scratch, 0); // this gets patched
+        asm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(scratch));
     }
 
     @Override
     protected void loadInt(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
-        asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Int);
     }
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     protected void loadWord(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     protected void loadObject(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     protected void storeInt(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
-        asm.str(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Int);
     }
 
     @Override
     protected void storeLong(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     protected void storeWord(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     protected void storeObject(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
@@ -318,13 +282,6 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     }
 
     @Override
-    protected void do_iinc(int index, int increment) {
-        loadInt(Aarch64.r15, index);
-        adjustReg(Aarch64.r15, increment);
-        storeInt(Aarch64.r15, index);
-    }
-
-    @Override
     protected void do_fconst(float value) {
         super.do_fconst(value);
     }
@@ -347,28 +304,50 @@ public class Aarch64T1XCompilation extends T1XCompilation {
 
     @Override
     protected int callDirect() {
-        return 0;
-        // XXX Implement me
+        alignDirectCall(buf.position());
+        int causePos = buf.position();
+        asm.call();
+        int safepointPos = buf.position();
+        asm.nop();
+        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
     }
 
     @Override
     protected int callDirect(int receiverStackIndex) {
-        return 0;
+        if (receiverStackIndex >= 0) {
+            peekObject(Aarch64.r0, receiverStackIndex);
+        }
+        alignDirectCall(buf.position());
+        int causePos = buf.position();
+        asm.call();
+        int safepointPos = buf.position();
+        asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
+        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
     }
 
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
-        return 0;
-        // XXX Implement me
+        if (receiverStackIndex >= 0) {
+            if (target == Aarch64.r0) {
+                asm.mov(64, asm.scratchRegister, target);
+                target = asm.scratchRegister;
+            }
+            peekObject(Aarch64.r0, receiverStackIndex);
+        }
+        int causePos = buf.position();
+        asm.call(target);
+        int safepointPos = buf.position();
+        asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
+        return Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
     }
 
     @Override
     protected void nullCheck(CiRegister src) {
-        // XXX Implement me
+        asm.nullCheck(src);
     }
 
     private void alignDirectCall(int callPos) {
-        // XXX Implement me
+        asm.alignForPatchableDirectCall();
     }
 
     /**
@@ -399,8 +378,8 @@ public class Aarch64T1XCompilation extends T1XCompilation {
          * of the other machinery e.g. stack walking if there is the assumption that the caller's FP lives
          * in a single JVMS_STACK_SLOT.
          */
-        asm.push(64, Aarch64.linkRegister);
-        asm.push(64, Aarch64.fp);
+        asm.push(Aarch64.linkRegister);
+        asm.push(Aarch64.fp);
         asm.sub(64, Aarch64.fp, Aarch64.sp, framePointerAdjustment()); // fp set relative to sp
         /*
          * Extend the stack pointer past the frame size minus the slot used for the callers
@@ -417,11 +396,16 @@ public class Aarch64T1XCompilation extends T1XCompilation {
                 int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
                 // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
                 offset = offset - frameSize;
-                // RSP is r13!
-                //asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
-                //asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, asm.scratchRegister, 0); // was LR
-                // APN guessing rax is return address.
-                // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
+                asm.bangStackWithOffset(offset);
+            }
+        }
+        if (T1XOptions.DebugMethods) {
+            int a = debugMethodWriter.getNextID();
+            asm.mov64BitConstant(scratch, a);
+            try {
+                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         return adapter;
@@ -441,9 +425,17 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     protected void emitEpilogue() {
         // rewind stack pointer
         asm.add(64, Aarch64.sp, Aarch64.fp, framePointerAdjustment());
-        asm.pop(64, Aarch64.fp);
-        asm.pop(64, Aarch64.linkRegister);
+        asm.pop(Aarch64.fp);
+        asm.pop(Aarch64.linkRegister);
+        asm.add(64, Aarch64.sp, Aarch64.sp, frame.sizeOfParameters());
         asm.ret(Aarch64.linkRegister);
+        if (T1XOptions.DebugMethods) {
+            try {
+                debugMethodWriter.flushDebugMethod();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /*
@@ -509,12 +501,16 @@ public class Aarch64T1XCompilation extends T1XCompilation {
          * into the scratch register. Add the jump table base address to the offset and
          * jump to it.
          */
-        asm.adr(scratch2, 16);
-        asm.ldr(32, scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, scratch, true));
-        asm.add(64, scratch2, scratch2, scratch);
+        final int adrPos = buf.position();
+        asm.adr(scratch2, 0); // Get the jump table adress
+        asm.load(scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, scratch, true), CiKind.Int);
+        asm.add(64, scratch2, scratch2, scratch); // Add target offset to jump table address to get the target address
         asm.jmp(scratch2);
 
         int jumpTablePos = buf.position();
+        buf.setPosition(adrPos);
+        asm.adr(scratch2, jumpTablePos - adrPos);
+        buf.setPosition(jumpTablePos);
 
         for (int i = 0; i < ts.numberOfCases(); i++) {
             int targetBCI = ts.targetAt(i);
@@ -549,32 +545,50 @@ public class Aarch64T1XCompilation extends T1XCompilation {
                 asm.jmp(Aarch64.zr);
             }
         } else {
-            // r1 = loop counter
-            // r2 = key from the lookup table under test.
-            asm.pop(32, scratch);                               // key
-            asm.push(64, Aarch64.r1);
-            asm.push(64, Aarch64.r2);
-            asm.adr(scratch2, 16 * 4);                          // lookup table base (+16 instructions from here)
-            asm.mov(Aarch64.r1, (ls.numberOfCases() - 1) * 2);  // loop counter
+            asm.pop(32, scratch);  // Pop the key we are looking for
+
+            asm.push(Aarch64.r19); // Use r19 as the loop counter
+            asm.push(Aarch64.r20); // Use r20 as the current key
+
+            int adrPos = buf.position();
+            asm.adr(scratch2, 0);  // lookup table base
+
+            // Initialize loop counter to number of cases x2 to account for pairs of integers (key-offset)
+            asm.mov(Aarch64.r19, (ls.numberOfCases() - 1) * 2);
+
             int loopPos = buf.position();
-            asm.ldr(32, Aarch64.r2, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r1, true));
-            asm.cmp(32, scratch, Aarch64.r2);
-            asm.b(ConditionFlag.EQ, 6 * 4);                     // break out of loop (+6 instructions)
-            asm.subs(32, Aarch64.r1, Aarch64.r1, 2);            // decrement loop counter
-            jcc(ConditionFlag.PL, loopPos);                     // iterate again if >= 0
-            startBlock(ls.defaultTarget());                     // No match, jump to default target
-            asm.pop(64, Aarch64.r2);                            // after restoring registers r2
-            asm.pop(64, Aarch64.r1);                            // and r1.
+            asm.load(Aarch64.r20, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r19, true), CiKind.Int);
+            asm.cmp(32, scratch, Aarch64.r20);
+            int branchPos = buf.position();
+            asm.b(ConditionFlag.EQ, 0);                             // break out of loop
+            asm.subs(32, Aarch64.r19, Aarch64.r19, 2);              // decrement loop counter (1 pair at a time)
+            jcc(ConditionFlag.PL, loopPos);                         // iterate again if >= 0
+            startBlock(ls.defaultTarget());                         // No match, jump to default target
+            asm.pop(Aarch64.r20);                                   // after restoring registers r20
+            asm.pop(Aarch64.r19);                                   // and r19.
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
             jmp(0);
+
+            // Patch b instruction above
+            int branchTargetPos = buf.position();
+            buf.setPosition(branchPos);
+            asm.b(ConditionFlag.EQ, branchTargetPos - branchPos);
+            buf.setPosition(branchTargetPos);
+
             // load offset, add to lookup table base and jump.
-            asm.add(32, Aarch64.r1, Aarch64.r1, 1);             // increment r1 to get the offset
-            asm.ldr(32, scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r1, true));
+            asm.add(32, Aarch64.r19, Aarch64.r19, 1); // increment r19 to get the offset (instead of the key)
+            asm.load(scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r19, true), CiKind.Int);
             asm.add(64, scratch, scratch, scratch2);
-            asm.pop(64, Aarch64.r2);
-            asm.pop(64, Aarch64.r1);
+            asm.pop(Aarch64.r20);
+            asm.pop(Aarch64.r19);
             asm.jmp(scratch);
             int lookupTablePos = buf.position();
+
+            // Patch adr instruction above now that we know the position of the jump table
+            buf.setPosition(adrPos);
+            asm.adr(scratch2, lookupTablePos - adrPos);
+            buf.setPosition(lookupTablePos);
+
             // Emit lookup table entries
             for (int i = 0; i < ls.numberOfCases(); i++) {
                 int key = ls.keyAt(i);
@@ -611,37 +625,37 @@ public class Aarch64T1XCompilation extends T1XCompilation {
             case Bytecodes.IFEQ:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.EQ;
                 break;
             case Bytecodes.IFNE:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.NE;
                 break;
             case Bytecodes.IFLE:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.LE;
                 break;
             case Bytecodes.IFLT:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.LT;
                 break;
             case Bytecodes.IFGE:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.GE;
                 break;
             case Bytecodes.IFGT:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.cmp(32, scratch, Aarch64.zr);
+                asm.cmp(32, scratch, 0);
                 cc = ConditionFlag.GT;
                 break;
             case Bytecodes.IF_ICMPEQ:
@@ -830,18 +844,31 @@ public class Aarch64T1XCompilation extends T1XCompilation {
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 //int disp = ldrDisp(dispPos, dispFromCodeStart); see below
                 // create a PC relative address in scratch
-                asm.adr(scratch, dispFromCodeStart - buf.position());
+                asm.adr(scratch, dispFromCodeStart - dispPos);
             } else {
                 throw new InternalError("Unknown PatchInfoAARCH64." + tag);
             }
         }
     }
 
-
     @HOSTED_ONLY
     public static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
-
-        return null;
+        int[] result = {};
+        for (int pos = 0; pos < source.codeLength(); pos++) {
+            for (CiRegister reg : Aarch64.cpuRegisters) {
+                Aarch64Assembler asm = new Aarch64Assembler(target(), null);
+                asm.adr(scratch, dispFromCodeStart - pos);
+                asm.ldr(64, reg, Aarch64Address.createBaseRegisterOnlyAddress(scratch));
+                // pattern must be compatible with Aarch64InstructionDecoder.patchRelativeInstruction
+                byte[] pattern = asm.codeBuffer.close(true);
+                byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
+                if (Arrays.equals(pattern, instr)) {
+                    result = Arrays.copyOf(result, result.length + 1);
+                    result[result.length - 1] = pos;
+                }
+            }
+        }
+        return result;
     }
 
     static class PatchInfoAARCH64 extends PatchInfo {
@@ -1002,6 +1029,26 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         asm.add(64, Aarch64.r0, Aarch64.r0, Aarch64.r1);
         incStack(1);
         pokeInt(Aarch64.r0, 0);
+    }
+
+    public void do_laddTests() {
+        peekLong(Aarch64.r0, 0);
+        decStack(2);
+        peekLong(Aarch64.r1, 0);
+        decStack(2);
+        asm.add(64, Aarch64.r0, Aarch64.r0, Aarch64.r1);
+        incStack(2);
+        pokeLong(Aarch64.r0, 0);
+    }
+
+    public void do_daddTests() {
+        peekDouble(Aarch64.d0, 0);
+        decStack(2);
+        peekDouble(Aarch64.d1, 0);
+        decStack(2);
+        asm.fadd(64, Aarch64.d0, Aarch64.d0, Aarch64.d1);
+        incStack(2);
+        pokeDouble(Aarch64.d0, 0);
     }
 
     public void do_imulTests() {

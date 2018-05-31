@@ -189,34 +189,52 @@ public final class Aarch64Address extends CiAddress {
         this.immediate = immediate;
         this.scaled = scaled;
         this.extendType = extendType;
-        assert verify();
+        verify();
     }
 
-    private boolean verify() {
+    private void verify() {
         assert addressingMode != null;
         assert Aarch64.isIntReg(base) && Aarch64.isIntReg(offset);
         switch (addressingMode) {
             case IMMEDIATE_SCALED:
 //            System.out.println("@IMMEDIATE_SCALED");
-                return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isUnsignedNbit(12, immediate);
+                assert !base.equals(zr);
+                assert offset.equals(zr);
+                assert extendType == null;
+                assert NumUtil.isUnsignedNbit(12, immediate);
+                break;
             case IMMEDIATE_UNSCALED:
 //            System.out.println("@IMMEDIATE_UNSCALED");
 //            System.out.println("!base.equals(zr): "                             + (!base.equals(zr)));
 //            System.out.println("offset.equals(zr): "                            + (offset.equals(zr)));
 //            System.out.println("extendType == null: "                           + (extendType == null));
 //            System.out.println("NumUtil.isSignedNbit(9, "+ immediate +"): "     + (NumUtil.isSignedNbit(9, immediate)));
-                return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isSignedNbit(9, immediate);
+                assert !base.equals(zr);
+                assert offset.equals(zr);
+                assert extendType == null;
+                assert NumUtil.isSignedNbit(9, immediate);
+                break;
             case BASE_REGISTER_ONLY:
 //            System.out.println("@BASE_REGISTER_ONLY");
-                return !base.equals(zr) && offset.equals(zr) && extendType == null && immediate == 0;
+                assert !base.equals(zr);
+                assert offset.equals(zr);
+                assert extendType == null;
+                assert immediate == 0;
+                break;
             case REGISTER_OFFSET:
 //            System.out.println("@REGISTER_OFFSET");
-                return !base.equals(zr) && Aarch64.isGeneralPurposeReg(offset) && extendType == null && immediate == 0;
+                assert !base.equals(zr);
+                assert Aarch64.isGeneralPurposeReg(offset);
+                assert extendType == null;
+                assert immediate == 0;
+                break;
             case EXTENDED_REGISTER_OFFSET:
 //            System.out.println("@EXTENDED_REGISTER_OFFSET");
-                return !base.equals(zr) && Aarch64.isGeneralPurposeReg(offset) &&
-                        (extendType == Aarch64Assembler.ExtendType.SXTW || extendType == Aarch64Assembler.ExtendType.UXTW) &&
-                        immediate == 0;
+                assert !base.equals(zr);
+                assert Aarch64.isGeneralPurposeReg(offset);
+                assert extendType == Aarch64Assembler.ExtendType.SXTW || extendType == Aarch64Assembler.ExtendType.UXTW;
+                assert immediate == 0;
+                break;
             case PC_LITERAL:
 //            System.out.println("@PC_LITERAL");
 //            System.out.println("base.equals(zr):"                              + base.equals(zr));
@@ -224,12 +242,20 @@ public final class Aarch64Address extends CiAddress {
 //            System.out.println("extendType == null: "                           + (extendType == null));
 //            System.out.println("NumUtil.isSignedNbit(21, immediate): "          + NumUtil.isSignedNbit(21, immediate));
 //            System.out.println("(immediate & 0x3) == 0: "                       + ((immediate & 0x3) == 0));
-                return base.equals(zr) && offset.equals(zr) && extendType == null &&
-                        NumUtil.isSignedNbit(21, immediate) && ((immediate & 0x3) == 0);
+                assert base.equals(zr);
+                assert offset.equals(zr);
+                assert extendType == null;
+                assert NumUtil.isSignedNbit(21, immediate);
+                assert (immediate & 0x3) == 0;
+                break;
             case IMMEDIATE_POST_INDEXED:
             case IMMEDIATE_PRE_INDEXED:
 //            System.out.println("@IMMEDIATE_POST_INDEXED|IMMEDIATE_PRE_INDEXED");
-                return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isSignedNbit(9, immediate);
+                assert !base.equals(zr);
+                assert offset.equals(zr);
+                assert extendType == null;
+                assert NumUtil.isSignedNbit(9, immediate);
+                break;
             default:
                 throw new Error("should not reach here");
         }

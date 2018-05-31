@@ -42,7 +42,7 @@ public class RISCVAssembler extends AbstractAssembler {
      *     |------------|----|--------|
      *     |     20     |  5 |    7   |
      * </pre>
-     *  @param opcode
+     * @param opcode
      * @param rd
      * @param imm32
      */
@@ -52,6 +52,89 @@ public class RISCVAssembler extends AbstractAssembler {
         int instruction = opcode.getValue();
         instruction |= rd.number << 7;
         instruction |= imm32 & 0xFFFFF000;
+        emitInt(instruction);
+    }
+
+    /**
+     * Emits an instruction of type R-type.
+     *
+     * <pre>
+     *     | funct7 | rs2 | rs1 | funct3 | rd | opcode |
+     *     |--------|-----|-----|--------|----|--------|
+     *     |    7   |  5  |  5  |   3    |  5 |    7   |
+     * </pre>
+     * @param opcode
+     * @param rd
+     * @param funct3
+     * @param rs1
+     * @param rs2
+     * @param funct7
+     */
+    private void rtype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
+        assert opcode.getValue() >> 7 == 0;
+        assert rd.number >> 5 == 0;
+        assert rs1.number >> 5 == 0;
+        assert rs2.number >> 5 == 0;
+        int instruction = opcode.getValue();
+        instruction |= rd.number << 7;
+        instruction |= funct3 << 12;
+        instruction |= rs1.number << 15;
+        instruction |= rs2.number << 20;
+        instruction |= funct7 << 25;
+        emitInt(instruction);
+    }
+
+    /**
+     * Emits an instruction of type I-type.
+     *
+     * <pre>
+     *     | imm[11:0] | rs1 | funct3 | rd | opcode |
+     *     |-----------|-----|--------|----|--------|
+     *     |    12     |  5  |    3   |  5 |    7   |
+     * </pre>
+     * @param opcode
+     * @param rd
+     * @param funct3
+     * @param rs1
+     * @param imm32
+     */
+    private void itype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
+        assert opcode.getValue() >> 7 == 0;
+        assert rd.number >> 5 == 0;
+        assert rs1.number >> 5 == 0;
+        int instruction = opcode.getValue();
+        instruction |= rd.number << 7;
+        instruction |= funct3 << 12;
+        instruction |= rs1.number << 15;
+        instruction |= imm32 << 20;
+        emitInt(instruction);
+    }
+
+    /**
+     * Emits an instruction of type S-type.
+     *
+     * <pre>
+     *     | imm[11:5] | rs2 | rs1 | funct3 | imm[4:0] | opcode |
+     *     |-----------|-----|-----|--------|----------|--------|
+     *     |     7     |  5  |  5  |    3   |    5     |    7   |
+     * </pre>
+     * @param opcode
+     * @param rd
+     * @param funct3
+     * @param rs1
+     * @param rs2
+     * @param imm32
+     */
+    private void stype(RISCVopCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+        assert opcode.getValue() >> 7 == 0;
+        assert rs1.number >> 5 == 0;
+        assert rs2.number >> 5 == 0;
+        int instruction = opcode.getValue();
+        instruction |= (imm32 & 0x1F) << 7;
+        instruction |= funct3 << 12;
+        instruction |= rs1.number << 15;
+        instruction |= rs2.number << 20;
+        instruction |= ((imm32 >> 5) & 0x7F) << 25;
         emitInt(instruction);
     }
 
@@ -161,7 +244,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lb(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(LOAD, rd, 0, rs, imm32);
     }
 
     /**
@@ -171,7 +254,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lh(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(LOAD, rd, 1, rs, imm32);
     }
 
     /**
@@ -181,7 +264,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lw(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(LOAD, rd, 2, rs, imm32);
     }
 
     /**
@@ -191,7 +274,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lbu(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(LOAD, rd, 4, rs, imm32);
     }
 
     /**
@@ -201,7 +284,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lhu(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(LOAD, rd, 5, rs, imm32);
     }
 
     /**
@@ -211,7 +294,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void sb(CiRegister rs1, CiRegister rs2, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        stype(STORE, 0, rs1, rs2, imm32);
     }
 
     /**
@@ -221,7 +304,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void sh(CiRegister rs1, CiRegister rs2, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        stype(STORE, 1, rs1, rs2, imm32);
     }
 
     /**
@@ -231,7 +314,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void sw(CiRegister rs1, CiRegister rs2, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        stype(STORE, 2, rs1, rs2, imm32);
     }
 
     /**
@@ -241,7 +324,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void addi(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(ADDI, rd, 0, rs, imm32);
     }
 
     /**
@@ -251,7 +334,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void slti(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(SLTI, rd, 3, rs, imm32);
     }
 
     /**
@@ -271,7 +354,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void xori(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(XORI, rd, 4, rs, imm32);
     }
 
     /**
@@ -281,7 +364,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void ori(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(ORI, rd, 6, rs, imm32);
     }
 
     /**
@@ -291,7 +374,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void andi(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(ANDI, rd, 7, rs, imm32);
     }
 
     /**
@@ -331,7 +414,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void add(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(ADD, rd, 0, rs1, rs2, 0);
     }
 
     /**
@@ -341,7 +424,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void sub(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(SUB, rd, 0, rs1, rs2, 32);
     }
 
     /**
@@ -361,7 +444,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void slt(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(SLT, rd, 2, rs1, rs2, 0);
     }
 
     /**
@@ -371,7 +454,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void sltu(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(SLTU, rd, 3, rs1, rs2, 0);
     }
 
     /**
@@ -381,7 +464,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void xor(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(XOR, rd, 4, rs1, rs2, 0);
     }
 
     /**
@@ -411,7 +494,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void or(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(OR, rd, 6, rs1, rs2, 0);
     }
 
     /**
@@ -421,7 +504,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void and(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(AND, rd, 7, rs1, rs2, 0);
     }
 
     /**

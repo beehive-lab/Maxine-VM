@@ -376,17 +376,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
 
             // Compute the number of stack args needed for the call (i.e. the args that won't
             // be put into registers)
-            int stackArgumentsSize = 0;
-            for (int i = optArgs.length - 1; i >= 0; i--) {
-                if (optArgs[i].isStackSlot()) {
-                    CiStackSlot slot = (CiStackSlot) optArgs[i];
-                    int offset = slot.index() * OPT_SLOT_SIZE;
-                    int end = offset + OPT_SLOT_SIZE;
-                    if (end > stackArgumentsSize) {
-                        stackArgumentsSize = end;
-                    }
-                }
-            }
+            int stackArgumentsSize = getStackArgumentsSize(optArgs);
 
             final int rbpSlotSize = OPT_SLOT_SIZE;
             final int optCallerRIPSlotSize = OPT_SLOT_SIZE;

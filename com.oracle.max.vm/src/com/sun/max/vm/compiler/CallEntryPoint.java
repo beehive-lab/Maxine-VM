@@ -28,6 +28,8 @@ import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.aarch64.Aarch64AdapterGenerator;
+import com.sun.max.vm.compiler.target.arm.ARMAdapterGenerator;
 import com.sun.max.vm.jni.*;
 
 /**
@@ -113,6 +115,11 @@ public enum CallEntryPoint {
     }
 
     @HOSTED_ONLY
+    private void init(int offset) {
+        init(offset, offset);
+    }
+
+    @HOSTED_ONLY
     private void init(int offset, int offsetInCallee) {
         assert this.offset == -1 || this.offset == offset : "cannot re-initialize with different value";
         assert this.offsetInCallee == -1 || this.offsetInCallee == offsetInCallee : "cannot re-initialize with different value";
@@ -129,12 +136,14 @@ public enum CallEntryPoint {
 
     static {
         if (vm().compilationBroker.needsAdapters()) {
-            if (Platform.target().arch.is32bit()) {
-                OPTIMIZED_ENTRY_POINT.init(20, 20);
+            if (Platform.target().arch.isARM()) {
+                OPTIMIZED_ENTRY_POINT.init(ARMAdapterGenerator.Baseline2Opt.PROLOGUE_SIZE);
+            } else if (Platform.target().arch.isAarch64()) {
+                OPTIMIZED_ENTRY_POINT.init(Aarch64AdapterGenerator.Baseline2Opt.PROLOGUE_SIZE);
             } else {
-                OPTIMIZED_ENTRY_POINT.init(8, 8);
+                OPTIMIZED_ENTRY_POINT.init(8);
             }
-            BASELINE_ENTRY_POINT.init(0, 0);
+            BASELINE_ENTRY_POINT.init(0);
             VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
             C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
         } else {

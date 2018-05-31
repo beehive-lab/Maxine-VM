@@ -61,10 +61,12 @@ boolean task_read_registers(pid_t tid,
     }
 
     if (canonicalFloatingPointRegisters != NULL) {
-#ifndef __arm__
-        struct user_fpregs_struct osFloatRegisters;
+#ifdef __arm__
+        struct user_fpregs osFloatRegisters;
+#elif defined __aarch64__
+        struct user_fpsimd_struct osFloatRegisters;
 #else
-	    struct user_fpregs osFloatRegisters;
+        struct user_fpregs_struct osFloatRegisters;
 #endif
         if (ptrace(PT_GETFPREGS, tid, 0, &osFloatRegisters) != 0) {
             return false;
@@ -101,10 +103,12 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
 
     TLA tla = 0;
     if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, NULL)) {
-#ifndef __arm__
-        Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
-#else
+#ifdef __arm__
         Address stackPointer = (Address) canonicalIntegerRegisters.r13;
+#elif defined __aarch64__
+        Address stackPointer = (Address) canonicalStateRegisters.sp;
+#else
+        Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
 #endif
         TLA threadLocals = (TLA) alloca(tlaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;

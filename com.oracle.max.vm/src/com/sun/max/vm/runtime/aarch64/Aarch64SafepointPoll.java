@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,23 +26,21 @@ package com.sun.max.vm.runtime.aarch64;
 import static com.sun.max.platform.Platform.*;
 
 import com.oracle.max.asm.target.aarch64.*;
-import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 
 /**
- * The safepoint poll implementation for AMD64.
+ * The safepoint poll implementation for Aarch64.
  *
- * @see AMD64TrapFrameAccess
+ * @see Aarch64TrapFrameAccess
  */
 public final class Aarch64SafepointPoll extends SafepointPoll {
 
     /**
      * ATTENTION: must be callee-saved by all C ABIs in use.
      */
-    public static final CiRegister LATCH_REGISTER = Aarch64.r26;
+    public static final CiRegister LATCH_REGISTER = Aarch64.LATCH_REGISTER;
 
     @HOSTED_ONLY
     public Aarch64SafepointPoll() {
@@ -52,7 +50,7 @@ public final class Aarch64SafepointPoll extends SafepointPoll {
     @Override
     protected byte[] createCode() {
         final Aarch64Assembler asm = new Aarch64Assembler(target(), null);
-        // TODO asm.movq(LATCH_REGISTER, new CiAddress(WordUtil.archKind(), LATCH_REGISTER.asValue()));
+        asm.ldr(64, LATCH_REGISTER, Aarch64Address.createBaseRegisterOnlyAddress(LATCH_REGISTER));
         return asm.codeBuffer.close(true);
     }
 }

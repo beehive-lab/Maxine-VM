@@ -93,7 +93,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     private ByteBuffer attach(String user, int lvmid, int mode) throws IllegalArgumentException {
-        FatalError.unimplemented();
+        FatalError.unimplemented("com.sun.max.vm.jdk.JDK_sun_misc_Perf.attach");
         return null;
     }
 
@@ -104,7 +104,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     private void detach(ByteBuffer byteBuffer) {
-        FatalError.unimplemented();
+        FatalError.unimplemented("com.sun.max.vm.jdk.JDK_sun_misc_Perf.detach");
     }
 
     /**
@@ -118,7 +118,7 @@ final class JDK_sun_misc_Perf {
      */
     @SUBSTITUTE
     public ByteBuffer createLong(String name, int variability, int units, long value) {
-        FatalError.unimplemented();
+        FatalError.unimplemented("com.sun.max.vm.jdk.JDK_sun_misc_Perf.createLong");
         return null;
     }
 

@@ -38,6 +38,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.code.CodeManager.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.runtime.*;
@@ -140,7 +141,7 @@ public final class Stub extends TargetMethod {
                     // Take into account return address adjustment in static trampoline
                     return ip.asPointer().equals(tm.codeStart().plus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
                 }
-                throw FatalError.unimplemented();
+                throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.isDeoptStubEntry");
             }
             return ip.asPointer().equals(tm.codeStart());
         } else {
@@ -225,31 +226,19 @@ public final class Stub extends TargetMethod {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.returnAddressPointer(frame);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.returnAddressPointer");
         }
     }
 
     @Override
     public void advance(StackFrameCursor current) {
-        if (platform().isa == ISA.AMD64) {
-            CiCalleeSaveLayout csl = calleeSaveLayout();
-            Pointer csa = Pointer.zero();
-            if (csl != null) {
-                assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
-                csa = current.sp().plus(csl.frameOffsetToCSA);
-            }
-            AMD64TargetMethodUtil.advance(current, csl, csa);
-        } else if (platform().isa == ISA.ARM) {
-            CiCalleeSaveLayout csl = calleeSaveLayout();
-            Pointer csa = Pointer.zero();
-            if (csl != null) {
-                assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
-                csa = current.sp().plus(csl.frameOffsetToCSA);
-            }
-            ARMTargetMethodUtil.advance(current, csl, csa);
-        } else {
-            throw FatalError.unimplemented();
+        CiCalleeSaveLayout csl = calleeSaveLayout();
+        Pointer csa = Pointer.zero();
+        if (csl != null) {
+            assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
+            csa = current.sp().plus(csl.frameOffsetToCSA);
         }
+        advanceHelper(current, csl, csa);
     }
 
     @Override
@@ -260,7 +249,7 @@ public final class Stub extends TargetMethod {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.acceptStackFrameVisitor");
         }
     }
 
@@ -271,7 +260,7 @@ public final class Stub extends TargetMethod {
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.frameLayout(this);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.frameLayout");
         }
     }
 
@@ -296,8 +285,10 @@ public final class Stub extends TargetMethod {
             return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (platform().isa == ISA.Aarch64) {
+            return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
-            throw FatalError.unimplemented();
+            throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.fixupCallSite");
         }
     }
 

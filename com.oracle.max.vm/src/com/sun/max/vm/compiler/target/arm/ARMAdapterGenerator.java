@@ -313,7 +313,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        private static final int PROLOGUE_SIZE = 20;
+        public static final int PROLOGUE_SIZE = 20;
 
         public Baseline2Opt() {
             super(Adapter.Type.BASELINE2OPT);

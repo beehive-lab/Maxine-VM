@@ -133,7 +133,6 @@ public abstract class Aarch64AdapterTest extends MaxTestCase {
         //c1x.initialize(Phase.HOSTED_TESTING);
         t1x.initialize(Phase.HOSTED_TESTING);
         t1xCompiler = (Aarch64T1XCompilationTest) t1x.getT1XCompilation();
-        t1xCompiler.setDebug(false);
         masm = new Aarch64MacroAssembler(Platform.target(), null);
     }
 
@@ -199,7 +198,9 @@ public abstract class Aarch64AdapterTest extends MaxTestCase {
      * @param signature
      */
     protected void initMethod(byte [] code, String signature) {
-        codeAttr = new CodeAttribute(null, code, (char) 2, (char) 2, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
+        SignatureDescriptor sigDescriptor = SignatureDescriptor.create(signature);
+        int numLocals = sigDescriptor.numberOfSlots;
+        codeAttr = new CodeAttribute(null, code, (char) 2, (char) numLocals, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
         method = new StaticMethodActor(null, SignatureDescriptor.create(signature), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
     }
 

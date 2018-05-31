@@ -19,19 +19,19 @@
  */
 package test.crossisa.aarch64.adapters;
 
-import java.lang.reflect.*;
-
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.AdapterGenerator.*;
 import com.sun.max.vm.compiler.target.aarch64.*;
+
+import static com.oracle.max.asm.target.aarch64.Aarch64.linkRegister;
+import static com.sun.max.vm.compiler.target.aarch64.Aarch64AdapterGenerator.Baseline2Opt.PROLOGUE_SIZE;
 
 /**
  * This class tests a call from optimised to baseline for a method
  * that takes 2 int parameters and returns an int.
  */
-public class TestOpt2Baseline_II_I extends Aarch64AdapterTest {
+public class TestOpt2Baseline_II_I extends Opt2BaselineAarch64AdapterTest {
 
     public TestOpt2Baseline_II_I() throws Exception {
         super("(II)I");
@@ -41,10 +41,13 @@ public class TestOpt2Baseline_II_I extends Aarch64AdapterTest {
     @Override
     public byte [] createPrelude()  {
         masm.codeBuffer.reset();
+        masm.push(linkRegister);
         masm.mov(Aarch64.r0, 1);        // r0 := 1
         masm.mov(Aarch64.r1, 2);        // r1 := 2
-        masm.b(8 + 8);                  // branch to optimised entry point
-        masm.ret(Aarch64.linkRegister); // return to startup_aarch64.o
+        // Branch to optimised entry point +16 for the bl, pops and ret below.
+        masm.bl(PROLOGUE_SIZE + 3 * 4);
+        masm.pop(linkRegister);
+        masm.ret(linkRegister);
         byte [] code = masm.codeBuffer.close(true);
         return code;
     }
@@ -77,13 +80,5 @@ public class TestOpt2Baseline_II_I extends Aarch64AdapterTest {
         assert 3 == values[0] : "Expected 3, got " + values[0];
     }
 
-    @Override
-    public Adapter createAdapter(Sig sig) throws Exception {
-        Aarch64AdapterGenerator adapterGenerator = new Aarch64AdapterGenerator.Opt2Baseline();
-        Method m = adapterGenerator.getClass().getDeclaredMethod("create", Sig.class);
-        m.setAccessible(true);
-        Adapter adapter = (Adapter) m.invoke(adapterGenerator, sig);
-        return adapter;
-    }
 }
 

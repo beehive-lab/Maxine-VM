@@ -498,7 +498,7 @@ public class LargeObjectSpace extends Sweeper {
 
     @Override
     public void verify(AfterMarkSweepVerifier verifier) {
-        FatalError.unimplemented();
+        FatalError.unimplemented("com.sun.max.vm.heap.gcx.LargeObjectSpace.verify");
     }
 
     @Override

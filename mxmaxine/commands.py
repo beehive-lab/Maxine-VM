@@ -197,9 +197,9 @@ def image(args):
 
     Name            | Description                   | Example values
     ================+===============================+================
-    max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64
-    max.cpu         | processor model               | AMD64 IA32 SPARCV9 ARMV7
-    max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC
+    max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64 linux-aarch64
+    max.cpu         | processor model               | AMD64 IA32 SPARCV9 ARMV7 Aarch64
+    max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC Aarch64
     max.os          | operating system              | Darwin Linux Solaris
     max.endianness  | endianness                    | BIG LITTLE
     max.bits        | machine word size             | 64 32
@@ -559,7 +559,7 @@ def olc(args):
     --- Patterns ---
     {0}"""
 
-    mx.run_java(['-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
+    mx.run_java(['-ea', '-esa', '-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
