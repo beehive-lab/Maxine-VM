@@ -1557,6 +1557,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.zr));
     }
 
+    public int insertDivByZeroCheck(int size, CiRegister denominator) {
+        cmp(size, denominator, 0); // Check denominator
+        b(ConditionFlag.NE, 12);  // If non-zero skip the following two commands
+        movz(64, scratchRegister, 0, 0);
+        int offset = codeBuffer.position();
+        ldr(64, zr, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister)); // generate SIGSEGV
+        return offset;
+    }
+
     public void insertForeverLoop() {
         b(0);
     }

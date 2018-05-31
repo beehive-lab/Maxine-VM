@@ -897,7 +897,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 masm.branchConditionally(ConditionFlag.EQ, continuation);
                 masm.bind(normalCase);
             }
-            int offset = masm.codeBuffer.position();
+            int offset = masm.insertDivByZeroCheck(size, denominator);
+            tasm.recordImplicitException(offset, info);
             if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
                 if (quotient == numerator || quotient == denominator) {
                     quotient = scratchRegister;
@@ -909,7 +910,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 masm.sdiv(size, quotient, numerator, denominator);
             }
             masm.bind(continuation);
-            tasm.recordImplicitException(offset, info);
         }
     }
 
@@ -922,7 +922,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         CiRegister quotient    = result.asRegister();
         CiRegister denominator = right.asRegister();
 
-        int offset = masm.codeBuffer.position();
+        int offset = masm.insertDivByZeroCheck(size, denominator);
         tasm.recordImplicitException(offset, info);
         if (code == LIROpcode.Iurem || code == LIROpcode.Lurem) {
             if (quotient == numerator || quotient == denominator) {
