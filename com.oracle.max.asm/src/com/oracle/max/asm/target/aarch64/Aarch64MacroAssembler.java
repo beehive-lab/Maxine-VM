@@ -427,7 +427,11 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param reg
      */
     public void push(CiRegister reg) {
-        push(64, reg);
+        if (ASM_DEBUG_MARKERS && (reg == Aarch64.linkRegister)) {
+            stp(64, reg, Aarch64.zr, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -2));
+        } else {
+            push(64, reg);
+        }
     }
 
     public void push(int size, CiRegister reg) {
@@ -472,7 +476,11 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param reg
      */
     public void pop(CiRegister reg) {
-        pop(64, reg);
+        if (ASM_DEBUG_MARKERS && (reg == Aarch64.linkRegister)) {
+            ldp(64, reg, zr, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 2));
+        } else {
+            pop(64, reg);
+        }
     }
 
     public void pop(int size, CiRegister reg) {

@@ -31,7 +31,6 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final CiRegister frameRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig registerConfig;
-    public static boolean ASM_DEBUG_MARKERS = false;
 
     public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);

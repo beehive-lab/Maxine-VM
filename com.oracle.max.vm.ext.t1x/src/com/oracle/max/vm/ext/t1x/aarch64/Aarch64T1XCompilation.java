@@ -36,17 +36,14 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.Word;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.DebugMethodWriter;
-import com.sun.max.vm.compiler.WordUtil;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.aarch64.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-// import java.io.PrintWriter;
 
 public class Aarch64T1XCompilation extends T1XCompilation {
 
@@ -430,6 +427,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         asm.add(64, Aarch64.sp, Aarch64.fp, framePointerAdjustment());
         asm.pop(Aarch64.fp);
         asm.pop(Aarch64.linkRegister);
+        asm.add(64, Aarch64.sp, Aarch64.sp, frame.sizeOfParameters());
         asm.ret(Aarch64.linkRegister);
         if (T1XOptions.DebugMethods) {
             try {

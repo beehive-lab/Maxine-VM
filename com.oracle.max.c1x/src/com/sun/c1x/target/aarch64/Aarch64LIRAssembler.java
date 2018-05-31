@@ -735,7 +735,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
                 rreg = Aarch64.d30;
-                masm.fmov(size, rreg, scratchRegister);
+                masm.load(rreg, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), kind);
             }
             if (kind.isInt() || kind.isLong()) {
                 switch (code) {
