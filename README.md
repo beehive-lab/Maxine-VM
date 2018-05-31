@@ -2,6 +2,12 @@
 
 #### Updates
 
+* 2018-05-31: Maxine VM 2.4.0 Release
+  * Initial port to Aarch64 (runs Hello World)
+  * Implemented Aarch64 C1X port
+  * Implemented first RISC-V instructions
+  * Bug and stability fixes
+  * Code refactoring and cleanup
 * 2018-03-09: Maxine VM 2.3.0 Release
   * Implemented Aarch64 Assembler
   * Implemented Aarch64 T1X port, Adapters

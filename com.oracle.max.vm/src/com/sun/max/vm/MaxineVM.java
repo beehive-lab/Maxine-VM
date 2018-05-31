@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -30,7 +30,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-import com.oracle.max.asm.target.armv7.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.lang.*;
@@ -71,7 +70,7 @@ public final class MaxineVM {
 
     public static final String NAME = "Maxine Virtual Machine";
     public static final int MAJOR_VERSION = 2;
-    public static final int MINOR_VERSION = 3;
+    public static final int MINOR_VERSION = 4;
     public static final int PATCH_VERSION = 0;
     public static final String VERSION_STRING = Integer.toString(MAJOR_VERSION) + "." + Integer.toString(MINOR_VERSION) + "." + Integer.toString(PATCH_VERSION);
     public static final String HOME_URL = "https://github.com/beehive-lab/Maxine-VM";
