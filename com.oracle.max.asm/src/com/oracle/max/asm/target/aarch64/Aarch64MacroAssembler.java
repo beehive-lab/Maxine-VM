@@ -1553,8 +1553,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public final void crashme() {
+        mov(scratchRegister, 0);
+        ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
         insertForeverLoop();
-        ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.zr));
     }
 
     public int insertDivByZeroCheck(int size, CiRegister denominator) {
