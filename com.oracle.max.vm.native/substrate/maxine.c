@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 #include <math.h>
 #include "log.h"
+#include "isa.h"
 #include "image.h"
 #include "threads.h"
 #include "os.h"
@@ -500,7 +501,7 @@ double native_parseDouble(const char* cstring, double nan) {
 }
 
 void maxine_cache_flush(char *start, int length) {
-#ifdef arm
+#if isa_ARM
     char * end = start + length;
     asm volatile("isb ");
     asm volatile("dsb ");
@@ -509,6 +510,9 @@ void maxine_cache_flush(char *start, int length) {
     asm volatile("isb ");
     asm volatile("dsb ");
     asm volatile("dmb ");
+#elif isa_AARCH64
+    char * end = start + length;
+    __builtin___clear_cache(start, end);
 #endif
 }
 

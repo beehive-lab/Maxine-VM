@@ -30,6 +30,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.StackFrameCursor;
 import com.sun.max.vm.stack.StackFrameWalker;
@@ -59,9 +60,6 @@ public final class Aarch64TargetMethodUtil {
                ((code[idx + 1] & 0xFF) << 8) |
                (code[idx + 0] & 0xFF);
     }
-
-    @C_FUNCTION
-    public static native void maxine_cache_flush(Pointer start, int length);
 
     private static int getOldDisplacement(Pointer callSitePointer) {
         final int instruction = callSitePointer.readInt(0);
@@ -183,9 +181,9 @@ public final class Aarch64TargetMethodUtil {
         final int instruction = callSitePointer.readInt(0);
         final boolean isLinked = Aarch64Assembler.isBranchInstructionLinked(instruction);
 
+        // overwrite the four nops from com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.call()
+        final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
         if (NumUtil.isSignedNbit(28, disp32)) {
-            // overwrite the four nops from com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.call()
-            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
             nopSite.writeInt(0, Aarch64Assembler.nopHelper());
             nopSite.writeInt(4, Aarch64Assembler.nopHelper());
             nopSite.writeInt(8, Aarch64Assembler.nopHelper());
@@ -200,8 +198,6 @@ public final class Aarch64TargetMethodUtil {
                 disp32 = -disp32;
             }
 
-            // overwrite the four nops from com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.call()
-            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
             nopSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r16, 0));
             nopSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r17, disp32 & 0xFFFF, 0));
             nopSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r17, (disp32 >> 16) & 0xFFFF, 16));
@@ -210,6 +206,7 @@ public final class Aarch64TargetMethodUtil {
             // overwrote the immediate branch with a register branch
             nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, isLinked));
         }
+        ARMTargetMethodUtil.maxine_cache_flush(nopSite, 20);
 
         return callSite.plus(oldDisplacement);
     }
