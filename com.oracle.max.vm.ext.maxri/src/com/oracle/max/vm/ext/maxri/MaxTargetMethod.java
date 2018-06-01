@@ -738,12 +738,13 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     @NEVER_INLINE
     public static void unwindToCalleeEpilogue(CodePointer catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
         // Overwrite return address of callee with catch address
-        final Pointer returnAddressPointer = stackPointer.minus(Word.size());
+        final int slotSize = target().arch.isAarch64() ? JVMSFrameLayout.JVMS_SLOT_SIZE : Word.size();
+        final Pointer returnAddressPointer = stackPointer.minus(slotSize);
         returnAddressPointer.setWord(catchAddress.toAddress());
 
         CodePointer epilogueAddress = lastJavaCallee.codeAt(lastJavaCallee.registerRestoreEpilogueOffset());
 
-        final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
+        final Pointer calleeStackPointer = stackPointer.minus(slotSize).minus(lastJavaCallee.frameSize());
         Stubs.unwind(epilogueAddress.toPointer(), calleeStackPointer, Pointer.zero());
     }
 
