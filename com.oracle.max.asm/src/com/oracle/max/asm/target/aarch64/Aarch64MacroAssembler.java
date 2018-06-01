@@ -1470,10 +1470,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void pause() {
-        push(1 | 2 | 4 | 8 | 128);
-        mov32BitConstant(Aarch64.r7, 158); // sched_yield
-        emitInt(0xd4000001); // svc 0
-        pop(1 | 2 | 4 | 8 | 128);
+        hint(SystemHint.YIELD);
     }
 
     public final void crashme() {
