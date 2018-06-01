@@ -507,17 +507,17 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 masm.sxt(64, 32, dest.asRegister(), src.asRegister());
                 break;
             case L2I:
-                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFFFFF);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFFFFFL);
                 break;
             case I2B:
-                masm.and(64, dest.asRegister(), src.asRegister(), 0xFF);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFL);
                 masm.sxt(64, 8, dest.asRegister(), src.asRegister());
                 break;
             case I2C:
-                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFF);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFL);
                 break;
             case I2S:
-                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFF);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFL);
                 masm.sxt(64, 16, dest.asRegister(), src.asRegister());
                 break;
             case F2D:
