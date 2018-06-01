@@ -175,10 +175,7 @@ public abstract class CrossISATester {
      * @param expectedValue the expected value
      */
     public void setExpectedValue(CiRegister cpuRegister, short expectedValue) {
-        final int index = cpuRegister.getEncoding();
-        expectedLongRegisters[index] = expectedValue;
-        testLongRegisters[index] = true;
-        bitMasks[index] = Lower16Bits;
+        setExpectedValue(cpuRegister, (int) expectedValue);
     }
 
     /**
@@ -188,11 +185,7 @@ public abstract class CrossISATester {
      * @param expectedValue the expected value
      */
     public void setExpectedValue(CiRegister cpuRegister, boolean expectedValue) {
-        final int index = cpuRegister.getEncoding();
-        final int expectedLongValue = expectedValue ? 1 : 0;
-        expectedLongRegisters[index] = expectedLongValue;
-        testLongRegisters[index] = true;
-        bitMasks[index] = Lower8Bits;
+        setExpectedValue(cpuRegister, expectedValue ? 1 : 0);
     }
 
     /**
@@ -202,10 +195,7 @@ public abstract class CrossISATester {
      * @param expectedValue the expected value
      */
     public void setExpectedValue(CiRegister cpuRegister, byte expectedValue) {
-        final int index = cpuRegister.getEncoding();
-        expectedLongRegisters[index] = expectedValue;
-        testLongRegisters[index] = true;
-        bitMasks[index] = Lower8Bits;
+        setExpectedValue(cpuRegister, (int) expectedValue);
     }
 
     /**
@@ -215,7 +205,7 @@ public abstract class CrossISATester {
      * @param expectedValue the expected value
      */
     public void setExpectedValue(CiRegister cpuRegister, char expectedValue) {
-        setExpectedValue(cpuRegister, (short) expectedValue);
+        setExpectedValue(cpuRegister, (int) expectedValue & 0xFFFF);
     }
 
     /**
