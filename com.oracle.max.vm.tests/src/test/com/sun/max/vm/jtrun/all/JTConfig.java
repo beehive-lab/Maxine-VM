@@ -43,6 +43,7 @@ public class JTConfig {
         jtt.bytecode.BC_athrow.class,
         jtt.bytecode.BC_baload.class,
         jtt.bytecode.BC_bastore.class,
+        jtt.bytecode.BC_boolean_tests.class,
         jtt.bytecode.BC_caload.class,
         jtt.bytecode.BC_castore.class,
         jtt.bytecode.BC_checkcast01.class,
