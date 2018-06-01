@@ -146,6 +146,7 @@ public class Aarch64AssemblerTest {
         masm.mov(r5, 0xFFFF_0000_1234_0000L); // Test forceMov optimization
         masm.mov(r6, 0xFFFF_FFFF_FFFF_FFFFL); // Test 32bit sign-extend optimization
         masm.mov(r7, 0); // Test zero optimization
+        masm.mov(r8, 0xcafebabe);
 
         tester.setExpectedValue(r0, Integer.MAX_VALUE);
         tester.setExpectedValue(r1, Integer.MIN_VALUE);
@@ -155,6 +156,7 @@ public class Aarch64AssemblerTest {
         tester.setExpectedValue(r5, 0xFFFF_0000_1234_0000L);
         tester.setExpectedValue(r6, 0xFFFF_FFFF_FFFF_FFFFL);
         tester.setExpectedValue(r7, 0);
+        tester.setExpectedValue(r8, 0xcafebabe);
     }
 
     @Test
