@@ -1194,23 +1194,4 @@ public class Aarch64AssemblerTest {
         tester.setExpectedValue(r0, 0);
     }
 
-    @Test
-    public void decrementl() throws Exception {
-        masm.mov32BitConstant(r0, 100);
-        masm.push(1);
-        Aarch64Address addr = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, 0);
-        masm.decrementl(addr, 10);
-        masm.pop(1);
-        tester.setExpectedValue(r0, 90);
-    }
-
-    @Test
-    public void incrementl() throws Exception {
-        masm.mov32BitConstant(r0, 100);
-        masm.push(1);
-        Aarch64Address addr = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, 0);
-        masm.incrementl(addr, 10);
-        masm.pop(1);
-        tester.setExpectedValue(r0, 110);
-    }
 }
