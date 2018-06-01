@@ -2254,7 +2254,7 @@ public class Aarch64JTTC1XTest {
         for (Args pair : pairs) {
             int    expectedValue     = BC_l2i.test(pair.lfirst);
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "long long", Long.toString(pair.lfirst) + "LL");
-            tester.setExpectedValue(Aarch64.r0, expectedValue);
+            tester.setExpectedValue(Aarch64.r0, expectedValue & 0xFFFFFFFFL);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
         }
     }
