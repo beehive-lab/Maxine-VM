@@ -1636,7 +1636,7 @@ public class Stubs {
             instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 48) & 0xffff, 48);
             patchAddr.writeInt(12, instruction);
 
-//            Aarch64TargetMethodUtil.maxine_cache_flush(patchAddr, 8);
+            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 16);
         }
     }
 

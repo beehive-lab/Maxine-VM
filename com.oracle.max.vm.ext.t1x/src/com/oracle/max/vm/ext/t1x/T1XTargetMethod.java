@@ -249,7 +249,7 @@ public class T1XTargetMethod extends TargetMethod {
         if (!MaxineVM.isHosted()) {
             if (install) {
                 linkDirectCalls();
-                if (Platform.target().arch.isARM()) {
+                if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64()) {
                     ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
                 }
             } else {

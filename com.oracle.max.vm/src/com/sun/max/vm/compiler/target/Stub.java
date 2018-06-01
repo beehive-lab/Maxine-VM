@@ -28,7 +28,6 @@ import static com.sun.max.vm.compiler.target.Stub.Type.*;
 
 import java.util.*;
 
-import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -178,7 +177,9 @@ public final class Stub extends TargetMethod {
         }
         if (!isHosted()) {
             linkDirectCalls();
-            ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
+            if (platform().target.arch.isARM() || platform().target.arch.isAarch64()) {
+                ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
+            }
         }
     }
 
