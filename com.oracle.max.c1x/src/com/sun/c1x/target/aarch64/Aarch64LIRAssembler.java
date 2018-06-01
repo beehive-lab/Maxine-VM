@@ -1137,37 +1137,48 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompare2Int(LIROpcode code, CiValue left, CiValue right, CiValue dst, LIROp2 op) {
+        CiRegister dest = dst.asRegister();
         if (code == LIROpcode.Cmpfd2i || code == LIROpcode.Ucmpfd2i) {
-            if (left.kind.isFloat()) {
-                masm.fcmp(32, left.asRegister(), right.asRegister());
-            } else if (left.kind.isDouble()) {
-                masm.fcmp(64, left.asRegister(), right.asRegister());
-            } else {
-                throw Util.unimplemented("no fpu stack");
+            assert left.kind.isFloat() || left.kind.isDouble();
+            CiRegister lreg = left.asRegister();
+            CiRegister rreg = right.asRegister();
+            masm.fcmp(left.kind.isFloat() ? 32 : 64, lreg, rreg);
+
+            Label l = new Label();
+            if (code == LIROpcode.Ucmpfd2i) {
+                masm.mov(dest, -1);
+                masm.branchConditionally(ConditionFlag.VS, l);
+                masm.branchConditionally(ConditionFlag.LO, l);
+                masm.mov(dest, 0);
+                masm.branchConditionally(ConditionFlag.EQ, l);
+                masm.add(64, dest, dest, (long) 1);
+            } else { // unordered is greater
+                masm.mov(dest, 1);
+                masm.branchConditionally(ConditionFlag.VS, l);
+                masm.branchConditionally(ConditionFlag.HI, l);
+                masm.mov(dest, 0);
+                masm.branchConditionally(ConditionFlag.EQ, l);
+                masm.sub(64, dest, dest, (long) 1);
             }
+            masm.bind(l);
+
         } else {
             assert code == LIROpcode.Cmpl2i;
+            Label high = new Label();
+            Label done = new Label();
+            Label isEqual = new Label();
             masm.cmp(64, left.asRegister(), right.asRegister());
-        }
-
-        CiRegister dest = dst.asRegister();
-        Label high = new Label();
-        Label done = new Label();
-        masm.branchConditionally(ConditionFlag.EQ, done);
-        masm.branchConditionally(ConditionFlag.GT, high);
-        if (code == LIROpcode.Ucmpfd2i) {
-            masm.mov(dest, 1);
-        } else {
+            masm.branchConditionally(ConditionFlag.EQ, isEqual);
+            masm.branchConditionally(ConditionFlag.GT, high);
             masm.mov(dest, -1);
-        }
-        masm.b(done);
-        masm.bind(high);
-        if (code == LIROpcode.Ucmpfd2i) {
-            masm.mov(dest, -1);
-        } else {
+            masm.b(done);
+            masm.bind(high);
             masm.mov(dest, 1);
+            masm.b(done);
+            masm.bind(isEqual);
+            masm.mov(dest, 0);
+            masm.bind(done);
         }
-        masm.bind(done);
     }
 
     @Override
