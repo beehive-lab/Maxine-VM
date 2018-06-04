@@ -148,27 +148,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         masm.xchgptr(a, b);
     }
 
-    private void const2reg(CiRegister dst, int constant) {
-        masm.mov(dst, constant);
-    }
-
-    private void const2reg(CiRegister dst, long constant) {
-        masm.mov(dst, constant);
-    }
-
-    private void const2reg(CiRegister dst, CiConstant constant) {
-        assert constant.kind == CiKind.Object;
-        if (constant.isNull()) {
-            masm.mov(dst, 0);
-        } else if (target.inlineObjects) {
-            assert false : "Object inlining not supported";
-        } else {
-            tasm.recordDataReferenceInCode(constant);
-            masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
-            masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
-        }
-    }
-
     @Override
     public void emitTraps() {
         for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
@@ -207,7 +186,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 masm.mov(dest.asRegister(), c.asLong());
                 break;
             case Object:
-                const2reg(dest.asRegister(), c);
+                movoop(dest.asRegister(), c);
                 break;
             case Float:
                 const2reg(dest.asRegister(), c.asFloat());
