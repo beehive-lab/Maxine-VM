@@ -390,7 +390,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         int highKey = op.lowKey + op.targets.length - 1;
         if (op.lowKey != 0) {
             // subtract the low value from the switch value
-            masm.subq(value, op.lowKey);
+            masm.sub(64, value, value, (long) op.lowKey);
             masm.cmp(64, value, highKey - op.lowKey);
         } else {
             masm.cmp(64, value, highKey);
