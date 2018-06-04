@@ -1258,7 +1258,7 @@ public class Aarch64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_i2s() throws Exception {
-        int[] argsOne = {1, -1, 34, 1, 65535, 32768, -32768};
+        int[] argsOne = {1, -1, 34, 1, 65535, 32768, -32768, Integer.MAX_VALUE, Integer.MIN_VALUE, 0xcafebabe};
         String klassName = getKlassName("jtt.bytecode.BC_i2s");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_i2s.java", "short test(int)");

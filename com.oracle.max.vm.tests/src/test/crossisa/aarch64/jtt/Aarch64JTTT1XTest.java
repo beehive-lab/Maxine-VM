@@ -550,6 +550,40 @@ public class Aarch64JTTT1XTest {
     }
 
     @Test
+    public void t1x_jtt_BC_i2s_3() throws Exception {
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        short answer = jtt.bytecode.BC_i2s.test(Integer.MAX_VALUE);
+        tester.setExpectedValue(r0, answer);
+        byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
+        initialiseFrameForCompilation(code, "(I)I");
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(r0, Integer.MAX_VALUE);
+        masm.push(r0);
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
+        generateAndTest(1);
+        theCompiler.cleanup();
+    }
+
+    @Test
+    public void t1x_jtt_BC_i2s_4() throws Exception {
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        short answer = jtt.bytecode.BC_i2s.test(0xcafebabe);
+        tester.setExpectedValue(r0, answer);
+        byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
+        initialiseFrameForCompilation(code, "(I)I");
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(r0, 0xcafebabe);
+        masm.push(r0);
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
+        generateAndTest(1);
+        theCompiler.cleanup();
+    }
+
+    @Test
     public void t1x_jtt_BC_i2c() throws Exception {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
