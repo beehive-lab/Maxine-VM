@@ -888,80 +888,76 @@ public class CompilationBroker {
 
         @Override
         public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
-            if (platform().isa == ISA.ARM) {
-                if (current.isTopFrame()) {
-                    return true;
-                }
-                Pointer ip = current.ipAsPointer();
-                Pointer newIp = ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-                if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), newIp)) {
-                    CodePointer callSite = CodePointer.from(newIp);
-                    int ripOffset = ARMTargetMethodUtil.ripCallOffset(current.targetMethod(), newIp);
-                    CodePointer target = CodePointer.from(newIp).plus(ripOffset).minus(8);
-                    if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
-                        final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
-                        final TargetMethod tm = current.targetMethod();
-                        final int dcIndex = directCalleePosition(tm, callSite);
-                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
-                        logStaticCallPatch(current, callSite, dcIndex, to);
-                        ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
-                        // Stop traversing the stack after a direct call site has been patched
-                        return false;
-                    }
-                    if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
-                        final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
-                        final TargetMethod tm = current.targetMethod();
-                        final int dcIndex = directCalleePosition(tm, callSite);
-                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
-                        logStaticCallPatch(current, callSite, dcIndex, to);
-                        ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
-                        // Stop traversing the stack after a direct call site has been patched
-                        return false;
-                    }
-                }
-                if (++frameCount > FRAME_SEARCH_LIMIT) {
-                    logNoFurtherStaticCallPatching();
-                    return false;
-                }
+            if (current.isTopFrame()) {
                 return true;
             }
-            if (platform().isa == ISA.AMD64) {
-                if (current.isTopFrame()) {
-                    return true;
-                }
-                Pointer ip = current.ipAsPointer();
-                CodePointer callSite = CodePointer.from(ip.minus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
-                Pointer callSitePointer = callSite.toPointer();
-                if ((callSitePointer.readByte(0) & 0xFF) == AMD64TargetMethodUtil.RIP_CALL) {
-                    CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
-                    if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
-                        final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
-                        final TargetMethod tm = current.targetMethod();
-                        final int dcIndex = directCalleePosition(tm, callSite);
-                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
-                        logStaticCallPatch(current, callSite, dcIndex, to);
-                        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
-                        // Stop traversing the stack after a direct call site has been patched
-                        return false;
+            Pointer ip = current.ipAsPointer();
+            switch (platform().isa) {
+                case AMD64: {
+                    CodePointer callSite = CodePointer.from(ip.minus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
+                    Pointer callSitePointer = callSite.toPointer();
+                    if ((callSitePointer.readByte(0) & 0xFF) == AMD64TargetMethodUtil.RIP_CALL) {
+                        CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
+                        if (amd64PatchCallSite(current, callSite, target, BASELINE_ENTRY_POINT)) {
+                            return false;
+                        }
+                        if (amd64PatchCallSite(current, callSite, target, OPTIMIZED_ENTRY_POINT)) {
+                            return false;
+                        }
                     }
-                    if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
-                        final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
-                        final TargetMethod tm = current.targetMethod();
-                        final int dcIndex = directCalleePosition(tm, callSite);
-                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
-                        logStaticCallPatch(current, callSite, dcIndex, to);
-                        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
-                        // Stop traversing the stack after a direct call site has been patched
-                        return false;
+                    break;
+                }
+                case ARM: {
+                    Pointer newIp = ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+                    if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), newIp)) {
+                        CodePointer callSite = CodePointer.from(newIp);
+                        int ripOffset = ARMTargetMethodUtil.ripCallOffset(current.targetMethod(), newIp);
+                        CodePointer target = CodePointer.from(newIp).plus(ripOffset).minus(8);
+                        if (armv7PatchCallSite(current, callSite, target, BASELINE_ENTRY_POINT)) {
+                            return false;
+                        }
+                        if (armv7PatchCallSite(current, callSite, target, OPTIMIZED_ENTRY_POINT)) {
+                            return false;
+                        }
                     }
+                    break;
                 }
-                if (++frameCount > FRAME_SEARCH_LIMIT) {
-                    logNoFurtherStaticCallPatching();
-                    return false;
-                }
+                default:
+                    throw FatalError.unimplemented("com.sun.max.vm.compiler.CompilationBroker.DirectCallPatcher.visitFrame");
+            }
+            if (++frameCount > FRAME_SEARCH_LIMIT) {
+                logNoFurtherStaticCallPatching();
+                return false;
+            }
+            return true;
+        }
+
+        private boolean amd64PatchCallSite(StackFrameCursor current, CodePointer callSite, CodePointer target, CallEntryPoint entryPoint) {
+            if (target.equals(oldMethod.getEntryPoint(entryPoint))) {
+                final CodePointer to = newMethod.getEntryPoint(entryPoint);
+                final TargetMethod tm = current.targetMethod();
+                final int dcIndex = directCalleePosition(tm, callSite);
+                assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                logStaticCallPatch(current, callSite, dcIndex, to);
+                AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                // Stop traversing the stack after a direct call site has been patched
                 return true;
             }
-            throw FatalError.unimplemented("com.sun.max.vm.compiler.CompilationBroker.DirectCallPatcher.visitFrame");
+            return false;
+        }
+
+        private boolean armv7PatchCallSite(StackFrameCursor current, CodePointer callSite, CodePointer target, CallEntryPoint entryPoint) {
+            if (target.equals(oldMethod.getEntryPoint(entryPoint))) {
+                final CodePointer to = newMethod.getEntryPoint(entryPoint);
+                final TargetMethod tm = current.targetMethod();
+                final int dcIndex = directCalleePosition(tm, callSite);
+                assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                logStaticCallPatch(current, callSite, dcIndex, to);
+                ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                // Stop traversing the stack after a direct call site has been patched
+                return true;
+            }
+            return false;
         }
     }
 
