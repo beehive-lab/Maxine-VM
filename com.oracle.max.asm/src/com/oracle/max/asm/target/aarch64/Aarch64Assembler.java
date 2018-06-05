@@ -705,6 +705,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @return {@code true} if the instruction is a linked branch
      */
     public static boolean isBranchInstructionLinked(int instruction) {
+        assert isBranchInstruction(instruction) : Integer.toHexString(instruction);
         if (isBimmInstruction(instruction)) {
             return instruction >> 31 != 0;
         } else {
@@ -726,7 +727,6 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @return the instruction type
      */
     public static boolean isBimmInstruction(int instruction) {
-        assert isBranchInstruction(instruction) : instruction;
         return (instruction & (NumUtil.getNbitNumberInt(5) << 26)) == UnconditionalBranchImmOp;
     }
 
