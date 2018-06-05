@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.target.aarch64;
 import com.oracle.max.asm.NumUtil;
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.ci.CiCalleeSaveLayout;
-import com.sun.max.annotate.C_FUNCTION;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.*;
@@ -90,6 +89,16 @@ public final class Aarch64TargetMethodUtil {
      */
     public static CodePointer readCall32Target(TargetMethod tm, int callPos) {
         final CodePointer callSite = tm.codeAt(callPos);
+        return readCall32Target(callSite);
+    }
+
+    /**
+     * Gets the target of a 32-bit relative CALL instruction.
+     *
+     * @param callSite the code pointer to the CALL
+     * @return the absolute target address of the CALL
+     */
+    public static CodePointer readCall32Target(CodePointer callSite) {
         final Pointer callSitePointer = callSite.toPointer();
         final int disp32 = getOldDisplacement(callSitePointer);
         return callSite.plus(disp32);
@@ -100,7 +109,7 @@ public final class Aarch64TargetMethodUtil {
         final Pointer callSitePointer = callSite.toPointer();
         final int instruction = callSitePointer.readInt(0);
         if (Aarch64Assembler.isBranchInstruction(instruction)) {
-            return readCall32Target(tm, pos).equals(jumpTarget);
+            return readCall32Target(callSite).equals(jumpTarget);
         }
         return false;
     }
@@ -268,4 +277,28 @@ public final class Aarch64TargetMethodUtil {
         }
     }
 
+    public static boolean isRIPCall(Pointer callIP) {
+        int instruction = callIP.readInt(0);
+        // If it is not a branch instruction then it is definitely not a RIP Call
+        if (!Aarch64MacroAssembler.isBranchInstruction(instruction)) {
+            return false;
+        }
+        // If it is not a branch immediate we need to check the previous instructions as well
+        if (!Aarch64MacroAssembler.isBimmInstruction(instruction)) {
+            final Pointer nopSite = callIP.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            int movzInstruction = nopSite.readInt(4);
+            if (!Aarch64MacroAssembler.isMovz(movzInstruction)) {
+                return false;
+            }
+            int movkInstruction = nopSite.readInt(8);
+            if (!Aarch64MacroAssembler.isMovk(movkInstruction)) {
+                return false;
+            }
+            int addSubInstruction = nopSite.readInt(12);
+            if (!Aarch64Assembler.isAddSubInstruction(addSubInstruction)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
