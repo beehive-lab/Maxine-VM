@@ -154,9 +154,17 @@ public final class Aarch64TargetMethodUtil {
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
-        final CodePointer callSite = tm.codeAt(pos);
-        final Pointer callSitePointer = callSite.toPointer();
-        final int instruction = callSitePointer.readInt(0);
+        CodePointer callSite = tm.codeAt(pos);
+        Pointer callSitePointer = callSite.toPointer();
+        int instruction = callSitePointer.readInt(0);
+        // first check for branch immediate (jump with 28bit displacement)
+        if (Aarch64Assembler.isBimmInstruction(instruction)) {
+            return readCall32Target(callSite).equals(jumpTarget);
+        }
+        // Else check for jumps with 32bit displacement. Move the callSite pointer to the actual branch instruction.
+        callSite = callSite.plus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+        callSitePointer = callSite.toPointer();
+        instruction = callSitePointer.readInt(0);
         if (Aarch64Assembler.isBranchInstruction(instruction)) {
             return readCall32Target(callSite).equals(jumpTarget);
         }
