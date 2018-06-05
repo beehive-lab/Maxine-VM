@@ -23,7 +23,6 @@ package com.sun.max.vm.compiler.target.aarch64;
 import com.oracle.max.asm.NumUtil;
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.ci.CiCalleeSaveLayout;
-import com.sun.max.annotate.C_FUNCTION;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.*;
@@ -72,7 +71,7 @@ public final class Aarch64TargetMethodUtil {
             int addSubInstruction = nopSite.readInt(12);
             short low = Aarch64Assembler.movExtractImmediate(movzInstruction);
             short high = Aarch64Assembler.movExtractImmediate(movkInstruction);
-            int oldDisplacement = high << 16 | low;
+            int oldDisplacement = high << 16 | low & 0xFFFF;
             if (!Aarch64Assembler.isAddInstruction(addSubInstruction)) {
                 oldDisplacement = -oldDisplacement;
             }
@@ -90,17 +89,84 @@ public final class Aarch64TargetMethodUtil {
      */
     public static CodePointer readCall32Target(TargetMethod tm, int callPos) {
         final CodePointer callSite = tm.codeAt(callPos);
+        return readCall32Target(callSite);
+    }
+
+    /**
+     * Gets the target of a 32-bit relative CALL instruction.
+     *
+     * @param callSite the code pointer to the CALL
+     * @return the absolute target address of the CALL
+     */
+    public static CodePointer readCall32Target(CodePointer callSite) {
         final Pointer callSitePointer = callSite.toPointer();
         final int disp32 = getOldDisplacement(callSitePointer);
         return callSite.plus(disp32);
     }
 
+    /**
+     * Patches a position in a target method with a direct jump to a given target address.
+     *
+     * @param tm the target method to be patched
+     * @param pos the position in {@code tm} at which to apply the patch
+     * @param target the target of the jump instruction being patched in
+     */
+    public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
+        // We must be at a global safepoint to safely patch TargetMethods
+        FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
+
+        final Pointer patchSite = tm.codeAt(pos).toPointer();
+
+        long disp64 = target.toLong() - patchSite.toLong();
+        int disp32 = (int) disp64;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+
+        if (NumUtil.isSignedNbit(28, disp32)) {
+            synchronized (PatchingLock) {
+                patchSite.writeInt(0, Aarch64Assembler.unconditionalBranchImmInstructionHelper(disp32, false));
+                ARMTargetMethodUtil.maxine_cache_flush(patchSite, 4);
+            }
+        } else {
+            // Since adr is invoked NUMBER_OF_NOPS instructions before the actual branch we need to adjust the displacement
+            final boolean isNegative = disp32 < 0;
+            if (isNegative) {
+                disp32 = -disp32;
+            }
+
+            synchronized (PatchingLock) {
+                patchSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r16, 0));
+                patchSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r17, disp32 & 0xFFFF, 0));
+                patchSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r17, (disp32 >> 16) & 0xFFFF, 16));
+                patchSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r16, Aarch64.r17, isNegative));
+                patchSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, false));
+                ARMTargetMethodUtil.maxine_cache_flush(patchSite, 20);
+            }
+        }
+    }
+
+    /**
+     * Indicate with the instruction in a target method at a given position is a jump to a specified destination. Used
+     * in particular for testing if the entry points of a target method were patched to jump to a trampoline.
+     *
+     * @param tm a target method
+     * @param pos byte index relative to the start of the method to a call site
+     * @param jumpTarget target to compare with the target of the assumed jump instruction
+     * @return {@code true} if the instruction is a jump to the target, false otherwise
+     */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
-        final CodePointer callSite = tm.codeAt(pos);
-        final Pointer callSitePointer = callSite.toPointer();
-        final int instruction = callSitePointer.readInt(0);
+        CodePointer callSite = tm.codeAt(pos);
+        Pointer callSitePointer = callSite.toPointer();
+        int instruction = callSitePointer.readInt(0);
+        // first check for branch immediate (jump with 28bit displacement)
+        if (Aarch64Assembler.isBimmInstruction(instruction)) {
+            return readCall32Target(callSite).equals(jumpTarget);
+        }
+        // Else check for jumps with 32bit displacement. Move the callSite pointer to the actual branch instruction.
+        callSite = callSite.plus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+        callSitePointer = callSite.toPointer();
+        instruction = callSitePointer.readInt(0);
         if (Aarch64Assembler.isBranchInstruction(instruction)) {
-            return readCall32Target(tm, pos).equals(jumpTarget);
+            return readCall32Target(callSite).equals(jumpTarget);
         }
         return false;
     }
@@ -121,8 +187,7 @@ public final class Aarch64TargetMethodUtil {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
                 // (although the lock excludes ALL concurrent patching)
-                fixupCall32Site(tm, callSite, target);
-                // TODO (fz): invalidate icache?
+                fixupCall32Site(callSite, target);
             }
         }
         return callSite.plus(oldDisp32);
@@ -168,16 +233,19 @@ public final class Aarch64TargetMethodUtil {
             final int oldDisplacement = fixupCall28Site(code, callOffset, disp32);
             return callSite.plus(oldDisplacement);
         } else {
-            return fixupCall32Site(tm, callSite, target);
+            return fixupCall32Site(callSite, target);
         }
     }
 
-    private static CodePointer fixupCall32Site(TargetMethod tm, CodePointer callSite, CodePointer target) {
+    private static CodePointer fixupCall32Site(CodePointer callSite, CodePointer target) {
         long disp64 = target.toLong() - callSite.toLong();
         int disp32 = (int) disp64;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         final Pointer callSitePointer = callSite.toPointer();
         int oldDisplacement = getOldDisplacement(callSitePointer);
+        if (oldDisplacement == disp32) {
+            return callSite.plus(oldDisplacement);
+        }
         final int instruction = callSitePointer.readInt(0);
         final boolean isLinked = Aarch64Assembler.isBranchInstructionLinked(instruction);
 
@@ -268,4 +336,28 @@ public final class Aarch64TargetMethodUtil {
         }
     }
 
+    public static boolean isRIPCall(Pointer callIP) {
+        int instruction = callIP.readInt(0);
+        // If it is not a branch instruction then it is definitely not a RIP Call
+        if (!Aarch64MacroAssembler.isBranchInstruction(instruction)) {
+            return false;
+        }
+        // If it is not a branch immediate we need to check the previous instructions as well
+        if (!Aarch64MacroAssembler.isBimmInstruction(instruction)) {
+            final Pointer nopSite = callIP.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            int movzInstruction = nopSite.readInt(4);
+            if (!Aarch64MacroAssembler.isMovz(movzInstruction)) {
+                return false;
+            }
+            int movkInstruction = nopSite.readInt(8);
+            if (!Aarch64MacroAssembler.isMovk(movkInstruction)) {
+                return false;
+            }
+            int addSubInstruction = nopSite.readInt(12);
+            if (!Aarch64Assembler.isAddSubInstruction(addSubInstruction)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

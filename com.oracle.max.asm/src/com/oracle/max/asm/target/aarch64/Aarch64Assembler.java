@@ -705,6 +705,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @return {@code true} if the instruction is a linked branch
      */
     public static boolean isBranchInstructionLinked(int instruction) {
+        assert isBranchInstruction(instruction) : Integer.toHexString(instruction);
         if (isBimmInstruction(instruction)) {
             return instruction >> 31 != 0;
         } else {
@@ -726,7 +727,6 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @return the instruction type
      */
     public static boolean isBimmInstruction(int instruction) {
-        assert isBranchInstruction(instruction) : instruction;
         return (instruction & (NumUtil.getNbitNumberInt(5) << 26)) == UnconditionalBranchImmOp;
     }
 
@@ -1392,6 +1392,18 @@ public class Aarch64Assembler extends AbstractAssembler {
         return (short) ((instruction >> MoveWideImmOffset) & NumUtil.getNbitNumberInt(16));
     }
 
+    public static boolean isMovz(int instruction) {
+        final int op = instruction & (NumUtil.getNbitNumberInt(6) << 23);
+        final int opc = instruction & (NumUtil.getNbitNumberInt(2) << 29);
+        return op == MoveWideImmOp && opc == Instruction.MOVZ.encoding;
+    }
+
+    public static boolean isMovk(int instruction) {
+        final int op = instruction & (NumUtil.getNbitNumberInt(6) << 23);
+        final int opc = instruction & (NumUtil.getNbitNumberInt(2) << 29);
+        return op == MoveWideImmOp && opc == Instruction.MOVK.encoding;
+    }
+
     /**
      * dst = uimm16 << shiftAmt.
      *
@@ -1632,8 +1644,12 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     public static boolean isAddInstruction(int instruction) {
-        assert (instruction & (NumUtil.getNbitNumberInt(5) << 24)) == AddSubShiftedOp : instruction;
+        assert isAddSubInstruction(instruction) : instruction;
         return (instruction & (1 << 30)) == Instruction.ADD.encoding;
+    }
+
+    public static boolean isAddSubInstruction(int instruction) {
+        return (instruction & (NumUtil.getNbitNumberInt(5) << 24)) == AddSubShiftedOp;
     }
 
     public static int addSubInstructionHelper(CiRegister dst, CiRegister src1, CiRegister src2, boolean isSub) {
