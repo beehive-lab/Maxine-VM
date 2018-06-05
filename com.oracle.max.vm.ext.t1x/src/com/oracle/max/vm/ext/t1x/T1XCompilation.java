@@ -2631,14 +2631,18 @@ public abstract class T1XCompilation {
             ClassActor arrayClassActor = classRef.resolve(cp, index);
             assert arrayClassActor.isArrayClass();
             assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
-            assignObject(0, "arrayClassActor", arrayClassActor);
+            // Do the assignment in reverse order since in ARMV7 and Aarch64 r0 holds lengths, and not doing so will
+            // overwrite it with arrayClassActor
             assignObjectReg(1, "lengths", lengths);
+            assignObject(0, "arrayClassActor", arrayClassActor);
             finish();
         } else {
             // Unresolved case
             start(MULTIANEWARRAY);
-            assignObject(0, "guard", cp.makeResolutionGuard(index));
+            // Do the assignment in reverse order since in ARMV7 and Aarch64 r0 holds lengths, and not doing so will
+            // overwrite it with guard
             assignObjectReg(1, "lengths", lengths);
+            assignObject(0, "guard", cp.makeResolutionGuard(index));
             finish();
         }
     }

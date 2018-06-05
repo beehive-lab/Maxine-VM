@@ -541,6 +541,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
+            asm.crashme();
             asm.push(Aarch64.linkRegister);
 
             // now allocate the frame for this method
@@ -1485,6 +1486,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
+            asm.crashme();
             // We are called from Java so we do need to push the LR.
             asm.push(Aarch64.linkRegister);
             asm.mov(64, asm.scratchRegister, Aarch64.sp);
@@ -1591,6 +1593,7 @@ public class Stubs {
         void apply() {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
             patchAddr.writeLong(0, runtimeRoutine.address().toLong());
+            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 8);
         }
     }
 
@@ -1867,8 +1870,7 @@ public class Stubs {
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
-            asm.mov64BitConstant(asm.scratchRegister, 0xdef2def2);
-
+            asm.crashme();
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
             try {
@@ -2188,12 +2190,13 @@ public class Stubs {
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
         } else if (platform().isa == ISA.Aarch64) {
-
+//FIXME
             CiCalleeSaveLayout csl = registerConfig.csl;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl.size);
             int cfo = frameSize + 8; // Caller frame offset
 
+            asm.crashme();
             String runtimeRoutineName;
             if (kind == null) {
                 runtimeRoutineName = "deoptimizeAtSafepoint";
@@ -2419,6 +2422,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 masm.nop();
             }
+            masm.crashme();
 
             // now allocate the frame for this method
             masm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);

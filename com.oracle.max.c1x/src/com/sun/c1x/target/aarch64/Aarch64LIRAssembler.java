@@ -148,27 +148,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         masm.xchgptr(a, b);
     }
 
-    private void const2reg(CiRegister dst, int constant) {
-        masm.mov(dst, constant);
-    }
-
-    private void const2reg(CiRegister dst, long constant) {
-        masm.mov(dst, constant);
-    }
-
-    private void const2reg(CiRegister dst, CiConstant constant) {
-        assert constant.kind == CiKind.Object;
-        if (constant.isNull()) {
-            masm.mov(dst, 0);
-        } else if (target.inlineObjects) {
-            assert false : "Object inlining not supported";
-        } else {
-            tasm.recordDataReferenceInCode(constant);
-            masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
-            masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
-        }
-    }
-
     @Override
     public void emitTraps() {
         for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
@@ -207,7 +186,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 masm.mov(dest.asRegister(), c.asLong());
                 break;
             case Object:
-                const2reg(dest.asRegister(), c);
+                movoop(dest.asRegister(), c);
                 break;
             case Float:
                 const2reg(dest.asRegister(), c.asFloat());
@@ -411,7 +390,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         int highKey = op.lowKey + op.targets.length - 1;
         if (op.lowKey != 0) {
             // subtract the low value from the switch value
-            masm.subq(value, op.lowKey);
+            masm.sub(64, value, value, (long) op.lowKey);
             masm.cmp(64, value, highKey - op.lowKey);
         } else {
             masm.cmp(64, value, highKey);
@@ -507,17 +486,17 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 masm.sxt(64, 32, dest.asRegister(), src.asRegister());
                 break;
             case L2I:
-                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFFFFF);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFFFFFL);
                 break;
             case I2B:
-                masm.and(64, dest.asRegister(), src.asRegister(), 0xFF);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFL);
                 masm.sxt(64, 8, dest.asRegister(), src.asRegister());
                 break;
             case I2C:
-                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFF);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFL);
                 break;
             case I2S:
-                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFF);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFL);
                 masm.sxt(64, 16, dest.asRegister(), src.asRegister());
                 break;
             case F2D:
@@ -1137,37 +1116,48 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompare2Int(LIROpcode code, CiValue left, CiValue right, CiValue dst, LIROp2 op) {
+        CiRegister dest = dst.asRegister();
         if (code == LIROpcode.Cmpfd2i || code == LIROpcode.Ucmpfd2i) {
-            if (left.kind.isFloat()) {
-                masm.fcmp(32, left.asRegister(), right.asRegister());
-            } else if (left.kind.isDouble()) {
-                masm.fcmp(64, left.asRegister(), right.asRegister());
-            } else {
-                throw Util.unimplemented("no fpu stack");
+            assert left.kind.isFloat() || left.kind.isDouble();
+            CiRegister lreg = left.asRegister();
+            CiRegister rreg = right.asRegister();
+            masm.fcmp(left.kind.isFloat() ? 32 : 64, lreg, rreg);
+
+            Label l = new Label();
+            if (code == LIROpcode.Ucmpfd2i) {
+                masm.mov(dest, -1);
+                masm.branchConditionally(ConditionFlag.VS, l);
+                masm.branchConditionally(ConditionFlag.LO, l);
+                masm.mov(dest, 0);
+                masm.branchConditionally(ConditionFlag.EQ, l);
+                masm.add(64, dest, dest, (long) 1);
+            } else { // unordered is greater
+                masm.mov(dest, 1);
+                masm.branchConditionally(ConditionFlag.VS, l);
+                masm.branchConditionally(ConditionFlag.HI, l);
+                masm.mov(dest, 0);
+                masm.branchConditionally(ConditionFlag.EQ, l);
+                masm.sub(64, dest, dest, (long) 1);
             }
+            masm.bind(l);
+
         } else {
             assert code == LIROpcode.Cmpl2i;
+            Label high = new Label();
+            Label done = new Label();
+            Label isEqual = new Label();
             masm.cmp(64, left.asRegister(), right.asRegister());
-        }
-
-        CiRegister dest = dst.asRegister();
-        Label high = new Label();
-        Label done = new Label();
-        masm.branchConditionally(ConditionFlag.EQ, done);
-        masm.branchConditionally(ConditionFlag.GT, high);
-        if (code == LIROpcode.Ucmpfd2i) {
-            masm.mov(dest, 1);
-        } else {
+            masm.branchConditionally(ConditionFlag.EQ, isEqual);
+            masm.branchConditionally(ConditionFlag.GT, high);
             masm.mov(dest, -1);
-        }
-        masm.b(done);
-        masm.bind(high);
-        if (code == LIROpcode.Ucmpfd2i) {
-            masm.mov(dest, -1);
-        } else {
+            masm.b(done);
+            masm.bind(high);
             masm.mov(dest, 1);
+            masm.b(done);
+            masm.bind(isEqual);
+            masm.mov(dest, 0);
+            masm.bind(done);
         }
-        masm.bind(done);
     }
 
     @Override
