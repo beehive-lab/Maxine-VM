@@ -130,8 +130,7 @@ public final class Aarch64TargetMethodUtil {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
                 // (although the lock excludes ALL concurrent patching)
-                fixupCall32Site(tm, callSite, target);
-                // TODO (fz): invalidate icache?
+                fixupCall32Site(callSite, target);
             }
         }
         return callSite.plus(oldDisp32);
@@ -177,16 +176,19 @@ public final class Aarch64TargetMethodUtil {
             final int oldDisplacement = fixupCall28Site(code, callOffset, disp32);
             return callSite.plus(oldDisplacement);
         } else {
-            return fixupCall32Site(tm, callSite, target);
+            return fixupCall32Site(callSite, target);
         }
     }
 
-    private static CodePointer fixupCall32Site(TargetMethod tm, CodePointer callSite, CodePointer target) {
+    private static CodePointer fixupCall32Site(CodePointer callSite, CodePointer target) {
         long disp64 = target.toLong() - callSite.toLong();
         int disp32 = (int) disp64;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         final Pointer callSitePointer = callSite.toPointer();
         int oldDisplacement = getOldDisplacement(callSitePointer);
+        if (oldDisplacement == disp32) {
+            return callSite.plus(oldDisplacement);
+        }
         final int instruction = callSitePointer.readInt(0);
         final boolean isLinked = Aarch64Assembler.isBranchInstructionLinked(instruction);
 
