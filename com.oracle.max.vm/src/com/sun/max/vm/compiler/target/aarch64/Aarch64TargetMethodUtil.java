@@ -104,6 +104,55 @@ public final class Aarch64TargetMethodUtil {
         return callSite.plus(disp32);
     }
 
+    /**
+     * Patches a position in a target method with a direct jump to a given target address.
+     *
+     * @param tm the target method to be patched
+     * @param pos the position in {@code tm} at which to apply the patch
+     * @param target the target of the jump instruction being patched in
+     */
+    public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
+        // We must be at a global safepoint to safely patch TargetMethods
+        FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
+
+        final Pointer patchSite = tm.codeAt(pos).toPointer();
+
+        long disp64 = target.toLong() - patchSite.toLong();
+        int disp32 = (int) disp64;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+
+        if (NumUtil.isSignedNbit(28, disp32)) {
+            synchronized (PatchingLock) {
+                patchSite.writeInt(0, Aarch64Assembler.unconditionalBranchImmInstructionHelper(disp32, false));
+                ARMTargetMethodUtil.maxine_cache_flush(patchSite, 4);
+            }
+        } else {
+            // Since adr is invoked NUMBER_OF_NOPS instructions before the actual branch we need to adjust the displacement
+            final boolean isNegative = disp32 < 0;
+            if (isNegative) {
+                disp32 = -disp32;
+            }
+
+            synchronized (PatchingLock) {
+                patchSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r16, 0));
+                patchSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r17, disp32 & 0xFFFF, 0));
+                patchSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r17, (disp32 >> 16) & 0xFFFF, 16));
+                patchSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r16, Aarch64.r17, isNegative));
+                patchSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, false));
+                ARMTargetMethodUtil.maxine_cache_flush(patchSite, 20);
+            }
+        }
+    }
+
+    /**
+     * Indicate with the instruction in a target method at a given position is a jump to a specified destination. Used
+     * in particular for testing if the entry points of a target method were patched to jump to a trampoline.
+     *
+     * @param tm a target method
+     * @param pos byte index relative to the start of the method to a call site
+     * @param jumpTarget target to compare with the target of the assumed jump instruction
+     * @return {@code true} if the instruction is a jump to the target, false otherwise
+     */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
         final CodePointer callSite = tm.codeAt(pos);
         final Pointer callSitePointer = callSite.toPointer();

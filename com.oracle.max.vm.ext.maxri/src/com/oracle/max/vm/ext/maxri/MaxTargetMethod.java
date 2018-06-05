@@ -278,16 +278,20 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             if (vm().compilationBroker.needsAdapters()) {
                 AMD64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
-            FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
         } else if (platform().isa == ISA.ARM) {
             ARMTargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             if (vm().compilationBroker.needsAdapters()) {
                 ARMTargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
-            FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
+        } else if (platform().isa == ISA.Aarch64) {
+            Aarch64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
+            if (vm().compilationBroker.needsAdapters()) {
+                Aarch64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
+            }
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.redirectTo");
         }
+        FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
     }
 
     @Override
