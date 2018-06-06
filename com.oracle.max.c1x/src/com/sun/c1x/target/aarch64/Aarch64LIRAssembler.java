@@ -701,7 +701,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             } else if (right.isStackSlot()) {
                 CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                 if (kind.isInt() || kind.isLong()) {
-                    masm.setUpScratch(raddr);
+                    masm.load(scratchRegister, raddr, kind);
                     rreg = scratchRegister;
                 } else {
                     assert kind.isFloat() || kind.isDouble();
