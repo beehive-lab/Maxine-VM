@@ -650,7 +650,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 assert other.isStackSlot();
                 CiStackSlot otherSlot = (CiStackSlot) other;
                 masm.setUpScratch(frameMap.toStackAddress(otherSlot));
-                masm.ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+                masm.load(scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), other.kind);
                 masm.cmov(64, result.asRegister(), scratchRegister, result.asRegister(), ncond);
             }
         } else {
@@ -823,7 +823,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             // added support for stack operands
             CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
             masm.setUpScratch(raddr);
-            masm.ldr(size, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+            masm.load(scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), right.kind);
             rright = scratchRegister;
         } else if (right.isConstant()) {
             if (left.kind.isInt()) {
@@ -1876,7 +1876,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             } else {
                 tasm.recordDataReferenceInCode(obj);
                 masm.adr(scratchRegister, 0); // This gets patched
-                masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+                masm.load(dst, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), obj.kind);
             }
         }
     }

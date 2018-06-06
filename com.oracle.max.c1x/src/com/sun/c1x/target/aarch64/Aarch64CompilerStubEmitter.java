@@ -179,7 +179,7 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
         for (int i = 0; i < cc.locations.length; ++i) {
             CiValue location = cc.locations[i];
             asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[i]));
-            asm.ldr(64, location.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+            asm.load(location.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), inArgs[i].kind);
         }
 
         if (C1XOptions.AlignDirectCallsForPatching) {
@@ -197,11 +197,7 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
         if (call.resultKind != CiKind.Void) {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
             asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
-            if (returnRegister.number <= 15) {
-                asm.str(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
-            } else {
-                asm.fstr(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
-            }
+            asm.store(returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), call.resultKind);
         }
     }
 }
