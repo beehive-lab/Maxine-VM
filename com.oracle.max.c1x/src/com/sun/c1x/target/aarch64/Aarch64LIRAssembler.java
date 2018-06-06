@@ -279,7 +279,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert src.isRegister();
         assert dst.isStackSlot();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) dst);
-        masm.store(src.asRegister(), addr, src.kind);
+        masm.store(src.asRegister(), addr, src.kind.stackKind());
     }
 
     @Override
@@ -296,7 +296,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert src.isStackSlot();
         assert dest.isRegister();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
-        masm.load(dest.asRegister(), addr, src.kind);
+        masm.load(dest.asRegister(), addr, dest.kind.stackKind());
     }
 
     @Override
