@@ -1038,12 +1038,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             return;
         }
 
-        if (size == 32) {
-            mov32BitConstant(scratchRegister, bimm);
-        } else {
-            assert size == 64;
-            mov64BitConstant(scratchRegister, bimm);
-        }
+        mov(scratchRegister, bimm);
         and(size, dst, src, scratchRegister);
     }
 
