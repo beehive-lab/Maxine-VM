@@ -279,7 +279,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert src.isRegister();
         assert dst.isStackSlot();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) dst);
-        masm.store(src.asRegister(), addr, src.kind);
+        masm.store(src.asRegister(), addr, src.kind.stackKind());
     }
 
     @Override
@@ -296,7 +296,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert src.isStackSlot();
         assert dest.isRegister();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
-        masm.load(dest.asRegister(), addr, src.kind);
+        masm.load(dest.asRegister(), addr, dest.kind.stackKind());
     }
 
     @Override
@@ -649,8 +649,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             } else {
                 assert other.isStackSlot();
                 CiStackSlot otherSlot = (CiStackSlot) other;
-                masm.setUpScratch(frameMap.toStackAddress(otherSlot));
-                masm.ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+                masm.load(scratchRegister, frameMap.toStackAddress(otherSlot), other.kind);
                 masm.cmov(64, result.asRegister(), scratchRegister, result.asRegister(), ncond);
             }
         } else {
@@ -701,7 +700,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             } else if (right.isStackSlot()) {
                 CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                 if (kind.isInt() || kind.isLong()) {
-                    masm.setUpScratch(raddr);
+                    masm.load(scratchRegister, raddr, kind);
                     rreg = scratchRegister;
                 } else {
                     assert kind.isFloat() || kind.isDouble();
@@ -822,8 +821,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         if (right.isStackSlot()) {
             // added support for stack operands
             CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
-            masm.setUpScratch(raddr);
-            masm.ldr(size, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+            masm.load(scratchRegister, raddr, right.kind);
             rright = scratchRegister;
         } else if (right.isConstant()) {
             if (left.kind.isInt()) {
@@ -1032,14 +1030,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         //                        masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot));
                         break;
                     case Float:
-                        masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
+                        masm.load(Aarch64.d30, frameMap.toStackAddress(opr2Slot), opr1.kind);
                         masm.ucomisd(32, reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
                     case Double:
-                        masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-                        masm.fldr(64, Aarch64.d15, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r16));
-                        masm.ucomisd(64, reg1, Aarch64.d15, opr1.kind, CiKind.Double);
+                        masm.load(Aarch64.d30, frameMap.toStackAddress(opr2Slot), opr1.kind);
+                        masm.ucomisd(64, reg1, Aarch64.d30, opr1.kind, CiKind.Double);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -1876,7 +1872,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             } else {
                 tasm.recordDataReferenceInCode(obj);
                 masm.adr(scratchRegister, 0); // This gets patched
-                masm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+                masm.load(dst, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), obj.kind);
             }
         }
     }

@@ -767,7 +767,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
      * @param destStackOffset
      */
     void stackCopy(Aarch64MacroAssembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
-        final int size = kind.width.numberOfBits;
+        final int size = kind.stackKind.width.numberOfBits;
         asm.ldr(size, scratch, asm.getAddressInFrame(Aarch64.sp, sourceStackOffset));
         asm.str(size, scratch, asm.getAddressInFrame(Aarch64.sp, destStackOffset));
     }
