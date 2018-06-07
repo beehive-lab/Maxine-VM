@@ -680,17 +680,9 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             CiKind storeKind;
             switch(kind.asEnum) {
                 case BYTE:
-                    storeKind = CiKind.Byte;
-                    break;
                 case BOOLEAN:
-                    storeKind = CiKind.Boolean;
-                    break;
                 case SHORT:
-                    storeKind = CiKind.Short;
-                    break;
                 case CHAR:
-                    storeKind = CiKind.Char;
-                    break;
                 case INT:
                     storeKind = CiKind.Int;
                     break;
