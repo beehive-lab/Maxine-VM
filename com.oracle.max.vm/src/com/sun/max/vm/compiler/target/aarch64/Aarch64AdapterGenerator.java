@@ -394,36 +394,38 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         }
 
         protected void adapt(Aarch64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
+            CiKind loadKind;
             switch(kind.asEnum) {
                 case BYTE:
-                    masm.ldrs(64, 8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Byte;
                     break;
                 case BOOLEAN:
-                    masm.ldr(8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Boolean;
                     break;
                 case SHORT:
-                    masm.ldrs(64, 16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Short;
                     break;
                 case CHAR:
-                    masm.ldr(16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Char;
                     break;
                 case INT:
-                    masm.ldrs(64, 32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Int;
                     break;
                 case WORD:
                 case REFERENCE:
                 case LONG:
-                    masm.ldr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Long;
                     break;
                 case FLOAT:
-                    masm.fldr(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Float;
                     break;
                 case DOUBLE:
-                    masm.fldr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Double;
                     break;
                 default :
                     throw ProgramError.unexpected("Bad case");
             }
+            masm.load(reg, masm.getAddressInFrame(Aarch64.sp, offset32), loadKind);
         }
 
         protected void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
