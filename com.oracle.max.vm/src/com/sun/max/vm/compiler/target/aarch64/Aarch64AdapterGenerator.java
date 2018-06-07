@@ -394,36 +394,38 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         }
 
         protected void adapt(Aarch64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
+            CiKind loadKind;
             switch(kind.asEnum) {
                 case BYTE:
-                    masm.ldrs(64, 8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Byte;
                     break;
                 case BOOLEAN:
-                    masm.ldr(8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Boolean;
                     break;
                 case SHORT:
-                    masm.ldrs(64, 16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Short;
                     break;
                 case CHAR:
-                    masm.ldr(16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Char;
                     break;
                 case INT:
-                    masm.ldrs(64, 32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Int;
                     break;
                 case WORD:
                 case REFERENCE:
                 case LONG:
-                    masm.ldr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Long;
                     break;
                 case FLOAT:
-                    masm.fldr(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Float;
                     break;
                 case DOUBLE:
-                    masm.fldr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Double;
                     break;
                 default :
                     throw ProgramError.unexpected("Bad case");
             }
+            masm.load(reg, masm.getAddressInFrame(Aarch64.sp, offset32), loadKind);
         }
 
         protected void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
@@ -641,7 +643,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             Aarch64MacroAssembler masm = new Aarch64MacroAssembler(Platform.target(), null);
-            final int adapterFrameSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
+            int adapterFrameSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
             assert adapterFrameSize % Platform.target().stackAlignment == 0 : "Bad stack alignment";
 
             // On entry to the frame, there is 1 return address in the link register and another at [SP]. The one at the
@@ -650,6 +652,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
             // adjust stack pointer to accommodate baseline args
             masm.sub(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
+            adapterFrameSize += BASELINE_SLOT_SIZE; // Add the RIP slot (16-byte aligned)
 
             int baselineStackOffset = 0;
 
@@ -680,17 +683,9 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             CiKind storeKind;
             switch(kind.asEnum) {
                 case BYTE:
-                    storeKind = CiKind.Byte;
-                    break;
                 case BOOLEAN:
-                    storeKind = CiKind.Boolean;
-                    break;
                 case SHORT:
-                    storeKind = CiKind.Short;
-                    break;
                 case CHAR:
-                    storeKind = CiKind.Char;
-                    break;
                 case INT:
                     storeKind = CiKind.Int;
                     break;
@@ -712,8 +707,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         }
 
         protected void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
-            // Add word size to take into account the slot used by the RIP of the caller
-            int src = adapterFrameSize + optStackOffset32 + Word.size();
+            int src = adapterFrameSize + optStackOffset32;
             int dst = baselineStackOffset32;
             stackCopy(asm, kind, src, dst);
         }

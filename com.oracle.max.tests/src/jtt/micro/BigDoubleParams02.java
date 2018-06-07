@@ -24,19 +24,20 @@ package jtt.micro;
 
 /*
  * @Harness: java
- * @Runs: (0, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d) = 1d;
- * @Runs: (1, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d) = 2d;
- * @Runs: (2, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d) = 3d;
- * @Runs: (3, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d) = 4d;
- * @Runs: (4, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d) = 5d;
- * @Runs: (5, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d) = 6d;
- * @Runs: (6, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d) = 7d;
- * @Runs: (7, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d) = 8d;
- * @Runs: (8, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d) = 9d
+ * @Runs: (0, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 1d;
+ * @Runs: (1, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 2d;
+ * @Runs: (2, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 3d;
+ * @Runs: (3, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 4d;
+ * @Runs: (4, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 5d;
+ * @Runs: (5, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 6d;
+ * @Runs: (6, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 7d;
+ * @Runs: (7, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 8d;
+ * @Runs: (8, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 9d;
+ * @Runs: (9, 1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d, 9d, 10d) = 10d
  */
 public class BigDoubleParams02 {
 
-    public static double test(int choice, double p0, double p1, double p2, double p3, double p4, double p5, double p6, double p7, double p8) {
+    public static double test(int choice, double p0, double p1, double p2, double p3, double p4, double p5, double p6, double p7, double p8, double p9) {
         switch (choice) {
             case 0:
                 return p0;
@@ -56,6 +57,8 @@ public class BigDoubleParams02 {
                 return p7;
             case 8:
                 return p8;
+            case 9:
+                return p9;
         }
         return 42;
     }

@@ -656,7 +656,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         if (NumUtil.isSignedNbit(9, displacement)) {
             return Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement);
         } else {
-            mov32BitConstant(scratchRegister, displacement);
+            mov(scratchRegister, displacement);
             return Aarch64Address.createRegisterOffsetAddress(frameRegister, scratchRegister, false);
         }
     }
