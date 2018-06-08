@@ -38,6 +38,7 @@ public enum RISCVopCodes {
     XORI((byte) 0b0010011),
     LOAD((byte) 0b0000011),
     STORE((byte) 0b0100011),
+    AUIPC((byte) 0b0010111),
     // TODO: fill the rest
 
     // RV64I Base instruction set /////////////////////////////////////////////

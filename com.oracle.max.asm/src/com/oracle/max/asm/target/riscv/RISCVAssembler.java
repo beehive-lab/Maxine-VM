@@ -150,12 +150,15 @@ public class RISCVAssembler extends AbstractAssembler {
     }
 
     /**
+     * AUIPC (add upper immediate to pc) is used to build pc-relative addresses and uses the U-type
+     * format. AUIPC forms a 32-bit offset from the 20-bit U-immediate, filling in the lowest 12 bits with
+     * zeros, adds this offset to the pc, then places the result in register rd.
      *
-     * @param rd
-     * @param imm32
+     * @param rd the regiester to place the result to
+     * @param imm32 the 32-bit offset (with 12LSBs zero)
      */
     public void auipc(CiRegister rd, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        utype(AUIPC, rd, imm32);
     }
 
     /**
