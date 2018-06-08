@@ -47,8 +47,8 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     private void utype(RISCVopCodes opcode, CiRegister rd, int imm32) {
-        assert opcode.getValue() >> 7 == 0;
-        assert rd.number >> 5 == 0;
+        assert opcode.getValue() >> 7 == 0 : opcode.getValue();
+        assert rd.number >> 5 == 0 : rd.number;
         int instruction = opcode.getValue();
         instruction |= rd.number << 7;
         instruction |= imm32 & 0xFFFFF000;
@@ -150,12 +150,15 @@ public class RISCVAssembler extends AbstractAssembler {
     }
 
     /**
+     * AUIPC (add upper immediate to pc) is used to build pc-relative addresses and uses the U-type
+     * format. AUIPC forms a 32-bit offset from the 20-bit U-immediate, filling in the lowest 12 bits with
+     * zeros, adds this offset to the pc, then places the result in register rd.
      *
-     * @param rd
-     * @param imm32
+     * @param rd the regiester to place the result to
+     * @param imm32 the 32-bit offset (with 12LSBs zero)
      */
     public void auipc(CiRegister rd, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        utype(AUIPC, rd, imm32);
     }
 
     /**

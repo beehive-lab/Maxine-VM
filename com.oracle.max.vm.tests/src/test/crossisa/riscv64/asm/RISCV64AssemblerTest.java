@@ -23,7 +23,6 @@ import static com.oracle.max.asm.target.riscv.RISCV64.*;
 
 import org.junit.*;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.riscv.*;
 import com.sun.cri.ci.*;
 
@@ -32,94 +31,45 @@ import test.crossisa.*;
 public class RISCV64AssemblerTest {
 
     private RISCVAssembler asm;
+    private MaxineRISCV64Tester tester = new MaxineRISCV64Tester();
 
     public RISCV64AssemblerTest() {
         CiTarget risc64 = new CiTarget(new RISCV64(), true, 8, 0, 4096, 0, false, false, false, true);
         asm = new RISCVAssembler(risc64);
     }
 
-    private static final boolean[] testValues = new boolean[MaxineRISCV64Tester.NUM_REGS];
-
-    // Each test should set the contents of this array appropriately,
-    // it enables the instruction under test to select the specific bit values for
-    // comparison i.e. for example ignoring upper or lower 16bits for movt, movw
-    // and for ignoring specific bits in the status register etc
-    // concerning whether a carry has been set
-    private static final MaxineRISCV64Tester.BitsFlag[] bitmasks =
-            new MaxineRISCV64Tester.BitsFlag[MaxineRISCV64Tester.NUM_REGS];
-    static {
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+    @Before
+    public void initialiseTest() {
+        tester.resetTestValues();
     }
 
-    private static void initializeTestValues() {
-        for (int i = 0; i < testValues.length; i++) {
-            testValues[i] = false;
-        }
-    }
-
-    // The following values will be updated
-    // to those expected to be found in a register after simulated execution of code.
-    private static final long[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
-
-    private static void initialiseExpectedValues() {
-        for (int i = 0; i < MaxineRISCV64Tester.NUM_REGS; i++) {
-            expectedValues[i] = i;
-        }
-    }
-
-    /**
-     * Sets the expected value of a register and enables it for inspection.
-     *
-     * @param cpuRegister the number of the cpuRegister
-     * @param expectedValue the expected value
-     */
-    private static void setExpectedValue(CiRegister cpuRegister, long expectedValue) {
-        final int index = cpuRegister.number - 1; // -1 to compensate for the zero register
-        expectedValues[index] = expectedValue;
-        testValues[index] = true;
-    }
-
-    private void generateAndTest(long[] expected, boolean[] tests, MaxineRISCV64Tester.BitsFlag[] masks, Buffer codeBuffer) throws Exception {
-        RISCV64CodeWriter code = new RISCV64CodeWriter(codeBuffer);
+    @After
+    public void generateAndTest() throws Exception {
+        RISCV64CodeWriter code = new RISCV64CodeWriter(asm.codeBuffer);
         code.createCodeFile();
-        MaxineRISCV64Tester r = new MaxineRISCV64Tester(expected, tests, masks);
         if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
             System.exit(1);
         }
-        r.assembleStartup();
-        r.compile();
-        r.link();
-        r.runSimulation();
-        if (!r.validateLongRegisters()) {
-            r.reset();
-            assert false : "Error while validating long registers";
-        }
-        r.reset();
+        tester.compile();
+        tester.runSimulation();
+        tester.cleanProcesses();
+        tester.cleanFiles();
+        Assert.assertTrue(tester.validateLongRegisters());
     }
 
     @Test
-    public void lui() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void lui() {
         asm.lui(t0, 0xFF);
         asm.lui(t1, 0xFF << 12);
         asm.lui(t2, 0xFFFFFFFF << 12);
-        setExpectedValue(t0, 0);
-        setExpectedValue(t1, 0xFF000);
-        setExpectedValue(t2, 0xFFFFF000);
-
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0);
+        tester.setExpectedValue(t1, 0xFF000);
+        tester.setExpectedValue(t2, 0xFFFFF000);
     }
 
     @Test
-    public void add() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void add() {
         //store values test case-1
         asm.lui(s1, 0x00011000);
         asm.lui(s2, 0x00022000);
@@ -135,18 +85,13 @@ public class RISCV64AssemblerTest {
         asm.add(t0, s1, s2);
         asm.add(t1, s3, s4);
         asm.add(t2, s5, s6);
-        setExpectedValue(t0, 0x00033000);
-        setExpectedValue(t1, 0x40042000);
-        setExpectedValue(t2, 0XFF000000);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0x00033000);
+        tester.setExpectedValue(t1, 0x40042000);
+        tester.setExpectedValue(t2, 0XFF000000);
     }
 
     @Test
-    public void sub() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void sub() {
         //store values
         asm.lui(s1, 0x00022000);
         asm.lui(s2, 0x00089000);
@@ -155,51 +100,36 @@ public class RISCV64AssemblerTest {
         asm.sub(t0, s2, s1);
         asm.sub(t1, s3, zero);
         asm.sub(t2, zero, zero);
-        setExpectedValue(t0, 0x00067000);
-        setExpectedValue(t1, 0xFFFFF000);
-        setExpectedValue(t2, 0x0);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0x00067000);
+        tester.setExpectedValue(t1, 0xFFFFF000);
+        tester.setExpectedValue(t2, 0x0);
     }
 
     @Test
-    public void slt() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void slt() {
         //store values
         asm.lui(s1, 0XFFFFF000);
         asm.lui(s2, 0X11111000);
 
         asm.slt(t0, s1, s2);
         asm.slt(t1, s2, s1);
-        setExpectedValue(t0, 1);
-        setExpectedValue(t1, 0);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 1);
+        tester.setExpectedValue(t1, 0);
     }
 
     @Test
-    public void sltu() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void sltu() {
         //store values
         asm.lui(s1, 0XFFFFF000);
 
         asm.sltu(t0, s1, zero);
         asm.sltu(t1, zero, s1);
-        setExpectedValue(t0, 0);
-        setExpectedValue(t1, 1);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0);
+        tester.setExpectedValue(t1, 1);
     }
 
     @Test
-    public void xor() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void xor() {
         //store values
         asm.lui(s1, 0XFF0FF000);
         asm.lui(s2, 0X0FF0F000);
@@ -207,34 +137,24 @@ public class RISCV64AssemblerTest {
 
         asm.xor(t0, s1, s2);
         asm.xor(t1, s4, zero);
-        setExpectedValue(t0, 0xF0FF0000);
-        setExpectedValue(t1, 0xFFFFF000);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0xF0FF0000);
+        tester.setExpectedValue(t1, 0xFFFFF000);
     }
 
     @Test
-    public void or() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void or() {
         //store values
         asm.lui(s1, 0xFF0FF000);
         asm.lui(s2, 0x0FF0F000);
 
         asm.or(t0, s1, s2);
         asm.or(t1, s1, zero);
-        setExpectedValue(t0, 0xFFFFF000);
-        setExpectedValue(t1, 0xFF0FF000);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0xFFFFF000);
+        tester.setExpectedValue(t1, 0xFF0FF000);
     }
 
     @Test
-    public void and() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void and() {
         //store values
         asm.lui(s1, 0xAF1F1000);
         asm.lui(s2, 0xF0FF5000);
@@ -244,18 +164,13 @@ public class RISCV64AssemblerTest {
         asm.and(t0, s1, s2);
         asm.and(t1, s1, s3);
         asm.and(t2, s4, s4);
-        setExpectedValue(t0, 0xA01F1000);
-        setExpectedValue(t1, 0x00000000);
-        setExpectedValue(t2, 0xFFFFF000);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0xA01F1000);
+        tester.setExpectedValue(t1, 0x00000000);
+        tester.setExpectedValue(t2, 0xFFFFF000);
     }
 
     @Test
-    public void addi() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void addi() {
         //store values
         asm.lui(s1, 0x33333000);
         asm.lui(s2, 0xFABF1000);
@@ -271,21 +186,16 @@ public class RISCV64AssemblerTest {
         asm.addi(s6, zero, 2);
         asm.addi(t5, s6, 1);
 
-        setExpectedValue(t0, 0x33333222);
-        setExpectedValue(t1, 0xFABF1333);
-        setExpectedValue(t2, 0x00000111);
-        setExpectedValue(t3, 0xFABF122A);
-        setExpectedValue(t4, 0x99992AB3);
-        setExpectedValue(t5, 3);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0x33333222);
+        tester.setExpectedValue(t1, 0xFABF1333);
+        tester.setExpectedValue(t2, 0x00000111);
+        tester.setExpectedValue(t3, 0xFABF122A);
+        tester.setExpectedValue(t4, 0x99992AB3);
+        tester.setExpectedValue(t5, 3);
     }
 
     @Test
-    public void andi() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void andi() {
         //store values
         asm.lui(s1, 0x33333000);
         asm.addi(s2, s1, 0x00000B3A); // s2 = 0x33332B3A
@@ -299,19 +209,14 @@ public class RISCV64AssemblerTest {
         asm.andi(t2, s6, 0x0);
         asm.andi(t3, zero, 0x22222222);
 
-        setExpectedValue(t0, 0x33332822);
-        setExpectedValue(t1, 0x11ABC1B0);
-        setExpectedValue(t2, 0x0);
-        setExpectedValue(t3, 0x0);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0x33332822);
+        tester.setExpectedValue(t1, 0x11ABC1B0);
+        tester.setExpectedValue(t2, 0x0);
+        tester.setExpectedValue(t3, 0x0);
     }
 
     @Test
-    public void ori() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void ori() {
         //store values
         asm.lui(s1, 0x33333000);
         asm.addi(s2, s1, 0x00000B3A); // s2 = 0x33332B3A
@@ -323,18 +228,13 @@ public class RISCV64AssemblerTest {
         asm.ori(t0, s2, 0x00000C22);
         asm.ori(t1, s4, 0x00000524);
         asm.ori(t2, s6, 0x00000AAA);
-        setExpectedValue(t0, 0xfffffF3A);
-        setExpectedValue(t1, 0x33333564);
-        setExpectedValue(t2, 0xFFFFFBBB);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0xfffffF3A);
+        tester.setExpectedValue(t1, 0x33333564);
+        tester.setExpectedValue(t2, 0xFFFFFBBB);
     }
 
     @Test
-    public void xori() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void xori() {
         //store values
 
         asm.lui(s1, 0x33333000);
@@ -345,17 +245,12 @@ public class RISCV64AssemblerTest {
 
         asm.xori(t0, s2, 0x00000111);
         asm.xori(t1, s4, 0x00000F1F);
-        setExpectedValue(t0, 0x33332a2b);
-        setExpectedValue(t1, 0xdddde4a5);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0x33332a2b);
+        tester.setExpectedValue(t1, 0xdddde4a5);
     }
 
     @Test
-    public void slti() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void slti() {
         //store values
         asm.lui(s1, 0x33333000);
         asm.addi(s2, s1, 0x00000B3A);
@@ -368,18 +263,13 @@ public class RISCV64AssemblerTest {
         asm.slti(t0, s2, 0x00220444);
         asm.slti(t1, s4, 0xFFFFFFFF);
         asm.slti(t2, s6, 0xAA22344A);
-        setExpectedValue(t0, 0);
-        setExpectedValue(t1, 1);
-        setExpectedValue(t2, 0);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t0, 0);
+        tester.setExpectedValue(t1, 1);
+        tester.setExpectedValue(t2, 0);
     }
 
     @Test
-    public void sw() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void sw() {
         //store values
         asm.lui(s1, 0x11111000);
         asm.lui(s2, 0xFFFFF000);
@@ -399,18 +289,13 @@ public class RISCV64AssemblerTest {
         asm.sw(sp, s5, 0);
         asm.lw(t3, sp, 0);
 
-        setExpectedValue(t1, 0x11111000);
-        setExpectedValue(t2, 0xFFFFF111);
-        setExpectedValue(t3, 0x33332B3A);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t1, 0x11111000);
+        tester.setExpectedValue(t2, 0xFFFFF111);
+        tester.setExpectedValue(t3, 0x33332B3A);
     }
 
     @Test
-    public void sh() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void sh() {
         //store values
         asm.lui(s1, 0x11111000);
         asm.lui(s2, 0xAB122000);
@@ -430,18 +315,13 @@ public class RISCV64AssemblerTest {
         asm.sh(sp, s5, 0);
         asm.lh(t3, sp, 0);
 
-        setExpectedValue(t1, 0x00001000);
-        setExpectedValue(t2, 0x00002131);
-        setExpectedValue(t3, 0x00002B3A);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t1, 0x00001000);
+        tester.setExpectedValue(t2, 0x00002131);
+        tester.setExpectedValue(t3, 0x00002B3A);
     }
 
     @Test
-    public void sb() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void sb() {
         //store values
         asm.lui(s1, 0x11111000);
         asm.lui(s2, 0xAB122000);
@@ -461,18 +341,13 @@ public class RISCV64AssemblerTest {
         asm.sb(sp, s5, 0);
         asm.lb(t3, sp, 0);
 
-        setExpectedValue(t1, 0x00);
-        setExpectedValue(t2, 0x31);
-        setExpectedValue(t3, 0x3A);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t1, 0x00);
+        tester.setExpectedValue(t2, 0x31);
+        tester.setExpectedValue(t3, 0x3A);
     }
 
     @Test
-    public void lhu() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void lhu() {
         //store values
         asm.lui(s1, 0xFFFFF000);
         asm.addi(s2, s1, 0x00000FFF);
@@ -493,18 +368,13 @@ public class RISCV64AssemblerTest {
         asm.sh(sp, s6, 0);
         asm.lhu(t3, sp, 0);
 
-        setExpectedValue(t1, 0xEFFF);
-        setExpectedValue(t2, 0x2131);
-        setExpectedValue(t3, 0x2B3A);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t1, 0xEFFF);
+        tester.setExpectedValue(t2, 0x2131);
+        tester.setExpectedValue(t3, 0x2B3A);
     }
 
     @Test
-    public void lbu() throws Exception {
-        initialiseExpectedValues();
-        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-        initializeTestValues();
-        asm.codeBuffer.reset();
+    public void lbu() {
         //store values
         asm.lui(s1, 0xFFFFF000);
         asm.addi(s2, s1, 0x00000FFF);
@@ -525,9 +395,8 @@ public class RISCV64AssemblerTest {
         asm.sb(sp, s6, 0);
         asm.lbu(t3, sp, 0);
 
-        setExpectedValue(t1, 0xFF);
-        setExpectedValue(t2, 0x31);
-        setExpectedValue(t3, 0x3A);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        tester.setExpectedValue(t1, 0xFF);
+        tester.setExpectedValue(t2, 0x31);
+        tester.setExpectedValue(t3, 0x3A);
     }
 }
