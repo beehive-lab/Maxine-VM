@@ -47,8 +47,8 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     private void utype(RISCVopCodes opcode, CiRegister rd, int imm32) {
-        assert opcode.getValue() >> 7 == 0;
-        assert rd.number >> 5 == 0;
+        assert opcode.getValue() >> 7 == 0 : opcode.getValue();
+        assert rd.number >> 5 == 0 : rd.number;
         int instruction = opcode.getValue();
         instruction |= rd.number << 7;
         instruction |= imm32 & 0xFFFFF000;
