@@ -19,8 +19,12 @@
  */
 package test.crossisa.riscv64.asm;
 
+import com.sun.cri.ci.CiRegister;
 import com.sun.max.vm.runtime.FatalError;
 import test.crossisa.*;
+
+import static test.crossisa.CrossISATester.BitsFlag.All64Bits;
+import static test.crossisa.CrossISATester.BitsFlag.Lower32Bits;
 
 public class MaxineRISCV64Tester extends CrossISATester {
     public static final int NUM_REGS = 32;
@@ -41,12 +45,9 @@ public class MaxineRISCV64Tester extends CrossISATester {
         }
     }
 
-    public MaxineRISCV64Tester(long[] expected, boolean[] test, BitsFlag[] range) {
+    public MaxineRISCV64Tester() {
         super();
         initializeQemu();
-        bitMasks = range;
-        expectedLongRegisters = expected;
-        testLongRegisters = test;
     }
 
     @Override
@@ -89,6 +90,60 @@ public class MaxineRISCV64Tester extends CrossISATester {
             return qemuProcessBuilder;
         }
         return new ProcessBuilder("qemu-system-riscv64", "-M", "virt", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    @Override
+    public void setExpectedValue(CiRegister cpuRegister, long expectedValue) {
+        final int index = cpuRegister.getEncoding() - 1; // -1 to compensate for the zero register
+        expectedLongRegisters[index] = expectedValue;
+        testLongRegisters[index] = true;
+        bitMasks[index] = All64Bits;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    @Override
+    public void setExpectedValue(CiRegister cpuRegister, int expectedValue) {
+        final int index = cpuRegister.getEncoding() - 1; // -1 to compensate for the zero register
+        expectedLongRegisters[index] = expectedValue;
+        testLongRegisters[index] = true;
+        bitMasks[index] = Lower32Bits;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param fpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    @Override
+    public void setExpectedValue(CiRegister fpuRegister, float expectedValue) {
+        final int index = fpuRegister.getEncoding() - 1; // -1 to compensate for the zero register
+        expectedFloatRegisters[index] = expectedValue;
+        testFloatRegisters[index] = true;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param fpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    @Override
+    public void setExpectedValue(CiRegister fpuRegister, double expectedValue) {
+        final int index = fpuRegister.getEncoding() - 1; // -1 to compensate for the zero register
+        expectedDoubleRegisters[index] = expectedValue;
+        testDoubleRegisters[index] = true;
     }
 
     /**
