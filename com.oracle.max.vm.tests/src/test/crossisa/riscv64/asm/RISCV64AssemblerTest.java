@@ -399,4 +399,112 @@ public class RISCV64AssemblerTest {
         tester.setExpectedValue(t2, 0x31);
         tester.setExpectedValue(t3, 0x3A);
     }
+
+    @Test
+    public void slli() throws Exception {
+        //store values
+        asm.lui(s2, 0xFFFFF000);
+        asm.addi(s4, s4, 0x11111BBB);
+        asm.lui(s5, 0x11111000);
+        asm.addi(s6, s5, 0x00000222);
+
+        asm.slli(s2, s2, 3);
+        asm.slli(s4, s4, 2);
+        asm.slli(s6, s6, 0);
+        tester.setExpectedValue(s2, 0xFFFF8000);
+        tester.setExpectedValue(s4, 0xFFFFeeec);
+        tester.setExpectedValue(s6, 0x11111222);
+    }
+
+    @Test
+    public void srli() throws Exception {
+        //store values
+        asm.lui(s2, 0x11111000);
+        asm.lui(s3, 0x11111000);
+        asm.addi(s4, s3, 0x00000222);
+        asm.lui(s5, 0x33333000);
+        asm.addi(s6, s5, 0x00000B3A); // s2 = 0x33332B3A
+
+        asm.srli(s2, s2, 3);
+        asm.srli(s4, s4, 2);
+        asm.srli(s6, s6, 4);
+        tester.setExpectedValue(s2, 0x2222200);
+        tester.setExpectedValue(s4, 0x4444488);
+        tester.setExpectedValue(s6, 0x33332b3);
+    }
+
+    @Test
+    public void srl() throws Exception {
+        //store values
+        asm.lui(s1, 0xABAB1);
+        asm.addi(s2, s1, 0x0000011A);
+        asm.lui(s3, 0x11111000);
+        asm.addi(s4, s3, 0x00000222);
+        asm.lui(s5, 0x33333000);
+        asm.addi(s6, s5, 0x00000B3A);
+
+        asm.srl(t0, s2, s1);
+        asm.srl(t1, s4, s3);
+        asm.srl(t2, s6, s5);
+        tester.setExpectedValue(t0, 0x00000558);
+        tester.setExpectedValue(t1, 0x00000444);
+        tester.setExpectedValue(t2, 0x00000333);
+    }
+
+    @Test
+    public void sll() throws Exception {
+        //store values
+        asm.lui(s1, 0xABAB1);
+        asm.addi(s2, s1, 0x0000011A);
+        asm.lui(s3, 0x00001000);
+        asm.addi(s4, s3, 0x00000223);
+        asm.lui(s5, 0x00000003);
+
+        asm.sll(t0, s2, s1);
+        asm.sll(t1, s4, s3);
+        asm.sll(t2, s5, s5);
+        tester.setExpectedValue(t0, 0x15623400);
+        tester.setExpectedValue(t1, 0x488c0000);
+        tester.setExpectedValue(t2, 0x0);
+    }
+
+    @Test
+    public void sltiu() throws Exception {
+        //store values
+        asm.lui(s1, 0x33333000 );
+        asm.addi(s2, s1, 0x00000B3A);
+        asm.lui(s3, 0x33333000);
+        asm.addi(s4, s3, 0x00000444);
+        asm.lui(s5, 0xFFFFF000);
+        asm.addi(s6, s5, 0x00000111);
+
+        asm.sltiu(t0, s2, 0x00220444);
+        asm.sltiu(t1, s4, 0xFFFFFFFF);
+        asm.sltiu(t2, s6, 0xAA22344A);
+        tester.setExpectedValue(t0, 0);
+        tester.setExpectedValue(t1, 1);
+        tester.setExpectedValue(t2, 0);
+    }
+
+    @Test
+    public void sra() throws Exception {
+        //store values
+        asm.lui(s1, 0xABAB1);
+        asm.addi(s2, s1, 0x0000011A);
+        asm.lui(s3, 0x11111000);
+        asm.addi(s4, s3, 0x00000222);
+        asm.lui(s5, 0x33333000);
+        asm.addi(s6, s5, 0x00000B3A);
+
+        asm.addi(s7, s7, 0x00000001);
+        asm.addi(s8, s8, 0x00000003);
+        asm.addi(s9, s9, 0x0000001F);
+
+        asm.sra(t0, s2, s7);
+        asm.sra(t1, s4, s8);
+        asm.sra(t2, s6, s9);
+        tester.setExpectedValue(t0, 0x0005588d);
+        tester.setExpectedValue(t1, 0x02222244);
+        tester.setExpectedValue(t2, 0x0);
+    }
 }
