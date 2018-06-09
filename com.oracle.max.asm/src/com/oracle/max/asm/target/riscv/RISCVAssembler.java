@@ -327,7 +327,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void addi(CiRegister rd, CiRegister rs, int imm32) {
-        itype(ADDI, rd, 0, rs, imm32);
+        itype(COMP, rd, 0, rs, imm32);
     }
 
     /**
@@ -337,7 +337,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void slti(CiRegister rd, CiRegister rs, int imm32) {
-        itype(SLTI, rd, 3, rs, imm32);
+        itype(COMP, rd, 3, rs, imm32);
     }
 
     /**
@@ -347,7 +347,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void sltiu(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(COMP, rd, 3, rs, imm32);
     }
 
     /**
@@ -357,7 +357,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void xori(CiRegister rd, CiRegister rs, int imm32) {
-        itype(XORI, rd, 4, rs, imm32);
+        itype(COMP, rd, 4, rs, imm32);
     }
 
     /**
@@ -367,7 +367,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void ori(CiRegister rd, CiRegister rs, int imm32) {
-        itype(ORI, rd, 6, rs, imm32);
+        itype(COMP, rd, 6, rs, imm32);
     }
 
     /**
@@ -377,7 +377,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void andi(CiRegister rd, CiRegister rs, int imm32) {
-        itype(ANDI, rd, 7, rs, imm32);
+        itype(COMP, rd, 7, rs, imm32);
     }
 
     /**
@@ -387,7 +387,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void slli(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(COMP, rd, 1, rs, imm32);
     }
 
     /**
@@ -397,7 +397,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void srli(CiRegister rd, CiRegister rs, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        itype(COMP, rd, 5, rs, imm32);
     }
 
     /**
@@ -437,7 +437,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void sll(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(COMP, rd, 1, rs1, rs2, 0);
     }
 
     /**
@@ -477,7 +477,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void srl(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(COMP, rd, 5, rs1, rs2, 0);
     }
 
     /**
@@ -487,7 +487,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void sra(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+        rtype(SLT, rd, 5, rs1, rs2, 32);
     }
 
     /**
