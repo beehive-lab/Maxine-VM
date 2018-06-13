@@ -381,7 +381,7 @@ def inspect(args):
         # The -E option propagates the environment variables into the sudo process
         mx.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd, cwd=cwd)
     else:
-        mx.run(cmd, cwd=cwd)
+        mx.run(cmd, cwd=cwd, env=ldenv)
 
 def inspectoragent(args):
     """launch the Inspector agent
@@ -396,7 +396,7 @@ def inspectoragent(args):
         # The -E option propagates the environment variables into the sudo process
         mx.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
     else:
-        mx.run(cmd)
+        mx.run(cmd, env=ldenv)
 
 def jnigen(args):
     """(re)generate Java source for native function interfaces (i.e. JNI, JMM, VM)
