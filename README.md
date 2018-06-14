@@ -2,6 +2,8 @@
 
 #### Updates
 
+* 2018-06-14: Maxine VM 2.4.1 Release
+  * Bug fix that enables the c1xgraal configuration
 * 2018-05-31: Maxine VM 2.4.0 Release
   * Initial port to Aarch64 (runs Hello World)
   * Implemented Aarch64 C1X port
