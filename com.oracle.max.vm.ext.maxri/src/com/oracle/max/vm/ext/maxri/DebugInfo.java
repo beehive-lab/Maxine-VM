@@ -358,7 +358,7 @@ public final class DebugInfo {
                 bci = in.decodeUInt();
             }
             assert method != null;
-            assert bci == -1 || (bci >= 0 && bci < method.code().length);
+            assert bci == -1 || (bci >= 0 && bci <= method.code().length);
             if (!cpc.doCodePos((ClassMethodActor) method, bci)) {
                 return count;
             }
@@ -442,7 +442,7 @@ public final class DebugInfo {
             bci = in.decodeUInt();
         }
         assert method != null;
-        assert bci == -1 || (bci >= 0 && bci < method.code().length);
+        assert bci == -1 || (bci >= 0 && bci <= method.code().length);
 
         int numLocals = in.decodeUInt();
         int numStack = in.decodeUInt();
@@ -570,7 +570,7 @@ public final class DebugInfo {
     static class TestCPC implements CodePosClosure {
         public boolean doCodePos(ClassMethodActor method, int bci) {
             assert method != null;
-            assert bci == -1 || (bci >= 0 && bci < method.code().length);
+            assert bci == -1 || (bci >= 0 && bci <= method.code().length);
             return true;
         }
     }
