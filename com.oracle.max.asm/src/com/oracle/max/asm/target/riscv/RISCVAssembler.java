@@ -138,6 +138,37 @@ public class RISCVAssembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    /**
+     * Emits an instruction of type B-type.
+     *
+     * <pre>
+     *     | imm[12|10:5] | rs2 | rs1 | funct3 | imm[4:1|11] | opcode |
+     *     |--------------|-----|-----|--------|-------------|--------|
+     *     |       7      |  5  |  5  |    3   |      5      |    7   |
+     * </pre>
+     * @param opcode
+     * @param rd
+     * @param funct3
+     * @param rs1
+     * @param rs2
+     * @param imm32
+     */
+    private void btype(RISCVopCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+        assert opcode.getValue() >> 7 == 0;
+        assert ((byte) funct3) >> 3 == 0;
+        assert rs1.number >> 5 == 0;
+        assert rs2.number >> 5 == 0;
+        int instruction = opcode.getValue();
+        instruction |= ((imm32 >> 11) & 1) << 7;
+        instruction |= ((imm32 >> 1) & 0xF) << 8;
+        instruction |= funct3 << 12;
+        instruction |= rs1.number << 15;
+        instruction |= rs2.number << 20;
+        instruction |= ((imm32 >> 5) & 0x3F) << 25;
+        instruction |= ((imm32 >> 12) & 1) << 31;
+        emitInt(instruction);
+    }
+
     // RV32I Base instruction set /////////////////////////////////////////////
 
     /**
@@ -187,7 +218,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void beq(CiRegister rs1, CiRegister rs2, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        btype(BRNC, 0, rs1, rs2, imm32);
     }
 
     /**
@@ -197,7 +228,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void bne(CiRegister rs1, CiRegister rs2, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        btype(BRNC, 1, rs1, rs2, imm32);
     }
 
     /**
