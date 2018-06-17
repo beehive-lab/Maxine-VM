@@ -57,7 +57,7 @@ public class RISCV64AssemblerTest {
         tester.cleanFiles();
         Assert.assertTrue(tester.validateLongRegisters());
     }
-
+    
     @Test
     public void lui() {
         asm.lui(t0, 0xFF);
@@ -506,5 +506,47 @@ public class RISCV64AssemblerTest {
         tester.setExpectedValue(t0, 0x0005588d);
         tester.setExpectedValue(t1, 0x02222244);
         tester.setExpectedValue(t2, 0x0);
+    }
+
+    @Test
+    public void beq() throws Exception {
+        //store values
+        asm.lui(s1, 0x33333000);
+        asm.lui(s2, 0x44444000);
+        asm.lui(s3, 0x33333000);
+
+        asm.addi(t1, t1, 0x0);
+        asm.beq(s1, s2, 0x8); // not equal
+        asm.addi(t1, t1, 0x1);
+        asm.addi(t2, t2, 0x2);
+
+        asm.addi(t3, t3, 0x0);
+        asm.beq(s1, s3, 0x8); // equal
+        asm.addi(t3, t3, 0x1);
+        asm.addi(t4, t4, 0x2);
+
+        tester.setExpectedValue(t1, 0x1);
+        tester.setExpectedValue(t3, 0x0);
+    }
+
+    @Test
+    public void bne() throws Exception {
+        //store values
+        asm.lui(s1, 0x33333000);
+        asm.lui(s2, 0x44444000);
+        asm.lui(s3, 0x33333000);
+
+        asm.addi(t1, t1, 0x0);
+        asm.bne(s1, s2, 0x8);
+        asm.addi(t1, t1, 0x1);
+        asm.addi(t2, t2, 0x2);
+
+        asm.addi(t3, t3, 0x0);
+        asm.bne(s1, s3, 0x8);
+        asm.addi(t3, t3, 0x1);
+        asm.addi(t4, t4, 0x2);
+
+        tester.setExpectedValue(t1, 0x0);
+        tester.setExpectedValue(t3, 0x1);
     }
 }
