@@ -57,7 +57,7 @@ public class RISCV64AssemblerTest {
         tester.cleanFiles();
         Assert.assertTrue(tester.validateLongRegisters());
     }
-    
+
     @Test
     public void lui() {
         asm.lui(t0, 0xFF);
@@ -404,7 +404,7 @@ public class RISCV64AssemblerTest {
     public void slli() throws Exception {
         //store values
         asm.lui(s2, 0xFFFFF000);
-        asm.addi(s4, s4, 0x11111BBB);
+        asm.addi(s4, zero, 0x11111BBB);
         asm.lui(s5, 0x11111000);
         asm.addi(s6, s5, 0x00000222);
 
@@ -515,15 +515,15 @@ public class RISCV64AssemblerTest {
         asm.lui(s2, 0x44444000);
         asm.lui(s3, 0x33333000);
 
-        asm.addi(t1, t1, 0x0);
+        asm.addi(t1, zero, 0x0);
         asm.beq(s1, s2, 0x8); // not equal
         asm.addi(t1, t1, 0x1);
-        asm.addi(t2, t2, 0x2);
+        asm.addi(t2, zero, 0x2);
 
-        asm.addi(t3, t3, 0x0);
+        asm.addi(t3, zero, 0x0);
         asm.beq(s1, s3, 0x8); // equal
         asm.addi(t3, t3, 0x1);
-        asm.addi(t4, t4, 0x2);
+        asm.addi(t4, zero, 0x2);
 
         tester.setExpectedValue(t1, 0x1);
         tester.setExpectedValue(t3, 0x0);
@@ -536,15 +536,15 @@ public class RISCV64AssemblerTest {
         asm.lui(s2, 0x44444000);
         asm.lui(s3, 0x33333000);
 
-        asm.addi(t1, t1, 0x0);
+        asm.addi(t1, zero, 0x0);
         asm.bne(s1, s2, 0x8);
         asm.addi(t1, t1, 0x1);
-        asm.addi(t2, t2, 0x2);
+        asm.addi(t2, zero, 0x2);
 
-        asm.addi(t3, t3, 0x0);
+        asm.addi(t3, zero, 0x0);
         asm.bne(s1, s3, 0x8);
         asm.addi(t3, t3, 0x1);
-        asm.addi(t4, t4, 0x2);
+        asm.addi(t4, zero, 0x2);
 
         tester.setExpectedValue(t1, 0x0);
         tester.setExpectedValue(t3, 0x1);
