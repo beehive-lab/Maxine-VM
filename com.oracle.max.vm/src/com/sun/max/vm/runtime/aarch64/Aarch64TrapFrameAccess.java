@@ -31,7 +31,7 @@ import com.sun.max.vm.runtime.*;
 
 import static com.oracle.max.asm.target.aarch64.Aarch64.*;
 import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.runtime.amd64.AMD64SafepointPoll.LATCH_REGISTER;
+import static com.sun.max.vm.runtime.aarch64.Aarch64SafepointPoll.LATCH_REGISTER;
 
 
 public class Aarch64TrapFrameAccess extends TrapFrameAccess {
