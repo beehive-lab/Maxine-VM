@@ -549,4 +549,87 @@ public class RISCV64AssemblerTest {
         tester.setExpectedValue(t1, 0x0);
         tester.setExpectedValue(t3, 0x1);
     }
+
+    @Test
+    public void blt() throws Exception {
+        //store values
+        asm.lui(s1, 0x33333000);
+        asm.lui(s2, 0x44444000);
+        asm.lui(s3, 0x33333000);
+
+        asm.addi(t1, t1, 0x0);
+        asm.blt(s1, s2, 0x8);
+        asm.addi(t1, t1, 0x1);
+        asm.addi(t2, t2, 0x2);
+
+        asm.addi(t3, t3, 0x0);
+        asm.blt(s2, s1, 0x8);
+        asm.addi(t3, t3, 0x1);
+        asm.addi(t4, t4, 0x2);
+
+        tester.setExpectedValue(t1, 0x0);
+        tester.setExpectedValue(t3, 0x1);
+    }
+
+    @Test
+    public void bltu() throws Exception {
+        //store values
+        asm.lui(s1, 0x33333000);
+        asm.lui(s2, 0x44444000);
+
+        asm.addi(t1, t1, 0x0);
+        asm.bltu(s1, s2, 0x8);
+        asm.addi(t1, t1, 0x1);
+        asm.addi(t2, t2, 0x2);
+
+        asm.addi(t3, t3, 0x0);
+        asm.bltu(s2, s1, 0x8);
+        asm.addi(t3, t3, 0x1);
+        asm.addi(t4, t4, 0x2);
+
+        tester.setExpectedValue(t1, 0x0);
+        tester.setExpectedValue(t3, 0x1);
+    }
+
+    @Test
+    public void bge() throws Exception {
+        //store values
+        asm.lui(s1, 0x33333000);
+        asm.lui(s2, 0x44444000);
+        asm.lui(s3, 0x33333000);
+
+        asm.addi(t1, t1, 0x0);
+        asm.bge(s2, s1, 0x8);
+        asm.addi(t1, t1, 0x1);
+        asm.addi(t2, t2, 0x2);
+
+        asm.addi(t3, t3, 0x0);
+        asm.bge(s1, s2, 0x8);
+        asm.addi(t3, t3, 0x1);
+        asm.addi(t4, t4, 0x2);
+
+        tester.setExpectedValue(t1, 0x0);
+        tester.setExpectedValue(t3, 0x1);
+    }
+
+    @Test
+    public void bgeu() throws Exception {
+        //store values
+        asm.lui(s1, 0x33333000);
+        asm.lui(s2, 0x44444000);
+        asm.lui(s3, 0x33333000);
+
+        asm.addi(t1, t1, 0x0);
+        asm.bgeu(s2, s1, 0x8);
+        asm.addi(t1, t1, 0x1);
+        asm.addi(t2, t2, 0x2);
+
+        asm.addi(t3, t3, 0x0);
+        asm.bgeu(s1, s2, 0x8);
+        asm.addi(t3, t3, 0x1);
+        asm.addi(t4, t4, 0x2);
+
+        tester.setExpectedValue(t1, 0x0);
+        tester.setExpectedValue(t3, 0x1);
+    }
 }
