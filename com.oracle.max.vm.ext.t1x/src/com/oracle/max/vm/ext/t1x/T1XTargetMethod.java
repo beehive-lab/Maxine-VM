@@ -30,7 +30,6 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
-import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.util.*;
 
@@ -1257,7 +1256,7 @@ public class T1XTargetMethod extends TargetMethod {
                 int safepointPos = safepoints.posAt(safepointIndex);
                 if (curPos <= safepointPos && safepointPos < succPos) {
                     if (safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
-                        if (isAMD64()) {
+                        if (isAMD64() || isAARCH64()) {
                             // On x86 the safepoint position of a call *is* the return position
                             templateCallReturnPos = safepointPos;
                         } else if (isARM()) {
