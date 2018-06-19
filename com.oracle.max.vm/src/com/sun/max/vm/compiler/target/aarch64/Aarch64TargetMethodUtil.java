@@ -360,4 +360,10 @@ public final class Aarch64TargetMethodUtil {
         }
         return true;
     }
+
+    public static Pointer returnAddressPointer(StackFrameCursor frame) {
+        TargetMethod tm = frame.targetMethod();
+        Pointer sp = frame.sp();
+        return sp.plus(tm.frameSize());
+    }
 }
