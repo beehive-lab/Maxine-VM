@@ -1632,12 +1632,18 @@ public class Stubs {
 
             int instruction = Aarch64MacroAssembler.movzHelper(64, Aarch64.r16, (int) disp & 0xffff, 0);
             patchAddr.writeInt(0, instruction);
-            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 16) & 0xffff, 16);
-            patchAddr.writeInt(4, instruction);
-            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 32) & 0xffff, 32);
-            patchAddr.writeInt(8, instruction);
-            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 48) & 0xffff, 48);
-            patchAddr.writeInt(12, instruction);
+            if (disp >> 16 != 0) {
+                instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 16) & 0xffff, 16);
+                patchAddr.writeInt(4, instruction);
+                if (disp >> 32 != 0) {
+                    instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 32) & 0xffff, 32);
+                    patchAddr.writeInt(8, instruction);
+                    if (disp >> 48 != 0) {
+                        instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 48) & 0xffff, 48);
+                        patchAddr.writeInt(12, instruction);
+                    }
+                }
+            }
 
             ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 16);
         }
