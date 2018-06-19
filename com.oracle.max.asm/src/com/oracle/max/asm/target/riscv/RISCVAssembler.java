@@ -238,7 +238,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void blt(CiRegister rs1, CiRegister rs2, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        btype(BRNC, 4, rs1, rs2, imm32);
     }
 
     /**
@@ -248,7 +248,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void bge(CiRegister rs1, CiRegister rs2, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        btype(BRNC, 5, rs1, rs2, imm32);
     }
 
     /**
@@ -258,7 +258,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void bltu(CiRegister rs1, CiRegister rs2, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        btype(BRNC, 6, rs1, rs2, imm32);
     }
 
     /**
@@ -268,7 +268,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void bgeu(CiRegister rs1, CiRegister rs2, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        btype(BRNC, 7, rs1, rs2, imm32);
     }
 
     /**
