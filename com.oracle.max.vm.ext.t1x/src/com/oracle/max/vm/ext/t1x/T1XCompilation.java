@@ -58,7 +58,7 @@ import com.sun.max.vm.verifier.*;
  */
 public abstract class T1XCompilation {
 
-    private static final boolean DEBUG_MARKERS = false;
+    private static boolean debugMarkers;
     protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
 
     protected static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();
@@ -82,6 +82,8 @@ public abstract class T1XCompilation {
     protected static final CiAddress[] FP_SLOTS_CACHE = new CiAddress[(FP_SLOTS_CACHE_END_OFFSET - FP_SLOTS_CACHE_START_OFFSET) / JVMS_SLOT_SIZE];
 
     static {
+        String value = System.getenv("ENABLE_DEBUG_METHODS_ID");
+        debugMarkers = value != null && !value.isEmpty();
         for (int i = 0; i < SP_WORD_ADDRESSES_CACHE.length; i++) {
             SP_WORD_ADDRESSES_CACHE[i] = new CiAddress(WordUtil.archKind(), SP, i * JVMS_SLOT_SIZE);
         }
@@ -585,7 +587,7 @@ public abstract class T1XCompilation {
     }
 
     protected void start(T1XTemplateTag tag) {
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, tag.ordinal() | (0xbeef << 16));
         }
         T1XTemplate template = getTemplate(tag);
@@ -647,13 +649,13 @@ public abstract class T1XCompilation {
         assert template != null;
         assert assertArgsAreInitialized();
 
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, 0xd00dd00d);
         }
 
         emitAndRecordSafepoints(template);
 
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, 0xbeefd00d);
         }
 
@@ -698,7 +700,7 @@ public abstract class T1XCompilation {
         }
         template = null;
         initializedArgs = 0;
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, 0xdeadd00d);
         }
     }
@@ -2299,7 +2301,7 @@ public abstract class T1XCompilation {
         T1XTemplateTag tag = INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
         do_profileExceptionSeen();
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, index | (0xbeaf << 16));
         }
         try {
