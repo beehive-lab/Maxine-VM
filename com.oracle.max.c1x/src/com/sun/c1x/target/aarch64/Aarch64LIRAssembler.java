@@ -94,10 +94,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         switch (op) {
             case HERE:
                 tasm.recordSafepoint(codePos(), info);
-                int beforeLea = masm.codeBuffer.position();
                 masm.adr(dst.asRegister(), 0);
-                int afterLea = masm.codeBuffer.position();
-                masm.adr(dst.asRegister(), beforeLea - afterLea, beforeLea);
                 break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
