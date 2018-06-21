@@ -1261,7 +1261,14 @@ public class T1XTargetMethod extends TargetMethod {
                             // On x86 the safepoint position of a call *is* the return position
                             templateCallReturnPos = safepointPos;
                         } else if (isARM()) {
-                            templateCallReturnPos += 16;
+                            /* On ARMv7 we do a call like this:
+                                movw r12, constLOW
+                                movt r12, constHIGH
+                                add  r12, r12, PC
+                                blx r12
+                                RETURN POINT <------ return address
+                             */
+                            templateCallReturnPos = safepointPos + 16;
                         } else {
                             throw unimplISA();
                         }
