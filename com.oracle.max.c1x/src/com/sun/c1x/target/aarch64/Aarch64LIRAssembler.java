@@ -252,10 +252,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         CiConstant constant = (CiConstant) src;
         CiAddress addr = asAddress(dst);
         CiKind storeKind = setScratchRegister(constant);
-        if (info != null) {
-            tasm.recordImplicitException(codePos(), info);
-        }
         masm.store(scratchRegister, addr, storeKind);
+        if (info != null) {
+            tasm.recordImplicitException(codePos() - 4, info);
+        }
     }
 
     @Override
@@ -319,10 +319,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert dest.isRegister() : "dest=" + dest;
 
         CiAddress addr = (CiAddress) src;
-        if (info != null) {
-            tasm.recordImplicitException(codePos(), info);
-        }
         masm.load(dest.asRegister(), addr, kind);
+        if (info != null) {
+            tasm.recordImplicitException(codePos() - 4, info);
+        }
     }
 
     @Override
@@ -1313,8 +1313,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         if (C1XOptions.NullCheckUniquePc) {
             masm.nop();
         }
-        tasm.recordImplicitException(codePos(), info);
         masm.nullCheck(src.asRegister());
+        tasm.recordImplicitException(codePos() - 4, info);
     }
 
     @Override
@@ -1648,8 +1648,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 case NullCheck: {
                     CiValue pointer = operands[inst.x().index];
-                    tasm.recordImplicitException(codePos(), info);
                     masm.nullCheck(pointer.asRegister());
+                    tasm.recordImplicitException(codePos() - 4, info);
                     break;
                 }
                 case Align: {
