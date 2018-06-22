@@ -36,12 +36,20 @@ public enum RISCVopCodes {
     STORE((byte) 0b0100011),
     AUIPC((byte) 0b0010111),
     BRNC((byte) 0b1100011),
-    // TODO: fill the rest
+    JAL((byte) 0b1101111),
+    JALR((byte) 0b1100111),
 
     // RV64I Base instruction set /////////////////////////////////////////////
 
-    LWU((byte) 0b0000011);
-    // TODO: fill the rest
+    LWU((byte) 0b0000011),
+    COMP64((byte) 0b0011011),
+    SLLW((byte) 0b0111011),
+    SRLW((byte) 0b0111011),
+    ADDW((byte) 0b0111011),
+    SUBW((byte) 0b0111011),
+    SRAW((byte) 0b0111011),
+    LD((byte) 0b0000011),
+    SD((byte) 0b0100011);
 
     public byte getValue() {
         return value;
