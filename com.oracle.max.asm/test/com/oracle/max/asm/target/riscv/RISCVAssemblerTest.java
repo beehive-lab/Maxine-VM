@@ -40,7 +40,7 @@ public class RISCVAssemblerTest {
 
     private int assemble(String instruction) {
         try {
-            String[] cmd = { "/bin/sh", "-c", "echo \"" + instruction + "\" | riscv64-unknown-elf-as -- && riscv64-unknown-elf-objdump -D a.out | tail -n 1 | awk '{print $2}'" };
+            String[] cmd = {"/bin/sh", "-c", "echo \"" + instruction + "\" | riscv64-unknown-elf-as -- && riscv64-unknown-elf-objdump -D a.out | tail -n 1 | awk '{print $2}'"};
             Process p = Runtime.getRuntime().exec(cmd);
             BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
             p.waitFor();
@@ -70,7 +70,7 @@ public class RISCVAssemblerTest {
 
     @Test
     public void lui() {
-        final int immediates[] = {0, 0xff, 0x0fff, 0xf000, 0xff_f000, 0xffff_ffff};
+        final int[] immediates = {0, 0xff, 0x0fff, 0xf000, 0xff_f000, 0xffff_ffff};
         for (CiRegister dest: RISCV64.cpuRegisters) {
             for (int imm32: immediates) {
                 asm.codeBuffer.reset();
@@ -83,7 +83,7 @@ public class RISCVAssemblerTest {
 
     @Test
     public void auipc() {
-        final int immediates[] = {0, 0xff, 0x0fff, 0xf000, 0xff_f000, 0xffff_ffff};
+        final int[] immediates = {0, 0xff, 0x0fff, 0xf000, 0xff_f000, 0xffff_ffff};
         for (CiRegister dest: RISCV64.cpuRegisters) {
             for (int imm32: immediates) {
                 asm.codeBuffer.reset();
@@ -96,7 +96,7 @@ public class RISCVAssemblerTest {
 
     @Test
     public void lb() {
-        final int immediates[] = {0, 0xff, 0x07ff};
+        final int[] immediates = {0, 0xff, 0x07ff};
         for (CiRegister dest: RISCV64.cpuRegisters) {
             for (CiRegister src : RISCV64.cpuRegisters) {
                 for (int imm32 : immediates) {
@@ -108,6 +108,5 @@ public class RISCVAssemblerTest {
             }
         }
     }
-
 
 }

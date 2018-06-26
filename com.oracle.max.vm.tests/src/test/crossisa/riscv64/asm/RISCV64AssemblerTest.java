@@ -472,7 +472,7 @@ public class RISCV64AssemblerTest {
     @Test
     public void sltiu() throws Exception {
         //store values
-        asm.lui(s1, 0x33333000 );
+        asm.lui(s1, 0x33333000);
         asm.addi(s2, s1, 0x00000B3A);
         asm.lui(s3, 0x33333000);
         asm.addi(s4, s3, 0x00000444);

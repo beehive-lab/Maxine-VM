@@ -45,7 +45,7 @@ public class Aarch64AssemblerTest {
 
     private int assemble(String instruction) {
         try {
-            String[] cmd = { "/bin/sh", "-c", "echo \"" + instruction + "\" | aarch64-linux-gnu-as -- && aarch64-linux-gnu-objdump -D a.out | tail -n 1 | awk '{print $2}'" };
+            String[] cmd = {"/bin/sh", "-c", "echo \"" + instruction + "\" | aarch64-linux-gnu-as -- && aarch64-linux-gnu-objdump -D a.out | tail -n 1 | awk '{print $2}'"};
             Process p = Runtime.getRuntime().exec(cmd);
             BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
             p.waitFor();
@@ -81,7 +81,7 @@ public class Aarch64AssemblerTest {
 
     @Test
     public void add() {
-        final int immediates[] = {0, 0xff, 0x0fff, 0xf000, 0xff_f000};
+        final int[] immediates = {0, 0xff, 0x0fff, 0xf000, 0xff_f000};
         for (CiRegister dest: Aarch64.cpuRegisters) {
             for (CiRegister src: Aarch64.cpuRegisters) {
                 for (int imm: immediates) {
