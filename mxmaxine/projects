@@ -13,7 +13,7 @@ library@JUNIT@urls=http://repo1.maven.org/maven2/junit/junit/4.12/junit-4.12.jar
 library@JUNIT@eclipse.container=org.eclipse.jdt.junit.JUNIT_CONTAINER/4
 
 library@CHECKSTYLE@path=lib/checkstyle-6.11.2-all.jar
-library@CHECKSTYLE@urls=https://downloads.sourceforge.net/project/checkstyle/checkstyle/6.11.2/checkstyle-6.11.2-all.jar
+library@CHECKSTYLE@urls=https://github.com/checkstyle/checkstyle/releases/download/checkstyle-6.11.2/checkstyle-6.11.2-all.jar
 
 library@JLF_ICONS@path=com.oracle.max.tele.ins/jlfgr-1_0.jar
 
