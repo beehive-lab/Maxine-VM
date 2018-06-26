@@ -141,7 +141,12 @@ public class RegisterConfigs {
             if (os == OS.LINUX || os == OS.DARWIN) {
                 allocatable = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23,
                                                 s24, s25, s26, s27};
-                parameters = new CiRegister[] {r0, r1, r2, r3, s0, s1, s2, s3, s4, s5, s6, s7};
+                // In accordance to the ARMv7 AAPCS r0-r3:
+                // The first four registers r0-r3 (a1-a4) are used to pass argument values into a subroutine and to
+                // return a result value from a function.
+                // registers s0-s15 (d0-d7, q0-q3) do not need to be preserved (and can be used for passing arguments or
+                // returning results in standard procedure-call variants)
+                parameters = new CiRegister[] {r0, r1, r2, r3, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15};
                 allRegistersExceptLatch = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r8, ARMV7.r9, ARMV7.r11, ARMV7.r12, ARMV7.r13, ARMV7.r14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9,
                                                             s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
                 roleMap.put(CPU_SP, ARMV7.r13);

@@ -2537,7 +2537,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         }
     }
 
-    public void wrong_C1X_jtt_BC_dload_9() throws Exception {
+    public void test_C1X_jtt_BC_dload_9() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
@@ -2565,7 +2565,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         }
     }
 
-    public void wrong_C1X_jtt_BC_dload_10() throws Exception {
+    public void test_C1X_jtt_BC_dload_10() throws Exception {
         Code.resetBootCodeRegion();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
