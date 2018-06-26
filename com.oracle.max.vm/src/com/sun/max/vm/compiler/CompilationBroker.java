@@ -164,7 +164,7 @@ public class CompilationBroker {
      */
     private RuntimeCompiler defaultCompiler;
 
-    private static final boolean BACKGROUND_COMPILATION = false;
+    private static final boolean BACKGROUND_COMPILATION = true;
 
     public boolean needsAdapters() {
         return baselineCompiler != null;
@@ -478,11 +478,20 @@ public class CompilationBroker {
 
             try {
                 if (doCompile) {
-                    TargetMethod tm = compilation.compile();
-                    VMTI.handler().methodCompiled(cma);
+										TargetMethod tm = null;
+										if (BACKGROUND_COMPILATION && nature == Nature.OPT) {
+												synchronized(pending) {
+														pending.add(compilation);
+														pending.notify();
+												}
+										} else {
+												tm = compilation.compile();
+												VMTI.handler().methodCompiled(cma);
+										}
                     return tm;
                 } else {
                     // return result from other thread (which will have send the VMTI event)
+										// TODO: we don't ever want to be waiting on a compilation
                     return compilation.get();
                 }
             } catch (Throwable t) {
@@ -681,7 +690,8 @@ public class CompilationBroker {
         if (oldMethod == newMethod || newMethod == null) {
             // No compiled method available yet, maybe compilation is pending.
             // We don't want to see another counter overflow in the near future.
-            mpo.entryBackedgeCount = 10000;
+						// TODO: this will need to change
+            mpo.entryBackedgeCount = 5000;
         } else {
             assert newMethod != null : oldMethod;
             logPatching(cma, oldMethod, newMethod);
@@ -846,8 +856,8 @@ public class CompilationBroker {
             if (GCOnRecompilation) {
                 System.gc();
             }
-            compilation.compile();
-            compilation = null;
+            TargetMethod tm = compilation.compile();
+						VMTI.handler().methodCompiled(tm.classMethodActor);
         }
     }
 
