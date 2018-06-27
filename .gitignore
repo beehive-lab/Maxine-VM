@@ -48,6 +48,8 @@ mx/
 *.o
 *.bin
 *.elf
+# Don't ignore directories matching the pattern
+!*.elf/
 
 # Debugging related
 codebuffer.c

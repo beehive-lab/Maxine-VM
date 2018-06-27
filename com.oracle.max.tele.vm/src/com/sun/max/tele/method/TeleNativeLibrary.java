@@ -276,6 +276,20 @@ public abstract class TeleNativeLibrary extends AbstractVmHolder implements MaxN
             ELFHeader header = ELFLoader.readELFHeader(raf);
             ELFSectionHeaderTable elfSHT = ELFLoader.readSHT(raf, header);
             ELFSymbolLookup elfSym = new ELFSymbolLookup(raf, header, elfSHT);
+            if (elfSym.symbolMap.isEmpty()) { // Debug symbols are probably in a separate .debug file
+                for (ELFSectionHeaderTable.Entry entry : elfSHT.entries) {
+                    if (entry.getName().equals(".note.gnu.build-id")) {
+                        final ELFNoteGNUbuildID note = new ELFNoteGNUbuildID(entry);
+                        final String buildID = note.getBuildID(raf, header);
+                        String debugPath = "/usr/lib/debug/.build-id/" + buildID.substring(0, 2) + "/" + buildID.substring(2) + ".debug";
+                        raf = new RandomAccessFile(debugPath, "r");
+                        header = ELFLoader.readELFHeader(raf);
+                        elfSHT = ELFLoader.readSHT(raf, header);
+                        elfSym = new ELFSymbolLookup(raf, header, elfSHT);
+                        break;
+                    }
+                }
+            }
             for (Map.Entry<String, List<ELFSymbolTable.Entry>> mapEntry : elfSym.symbolMap.entrySet()) {
                 List<ELFSymbolTable.Entry> entryList = mapEntry.getValue();
                 for (ELFSymbolTable.Entry entry : entryList) {
