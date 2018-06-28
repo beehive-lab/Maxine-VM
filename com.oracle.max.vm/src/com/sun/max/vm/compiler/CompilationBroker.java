@@ -658,12 +658,6 @@ public class CompilationBroker {
             mpo.entryBackedgeCount = 1000;
             return;
         }
-        if (Compilation.isCompilationRunningInCurrentThread()) {
-            logCounterOverflow(mpo, "Stopped recompilation because compilation is running in current thread");
-            // We don't want to see another counter overflow in the near future
-            mpo.entryBackedgeCount = 1000;
-            return;
-        }
 
         ClassMethodActor cma = mpo.method.classMethodActor;
         TargetMethod oldMethod = mpo.method;
@@ -690,8 +684,7 @@ public class CompilationBroker {
         if (oldMethod == newMethod || newMethod == null) {
             // No compiled method available yet, maybe compilation is pending.
             // We don't want to see another counter overflow in the near future.
-						// TODO: this will need to change
-            mpo.entryBackedgeCount = 5000;
+            mpo.entryBackedgeCount = 1000;
         } else {
             assert newMethod != null : oldMethod;
             logPatching(cma, oldMethod, newMethod);
