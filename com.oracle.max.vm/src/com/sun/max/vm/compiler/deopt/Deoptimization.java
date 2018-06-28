@@ -393,7 +393,7 @@ public class Deoptimization extends VmOperation {
                 // the safepoint position. As a result, in such cases we need to move the ip to the safepoint to make
                 // verifyReferenceMaps work.
                 if (tm.findSafepointIndex(info.ip.vmIP()) < 0) {
-                    final int indexOfNextDirectCall = tm.safepoints().closestIndexOf(tm.posFor(ip));
+                    final int indexOfNextDirectCall = tm.safepoints().indexOf(tm.posFor(ip), true);
                     assert indexOfNextDirectCall != -1;
                     ip = tm.codeAt(tm.safepoints().posAt(indexOfNextDirectCall));
                 }
