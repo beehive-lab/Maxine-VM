@@ -386,7 +386,18 @@ public class Deoptimization extends VmOperation {
             Stubs.unwind(info.ip.asPointer(), info.sp, info.fp);
         } else {
             if (StackReferenceMapPreparer.VerifyRefMaps || deoptLogger.enabled() || DeoptimizeALot != 0) {
-                StackReferenceMapPreparer.verifyReferenceMaps(VmThread.current(), info.ip.vmIP(), info.sp, info.fp);
+                CodePointer ip = info.ip.vmIP();
+                TargetMethod tm = ip.toTargetMethod();
+                assert tm != null;
+                // The unrolling happens at the cause position of a safepoint, which in the case of calls doesn't match
+                // the safepoint position. As a result, in such cases we need to move the ip to the safepoint to make
+                // verifyReferenceMaps work.
+                if (tm.findSafepointIndex(info.ip.vmIP()) < 0) {
+                    final int indexOfNextDirectCall = tm.safepoints().closestIndexOf(tm.posFor(ip));
+                    assert indexOfNextDirectCall != -1;
+                    ip = tm.codeAt(tm.safepoints().posAt(indexOfNextDirectCall));
+                }
+                StackReferenceMapPreparer.verifyReferenceMaps(VmThread.current(), ip, info.sp, info.fp);
             }
 
             // Re-enable safepoints

@@ -305,6 +305,34 @@ public final class Safepoints {
     }
 
     /**
+     * Finds the closest safepoint after a given code position.
+     *
+     * @param pos the position to search for
+     * @return the index of the closest safepoint after {@code pos} or -1 if no such safepoint exists
+     */
+    public int closestIndexOf(int pos) {
+        // Use binary search since safepoints are sorted by position
+        int left = 0;
+        assert safepoints != null : "Safepoints:closestNextIndexOf null";
+        int right = safepoints.length;
+        while (right > left) {
+            final int middle = left + ((right - left) >> 1);
+            int p = posAt(middle);
+            if (p > pos) {
+                right = middle;
+            } else if (p == pos) {
+                return middle;
+            } else {
+                left = middle + 1;
+            }
+        }
+        if (posAt(right) > pos) {
+            return right;
+        }
+        return -1;
+    }
+
+    /**
      * Returns the index of the first direct call safepoint at or after a specified start index.
      * If no such safepoint exists then -1 is returned.
      * <p>
