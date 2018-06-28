@@ -1094,7 +1094,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     public int findSafepointIndex(int pos) {
-        return safepoints.indexOf(pos);
+        return safepoints.indexOf(pos, false);
     }
 
     @Override
