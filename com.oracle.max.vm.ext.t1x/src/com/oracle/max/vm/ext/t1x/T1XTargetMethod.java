@@ -33,6 +33,7 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.aarch64.Aarch64;
 import com.oracle.max.criutils.TTY;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
 import com.sun.cri.bytecode.*;
@@ -1037,7 +1038,7 @@ public class T1XTargetMethod extends TargetMethod {
         Pointer returnRIP = current.fp().plus(dispToRip);
         int slotSize = Word.size();
         if (isAARCH64()) { // On Aarch64 stack is 16-byte aligned, so we use this as the slot size
-            slotSize = platform().target.stackAlignment;
+            slotSize = target().stackAlignment;
         }
         Pointer callerFP = sfw.readWord(returnRIP, -slotSize).asPointer();
         if (MaxineVM.isHosted()) {
@@ -1164,7 +1165,8 @@ public class T1XTargetMethod extends TargetMethod {
         }
 
         // add alignment slots
-        int numberOfSlots = 1 + templateSlots; // one extra word for the caller FP
+        int fpSlots = target().arch.isAarch64() ? 2 : 1; // one (or two) extra word(s) for the caller FP
+        int numberOfSlots = fpSlots + templateSlots;
         int unalignedSize = (numberOfSlots + (nonParamLocals * STACK_SLOTS_PER_JVMS_SLOT)) * STACK_SLOT_SIZE;
         int alignedSize = target().alignFrameSize(unalignedSize);
         int alignmentSlots = (alignedSize - unalignedSize) / STACK_SLOT_SIZE;
@@ -1175,10 +1177,18 @@ public class T1XTargetMethod extends TargetMethod {
         // add caller FP slot with placeholder value
         int callerFPIndex = info.slotsCount();
         info.addSlot(WordUtil.ZERO, "callerFP");
+        // in Aarch64 FP and LR are pushed separately and each one takes a whole JVMS_SLOT
+        if (target().arch.isAarch64()) {
+            addSlotPadding(info, "callerFP (pad)");
+        }
 
         // add caller return address slot with placeholder value
         int returnAddressIndex = info.slotsCount();
         info.addSlot(WordUtil.ZERO, "returnIP");
+        // in Aarch64 FP and LR are pushed separately and each one takes a whole JVMS_SLOT
+        if (target().arch.isAarch64()) {
+            addSlotPadding(info, "returnIP (pad)");
+        }
 
         // add parameter slots
         for (int i = paramLocals - 1; i >= 0; i--) {
