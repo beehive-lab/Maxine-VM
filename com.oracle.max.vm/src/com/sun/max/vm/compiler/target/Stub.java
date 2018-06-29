@@ -226,6 +226,8 @@ public final class Stub extends TargetMethod {
             return AMD64TargetMethodUtil.returnAddressPointer(frame);
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.returnAddressPointer(frame);
+        } else if (platform().isa == ISA.Aarch64) {
+            return Aarch64TargetMethodUtil.returnAddressPointer(frame);
         } else {
             throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.returnAddressPointer");
         }
