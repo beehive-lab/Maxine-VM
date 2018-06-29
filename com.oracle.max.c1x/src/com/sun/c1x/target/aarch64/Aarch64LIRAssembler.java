@@ -141,10 +141,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         }
     }
 
-    private void swapReg(CiRegister a, CiRegister b) {
-        masm.xchgptr(a, b);
-    }
-
     @Override
     public void emitTraps() {
         for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {

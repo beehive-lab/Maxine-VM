@@ -45,30 +45,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         add(32, dest, left, right);
     }
 
-    public void incrementl(CiRegister reg, int value) {
-        if (value == 0) {
-            return;
-        }
-        assert reg != Aarch64.r16;
-        addq(reg, value);
-    }
-
-    public void decrementl(CiRegister reg, int value) {
-        assert reg == Aarch64.r16 || reg != Aarch64.r17 : "Reg " + reg;
-        mov32BitConstant(Aarch64.r17, value);
-        sub(32, reg, reg, Aarch64.r17);
-    }
-
-    public void decrementl(CiAddress dst, int value) {
-        if (value == 0) {
-            return;
-        }
-        load(Aarch64.r16, dst, CiKind.Int);
-        mov64BitConstant(Aarch64.r17, value);
-        sub(64, Aarch64.r17, Aarch64.r16, Aarch64.r17);
-        store(Aarch64.r17, dst, CiKind.Int);
-    }
-
     public void align(int modulus) {
         if (codeBuffer.position() % modulus != 0) {
             assert modulus % 4 == 0;
@@ -1490,19 +1466,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     public void insertForeverLoop() {
         b(0);
-    }
-
-    public void asr(CiRegister ciRegister, CiRegister dest, int i) {
-        // TODO Port from ARMv7
-        throw new Error("unimplemented");
-    }
-
-    public void xchgptr(CiRegister src1, CiRegister src2) {
-        CiRegister tmp = Aarch64.r17;
-        assert src1 != tmp && src2 != tmp;
-        mov(64, tmp, src1);
-        mov(64, src1, src2);
-        mov(64, src2, tmp);
     }
 
     public void store(CiRegister src, CiAddress addr, CiKind kind) {
