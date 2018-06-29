@@ -1424,7 +1424,7 @@ public class Stubs {
         FatalError.unexpected("stub should be overwritten");
     }
 
-    // TODO: Is ARM (+Aarch64) version working?
+    // TODO: Is ARM version working?
     @HOSTED_ONLY
     private Stub genUnroll(CiValue[] unrollArgs) {
         if (platform().isa == ISA.AMD64) {
@@ -1486,9 +1486,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.crashme();
-            // We are called from Java so we do need to push the LR.
-            asm.push(Aarch64.linkRegister);
+
             asm.mov(64, asm.scratchRegister, Aarch64.sp);
             asm.sub(64, asm.scratchRegister, asm.scratchRegister, Aarch64.r1);
             asm.mov(64, Aarch64.sp, asm.scratchRegister);
