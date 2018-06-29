@@ -99,7 +99,7 @@ public class CompilationBroker {
     private static boolean needOfflineAdapters = false;
 
     private static boolean BackgroundCompilation = false;
-		private boolean backgroundCompilationEnabled = false;
+		private static boolean backgroundCompilationEnabled = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
@@ -648,6 +648,12 @@ public class CompilationBroker {
             mpo.entryBackedgeCount = 1000;
             return;
         }
+				if (!backgroundCompilationEnabled && Compilation.isCompilationRunningInCurrentThread()) {
+            logCounterOverflow(mpo, "Stopped recompilation because compilation is running in current thread");
+            // We don't want to see another counter overflow in the near future
+            mpo.entryBackedgeCount = 1000;
+            return;
+				}
 
         ClassMethodActor cma = mpo.method.classMethodActor;
         TargetMethod oldMethod = mpo.method;
