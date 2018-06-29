@@ -28,6 +28,7 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.NumUtil;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.aarch64.Aarch64Assembler.*;
 import com.oracle.max.vm.ext.maxri.*;
@@ -198,7 +199,8 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         int index = objectLiterals.size();
         objectLiterals.add(value);
         patchInfo.addObjectLiteral(buf.position(), index);
-        asm.adr(scratch, 0); // this gets patched
+        asm.adr(scratch, 0); // this gets patched by fixup
+        asm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
         asm.ldr(64, dst, Aarch64Address.createBaseRegisterOnlyAddress(scratch));
     }
 
@@ -416,7 +418,8 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         protectionLiteralIndex = objectLiterals.size();
         objectLiterals.add(T1XTargetMethod.PROTECTED);
         int dispPos = buf.position();
-        asm.adr(scratch, 0); // this gets patched
+        asm.adr(scratch, 0); // this gets patched by fixup
+        asm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
         asm.str(64, Aarch64.zr, Aarch64Address.createBaseRegisterOnlyAddress(scratch));
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
     }
@@ -842,9 +845,19 @@ public class Aarch64T1XCompilation extends T1XCompilation {
                 assert objectLiterals.get(index) != null;
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
-                //int disp = ldrDisp(dispPos, dispFromCodeStart); see below
                 // create a PC relative address in scratch
-                asm.adr(scratch, dispFromCodeStart - dispPos);
+                final long offset = dispFromCodeStart - dispPos;
+                if (NumUtil.isSignedNbit(21, offset)) {
+                    asm.adr(scratch, (int) offset);
+                    asm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+                } else {
+                    asm.adr(scratch, 0);
+                    int startPos = buf.position();
+                    asm.mov64BitConstant(scratch2, offset);
+                    asm.add(64, scratch, scratch, scratch2);
+                    int endPos = buf.position();
+                    assert endPos - startPos <= Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS : endPos - startPos;
+                }
             } else {
                 throw new InternalError("Unknown PatchInfoAARCH64." + tag);
             }
@@ -858,6 +871,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
             for (CiRegister reg : Aarch64.cpuRegisters) {
                 Aarch64Assembler asm = new Aarch64Assembler(target(), null);
                 asm.adr(scratch, dispFromCodeStart - pos);
+                asm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 asm.ldr(64, reg, Aarch64Address.createBaseRegisterOnlyAddress(scratch));
                 // pattern must be compatible with Aarch64InstructionDecoder.patchRelativeInstruction
                 byte[] pattern = asm.codeBuffer.close(true);

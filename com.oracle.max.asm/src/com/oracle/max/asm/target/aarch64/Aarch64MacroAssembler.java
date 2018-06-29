@@ -35,6 +35,8 @@ import com.sun.cri.ri.*;
 
 public class Aarch64MacroAssembler extends Aarch64Assembler {
 
+    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 5;
+
     public Aarch64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
     }

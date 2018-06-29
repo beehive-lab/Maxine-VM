@@ -713,6 +713,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                 }
                 masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 rreg = Aarch64.d30;
                 masm.load(rreg, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), kind);
             }
@@ -1052,6 +1053,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         assert false : "not tested";
                         tasm.recordDataReferenceInCode(CiConstant.forFloat(c.asFloat()));
                         masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                        masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                         masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
                         masm.ucomisd(32, reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
@@ -1059,6 +1061,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         assert false : "not tested";
                         tasm.recordDataReferenceInCode(CiConstant.forDouble(c.asDouble()));
                         masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                        masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                         masm.fldr(64, Aarch64.d15, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
                         masm.ucomisd(64, reg1, Aarch64.d15, opr1.kind, CiKind.Double);
                         break;
@@ -1868,7 +1871,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 assert false : "Object inlining not supported";
             } else {
                 tasm.recordDataReferenceInCode(obj);
-                masm.adr(scratchRegister, 0); // This gets patched
+                masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 masm.load(dst, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), obj.kind);
             }
         }
