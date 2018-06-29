@@ -1498,10 +1498,8 @@ public class Stubs {
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
-            // should never reach here ...
-            asm.mov64BitConstant(asm.scratchRegister, 0xffffffff);
-            asm.jmp(asm.scratchRegister);
             // Should never reach here
+            asm.crashme();
             asm.hlt();
 
             byte[] code = asm.codeBuffer.close(true);
