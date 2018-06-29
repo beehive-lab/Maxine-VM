@@ -760,9 +760,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         } else {
             assert kind.isInt();
             CiAddress laddr = asAddress(left);
+            masm.load(scratchRegister, laddr, kind);
             if (right.isRegister()) {
                 CiRegister rreg = right.asRegister();
-                masm.load(scratchRegister, laddr, kind);
                 switch (code) {
                     case Add:
                         masm.add(32, scratchRegister, scratchRegister, rreg);
@@ -774,21 +774,21 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         throw Util.shouldNotReachHere();
 
                 }
-                masm.store(scratchRegister, laddr, kind);
             } else {
                 assert right.isConstant();
                 int c = ((CiConstant) right).asInt();
                 switch (code) {
                     case Add:
-                        masm.increment32(laddr, c);
+                        masm.add(32, scratchRegister, scratchRegister, (long) c);
                         break;
                     case Sub:
-                        masm.increment32(laddr, -c);
+                        masm.sub(32, scratchRegister, scratchRegister, (long) c);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
             }
+            masm.store(scratchRegister, laddr, kind);
         }
     }
 

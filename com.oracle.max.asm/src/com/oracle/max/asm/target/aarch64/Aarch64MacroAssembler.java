@@ -643,15 +643,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         add(32, reg, reg, (long) delta);
     }
 
-    public void increment32(CiAddress dst, int delta) {
-        if (delta == 0) {
-            return;
-        }
-        load(r17, dst, CiKind.Int);
-        increment32(r17, delta);
-        store(r17, dst, CiKind.Int);
-    }
-
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
         for (CiRegister r : csl.registers) {
             int displacement = csl.offsetOf(r) + frameToCSA;
