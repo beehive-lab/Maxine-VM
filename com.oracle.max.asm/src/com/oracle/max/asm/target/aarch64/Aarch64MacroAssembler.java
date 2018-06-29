@@ -824,6 +824,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      */
     @Override
     public void add(int size, CiRegister dst, CiRegister src, int immediate) {
+        assert immediate != Integer.MIN_VALUE;
         if (immediate < 0) {
             sub(size, dst, src, -immediate);
         } else if (!dst.equals(src) || immediate != 0) {
@@ -841,6 +842,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      */
     @Override
     public void sub(int size, CiRegister dst, CiRegister src, int immediate) {
+        assert immediate != Integer.MIN_VALUE;
         if (immediate < 0) {
             add(size, dst, src, -immediate);
         } else if (!dst.equals(src) || immediate != 0) {
