@@ -489,7 +489,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         if (lowMatch == 0) {
             asm.cmp(32, scratch, highMatch);
         } else {
-            asm.sub(32, scratch, scratch, lowMatch);
+            asm.sub(32, scratch, scratch, (long) lowMatch);
             asm.cmp(32, scratch, highMatch - lowMatch);
         }
         pos = buf.position();
