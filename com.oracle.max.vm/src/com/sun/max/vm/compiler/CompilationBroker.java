@@ -28,6 +28,7 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.compiler.CompilationThreadPool.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
@@ -67,11 +68,6 @@ public class CompilationBroker {
     private static int RCT = 5000;
 
     /**
-     * A queue of pending compilations.
-     */
-    protected final LinkedList<Compilation> pending = new LinkedList<Compilation>();
-
-    /**
      * The baseline compiler.
      */
     public final RuntimeCompiler baselineCompiler;
@@ -81,13 +77,17 @@ public class CompilationBroker {
      */
     public final RuntimeCompiler optimizingCompiler;
 
+		/**
+		 * Thread pool of compilation threads
+		 */
+		private CompilationThreadPool compilationThreadPool;
+
     /**
      * Other compilers registered with {@link #addCompiler}.
      */
     private HashMap<String, RuntimeCompiler> altCompilers = new HashMap<String, RuntimeCompiler>();
 
     private static boolean opt;
-    private static boolean GCOnRecompilation;
     private static boolean FailOverCompilation = true;
     private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
@@ -98,14 +98,17 @@ public class CompilationBroker {
     @HOSTED_ONLY
     private static boolean needOfflineAdapters = false;
 
+    private static boolean BackgroundCompilation = false;
+		private boolean backgroundCompilationEnabled = false;
+
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
         addFieldOption("-XX:", "RCT", CompilationBroker.class, "Set the recompilation threshold for methods. Use 0 to disable recompilation. (default: " + RCT + ").");
-        addFieldOption("-XX:", "GCOnRecompilation", CompilationBroker.class, "Force GC before every re-compilation.");
         addFieldOption("-XX:", "FailOverCompilation", CompilationBroker.class, "Retry failed compilations with another compiler (if available).");
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
+				addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
 
     @RESET
@@ -163,8 +166,6 @@ public class CompilationBroker {
      * The default compiler to use.
      */
     private RuntimeCompiler defaultCompiler;
-
-    private static final boolean BACKGROUND_COMPILATION = true;
 
     public boolean needsAdapters() {
         return baselineCompiler != null;
@@ -337,14 +338,7 @@ public class CompilationBroker {
             }
         }
 
-        if (isHosted()) {
-            if (BACKGROUND_COMPILATION) {
-                // launch a compiler thread if background compilation is supported (currently no)
-                final CompilationThread compilationThread = new CompilationThread();
-                compilationThread.setDaemon(true);
-                compilationThread.start();
-            }
-        } else if (phase == MaxineVM.Phase.STARTING) {
+        if (phase == MaxineVM.Phase.STARTING) {
             if (opt) {
                 defaultCompiler = optimizingCompiler;
             }
@@ -352,14 +346,13 @@ public class CompilationBroker {
             if (RCT != 0 && baselineCompiler != null) {
                 MethodInstrumentation.enable(RCT);
             }
-
-            if (BACKGROUND_COMPILATION) {
-                // launch a compiler thread if background compilation is supported (currently no)
-                final CompilationThread compilationThread = new CompilationThread();
-                compilationThread.setDaemon(true);
-                compilationThread.start();
-            }
         } else if (phase == Phase.RUNNING) {
+            if (BackgroundCompilation) {
+								backgroundCompilationEnabled = true;
+                compilationThreadPool = new CompilationThreadPool();
+                compilationThreadPool.setDaemon(true);
+                compilationThreadPool.startThreads();
+            }
             if (PrintCodeCacheMetrics != 0) {
                 Runtime.getRuntime().addShutdownHook(new Thread("CodeCacheMetricsPrinter") {
                     @Override
@@ -479,11 +472,8 @@ public class CompilationBroker {
             try {
                 if (doCompile) {
 										TargetMethod tm = null;
-										if (BACKGROUND_COMPILATION && nature == Nature.OPT) {
-												synchronized(pending) {
-														pending.add(compilation);
-														pending.notify();
-												}
+										if (backgroundCompilationEnabled && nature == Nature.OPT) {
+												compilationThreadPool.addCompilationToQueue(compilation);
 										} else {
 												tm = compilation.compile();
 												VMTI.handler().methodCompiled(cma);
@@ -796,63 +786,6 @@ public class CompilationBroker {
         }
     }
 
-    /**
-     * This class implements a daemon thread that performs compilations in the background. Depending on the compiler
-     * configuration, multiple compilation threads may be working in parallel.
-     */
-    protected class CompilationThread extends Thread {
-
-        protected CompilationThread() {
-            super("compile");
-            setDaemon(true);
-        }
-
-        /**
-         * The current compilation being performed by this thread.
-         */
-        Compilation compilation;
-
-        /**
-         * Continuously polls the compilation queue for work, performing compilations as they are removed from the
-         * queue.
-         */
-        @Override
-        public void run() {
-            while (true) {
-                try {
-                    compileOne();
-                } catch (InterruptedException e) {
-                    // do nothing.
-                } catch (Throwable t) {
-                    Log.print("Exception during compilation of " + compilation.classMethodActor);
-                    t.printStackTrace();
-                }
-            }
-        }
-
-        /**
-         * Polls the compilation queue and performs a single compilation.
-         *
-         * @throws InterruptedException if the thread was interrupted waiting on the queue
-         */
-        void compileOne() throws InterruptedException {
-            compilation = null;
-            synchronized (pending) {
-                while (compilation == null) {
-                    compilation = pending.poll();
-                    if (compilation == null) {
-                        pending.wait();
-                    }
-                }
-            }
-            compilation.compilingThread = Thread.currentThread();
-            if (GCOnRecompilation) {
-                System.gc();
-            }
-            TargetMethod tm = compilation.compile();
-						VMTI.handler().methodCompiled(tm.classMethodActor);
-        }
-    }
 
     /**
      * Helper class for patching any direct call sites on the stack corresponding to a target method
