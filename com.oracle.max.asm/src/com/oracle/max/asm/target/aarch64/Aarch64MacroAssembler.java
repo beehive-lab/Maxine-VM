@@ -599,10 +599,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 super.add(size, dest, source, (int) delta);
             }
         } else {
-            assert dest != scratchRegister;
-            assert source != scratchRegister;
-            mov(scratchRegister, delta);
-            add(size, dest, source, scratchRegister);
+            CiRegister deltaRegister;
+            if (source == scratchRegister) {
+                deltaRegister = Aarch64.r17;
+            } else {
+                deltaRegister = scratchRegister;
+            }
+
+            mov(deltaRegister, delta);
+            add(size, dest, source, deltaRegister);
         }
     }
 
@@ -617,10 +622,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 super.sub(size, dest, source, (int) delta);
             }
         } else {
-            assert dest != scratchRegister;
-            assert source != scratchRegister;
-            mov(scratchRegister, delta);
-            sub(size, dest, source, scratchRegister);
+            CiRegister deltaRegister;
+            if (source == scratchRegister) {
+                deltaRegister = Aarch64.r17;
+            } else {
+                deltaRegister = scratchRegister;
+            }
+
+            mov(deltaRegister, delta);
+            sub(size, dest, source, deltaRegister);
         }
     }
 
