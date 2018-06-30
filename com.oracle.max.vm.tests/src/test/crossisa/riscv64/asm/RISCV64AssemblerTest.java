@@ -685,6 +685,28 @@ public class RISCV64AssemblerTest {
         tester.setExpectedValue(s5, 0x44444000);
     }
 
+    @Test
+    public void srai() throws Exception {
+        //store values
+        asm.lui(s1, 0xABAB1);
+        asm.addi(s2, s1, 0x0000011A);
+        asm.lui(s3, 0x11111000);
+        asm.addi(s4, s3, 0x00000222);
+        asm.lui(s5, 0x33333000);
+        asm.addi(s6, s5, 0x00000B3A);
+
+        //asm.addi(s7, s7, 0x00000001);
+        //asm.addi(s8, s8, 0x00000003);
+        //asm.addi(s9, s9, 0x0000001F);
+
+        asm.srai(t0, s2, 0x00000001);
+        asm.srai(t1, s4, 0x00000003);
+        asm.srai(t2, s6, 0x0000001F);
+        tester.setExpectedValue(t0, 0x0005588d);
+        tester.setExpectedValue(t1, 0x02222244);
+        tester.setExpectedValue(t2, 0x0);
+    }
+
     // RV64I Base instruction set /////////////////////////////////////////////
 
     @Test
@@ -889,5 +911,23 @@ public class RISCV64AssemblerTest {
         tester.setExpectedValue(t1, 0x11111000);
         tester.setExpectedValue(t2, 0xFFFFF111);
         tester.setExpectedValue(t3, 0x33332B3A);
+    }
+
+    @Test
+    public void sraiw() throws Exception {
+        //store values
+        asm.lui(s1, 0xABAB1);
+        asm.addi(s2, s1, 0x0000011A);
+        asm.lui(s3, 0x11111000);
+        asm.addi(s4, s3, 0x00000222);
+        asm.lui(s5, 0x33333000);
+        asm.addi(s6, s5, 0x00000B3A);
+
+        asm.sraiw(t0, s2, 0x00000001);
+        asm.sraiw(t1, s4, 0x00000003);
+        asm.sraiw(t2, s6, 0x0000001F);
+        tester.setExpectedValue(t0, 0x0005588d);
+        tester.setExpectedValue(t1, 0x02222244);
+        tester.setExpectedValue(t2, 0x0);
     }
 }
