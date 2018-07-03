@@ -474,6 +474,7 @@ public class CompilationBroker {
 										TargetMethod tm = null;
 										if (backgroundCompilationEnabled && nature == Nature.OPT) {
 												compilationThreadPool.addCompilationToQueue(compilation);
+												compilation.relinquishOwnership();
 										} else {
 												tm = compilation.compile();
 												VMTI.handler().methodCompiled(cma);
