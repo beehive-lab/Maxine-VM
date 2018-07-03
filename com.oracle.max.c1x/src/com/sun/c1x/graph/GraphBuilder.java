@@ -1842,6 +1842,9 @@ public final class GraphBuilder {
                 }
             }
         }
+        if (target.codeSize() == 0 && target.name().equals("invokeBasic")) {
+            return cannotInline(target, "invokeBasic cannot be inlined yet");
+        }
         return true;
     }
 
