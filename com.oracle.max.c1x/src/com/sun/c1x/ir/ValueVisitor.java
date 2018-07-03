@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -52,6 +52,7 @@ public abstract class ValueVisitor {
     public abstract void visitLoadField(LoadField i);
     public abstract void visitLoadIndexed(LoadIndexed i);
     public abstract void visitInfopoint(Infopoint i);
+    public abstract void visitLinkTo(LinkTo linkTo);
     public abstract void visitLoadPointer(LoadPointer i);
     public abstract void visitLoadRegister(LoadRegister i);
     public abstract void visitLocal(Local i);
