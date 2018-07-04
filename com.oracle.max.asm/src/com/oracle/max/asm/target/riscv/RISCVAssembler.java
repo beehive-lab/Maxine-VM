@@ -23,8 +23,7 @@ import static com.oracle.max.asm.target.riscv.RISCVopCodes.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
-//import com.oracle.max.asm.target.riscv.*; //kostas
-import static com.oracle.max.asm.target.riscv.RISCV64.*; //kostas
+import static com.oracle.max.asm.target.riscv.RISCV64.*;
 
 public class RISCVAssembler extends AbstractAssembler {
     public RISCVAssembler(CiTarget target) {
@@ -100,7 +99,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs1
      * @param imm32
      */
-    private void itype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32, int ext, int shift) {
+    private void itype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
         assert rs1.number >> 5 == 0;
@@ -109,9 +108,36 @@ public class RISCVAssembler extends AbstractAssembler {
         instruction |= funct3 << 12;
         instruction |= rs1.number << 15;
         instruction |= imm32 << 20;
-        if (shift == 1) {
-            instruction |= ext << 25;
-        }
+
+        emitInt(instruction);
+    }
+
+    /**
+     * Helping method that emits an instruction of type I-type for the Shift instrictions.
+     *
+     * <pre>
+     *     | imm[11:0] | rs1 | funct3 | rd | opcode |
+     *     |-----------|-----|--------|----|--------|
+     *     |    12     |  5  |    3   |  5 |    7   |
+     * </pre>
+     * @param opcode
+     * @param rd
+     * @param funct3
+     * @param rs1
+     * @param imm32
+     * @param ext
+     */
+    private void shiftHelper(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32, int ext) {
+        assert opcode.getValue() >> 7 == 0;
+        assert rd.number >> 5 == 0;
+        assert rs1.number >> 5 == 0;
+        int instruction = opcode.getValue();
+        instruction |= rd.number << 7;
+        instruction |= funct3 << 12;
+        instruction |= rs1.number << 15;
+        instruction |= imm32 << 20;
+        instruction |= ext << 25;
+
         emitInt(instruction);
     }
 
@@ -237,7 +263,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void jalr(CiRegister rd, CiRegister rs, int imm32) {
-        itype(JALR, rd, 0, rs, imm32, 0, 0);
+        itype(JALR, rd, 0, rs, imm32);
     }
 
     /**
@@ -307,7 +333,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lb(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 0, rs, imm32, 0, 0);
+        itype(LOAD, rd, 0, rs, imm32);
     }
 
     /**
@@ -317,7 +343,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lh(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 1, rs, imm32, 0, 0);
+        itype(LOAD, rd, 1, rs, imm32);
     }
 
     /**
@@ -327,7 +353,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 2, rs, imm32, 0, 0);
+        itype(LOAD, rd, 2, rs, imm32);
     }
 
     /**
@@ -337,7 +363,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lbu(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 4, rs, imm32, 0, 0);
+        itype(LOAD, rd, 4, rs, imm32);
     }
 
     /**
@@ -347,7 +373,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lhu(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 5, rs, imm32, 0, 0);
+        itype(LOAD, rd, 5, rs, imm32);
     }
 
     /**
@@ -387,7 +413,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void addi(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 0, rs, imm32, 0, 0);
+        itype(COMP, rd, 0, rs, imm32);
     }
 
     /**
@@ -397,7 +423,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void slti(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 3, rs, imm32, 0, 0);
+        itype(COMP, rd, 3, rs, imm32);
     }
 
     /**
@@ -407,7 +433,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void sltiu(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 3, rs, imm32, 0, 0);
+        itype(COMP, rd, 3, rs, imm32);
     }
 
     /**
@@ -417,7 +443,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void xori(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 4, rs, imm32, 0, 0);
+        itype(COMP, rd, 4, rs, imm32);
     }
 
     /**
@@ -427,7 +453,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void ori(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 6, rs, imm32, 0, 0);
+        itype(COMP, rd, 6, rs, imm32);
     }
 
     /**
@@ -437,7 +463,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void andi(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 7, rs, imm32, 0, 0);
+        itype(COMP, rd, 7, rs, imm32);
     }
 
     /**
@@ -447,7 +473,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void slli(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 1, rs, imm32, 0, 1);
+        shiftHelper(COMP, rd, 1, rs, imm32, 0);
     }
 
     /**
@@ -457,7 +483,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void srli(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 5, rs, imm32, 0, 1);
+        shiftHelper(COMP, rd, 5, rs, imm32, 0);
     }
 
     /**
@@ -467,7 +493,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void srai(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 5, rs, imm32, 32, 1);
+        shiftHelper(COMP, rd, 5, rs, imm32, 32);
     }
 
     /**
@@ -576,28 +602,28 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param successorMask
      */
     public void fence(int predecessorMask, int successorMask) {
-        itype(FENCE, x0, 0, x0, predecessorMask + successorMask, 0, 0);
+        itype(FENCE, x0, 0, x0, predecessorMask + successorMask);
     }
 
     /**
      *
      */
     public void fencei() {
-        itype(FENCE, x0, 0, x0, 0, 0, 0);
+        itype(FENCE, x0, 0, x0, 0);
     }
 
     /**
      *
      */
     public void ecall() {
-        itype(SYS, x0, 0, x0, 0, 0, 0);
+        itype(SYS, x0, 0, x0, 0);
     }
 
     /**
      *
      */
     public void ebreak() {
-        itype(SYS, x0, 0, x0, 1, 0, 0);
+        itype(SYS, x0, 0, x0, 1);
     }
 
     /**
@@ -607,7 +633,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs
      */
     public void csrrw(CiRegister rd, CiRegister csr, CiRegister rs) {
-        itype(SYS, rd, 1, rs, csr.number, 0, 0);
+        itype(SYS, rd, 1, rs, csr.number);
     }
 
     /**
@@ -617,7 +643,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs
      */
     public void csrrs(CiRegister rd, CiRegister csr, CiRegister rs) {
-        itype(SYS, rd, 2, rs, csr.number, 0, 0);
+        itype(SYS, rd, 2, rs, csr.number);
     }
 
     /**
@@ -627,7 +653,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs
      */
     public void csrrc(CiRegister rd, CiRegister csr, CiRegister rs) {
-        itype(SYS, rd, 3, rs, csr.number, 0, 0);
+        itype(SYS, rd, 3, rs, csr.number);
     }
 
     /**
@@ -637,7 +663,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void csrrwi(CiRegister rd, CiRegister csr, int imm32) {
-        itype(SYS, rd, 5, x0, csr.number, 0, 0);
+        itype(SYS, rd, 5, x0, csr.number);
     }
 
     /**
@@ -647,7 +673,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void csrrsi(CiRegister rd, CiRegister csr, int imm32) {
-        itype(SYS, rd, 6, x0, csr.number, 0, 0);
+        itype(SYS, rd, 6, x0, csr.number);
     }
 
     /**
@@ -657,7 +683,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void csrrci(CiRegister rd, CiRegister csr, int imm32) {
-        itype(SYS, rd, 7, x0, csr.number, 0, 0);
+        itype(SYS, rd, 7, x0, csr.number);
     }
 
     // RV64I Base instruction set /////////////////////////////////////////////
@@ -669,7 +695,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lwu(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LD, rd, 6, rs, imm32, 0, 0);
+        itype(LD, rd, 6, rs, imm32);
     }
 
     /**
@@ -679,7 +705,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void ld(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LD, rd, 3, rs, imm32, 0, 0);
+        itype(LD, rd, 3, rs, imm32);
     }
 
     /**
@@ -699,7 +725,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void addiw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP64, rd, 0, rs, imm32, 0, 0);
+        itype(COMP64, rd, 0, rs, imm32);
     }
 
     /**
@@ -709,7 +735,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void slliw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP64, rd, 1, rs, imm32, 0, 0);
+        itype(COMP64, rd, 1, rs, imm32);
     }
 
     /**
@@ -719,7 +745,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void srliw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP64, rd, 5, rs, imm32, 0, 0);
+        itype(COMP64, rd, 5, rs, imm32);
     }
 
     /**
@@ -729,7 +755,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void sraiw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP64, rd, 5, rs, imm32, 32, 1);
+        shiftHelper(COMP64, rd, 5, rs, imm32, 32);
     }
 
     /**

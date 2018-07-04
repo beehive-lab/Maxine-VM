@@ -695,10 +695,6 @@ public class RISCV64AssemblerTest {
         asm.lui(s5, 0x33333000);
         asm.addi(s6, s5, 0x00000B3A);
 
-        //asm.addi(s7, s7, 0x00000001);
-        //asm.addi(s8, s8, 0x00000003);
-        //asm.addi(s9, s9, 0x0000001F);
-
         asm.srai(t0, s2, 0x00000001);
         asm.srai(t1, s4, 0x00000003);
         asm.srai(t2, s6, 0x0000001F);
