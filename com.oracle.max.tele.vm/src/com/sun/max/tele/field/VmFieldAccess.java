@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -56,6 +58,7 @@ import com.sun.max.vm.heap.gcx.ms.*;
 import com.sun.max.vm.heap.gcx.rset.ctbl.*;
 import com.sun.max.vm.heap.sequential.gen.semiSpace.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
+import com.sun.max.vm.jdk.JDK;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.jni.DynamicLinker.LibInfo;
 import com.sun.max.vm.layout.*;
@@ -96,6 +99,18 @@ public class VmFieldAccess extends AbstractVmHolder {
         super(vm);
         // Uncomment to enable verifying that the generated content in this class is up to date when running the inspector
         // updateSource(true);
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            ConcurrentHashMap$Segment = Classes.getInnerClass(ConcurrentHashMap.class, "Segment");
+            ConcurrentHashMap_segments = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap.class, "segments", Array.newInstance(ConcurrentHashMap$Segment, 0).getClass());
+            ConcurrentHashMap$Segment_table = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$Segment, "table", Array.newInstance(ConcurrentHashMap$HashEntry, 0).getClass());
+            ConcurrentHashMap$HashEntry_next = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$HashEntry, "next", ConcurrentHashMap$HashEntry);
+            ConcurrentHashMap$HashEntry_value = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$HashEntry, "value", Object.class);
+        } else {
+            ConcurrentHashMap$Node = Classes.getInnerClass(ConcurrentHashMap.class, "Node");
+            ConcurrentHashMap_table = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap.class, "table", Array.newInstance(ConcurrentHashMap$Node, 0).getClass());
+            ConcurrentHashMap$Node_next = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$Node, "next", ConcurrentHashMap$Node);
+            ConcurrentHashMap$Node_val = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$Node, "val", Object.class);
+        }
     }
 
     // Checkstyle: stop field name check
@@ -302,12 +317,16 @@ public class VmFieldAccess extends AbstractVmHolder {
 
     // Other JDK fields:
 
-    private final Class ConcurrentHashMap$Segment = Classes.getInnerClass(ConcurrentHashMap.class, "Segment");
+    private Class ConcurrentHashMap$Segment;
+    private Class ConcurrentHashMap$Node;
     private final Class ConcurrentHashMap$HashEntry = Classes.getInnerClass(ConcurrentHashMap.class, "HashEntry");
-    public final TeleInstanceReferenceFieldAccess ConcurrentHashMap_segments = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap.class, "segments", Array.newInstance(ConcurrentHashMap$Segment, 0).getClass());
-    public final TeleInstanceReferenceFieldAccess ConcurrentHashMap$Segment_table = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$Segment, "table", Array.newInstance(ConcurrentHashMap$HashEntry, 0).getClass());
-    public final TeleInstanceReferenceFieldAccess ConcurrentHashMap$HashEntry_next = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$HashEntry, "next", ConcurrentHashMap$HashEntry);
-    public final TeleInstanceReferenceFieldAccess ConcurrentHashMap$HashEntry_value = new TeleInstanceReferenceFieldAccess(ConcurrentHashMap$HashEntry, "value", Object.class);
+    public TeleInstanceReferenceFieldAccess ConcurrentHashMap_segments;
+    public TeleInstanceReferenceFieldAccess ConcurrentHashMap_table;
+    public TeleInstanceReferenceFieldAccess ConcurrentHashMap$Segment_table;
+    public TeleInstanceReferenceFieldAccess ConcurrentHashMap$Node_next;
+    public TeleInstanceReferenceFieldAccess ConcurrentHashMap$Node_val;
+    public TeleInstanceReferenceFieldAccess ConcurrentHashMap$HashEntry_next;
+    public TeleInstanceReferenceFieldAccess ConcurrentHashMap$HashEntry_value;
     public final TeleInstanceIntFieldAccess Enum_ordinal = new TeleInstanceIntFieldAccess(Enum.class, "ordinal");
     public final TeleInstanceReferenceFieldAccess String_value = new TeleInstanceReferenceFieldAccess(String.class, "value", char[].class);
 

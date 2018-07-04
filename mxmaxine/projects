@@ -59,7 +59,7 @@ project@com.oracle.max.tele.jdwp@checkstyle=com.oracle.max.base
 project@com.oracle.max.tele.jdwp@javaCompliance=1.7
 
 project@com.oracle.max.tele.vm@sourceDirs=src,test
-project@com.oracle.max.tele.vm@dependencies=com.oracle.max.vm.ext.jvmti,com.oracle.max.vmdi,com.oracle.max.elf
+project@com.oracle.max.tele.vm@dependencies=com.oracle.max.vm.ext.jvmti,com.oracle.max.vmdi,com.oracle.max.elf,com.oracle.max.vm
 project@com.oracle.max.tele.vm@checkstyle=com.oracle.max.base
 project@com.oracle.max.tele.vm@javaCompliance=1.7
 
