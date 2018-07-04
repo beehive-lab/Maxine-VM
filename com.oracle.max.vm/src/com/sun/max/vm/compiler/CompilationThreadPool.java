@@ -106,8 +106,8 @@ public class CompilationThreadPool {
                 } catch (InterruptedException e) {
                     // do nothing.
                 } catch (Throwable t) {
-                    Log.print("Exception during compilation of " + compilation.classMethodActor);
-                    t.printStackTrace();
+                    Log.println("Exception during compilation of " + compilation.classMethodActor);
+                    t.printStackTrace(Log.out);
                 }
             }
         }
