@@ -622,8 +622,8 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param csr
      * @param rs
      */
-    public void csrrw(CiRegister rd, CiRegister csr, CiRegister rs) {
-        itype(SYS, rd, 1, rs, csr.number);
+    public void csrrw(CiRegister rd, int csr, CiRegister rs) {
+        itype(SYS, rd, 1, rs, csr);
     }
 
     /**
@@ -632,8 +632,8 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param csr
      * @param rs
      */
-    public void csrrs(CiRegister rd, CiRegister csr, CiRegister rs) {
-        itype(SYS, rd, 2, rs, csr.number);
+    public void csrrs(CiRegister rd, int csr, CiRegister rs) {
+        itype(SYS, rd, 2, rs, csr);
     }
 
     /**
@@ -642,8 +642,8 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param csr
      * @param rs
      */
-    public void csrrc(CiRegister rd, CiRegister csr, CiRegister rs) {
-        itype(SYS, rd, 3, rs, csr.number);
+    public void csrrc(CiRegister rd, int csr, CiRegister rs) {
+        itype(SYS, rd, 3, rs, csr);
     }
 
     /**
@@ -652,8 +652,8 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param csr
      * @param imm32
      */
-    public void csrrwi(CiRegister rd, CiRegister csr, int imm32) {
-        itype(SYS, rd, 5, x0, csr.number);
+    public void csrrwi(CiRegister rd, int csr, int imm32) {
+        itype(SYS, rd, 5, x0, csr);
     }
 
     /**
@@ -662,8 +662,8 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param csr
      * @param imm32
      */
-    public void csrrsi(CiRegister rd, CiRegister csr, int imm32) {
-        itype(SYS, rd, 6, x0, csr.number);
+    public void csrrsi(CiRegister rd, int csr, int imm32) {
+        itype(SYS, rd, 6, x0, csr);
     }
 
     /**
@@ -672,8 +672,8 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param csr
      * @param imm32
      */
-    public void csrrci(CiRegister rd, CiRegister csr, int imm32) {
-        itype(SYS, rd, 7, x0, csr.number);
+    public void csrrci(CiRegister rd, int csr, int imm32) {
+        itype(SYS, rd, 7, x0, csr);
     }
 
     // RV64I Base instruction set /////////////////////////////////////////////

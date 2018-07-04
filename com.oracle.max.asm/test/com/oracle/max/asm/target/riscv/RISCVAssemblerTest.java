@@ -104,9 +104,91 @@ public class RISCVAssemblerTest {
                     asm.lb(dest, src, imm32);
                     final String assemblyInstruction = "lb x" + dest.getEncoding() + ", " + (imm32 & 0xfff) + "(x" + src.getEncoding() + ")";
                     assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+
                 }
             }
         }
     }
 
+    @Test
+    public void ecall() {
+        asm.codeBuffer.reset();
+        asm.ecall();
+        final String assemblyInstruction = "ecall ";
+        assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+    }
+
+    @Test
+    public void ebreak() {
+        asm.codeBuffer.reset();
+        asm.ebreak();
+        final String assemblyInstruction = "ebreak ";
+        assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+    }
+
+    @Test
+    public void csrrw() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            for (CiRegister src : RISCV64.cpuRegisters) {
+                asm.codeBuffer.reset();
+                asm.csrrw(dest, 5, src);
+                final String assemblyInstruction = "csrrw x" + dest.getEncoding() + "," + 5 + "," + "x" + src.getEncoding();
+                assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+            }
+        }
+    }
+
+    @Test
+    public void csrrs() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            for (CiRegister src : RISCV64.cpuRegisters) {
+                asm.codeBuffer.reset();
+                asm.csrrs(dest, 0, src);
+                final String assemblyInstruction = "csrrs x" + dest.getEncoding() + "," + 0 + "," + "x" + src.getEncoding();
+                assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+            }
+        }
+    }
+
+    @Test
+    public void csrrc() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            for (CiRegister src : RISCV64.cpuRegisters) {
+                asm.codeBuffer.reset();
+                asm.csrrc(dest, 0, src);
+                final String assemblyInstruction = "csrrc x" + dest.getEncoding() + "," + 0 + "," + "x" + src.getEncoding();
+                assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+            }
+        }
+    }
+
+    @Test
+    public void csrrwi() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            asm.codeBuffer.reset();
+            asm.csrrwi(dest, 1, 0);
+            final String assemblyInstruction = "csrrwi x" + dest.getEncoding() + "," + 1 + "," + 0;
+            assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+        }
+    }
+
+    @Test
+    public void csrrsi() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            asm.codeBuffer.reset();
+            asm.csrrsi(dest, 1, 0);
+            final String assemblyInstruction = "csrrsi x" + dest.getEncoding() + "," + 1 + "," + 0;
+            assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+        }
+    }
+
+    @Test
+    public void csrrci() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            asm.codeBuffer.reset();
+            asm.csrrci(dest, 1, 0);
+            final String assemblyInstruction = "csrrci x" + dest.getEncoding() + "," + 1 + "," + 0;
+            assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+        }
+    }
 }
