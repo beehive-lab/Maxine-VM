@@ -116,29 +116,19 @@ public class RISCVAssembler extends AbstractAssembler {
      * Helping method that emits an instruction of type I-type for the Shift instrictions.
      *
      * <pre>
-     *     | imm[11:0] | rs1 | funct3 | rd | opcode |
-     *     |-----------|-----|--------|----|--------|
-     *     |    12     |  5  |    3   |  5 |    7   |
+     *     | ext | shampt | rs1 | funct3 | rd | opcode |
+     *     |-----|--------|-----|--------|----|--------|
+     *     |  7  |    5   |  5  |    3   |  5 |    7   |
      * </pre>
      * @param opcode
      * @param rd
      * @param funct3
      * @param rs1
-     * @param imm32
+     * @param shamt
      * @param ext
      */
-    private void shiftHelper(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32, int ext) {
-        assert opcode.getValue() >> 7 == 0;
-        assert rd.number >> 5 == 0;
-        assert rs1.number >> 5 == 0;
-        int instruction = opcode.getValue();
-        instruction |= rd.number << 7;
-        instruction |= funct3 << 12;
-        instruction |= rs1.number << 15;
-        instruction |= imm32 << 20;
-        instruction |= ext << 25;
-
-        emitInt(instruction);
+    private void shiftHelper(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int shamt, int ext) {
+        itype(opcode, rd, funct3, rs1, ext << 5 | shamt);
     }
 
     /**
