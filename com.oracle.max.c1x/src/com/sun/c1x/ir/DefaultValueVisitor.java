@@ -60,6 +60,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitInstanceOf(InstanceOf i) { visit(i); }
     @Override public void visitIntrinsic(Intrinsic i) { visit(i); }
     @Override public void visitInvoke(Invoke i) { visit(i); }
+    @Override public void visitInvokeHandle(InvokeHandle i) { visit(i); }
     @Override public void visitLinkTo(LinkTo i) { visit(i); }
     @Override public void visitLoadField(LoadField i) { visit(i); }
     @Override public void visitLoadIndexed(LoadIndexed i) { visit(i); }

@@ -140,6 +140,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     private XirPair[] multiNewArrayTemplate;
 
+    private XirTemplate invokeHandleTemplate;
     private XirTemplate linkToSpecialTemplate;
     private XirTemplate linkToInterfaceTemplate;
     private XirTemplate linkToVirtualTemplate;
@@ -279,6 +280,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         invokeSpecialTemplates = buildInvokeSpecial();
         invokeStaticTemplates = buildInvokeStatic();
 
+        invokeHandleTemplate = buildInvokeHandle();
         linkToVirtualTemplate = buildLinkToVirtual();
         linkToInterfaceTemplate = buildLinkToInterface();
         linkToSpecialTemplate = buildLinkToSpecial();
@@ -384,6 +386,11 @@ public class MaxXirGenerator implements RiXirGenerator {
     @Override
     public XirSnippet genResolveClass(XirSite site, RiType type, Representation representation) {
         return new XirSnippet(resolveClassTemplates[representation.ordinal()], guardFor(type));
+    }
+
+    @Override
+    public XirSnippet genInvokeHandle(XirSite site, XirArgument actor) {
+        return new XirSnippet(invokeHandleTemplate, actor);
     }
 
     @Override
@@ -845,6 +852,15 @@ public class MaxXirGenerator implements RiXirGenerator {
             callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, array, index);
         }
         return finishTemplate(asm, "arrayload<" + kind + ">");
+    }
+
+    @HOSTED_ONLY
+    private XirTemplate buildInvokeHandle() {
+        asm.restart();
+        XirParameter actor = asm.createInputParameter("actor", CiKind.Object);
+        XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
+        callRuntimeThroughStub(asm, "invokeHandle", addr, actor);
+        return finishTemplate(asm, addr, "invokehandle");
     }
 
     @HOSTED_ONLY
@@ -2011,6 +2027,10 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         public static int resolveInterfaceID(ResolutionGuard.InPool guard) {
             return Snippets.resolveInterfaceMethod(guard).holder().id;
+        }
+
+        public static Word invokeHandle(ClassMethodActor actor) {
+            return Snippets.makeEntrypoint(actor, OPTIMIZED_ENTRY_POINT);
         }
 
         public static Word linkToSpecial(Object memberName) {

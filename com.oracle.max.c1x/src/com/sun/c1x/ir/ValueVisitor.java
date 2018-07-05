@@ -49,6 +49,7 @@ public abstract class ValueVisitor {
     public abstract void visitInstanceOf(InstanceOf i);
     public abstract void visitIntrinsic(Intrinsic i);
     public abstract void visitInvoke(Invoke i);
+    public abstract void visitInvokeHandle(InvokeHandle invokeHandle);
     public abstract void visitLoadField(LoadField i);
     public abstract void visitLoadIndexed(LoadIndexed i);
     public abstract void visitInfopoint(Infopoint i);

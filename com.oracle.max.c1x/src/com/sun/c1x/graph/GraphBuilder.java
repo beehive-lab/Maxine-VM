@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -932,6 +932,18 @@ public final class GraphBuilder {
         if (target == null) {
             return;
         }
+
+        // Check for MethodHandle static adapter method
+        if (target instanceof RiResolvedMethod) {
+            RiResolvedMethod resolved = (RiResolvedMethod) target;
+            if (isStatic(resolved.accessFlags())) {
+                // Pop the arguments -1 which is the appenix to be appended by the compiler
+                Value[] args = curState.popArguments(target.signature().argumentSlots(false) - 1);
+                pushReturn(returnKind(target), append(new InvokeHandle(resolved, args, cpi, constantPool, curState, returnKind(resolved).stackKind())));
+                return;
+            }
+        }
+
         Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
             genInvokeIndirect(INVOKEVIRTUAL, target, args, cpi, constantPool);

@@ -56,6 +56,8 @@ import com.sun.cri.xir.CiXirAssembler.XirParameter;
 import com.sun.cri.xir.CiXirAssembler.XirRegister;
 import com.sun.cri.xir.CiXirAssembler.XirTemp;
 import com.sun.cri.xir.*;
+import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
+import com.sun.max.vm.classfile.constant.ConstantPool;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -626,6 +628,60 @@ public abstract class LIRGenerator extends ValueVisitor {
             CiValue result = createResultVariable(x);
             lir.move(resultOperand, result);
         }
+    }
+
+    @Override
+    public void visitInvokeHandle(InvokeHandle x) {
+        assert x.constantPool() instanceof ConstantPool;
+        ConstantPool cp = (ConstantPool) x.constantPool();
+        ClassMethodRefConstant methodRefConstant = cp.classMethodAt(x.cpi());
+        XirArgument actor = XirArgument.forObject(x.target());
+        XirSnippet snippet = xir.genInvokeHandle(site(x), actor);
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
+
+        CiValue destinationAddress = null;
+        // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
+        // implicit calling convention between the XirSnippet and the call.
+        if (!C1XOptions.InvokeSnippetAfterArguments) {
+            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
+        }
+
+        CiValue resultOperand = resultOperandFor(x.kind);
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.signature(), JavaCall);
+        List<CiValue> pointerSlots = new ArrayList<>(2);
+        Value[] args = addAppendixToArguments(x, methodRefConstant);
+        List<CiValue> argList = visitInvokeArguments(cc, args, pointerSlots);
+
+        if (C1XOptions.InvokeSnippetAfterArguments) {
+            destinationAddress = emitXir(snippet, x, info.copy(), null, x.target(), false, pointerSlots);
+        }
+
+        // emit direct or indirect call to the destination address
+        if (destinationAddress instanceof CiConstant) {
+            // Direct call
+            assert ((CiConstant) destinationAddress).isDefaultValue() : "destination address should be zero";
+            lir.callDirect(x.target(), resultOperand, argList, info, snippet.marks, pointerSlots);
+        } else {
+            // Indirect call
+            argList.add(destinationAddress);
+            lir.callIndirect(x.target(), resultOperand, argList, info, snippet.marks, pointerSlots);
+        }
+
+        if (resultOperand.isLegal()) {
+            CiValue result = createResultVariable(x);
+            lir.move(resultOperand, result);
+        }
+    }
+
+    private Value[] addAppendixToArguments(InvokeHandle x, ClassMethodRefConstant methodRefConstant) {
+        Value[] args = new Value[x.arguments().length + 1];
+        int i = 0;
+        for (Value arg: x.arguments()) {
+            args[i++] = arg;
+        }
+        args[i] = new Constant(CiConstant.forObject(methodRefConstant.appendix()));
+        args[i].setFlag(Flag.LiveValue);
+        return args;
     }
 
     @Override

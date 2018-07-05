@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,156 +17,60 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.ir;
 
-import com.oracle.max.criutils.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
+import com.oracle.max.criutils.LogStream;
+import com.sun.c1x.value.MutableFrameState;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiUtil;
 import com.sun.cri.ri.*;
 
 /**
- * The {@code Invoke} instruction represents all kinds of method calls.
+ * The {@code InvokeHandle} instruction is used for methodHandle invocations.
  */
-public final class Invoke extends StateSplit {
+public final class InvokeHandle extends StateSplit {
 
-    public final int opcode;
-    public final Value[] arguments;
-    public final RiMethod target;
-    public final RiType returnType;
+    private final RiResolvedMethod target;
+    private final int cpi;
+    private final RiConstantPool constantPool;
+    private final Value[] arguments;
 
-    /**
-     * Constructs a new Invoke instruction.
-     *
-     * @param opcode the opcode of the invoke
-     * @param result the result type
-     * @param args the list of instructions producing arguments to the invocation, including the receiver object
-     * @param isStatic {@code true} if this call is static (no receiver object)
-     * @param target the target method being called
-     * @param stateBefore the state before executing the invocation
-     */
-    public Invoke(int opcode, CiKind result, Value[] args, boolean isStatic, RiMethod target, RiType returnType, FrameState stateBefore) {
-        super(result, stateBefore);
-        this.opcode = opcode;
-        this.arguments = args;
+    public InvokeHandle(RiResolvedMethod target, Value[] arguments, int cpi, RiConstantPool constantPool, MutableFrameState stateBefore, CiKind returnKind) {
+        super(returnKind, stateBefore);
         this.target = target;
-        this.returnType = returnType;
-        if (isStatic) {
-            setFlag(Flag.IsStatic);
-            eliminateNullCheck();
-        } else if (args[0].isNonNull() || target.holder().kind(true) != CiKind.Object) {
-            eliminateNullCheck();
-        }
-    }
-
-    /**
-     * Gets the opcode of this invoke instruction.
-     * @return the opcode
-     */
-    public int opcode() {
-        return opcode;
-    }
-
-    /**
-     * Checks whether this is an invocation of a static method.
-     * @return {@code true} if the invocation is a static invocation
-     */
-    public boolean isStatic() {
-        return checkFlag(Flag.IsStatic);
-    }
-
-    @Override
-    public RiResolvedType declaredType() {
-        return (returnType instanceof RiResolvedType) ? ((RiResolvedType) returnType) : null;
-    }
-
-    /**
-     * Gets the instruction that produces the receiver object for this invocation, if any.
-     * @return the instruction that produces the receiver object for this invocation if any, {@code null} if this
-     *         invocation does not take a receiver object
-     */
-    public Value receiver() {
-        assert !isStatic();
-        return arguments[0];
-    }
-
-    /**
-     * Gets the target method for this invocation instruction.
-     * @return the target method
-     */
-    public RiMethod target() {
-        return target;
-    }
-
-    /**
-     * Gets the list of instructions that produce input for this instruction.
-     * @return the list of instructions that produce input
-     */
-    public Value[] arguments() {
-        return arguments;
-    }
-
-    /**
-     * Checks whether this instruction can trap.
-     * @return {@code true}, conservatively assuming the called method may throw an exception
-     */
-    @Override
-    public boolean canTrap() {
-        return true;
-    }
-
-    /**
-     * Checks whether this invocation has a receiver object.
-     * @return {@code true} if this invocation has a receiver object; {@code false} otherwise, if this is a
-     *         static call
-     */
-    public boolean hasReceiver() {
-        return !isStatic();
-    }
-
-    @Override
-    public void inputValuesDo(ValueClosure closure) {
-        for (int i = 0; i < arguments.length; i++) {
-            Value arg = arguments[i];
-            if (arg != null) {
-                arguments[i] = closure.apply(arg);
-                assert arguments[i] != null;
-            }
-        }
+        this.arguments = arguments;
+        this.cpi = cpi;
+        this.constantPool = constantPool;
     }
 
     @Override
     public void accept(ValueVisitor v) {
-        v.visitInvoke(this);
-    }
-
-    public CiKind[] signature() {
-        CiKind receiver = isStatic() ? null : target.holder().kind(true);
-        return CiUtil.signatureToKinds(target.signature(), receiver);
+        v.visitInvokeHandle(this);
     }
 
     @Override
     public void print(LogStream out) {
-        int argStart = 0;
-        if (hasReceiver()) {
-            out.print(Util.valueString(receiver())).print('.');
-            argStart = 1;
-        }
+        out.print("invokeHandle");
+    }
 
-        RiMethod target = target();
-        out.print(target.name()).print('(');
-        Value[] arguments = arguments();
-        for (int i = argStart; i < arguments.length; i++) {
-            if (i > argStart) {
-                out.print(", ");
-            }
-            out.print(Util.valueString(arguments[i]));
-        }
-        out.print(CiUtil.format(") [method: %H.%n(%p):%r]", target));
+    public RiResolvedMethod target() {
+        return target;
+    }
+
+    public int cpi() {
+        return cpi;
+    }
+
+    public RiConstantPool constantPool() {
+        return constantPool;
+    }
+
+    public Value[] arguments() {
+        return arguments;
+    }
+
+    public CiKind[] signature() {
+        return CiUtil.signatureToKinds(target.signature(), null);
     }
 }
