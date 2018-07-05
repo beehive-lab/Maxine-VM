@@ -25,6 +25,8 @@ import static com.sun.max.vm.VMOptions.*;
 
 import java.util.*;
 
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.thread.*;
@@ -106,8 +108,7 @@ public class CompilationThreadPool {
                 } catch (InterruptedException e) {
                     // do nothing.
                 } catch (Throwable t) {
-                    Log.println("Exception during compilation of " + compilation.classMethodActor);
-                    t.printStackTrace(Log.out);
+									  LogCompilationError(compilation.classMethodActor, t);
                 }
             }
         }
@@ -135,5 +136,15 @@ public class CompilationThreadPool {
 						VMTI.handler().methodCompiled(tm.classMethodActor);
         }
     }
+
+		private void LogCompilationError(ClassMethodActor cma, Throwable t) {
+				if (VMOptions.verboseOption.verboseCompilation) {
+						boolean lockDisabledSafepoints = Log.lock();
+						Log.printCurrentThread(false);
+						Log.println(": Exception during compilation of " + cma);
+						t.printStackTrace(Log.out);
+						Log.unlock(lockDisabledSafepoints);
+				}
+		}
 }
 
