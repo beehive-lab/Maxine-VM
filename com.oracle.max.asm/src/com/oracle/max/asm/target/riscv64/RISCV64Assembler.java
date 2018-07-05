@@ -17,16 +17,16 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.asm.target.riscv;
+package com.oracle.max.asm.target.riscv64;
 
-import static com.oracle.max.asm.target.riscv.RISCVopCodes.*;
+import static com.oracle.max.asm.target.riscv64.RISCV64opCodes.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import static com.oracle.max.asm.target.riscv.RISCV64.*;
 
-public class RISCVAssembler extends AbstractAssembler {
-    public RISCVAssembler(CiTarget target) {
+public class RISCV64Assembler extends AbstractAssembler {
+    public RISCV64Assembler(CiTarget target) {
         super(target);
     }
 
@@ -47,7 +47,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rd
      * @param imm32
      */
-    private void utype(RISCVopCodes opcode, CiRegister rd, int imm32) {
+    private void utype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
         assert opcode.getValue() >> 7 == 0 : opcode.getValue();
         assert rd.number >> 5 == 0 : rd.number;
         int instruction = opcode.getValue();
@@ -71,7 +71,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      * @param funct7
      */
-    private void rtype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
+    private void rtype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
         assert rs1.number >> 5 == 0;
@@ -99,7 +99,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs1
      * @param imm32
      */
-    private void itype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
+    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
         assert rs1.number >> 5 == 0;
@@ -146,7 +146,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      * @param imm32
      */
-    private void stype(RISCVopCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+    private void stype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rs1.number >> 5 == 0;
         assert rs2.number >> 5 == 0;
@@ -174,7 +174,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      * @param imm32
      */
-    private void btype(RISCVopCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+    private void btype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert ((byte) funct3) >> 3 == 0;
         assert rs1.number >> 5 == 0;
@@ -202,7 +202,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rd
      * @param imm32
      */
-    private void jtype(RISCVopCodes opcode, CiRegister rd, int imm32) {
+    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
         int instruction = opcode.getValue();

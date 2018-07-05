@@ -17,14 +17,14 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.asm.target.riscv;
+package com.oracle.max.asm.target.riscv64;
 
-import static com.oracle.max.asm.target.riscv.RISCVopCodes.*;
+import static com.oracle.max.asm.target.riscv64.RISCV64opCodes.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 
-public class RISCV64MacroAssembler extends RISCVAssembler {
+public class RISCV64MacroAssembler extends RISCV64Assembler {
     public RISCV64MacroAssembler(CiTarget target) {
         super(target);
     }

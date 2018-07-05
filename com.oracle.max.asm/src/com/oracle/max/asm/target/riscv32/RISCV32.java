@@ -17,14 +17,15 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.asm.target.riscv;
+package com.oracle.max.asm.target.riscv32;
 
+import static com.sun.cri.ci.CiRegister.RegisterFlag.Byte;
 import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
 
 import com.sun.cri.ci.*;
 
 /**
- * Defines the registers of the RISC-V 64 architecture along with their ABI names.
+ * Defines the registers of the RISC-V 32 architecture along with their ABI names.
  *
  * <pre>
  *     |----------+----------+-----------------------------------+--------|
@@ -52,73 +53,73 @@ import com.sun.cri.ci.*;
  *     |----------+----------+-----------------------------------+--------|
  * </pre>
  */
-public class RISCV64 extends CiArchitecture {
+public class RISCV32 extends CiArchitecture {
 
-    public static final CiRegister x0 = new CiRegister(0, 0, 8, "x0", CPU, Byte);
-    public static final CiRegister x1 = new CiRegister(1, 1, 8, "x1", CPU, Byte);
-    public static final CiRegister x2 = new CiRegister(2, 2, 8, "x2", CPU, Byte);
-    public static final CiRegister x3 = new CiRegister(3, 3, 8, "x3", CPU, Byte);
-    public static final CiRegister x4 = new CiRegister(4, 4, 8, "x4", CPU, Byte);
-    public static final CiRegister x5 = new CiRegister(5, 5, 8, "x5", CPU, Byte);
-    public static final CiRegister x6 = new CiRegister(6, 6, 8, "x6", CPU, Byte);
-    public static final CiRegister x7 = new CiRegister(7, 7, 8, "x7", CPU, Byte);
-    public static final CiRegister x8 = new CiRegister(8, 8, 8, "x8", CPU, Byte);
-    public static final CiRegister x9 = new CiRegister(9, 9, 8, "x9", CPU, Byte);
-    public static final CiRegister x10 = new CiRegister(10, 10, 8, "x10", CPU, Byte);
-    public static final CiRegister x11 = new CiRegister(11, 11, 8, "x11", CPU, Byte);
-    public static final CiRegister x12 = new CiRegister(12, 12, 8, "x12", CPU, Byte);
-    public static final CiRegister x13 = new CiRegister(13, 13, 8, "x13", CPU, Byte);
-    public static final CiRegister x14 = new CiRegister(14, 14, 8, "x14", CPU, Byte);
-    public static final CiRegister x15 = new CiRegister(15, 15, 8, "x15", CPU, Byte);
-    public static final CiRegister x16 = new CiRegister(16, 16, 8, "x16", CPU, Byte);
-    public static final CiRegister x17 = new CiRegister(17, 17, 8, "x17", CPU, Byte);
-    public static final CiRegister x18 = new CiRegister(18, 18, 8, "x18", CPU, Byte);
-    public static final CiRegister x19 = new CiRegister(19, 19, 8, "x19", CPU, Byte);
-    public static final CiRegister x20 = new CiRegister(20, 20, 8, "x20", CPU, Byte);
-    public static final CiRegister x21 = new CiRegister(21, 21, 8, "x21", CPU, Byte);
-    public static final CiRegister x22 = new CiRegister(22, 22, 8, "x22", CPU, Byte);
-    public static final CiRegister x23 = new CiRegister(23, 23, 8, "x23", CPU, Byte);
-    public static final CiRegister x24 = new CiRegister(24, 24, 8, "x24", CPU, Byte);
-    public static final CiRegister x25 = new CiRegister(25, 25, 8, "x25", CPU, Byte);
-    public static final CiRegister x26 = new CiRegister(26, 26, 8, "x26", CPU, Byte);
-    public static final CiRegister x27 = new CiRegister(27, 27, 8, "x27", CPU, Byte);
-    public static final CiRegister x28 = new CiRegister(28, 28, 8, "x28", CPU, Byte);
-    public static final CiRegister x29 = new CiRegister(29, 29, 8, "x29", CPU, Byte);
-    public static final CiRegister x30 = new CiRegister(30, 30, 8, "x30", CPU, Byte);
-    public static final CiRegister x31 = new CiRegister(31, 31, 8, "x31", CPU, Byte);
+    public static final CiRegister x0 = new CiRegister(0, 0, 4, "x0", CPU, Byte);
+    public static final CiRegister x1 = new CiRegister(1, 1, 4, "x1", CPU, Byte);
+    public static final CiRegister x2 = new CiRegister(2, 2, 4, "x2", CPU, Byte);
+    public static final CiRegister x3 = new CiRegister(3, 3, 4, "x3", CPU, Byte);
+    public static final CiRegister x4 = new CiRegister(4, 4, 4, "x4", CPU, Byte);
+    public static final CiRegister x5 = new CiRegister(5, 5, 4, "x5", CPU, Byte);
+    public static final CiRegister x6 = new CiRegister(6, 6, 4, "x6", CPU, Byte);
+    public static final CiRegister x7 = new CiRegister(7, 7, 4, "x7", CPU, Byte);
+    public static final CiRegister x8 = new CiRegister(8, 8, 4, "x8", CPU, Byte);
+    public static final CiRegister x9 = new CiRegister(9, 9, 4, "x9", CPU, Byte);
+    public static final CiRegister x10 = new CiRegister(10, 10, 4, "x10", CPU, Byte);
+    public static final CiRegister x11 = new CiRegister(11, 11, 4, "x11", CPU, Byte);
+    public static final CiRegister x12 = new CiRegister(12, 12, 4, "x12", CPU, Byte);
+    public static final CiRegister x13 = new CiRegister(13, 13, 4, "x13", CPU, Byte);
+    public static final CiRegister x14 = new CiRegister(14, 14, 4, "x14", CPU, Byte);
+    public static final CiRegister x15 = new CiRegister(15, 15, 4, "x15", CPU, Byte);
+    public static final CiRegister x16 = new CiRegister(16, 16, 4, "x16", CPU, Byte);
+    public static final CiRegister x17 = new CiRegister(17, 17, 4, "x17", CPU, Byte);
+    public static final CiRegister x18 = new CiRegister(18, 18, 4, "x18", CPU, Byte);
+    public static final CiRegister x19 = new CiRegister(19, 19, 4, "x19", CPU, Byte);
+    public static final CiRegister x20 = new CiRegister(20, 20, 4, "x20", CPU, Byte);
+    public static final CiRegister x21 = new CiRegister(21, 21, 4, "x21", CPU, Byte);
+    public static final CiRegister x22 = new CiRegister(22, 22, 4, "x22", CPU, Byte);
+    public static final CiRegister x23 = new CiRegister(23, 23, 4, "x23", CPU, Byte);
+    public static final CiRegister x24 = new CiRegister(24, 24, 4, "x24", CPU, Byte);
+    public static final CiRegister x25 = new CiRegister(25, 25, 4, "x25", CPU, Byte);
+    public static final CiRegister x26 = new CiRegister(26, 26, 4, "x26", CPU, Byte);
+    public static final CiRegister x27 = new CiRegister(27, 27, 4, "x27", CPU, Byte);
+    public static final CiRegister x28 = new CiRegister(28, 28, 4, "x28", CPU, Byte);
+    public static final CiRegister x29 = new CiRegister(29, 29, 4, "x29", CPU, Byte);
+    public static final CiRegister x30 = new CiRegister(30, 30, 4, "x30", CPU, Byte);
+    public static final CiRegister x31 = new CiRegister(31, 31, 4, "x31", CPU, Byte);
 
-    public static final CiRegister f0 = new CiRegister(0, 0, 8, "f0", FPU, FPU);
-    public static final CiRegister f1 = new CiRegister(1, 1, 8, "f1", FPU, FPU);
-    public static final CiRegister f2 = new CiRegister(2, 2, 8, "f2", FPU, FPU);
-    public static final CiRegister f3 = new CiRegister(3, 3, 8, "f3", FPU, FPU);
-    public static final CiRegister f4 = new CiRegister(4, 4, 8, "f4", FPU, FPU);
-    public static final CiRegister f5 = new CiRegister(5, 5, 8, "f5", FPU, FPU);
-    public static final CiRegister f6 = new CiRegister(6, 6, 8, "f6", FPU, FPU);
-    public static final CiRegister f7 = new CiRegister(7, 7, 8, "f7", FPU, FPU);
-    public static final CiRegister f8 = new CiRegister(8, 8, 8, "f8", FPU, FPU);
-    public static final CiRegister f9 = new CiRegister(9, 9, 8, "f9", FPU, FPU);
-    public static final CiRegister f10 = new CiRegister(10, 10, 8, "f10", FPU, FPU);
-    public static final CiRegister f11 = new CiRegister(11, 11, 8, "f11", FPU, FPU);
-    public static final CiRegister f12 = new CiRegister(12, 12, 8, "f12", FPU, FPU);
-    public static final CiRegister f13 = new CiRegister(13, 13, 8, "f13", FPU, FPU);
-    public static final CiRegister f14 = new CiRegister(14, 14, 8, "f14", FPU, FPU);
-    public static final CiRegister f15 = new CiRegister(15, 15, 8, "f15", FPU, FPU);
-    public static final CiRegister f16 = new CiRegister(16, 16, 8, "f16", FPU, FPU);
-    public static final CiRegister f17 = new CiRegister(17, 17, 8, "f17", FPU, FPU);
-    public static final CiRegister f18 = new CiRegister(18, 18, 8, "f18", FPU, FPU);
-    public static final CiRegister f19 = new CiRegister(19, 19, 8, "f19", FPU, FPU);
-    public static final CiRegister f20 = new CiRegister(20, 20, 8, "f20", FPU, FPU);
-    public static final CiRegister f21 = new CiRegister(21, 21, 8, "f21", FPU, FPU);
-    public static final CiRegister f22 = new CiRegister(22, 22, 8, "f22", FPU, FPU);
-    public static final CiRegister f23 = new CiRegister(23, 23, 8, "f23", FPU, FPU);
-    public static final CiRegister f24 = new CiRegister(24, 24, 8, "f24", FPU, FPU);
-    public static final CiRegister f25 = new CiRegister(25, 25, 8, "f25", FPU, FPU);
-    public static final CiRegister f26 = new CiRegister(26, 26, 8, "f26", FPU, FPU);
-    public static final CiRegister f27 = new CiRegister(27, 27, 8, "f27", FPU, FPU);
-    public static final CiRegister f28 = new CiRegister(28, 28, 8, "f28", FPU, FPU);
-    public static final CiRegister f29 = new CiRegister(29, 29, 8, "f29", FPU, FPU);
-    public static final CiRegister f30 = new CiRegister(30, 30, 8, "f30", FPU, FPU);
-    public static final CiRegister f31 = new CiRegister(31, 31, 8, "f31", FPU, FPU);
+    public static final CiRegister f0 = new CiRegister(0, 0, 4, "f0", FPU, FPU);
+    public static final CiRegister f1 = new CiRegister(1, 1, 4, "f1", FPU, FPU);
+    public static final CiRegister f2 = new CiRegister(2, 2, 4, "f2", FPU, FPU);
+    public static final CiRegister f3 = new CiRegister(3, 3, 4, "f3", FPU, FPU);
+    public static final CiRegister f4 = new CiRegister(4, 4, 4, "f4", FPU, FPU);
+    public static final CiRegister f5 = new CiRegister(5, 5, 4, "f5", FPU, FPU);
+    public static final CiRegister f6 = new CiRegister(6, 6, 4, "f6", FPU, FPU);
+    public static final CiRegister f7 = new CiRegister(7, 7, 4, "f7", FPU, FPU);
+    public static final CiRegister f8 = new CiRegister(8, 8, 4, "f8", FPU, FPU);
+    public static final CiRegister f9 = new CiRegister(9, 9, 4, "f9", FPU, FPU);
+    public static final CiRegister f10 = new CiRegister(10, 10, 4, "f10", FPU, FPU);
+    public static final CiRegister f11 = new CiRegister(11, 11, 4, "f11", FPU, FPU);
+    public static final CiRegister f12 = new CiRegister(12, 12, 4, "f12", FPU, FPU);
+    public static final CiRegister f13 = new CiRegister(13, 13, 4, "f13", FPU, FPU);
+    public static final CiRegister f14 = new CiRegister(14, 14, 4, "f14", FPU, FPU);
+    public static final CiRegister f15 = new CiRegister(15, 15, 4, "f15", FPU, FPU);
+    public static final CiRegister f16 = new CiRegister(16, 16, 4, "f16", FPU, FPU);
+    public static final CiRegister f17 = new CiRegister(17, 17, 4, "f17", FPU, FPU);
+    public static final CiRegister f18 = new CiRegister(18, 18, 4, "f18", FPU, FPU);
+    public static final CiRegister f19 = new CiRegister(19, 19, 4, "f19", FPU, FPU);
+    public static final CiRegister f20 = new CiRegister(20, 20, 4, "f20", FPU, FPU);
+    public static final CiRegister f21 = new CiRegister(21, 21, 4, "f21", FPU, FPU);
+    public static final CiRegister f22 = new CiRegister(22, 22, 4, "f22", FPU, FPU);
+    public static final CiRegister f23 = new CiRegister(23, 23, 4, "f23", FPU, FPU);
+    public static final CiRegister f24 = new CiRegister(24, 24, 4, "f24", FPU, FPU);
+    public static final CiRegister f25 = new CiRegister(25, 25, 4, "f25", FPU, FPU);
+    public static final CiRegister f26 = new CiRegister(26, 26, 4, "f26", FPU, FPU);
+    public static final CiRegister f27 = new CiRegister(27, 27, 4, "f27", FPU, FPU);
+    public static final CiRegister f28 = new CiRegister(28, 28, 4, "f28", FPU, FPU);
+    public static final CiRegister f29 = new CiRegister(29, 29, 4, "f29", FPU, FPU);
+    public static final CiRegister f30 = new CiRegister(30, 30, 4, "f30", FPU, FPU);
+    public static final CiRegister f31 = new CiRegister(31, 31, 4, "f31", FPU, FPU);
 
     public static final CiRegister zero = x0;
     public static final CiRegister ra   = x1;
@@ -213,15 +214,15 @@ public class RISCV64 extends CiArchitecture {
         f25, f26, f27, f28, f29, f30, f31
     };
 
-    public RISCV64() {
-        super("RISCV64",                        //architecture name
-              8,                                //word size (8 bytes)
+    public RISCV32() {
+        super("RISCV32",                        //architecture name
+              4,                                //word size (4 bytes)
               ByteOrder.LittleEndian,           //endianness
               allRegisters,                     //available registers
               0, /*LOAD_STORE | STORE_STORE*/   //implicitMemoryBarriers (no implicit barriers)
               -1,                               //nativeCallDisplacementOffset (ignore)
               32,                               //registerReferenceMapBitCount
-              8);                               //returnAddressSize (8 bytes)
+              4);                               //returnAddressSize (4 bytes)
     }
 
 }
