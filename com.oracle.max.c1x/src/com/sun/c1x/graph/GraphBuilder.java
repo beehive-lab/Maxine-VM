@@ -43,6 +43,7 @@ import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
 import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
 import com.sun.max.vm.classfile.constant.ConstantPool;
+import com.sun.max.vm.classfile.constant.InvokeDynamicConstant;
 
 /**
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
@@ -927,6 +928,19 @@ public final class GraphBuilder {
         if (!tryRemoveCall(target, args, false)) {
             genInvokeIndirect(INVOKEINTERFACE, target, args, cpi, constantPool);
         }
+    }
+
+    void genInvokeDynamic(RiMethod target, int cpi, RiConstantPool constantPool) {
+        assert target instanceof RiResolvedMethod;
+        RiResolvedMethod resolved = (RiResolvedMethod) target;
+        assert isStatic(resolved.accessFlags());
+        // Pop the arguments -1 which is the appenix to be appended by the compiler
+        Value[] args = curState.popArguments(target.signature().argumentSlots(false) - 1);
+        assert constantPool instanceof ConstantPool;
+        ConstantPool cp = (ConstantPool) constantPool;
+        InvokeDynamicConstant invokeDynamicConstant = cp.invokeDynamicAt(cpi);
+        args = appendObjectToArguments(args, invokeDynamicConstant.getAppendix());
+        appendInvoke(INVOKESTATIC, target, args, true, cpi, constantPool);
     }
 
     void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
@@ -2403,6 +2417,7 @@ public final class GraphBuilder {
             case INVOKESPECIAL  : cpi = s.readCPI(); genInvokeSpecial(constantPool().lookupMethod(cpi, opcode), null, cpi, constantPool()); break;
             case INVOKESTATIC   : cpi = s.readCPI(); genInvokeStatic(constantPool().lookupMethod(cpi, opcode), cpi, constantPool()); break;
             case INVOKEINTERFACE: cpi = s.readCPI(); genInvokeInterface(constantPool().lookupMethod(cpi, opcode), cpi, constantPool()); break;
+            case INVOKEDYNAMIC  : cpi = s.readCPI(); genInvokeDynamic(constantPool().lookupInvokeDynamic(cpi), cpi, constantPool()); break;
             case NEW            : genNewInstance(s.readCPI()); break;
             case NEWARRAY       : genNewTypeArray(s.readLocalIndex()); break;
             case ANEWARRAY      : genNewObjectArray(s.readCPI()); break;

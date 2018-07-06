@@ -1052,8 +1052,19 @@ public final class ConstantPool implements RiConstantPool {
                     }
                     break;
                 }
+                case INVOKEDYNAMIC:
+                    // TODO add checks
+                    break;
             }
         }
+        return method;
+    }
+
+    public RiMethod lookupInvokeDynamic(int cpi) {
+        InvokeDynamicConstant constant = invokeDynamicAt(cpi);
+        assert constant.isResolvableWithoutClassLoading(this);
+        MethodActor method = constant.resolve(this, cpi);
+        assert checkResolvedMethodAccess(method, INVOKEDYNAMIC) != null;
         return method;
     }
 
