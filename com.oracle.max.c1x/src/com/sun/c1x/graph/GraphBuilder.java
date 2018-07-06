@@ -1124,7 +1124,7 @@ public final class GraphBuilder {
 
     private void appendInvokeHandle(RiMethod target, int cpi, RiConstantPool constantPool, RiResolvedMethod resolved, Value[] args) {
         CiKind resultType = returnKind(target);
-        final Value result = append(new InvokeHandle(resolved, args, cpi, constantPool, curState, returnKind(resolved).stackKind()));
+        final Value result = append(new InvokeHandle(resolved, args, cpi, constantPool, null, returnKind(resolved).stackKind()));
         pushReturn(resultType, result);
     }
 
