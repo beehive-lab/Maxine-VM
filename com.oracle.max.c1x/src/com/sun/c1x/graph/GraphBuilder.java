@@ -959,7 +959,7 @@ public final class GraphBuilder {
                 ConstantPool cp = (ConstantPool) constantPool;
                 ClassMethodRefConstant methodRefConstant = cp.classMethodAt(cpi);
                 args = appendObjectToArguments(args, methodRefConstant.appendix());
-                pushReturn(returnKind(target), append(new InvokeHandle(resolved, args, cpi, constantPool, curState, returnKind(resolved).stackKind())));
+                appendInvokeHandle(target, cpi, constantPool, resolved, args);
                 return;
             }
         }
@@ -1119,6 +1119,12 @@ public final class GraphBuilder {
     private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, int cpi, RiConstantPool constantPool) {
         CiKind resultType = returnKind(target);
         Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target, target.signature().returnType(compilation.method.holder()), null));
+        pushReturn(resultType, result);
+    }
+
+    private void appendInvokeHandle(RiMethod target, int cpi, RiConstantPool constantPool, RiResolvedMethod resolved, Value[] args) {
+        CiKind resultType = returnKind(target);
+        final Value result = append(new InvokeHandle(resolved, args, cpi, constantPool, curState, returnKind(resolved).stackKind()));
         pushReturn(resultType, result);
     }
 
