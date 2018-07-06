@@ -41,6 +41,8 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
+import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
+import com.sun.max.vm.classfile.constant.ConstantPool;
 
 /**
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
@@ -937,8 +939,12 @@ public final class GraphBuilder {
         if (target instanceof RiResolvedMethod) {
             RiResolvedMethod resolved = (RiResolvedMethod) target;
             if (isStatic(resolved.accessFlags())) {
-                // Pop the arguments -1 which is the appenix to be appended by the compiler
+                // Pop the arguments -1 which is the appendix to be appended
                 Value[] args = curState.popArguments(target.signature().argumentSlots(false) - 1);
+                assert constantPool instanceof ConstantPool;
+                ConstantPool cp = (ConstantPool) constantPool;
+                ClassMethodRefConstant methodRefConstant = cp.classMethodAt(cpi);
+                args = appendObjectToArguments(args, methodRefConstant.appendix());
                 pushReturn(returnKind(target), append(new InvokeHandle(resolved, args, cpi, constantPool, curState, returnKind(resolved).stackKind())));
                 return;
             }
@@ -948,6 +954,17 @@ public final class GraphBuilder {
         if (!tryRemoveCall(target, args, false)) {
             genInvokeIndirect(INVOKEVIRTUAL, target, args, cpi, constantPool);
         }
+    }
+
+    private Value[] appendObjectToArguments(Value[] arguments, Object object) {
+        Value[] args = new Value[arguments.length + 1];
+        int i = 0;
+        for (Value arg: arguments) {
+            args[i++] = arg;
+        }
+        args[i] = new Constant(CiConstant.forObject(object));
+        args[i].setFlag(Value.Flag.LiveValue);
+        return args;
     }
 
     void genInvokeSpecial(RiMethod target, RiType knownHolder, int cpi, RiConstantPool constantPool) {

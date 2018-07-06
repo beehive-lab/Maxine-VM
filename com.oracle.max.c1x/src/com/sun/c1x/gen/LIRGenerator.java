@@ -632,9 +632,6 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     @Override
     public void visitInvokeHandle(InvokeHandle x) {
-        assert x.constantPool() instanceof ConstantPool;
-        ConstantPool cp = (ConstantPool) x.constantPool();
-        ClassMethodRefConstant methodRefConstant = cp.classMethodAt(x.cpi());
         XirArgument actor = XirArgument.forObject(x.target());
         XirSnippet snippet = xir.genInvokeHandle(site(x), actor);
         LIRDebugInfo info = stateFor(x, x.stateBefore());
@@ -649,8 +646,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue resultOperand = resultOperandFor(x.kind);
         CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.signature(), JavaCall);
         List<CiValue> pointerSlots = new ArrayList<>(2);
-        Value[] args = addAppendixToArguments(x, methodRefConstant.appendix());
-        List<CiValue> argList = visitInvokeArguments(cc, args, pointerSlots);
+        List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
 
         if (C1XOptions.InvokeSnippetAfterArguments) {
             destinationAddress = emitXir(snippet, x, info.copy(), null, x.target(), false, pointerSlots);
@@ -671,17 +667,6 @@ public abstract class LIRGenerator extends ValueVisitor {
             CiValue result = createResultVariable(x);
             lir.move(resultOperand, result);
         }
-    }
-
-    private Value[] addAppendixToArguments(InvokeHandle x, Object appendix) {
-        Value[] args = new Value[x.arguments().length + 1];
-        int i = 0;
-        for (Value arg: x.arguments()) {
-            args[i++] = arg;
-        }
-        args[i] = new Constant(CiConstant.forObject(appendix));
-        args[i].setFlag(Flag.LiveValue);
-        return args;
     }
 
     @Override
