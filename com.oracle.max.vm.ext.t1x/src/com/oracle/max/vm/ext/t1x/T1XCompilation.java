@@ -2819,6 +2819,11 @@ public abstract class T1XCompilation {
                 do_oconst(stringConstant.value);
                 break;
             }
+            case OBJECT: { // Used only by methodhandle generated code
+                ObjectConstant objectConstant = (ObjectConstant) constant;
+                do_oconst(objectConstant.value());
+                break;
+            }
             default: {
                 assert false : "ldc for unexpected constant tag: " + constant.tag();
                 break;
