@@ -977,7 +977,6 @@ public final class GraphBuilder {
             args[i++] = arg;
         }
         args[i] = new Constant(CiConstant.forObject(object));
-        args[i].setFlag(Value.Flag.LiveValue);
         return args;
     }
 

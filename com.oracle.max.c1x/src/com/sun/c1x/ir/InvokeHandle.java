@@ -45,6 +45,17 @@ public final class InvokeHandle extends StateSplit {
     }
 
     @Override
+    public void inputValuesDo(ValueClosure closure) {
+        for (int i = 0; i < arguments.length; i++) {
+            Value arg = arguments[i];
+            if (arg != null) {
+                arguments[i] = closure.apply(arg);
+                assert arguments[i] != null;
+            }
+        }
+    }
+
+    @Override
     public void accept(ValueVisitor v) {
         v.visitInvokeHandle(this);
     }
