@@ -649,7 +649,7 @@ public abstract class LIRGenerator extends ValueVisitor {
         CiValue resultOperand = resultOperandFor(x.kind);
         CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.signature(), JavaCall);
         List<CiValue> pointerSlots = new ArrayList<>(2);
-        Value[] args = addAppendixToArguments(x, methodRefConstant);
+        Value[] args = addAppendixToArguments(x, methodRefConstant.appendix());
         List<CiValue> argList = visitInvokeArguments(cc, args, pointerSlots);
 
         if (C1XOptions.InvokeSnippetAfterArguments) {
@@ -673,13 +673,13 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
     }
 
-    private Value[] addAppendixToArguments(InvokeHandle x, ClassMethodRefConstant methodRefConstant) {
+    private Value[] addAppendixToArguments(InvokeHandle x, Object appendix) {
         Value[] args = new Value[x.arguments().length + 1];
         int i = 0;
         for (Value arg: x.arguments()) {
             args[i++] = arg;
         }
-        args[i] = new Constant(CiConstant.forObject(methodRefConstant.appendix()));
+        args[i] = new Constant(CiConstant.forObject(appendix));
         args[i].setFlag(Flag.LiveValue);
         return args;
     }
