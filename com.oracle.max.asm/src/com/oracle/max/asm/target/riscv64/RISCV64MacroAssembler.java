@@ -23,9 +23,11 @@ import static com.oracle.max.asm.target.riscv64.RISCV64opCodes.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64MacroAssembler extends RISCV64Assembler {
-    public RISCV64MacroAssembler(CiTarget target) {
-        super(target);
+    public RISCV64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
+        super(target, registerConfig);
+    }
     }
 }

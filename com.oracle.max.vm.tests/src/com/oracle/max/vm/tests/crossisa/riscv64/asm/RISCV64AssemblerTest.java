@@ -19,22 +19,22 @@
  */
 package com.oracle.max.vm.tests.crossisa.riscv64.asm;
 
-import static com.oracle.max.asm.target.riscv.RISCV64.*;
+import static com.oracle.max.asm.target.riscv64.RISCV64.*;
 
+import com.oracle.max.vm.tests.crossisa.CrossISATester;
 import org.junit.*;
 
-import com.oracle.max.vm.tests.crossisa.*;
-import com.oracle.max.asm.target.riscv.*;
+import com.oracle.max.asm.target.riscv64.*;
 import com.sun.cri.ci.*;
 
 public class RISCV64AssemblerTest {
 
-    private RISCVAssembler asm;
+    private RISCV64Assembler asm;
     private MaxineRISCV64Tester tester = new MaxineRISCV64Tester();
 
     public RISCV64AssemblerTest() {
         CiTarget risc64 = new CiTarget(new RISCV64(), true, 8, 0, 4096, 0, false, false, false, true);
-        asm = new RISCVAssembler(risc64);
+        asm = new RISCV64Assembler(risc64);
     }
 
     @Before

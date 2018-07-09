@@ -19,15 +19,25 @@
  */
 package com.oracle.max.asm.target.riscv64;
 
+import static com.oracle.max.asm.target.riscv64.RISCV64.*;
 import static com.oracle.max.asm.target.riscv64.RISCV64opCodes.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
-import static com.oracle.max.asm.target.riscv.RISCV64.*;
+import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64Assembler extends AbstractAssembler {
+    public CiRegister frameRegister;
+    public CiRegister scratchRegister;
+
     public RISCV64Assembler(CiTarget target) {
         super(target);
+    }
+
+    public RISCV64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
+        super(target);
+        this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
+        this.scratchRegister = registerConfig == null ? RISCV64.x16 : registerConfig.getScratchRegister();
     }
 
     @Override
