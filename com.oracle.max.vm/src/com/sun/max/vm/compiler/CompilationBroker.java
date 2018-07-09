@@ -72,15 +72,15 @@ public class CompilationBroker {
      */
     public final RuntimeCompiler baselineCompiler;
 
-    /**
+    /** 
      * The optimizing compiler.
      */
     public final RuntimeCompiler optimizingCompiler;
 
-		/**
-		 * Thread pool of compilation threads
-		 */
-		private CompilationThreadPool compilationThreadPool;
+    /**
+     * Thread pool of compilation threads.
+     */
+    private CompilationThreadPool compilationThreadPool;
 
     /**
      * Other compilers registered with {@link #addCompiler}.
@@ -99,7 +99,7 @@ public class CompilationBroker {
     private static boolean needOfflineAdapters = false;
 
     private static boolean BackgroundCompilation = false;
-		private static boolean backgroundCompilationEnabled = false;
+    private static boolean backgroundCompilationEnabled = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
@@ -108,7 +108,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
-				addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
+        addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
 
     @RESET
@@ -348,7 +348,7 @@ public class CompilationBroker {
             }
         } else if (phase == Phase.RUNNING) {
             if (BackgroundCompilation) {
-								backgroundCompilationEnabled = true;
+                backgroundCompilationEnabled = true;
                 compilationThreadPool = new CompilationThreadPool();
                 compilationThreadPool.setDaemon(true);
                 compilationThreadPool.startThreads();
@@ -471,18 +471,18 @@ public class CompilationBroker {
 
             try {
                 if (doCompile) {
-										TargetMethod tm = null;
-										if (backgroundCompilationEnabled && nature == Nature.OPT) {
-												compilationThreadPool.addCompilationToQueue(compilation);
-												compilation.relinquishOwnership();
-										} else {
-												tm = compilation.compile();
-												VMTI.handler().methodCompiled(cma);
-										}
+                    TargetMethod tm = null;
+                    if (backgroundCompilationEnabled && nature == Nature.OPT) {
+                        compilationThreadPool.addCompilationToQueue(compilation);
+                        compilation.relinquishOwnership();
+                    } else {
+                        tm = compilation.compile();
+                        VMTI.handler().methodCompiled(cma);
+                    }
                     return tm;
                 } else {
                     // return result from other thread (which will have send the VMTI event)
-										// TODO: we don't ever want to be waiting on a compilation
+                    // TODO: we don't ever want to be waiting on a compilation
                     return compilation.get();
                 }
             } catch (Throwable t) {
@@ -649,12 +649,12 @@ public class CompilationBroker {
             mpo.entryBackedgeCount = 1000;
             return;
         }
-				if (!backgroundCompilationEnabled && Compilation.isCompilationRunningInCurrentThread()) {
+        if (!backgroundCompilationEnabled && Compilation.isCompilationRunningInCurrentThread()) {
             logCounterOverflow(mpo, "Stopped recompilation because compilation is running in current thread");
             // We don't want to see another counter overflow in the near future
             mpo.entryBackedgeCount = 1000;
             return;
-				}
+        }
 
         ClassMethodActor cma = mpo.method.classMethodActor;
         TargetMethod oldMethod = mpo.method;

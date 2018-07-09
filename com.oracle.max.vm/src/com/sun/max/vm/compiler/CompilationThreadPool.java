@@ -42,44 +42,45 @@ public class CompilationThreadPool {
      */
     private final LinkedList<Compilation> pending = new LinkedList<Compilation>();
 
-		private CompilationThread[] threadPool;
+    private CompilationThread[] threadPool;
 
-		/**
-		 * Default size of compilation thread pool
-		 */
-		private static int CTPS = 4;
+    /**
+     * Default size of compilation thread pool.  
+     */
+    private static int CTPS = 4;
 
     private static boolean GCOnRecompilation;
 
-		static {
+    static {
         addFieldOption("-XX:", "GCOnRecompilation", CompilationThreadPool.class, "Force GC before every re-compilation.");
         addFieldOption("-XX:", "CTPS", CompilationThreadPool.class, "Compilation threadpool size (Default: 4)");
-		}
+    }
 
-		public CompilationThreadPool() {
-				threadPool = new CompilationThread[CTPS];
-				for(int i = 0; i < CTPS; i++) {
-						threadPool[i] = new CompilationThread();
-				}
-		}
-		public void setDaemon(boolean on) {
-				for(int i = 0; i < CTPS; i++) {
-						threadPool[i].setDaemon(on);
-				}
-		}
+    public CompilationThreadPool() {
+        threadPool = new CompilationThread[CTPS];
+        for (int i = 0; i < CTPS; i++) {
+            threadPool[i] = new CompilationThread();
+        }
+    }
 
-		public void startThreads() {
-				for (int i = 0; i < CTPS; i++) {
-						threadPool[i].start();
-				}
-		}
+    public void setDaemon(boolean on) {
+        for (int i = 0; i < CTPS; i++) {
+            threadPool[i].setDaemon(on);
+        }
+    }
 
-		public void addCompilationToQueue(Compilation compilation) {
-				synchronized(pending) {
-						pending.add(compilation);
-						pending.notify();
-				}
-		}
+    public void startThreads() {
+        for (int i = 0; i < CTPS; i++) {
+            threadPool[i].start();
+        }
+    }
+
+    public void addCompilationToQueue(Compilation compilation) {
+        synchronized (pending) {
+            pending.add(compilation);
+            pending.notify();
+        }
+    }
 
     /**
      * This class implements a daemon thread that performs compilations in the background. Depending on the compiler
@@ -106,16 +107,15 @@ public class CompilationThreadPool {
                 try {
                     compileOne();
                 } catch (InterruptedException e) {
-                    // do nothing.
+                    // do nothing.  
                 } catch (Throwable t) {
-									  LogCompilationError(compilation.classMethodActor, t);
+                    logCompilationError(compilation.classMethodActor, t);
                 }
             }
         }
 
         /**
          * Polls the compilation queue and performs a single compilation.
-         *
          * @throws InterruptedException if the thread was interrupted waiting on the queue
          */
         void compileOne() throws InterruptedException {
@@ -129,22 +129,22 @@ public class CompilationThreadPool {
                 }
             }
             compilation.compilingThread = Thread.currentThread();
-						if (GCOnRecompilation) {
-								System.gc();
-						}
+            if (GCOnRecompilation) {
+                System.gc();
+            }
             TargetMethod tm = compilation.compile();
-						VMTI.handler().methodCompiled(tm.classMethodActor);
+            VMTI.handler().methodCompiled(tm.classMethodActor);
         }
     }
 
-		private void LogCompilationError(ClassMethodActor cma, Throwable t) {
-				if (VMOptions.verboseOption.verboseCompilation) {
-						boolean lockDisabledSafepoints = Log.lock();
-						Log.printCurrentThread(false);
-						Log.println(": Exception during compilation of " + cma);
-						t.printStackTrace(Log.out);
-						Log.unlock(lockDisabledSafepoints);
-				}
-		}
+    private void logCompilationError(ClassMethodActor cma, Throwable t) {
+        if (VMOptions.verboseOption.verboseCompilation) {
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.printCurrentThread(false);
+            Log.println(": Exception during compilation of " + cma);
+            t.printStackTrace(Log.out);
+            Log.unlock(lockDisabledSafepoints);
+        }
+    }
 }
 

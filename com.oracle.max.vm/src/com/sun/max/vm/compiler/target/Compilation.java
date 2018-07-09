@@ -344,13 +344,13 @@ public class Compilation {
         return result;
     }
 
-		/**
-		 * Allows a thread to relinquish ownership of a compilation
-		 * if another thread is to compile it
-		 */
-		public void relinquishOwnership() {
-					COMPILATION.set(parent);
-		}
+    /**
+     * Allows a thread to relinquish ownership of a compilation
+     * if another thread is to compile it.
+     */
+    public void relinquishOwnership() {
+        COMPILATION.set(parent);
+    }
 
     /**
      * Invokes a garbage collection if the {@link #GCOnCompilation} or
