@@ -121,6 +121,7 @@ public class RISCV64 extends CiArchitecture {
     public static final CiRegister f31 = new CiRegister(31, 31, 8, "f31", FPU, FPU);
 
     public static final CiRegister zero = x0;
+    public static final CiRegister zr = x0;
     public static final CiRegister ra   = x1;
     public static final CiRegister sp   = x2;
     public static final CiRegister gp   = x3;
