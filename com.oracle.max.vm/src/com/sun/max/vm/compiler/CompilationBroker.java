@@ -99,7 +99,7 @@ public class CompilationBroker {
     private static boolean needOfflineAdapters = false;
 
     private static boolean BackgroundCompilation = false;
-    private static boolean backgroundCompilationEnabled = false;
+    private static boolean backgroundCompilationInitialized = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
@@ -348,7 +348,7 @@ public class CompilationBroker {
             }
         } else if (phase == Phase.RUNNING) {
             if (BackgroundCompilation) {
-                backgroundCompilationEnabled = true;
+                backgroundCompilationInitialized = true;
                 compilationThreadPool = new CompilationThreadPool();
                 compilationThreadPool.setDaemon(true);
                 compilationThreadPool.startThreads();
@@ -472,7 +472,7 @@ public class CompilationBroker {
             try {
                 if (doCompile) {
                     TargetMethod tm = null;
-                    if (backgroundCompilationEnabled && nature == Nature.OPT) {
+                    if (backgroundCompilationInitialized && nature == Nature.OPT) {
                         compilationThreadPool.addCompilationToQueue(compilation);
                         compilation.relinquishOwnership();
                     } else {
@@ -649,7 +649,7 @@ public class CompilationBroker {
             mpo.entryBackedgeCount = 1000;
             return;
         }
-        if (!backgroundCompilationEnabled && Compilation.isCompilationRunningInCurrentThread()) {
+        if (!backgroundCompilationInitialized && Compilation.isCompilationRunningInCurrentThread()) {
             logCounterOverflow(mpo, "Stopped recompilation because compilation is running in current thread");
             // We don't want to see another counter overflow in the near future
             mpo.entryBackedgeCount = 1000;
