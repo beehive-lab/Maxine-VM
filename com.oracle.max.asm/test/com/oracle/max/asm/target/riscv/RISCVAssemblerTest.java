@@ -104,9 +104,122 @@ public class RISCVAssemblerTest {
                     asm.lb(dest, src, imm32);
                     final String assemblyInstruction = "lb x" + dest.getEncoding() + ", " + (imm32 & 0xfff) + "(x" + src.getEncoding() + ")";
                     assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+
                 }
             }
         }
     }
 
+    @Test
+    public void ecall() {
+        asm.codeBuffer.reset();
+        asm.ecall();
+        final String assemblyInstruction = "ecall ";
+        assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+    }
+
+    @Test
+    public void ebreak() {
+        asm.codeBuffer.reset();
+        asm.ebreak();
+        final String assemblyInstruction = "ebreak ";
+        assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+    }
+
+    @Test
+    public void csrrw() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            for (CiRegister src : RISCV64.cpuRegisters) {
+                asm.codeBuffer.reset();
+                asm.csrrw(dest, 5, src);
+                final String assemblyInstruction = "csrrw x" + dest.getEncoding() + "," + 5 + "," + "x" + src.getEncoding();
+                assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+            }
+        }
+    }
+
+    @Test
+    public void csrrs() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            for (CiRegister src : RISCV64.cpuRegisters) {
+                asm.codeBuffer.reset();
+                asm.csrrs(dest, 0, src);
+                final String assemblyInstruction = "csrrs x" + dest.getEncoding() + "," + 0 + "," + "x" + src.getEncoding();
+                assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+            }
+        }
+    }
+
+    @Test
+    public void csrrc() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            for (CiRegister src : RISCV64.cpuRegisters) {
+                asm.codeBuffer.reset();
+                asm.csrrc(dest, 0, src);
+                final String assemblyInstruction = "csrrc x" + dest.getEncoding() + "," + 0 + "," + "x" + src.getEncoding();
+                assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+            }
+        }
+    }
+
+    @Test
+    public void csrrwi() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            asm.codeBuffer.reset();
+            asm.csrrwi(dest, 1, 0);
+            final String assemblyInstruction = "csrrwi x" + dest.getEncoding() + "," + 1 + "," + 0;
+            assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+        }
+    }
+
+    @Test
+    public void csrrsi() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            asm.codeBuffer.reset();
+            asm.csrrsi(dest, 1, 0);
+            final String assemblyInstruction = "csrrsi x" + dest.getEncoding() + "," + 1 + "," + 0;
+            assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+        }
+    }
+
+    @Test
+    public void csrrci() {
+        for (CiRegister dest: RISCV64.cpuRegisters) {
+            asm.codeBuffer.reset();
+            asm.csrrci(dest, 1, 0);
+            final String assemblyInstruction = "csrrci x" + dest.getEncoding() + "," + 1 + "," + 0;
+            assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+        }
+    }
+
+
+    @Test
+    public void fence() {
+        for (int predecessor = 1; predecessor < 0b1111; predecessor++) {
+            for (int successor = 1; successor < 0b1111; successor++) {
+                asm.codeBuffer.reset();
+                asm.fence(predecessor, successor);
+                final StringBuilder assemblyInstruction = new StringBuilder("fence ");
+                appendFenceMask(predecessor, assemblyInstruction);
+                assemblyInstruction.append(',');
+                appendFenceMask(successor, assemblyInstruction);
+                assertEquals(assemblyInstruction.toString(), assemble(assemblyInstruction.toString()), asm.codeBuffer.getInt(0));
+            }
+        }
+    }
+
+    private void appendFenceMask(int fenceMask, StringBuilder fenceInstruction) {
+        if ((fenceMask & 0b1000) != 0) {
+            fenceInstruction.append('i');
+        }
+        if ((fenceMask & 0b0100) != 0) {
+            fenceInstruction.append('o');
+        }
+        if ((fenceMask & 0b0010) != 0) {
+            fenceInstruction.append('r');
+        }
+        if ((fenceMask & 0b0001) != 0) {
+            fenceInstruction.append('w');
+        }
+    }
 }

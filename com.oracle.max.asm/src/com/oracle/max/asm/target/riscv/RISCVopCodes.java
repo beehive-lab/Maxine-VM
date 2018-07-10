@@ -38,7 +38,8 @@ public enum RISCVopCodes {
     BRNC((byte) 0b1100011),
     JAL((byte) 0b1101111),
     JALR((byte) 0b1100111),
-
+    FENCE((byte) 0b0001111),
+    SYS((byte) 0b1110011),
     // RV64I Base instruction set /////////////////////////////////////////////
 
     LWU((byte) 0b0000011),
