@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -60,6 +60,8 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitInstanceOf(InstanceOf i) { visit(i); }
     @Override public void visitIntrinsic(Intrinsic i) { visit(i); }
     @Override public void visitInvoke(Invoke i) { visit(i); }
+    @Override public void visitInvokeHandle(InvokeHandle i) { visit(i); }
+    @Override public void visitLinkTo(LinkTo i) { visit(i); }
     @Override public void visitLoadField(LoadField i) { visit(i); }
     @Override public void visitLoadIndexed(LoadIndexed i) { visit(i); }
     @Override public void visitLoadPointer(LoadPointer i) { visit(i); }

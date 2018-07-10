@@ -51,6 +51,8 @@ public interface RiXirGenerator {
 
     XirSnippet genIntrinsic(XirSite site, XirArgument[] arguments, RiMethod method);
 
+    XirSnippet genInvokeHandle(XirSite site, XirArgument actor);
+
     XirSnippet genInvokeInterface(XirSite site, XirArgument receiver, RiMethod method);
 
     XirSnippet genInvokeVirtual(XirSite site, XirArgument receiver, RiMethod method);
@@ -58,6 +60,14 @@ public interface RiXirGenerator {
     XirSnippet genInvokeSpecial(XirSite site, XirArgument receiver, RiMethod method);
 
     XirSnippet genInvokeStatic(XirSite site, RiMethod method);
+
+    XirSnippet genLinkToSpecial(XirSite site, XirArgument memberName, RiMethod target);
+
+    XirSnippet genLinkToInterface(XirSite site, XirArgument receiver, XirArgument memberName, RiMethod target);
+
+    XirSnippet genLinkToVirtual(XirSite site, XirArgument receiver, XirArgument memberName, RiMethod target);
+
+    XirSnippet genLinkToStatic(XirSite site, XirArgument memberName, RiMethod target);
 
     XirSnippet genMonitorEnter(XirSite site, XirArgument receiver, XirArgument lockAddress);
 

@@ -25,7 +25,6 @@ import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
-import java.lang.invoke.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
@@ -153,12 +152,6 @@ public abstract class T1XCompilation {
         }
         return new CiAddress(CiKind.Int, FP, offset);
     }
-
-    /**
-     * The minimum value to which {@link T1XOptions#TraceBytecodeParserLevel} must be set to trace
-     * the bytecode instructions as they are parsed.
-     */
-    public static final int TRACELEVEL_INSTRUCTIONS = 1;
 
     // Fields holding info/data structures reused across all compilations
 
@@ -604,11 +597,11 @@ public abstract class T1XCompilation {
      * Starts the process of emitting a template. This includes emitting code to copy any arguments from the stack to
      * the relevant parameter locations.
      * <p/>
-     * A call to this method must be matched with a call to {@link #finish()} or
-     * {@link #finish(ClassMethodActor, boolean)} once the code for initializing the non-stack-based template parameters
+     * A call to this method must be matched with a call to {@link #finish()} once the code for initializing the
+     * non-stack-based template parameters
      * has been emitted.
      *
-     * @param tag denotes the template to emit
+     * @param startTemplate denotes the template to emit
      */
     protected void start(T1XTemplate startTemplate) {
         assert template == null;
@@ -991,9 +984,9 @@ public abstract class T1XCompilation {
      * Method handle intrinsics such as invokeBasic need to query the receiver in order to
      * extract the correct target.
      *
-     * @param reveiverStackIndex The receiver's position in the Java operand stack is copied into
+     * @param receiverStackIndex The receiver's position in the Java operand stack is copied into
      *          the receiver register expected by the intrinsic.
-     * @param The {@linkplain Safepoints safepoint} for the call.
+     * @return The {@linkplain Safepoints safepoint} for the call.
      */
     protected abstract int callDirect(int receiverStackIndex);
 
@@ -2824,6 +2817,11 @@ public abstract class T1XCompilation {
             case STRING: {
                 StringConstant stringConstant = (StringConstant) constant;
                 do_oconst(stringConstant.value);
+                break;
+            }
+            case OBJECT: { // Used only by methodhandle generated code
+                ObjectConstant objectConstant = (ObjectConstant) constant;
+                do_oconst(objectConstant.value());
                 break;
             }
             default: {

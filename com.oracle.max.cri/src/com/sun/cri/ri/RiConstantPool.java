@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -54,7 +56,7 @@ public interface RiConstantPool {
     /**
      * Looks up a reference to a method. If {@code opcode} is non-negative, then resolution checks
      * specific to the JVM instruction it denotes are performed if the method is already resolved.
-     * Should any of these checks fail, an {@linkplain RiMethod#isResolved() unresolved}
+     * Should any of these checks fail, an {@linkplain RiMethod unresolved}
      * method reference is returned.
      *
      * @param cpi the constant pool index
@@ -63,6 +65,14 @@ public interface RiConstantPool {
      * @throws ClassFormatError if the entry at {@code cpi} is not a method
      */
     RiMethod lookupMethod(int cpi, int opcode);
+
+    /**
+     * Looks up a reference to a method invoked through invokeDynamic.
+     *
+     * @param cpi the constant pool index of the invokeDynamic constant
+     * @return a reference to the method to be invoked by the invokeDynamic
+     */
+    RiMethod lookupInvokeDynamic(int cpi);
 
     /**
      * Looks up a reference to a type. If {@code opcode} is non-negative, then resolution checks

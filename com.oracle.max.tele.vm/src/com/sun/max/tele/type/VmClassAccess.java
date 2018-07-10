@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -40,6 +42,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jdk.JDK;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
@@ -175,30 +178,54 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
         int count = 0;
         VmFieldAccess f = fields();
         final RemoteReference hashMapRef = f.ClassRegistry_typeDescriptorToClassActor.readRemoteReference(classRegistryRef);
-        RemoteReference segmentArrayRef = f.ConcurrentHashMap_segments.readRemoteReference(hashMapRef);
-        int segmentArrayLength = objects().unsafeReadArrayLength(segmentArrayRef);
-        for (int i = 0; i < segmentArrayLength; i++) {
-            final RemoteReference segmentRef = segmentArrayRef.readArrayAsRemoteReference(i);
-            if (!segmentRef.isZero()) {
-                RemoteReference entryArrayRef = f.ConcurrentHashMap$Segment_table.readRemoteReference(segmentRef);
-                if (!entryArrayRef.isZero()) {
-                    int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
-                    for (int j = 0; j != entryArrayLength; j++) {
-                        RemoteReference entryRef = entryArrayRef.readArrayAsRemoteReference(j);
-                        while (!entryRef.isZero()) {
-                            if (entryRef.isProvisional() && vm().isAttaching()) {
-                                // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
-                                // fully initialized yet so we add it to a fix-up list and handle it later
-                                attachFixupList.add(entryRef);
-                            } else {
-                                RemoteReference classActorRef = f.ConcurrentHashMap$HashEntry_value.readRemoteReference(entryRef);
-                                if (!classActorRef.isZero()) {
-                                    addToRegistry(classActorRef);
-                                    count++;
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            RemoteReference segmentArrayRef = f.ConcurrentHashMap_segments.readRemoteReference(hashMapRef);
+            int segmentArrayLength = objects().unsafeReadArrayLength(segmentArrayRef);
+            for (int i = 0; i < segmentArrayLength; i++) {
+                final RemoteReference segmentRef = segmentArrayRef.readArrayAsRemoteReference(i);
+                if (!segmentRef.isZero()) {
+                    RemoteReference entryArrayRef = f.ConcurrentHashMap$Segment_table.readRemoteReference(segmentRef);
+                    if (!entryArrayRef.isZero()) {
+                        int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
+                        for (int j = 0; j != entryArrayLength; j++) {
+                            RemoteReference entryRef = entryArrayRef.readArrayAsRemoteReference(j);
+                            while (!entryRef.isZero()) {
+                                if (entryRef.isProvisional() && vm().isAttaching()) {
+                                    // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
+                                    // fully initialized yet so we add it to a fix-up list and handle it later
+                                    attachFixupList.add(entryRef);
+                                } else {
+                                    RemoteReference classActorRef = f.ConcurrentHashMap$HashEntry_value.readRemoteReference(entryRef);
+                                    if (!classActorRef.isZero()) {
+                                        addToRegistry(classActorRef);
+                                        count++;
+                                    }
                                 }
+                                entryRef = f.ConcurrentHashMap$HashEntry_next.readRemoteReference(entryRef);
                             }
-                            entryRef = f.ConcurrentHashMap$HashEntry_next.readRemoteReference(entryRef);
                         }
+                    }
+                }
+            }
+        } else {
+            RemoteReference entryArrayRef = f.ConcurrentHashMap_table.readRemoteReference(hashMapRef);
+            if (!entryArrayRef.isZero()) {
+                int entryArrayLength = objects().unsafeReadArrayLength(entryArrayRef);
+                for (int j = 0; j != entryArrayLength; j++) {
+                    RemoteReference entryRef = entryArrayRef.readArrayAsRemoteReference(j);
+                    while (!entryRef.isZero()) {
+                        if (entryRef.isProvisional() && vm().isAttaching()) {
+                            // this is likely to be a reference in the dynamic heap that we can't see because TeleHeap is not
+                            // fully initialized yet so we add it to a fix-up list and handle it later
+                            attachFixupList.add(entryRef);
+                        } else {
+                            RemoteReference classActorRef = f.ConcurrentHashMap$Node_val.readRemoteReference(entryRef);
+                            if (!classActorRef.isZero()) {
+                                addToRegistry(classActorRef);
+                                count++;
+                            }
+                        }
+                        entryRef = f.ConcurrentHashMap$Node_next.readRemoteReference(entryRef);
                     }
                 }
             }
@@ -356,7 +383,12 @@ public final class VmClassAccess extends AbstractVmHolder implements MaxClasses,
             timedTrace.begin();
             for (RemoteReference entry : attachFixupList) {
                 if (!entry.isZero()) {
-                    RemoteReference classActorReference = fields().ConcurrentHashMap$HashEntry_value.readRemoteReference(entry);
+                    RemoteReference classActorReference;
+                    if (JDK.JDK_VERSION == JDK.JDK_7) {
+                        classActorReference = fields().ConcurrentHashMap$HashEntry_value.readRemoteReference(entry);
+                    } else {
+                        classActorReference = fields().ConcurrentHashMap$Node_val.readRemoteReference(entry);
+                    }
                     if (!classActorReference.isZero()) {
                         addToRegistry(classActorReference);
                     }
