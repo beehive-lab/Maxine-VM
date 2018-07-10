@@ -191,4 +191,35 @@ public class RISCVAssemblerTest {
             assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
         }
     }
+
+
+    @Test
+    public void fence() {
+        for (int predecessor = 1; predecessor < 0b1111; predecessor++) {
+            for (int successor = 1; successor < 0b1111; successor++) {
+                asm.codeBuffer.reset();
+                asm.fence(predecessor, successor);
+                final StringBuilder assemblyInstruction = new StringBuilder("fence ");
+                appendFenceMask(predecessor, assemblyInstruction);
+                assemblyInstruction.append(',');
+                appendFenceMask(successor, assemblyInstruction);
+                assertEquals(assemblyInstruction.toString(), assemble(assemblyInstruction.toString()), asm.codeBuffer.getInt(0));
+            }
+        }
+    }
+
+    private void appendFenceMask(int fenceMask, StringBuilder fenceInstruction) {
+        if ((fenceMask & 0b1000) != 0) {
+            fenceInstruction.append('i');
+        }
+        if ((fenceMask & 0b0100) != 0) {
+            fenceInstruction.append('o');
+        }
+        if ((fenceMask & 0b0010) != 0) {
+            fenceInstruction.append('r');
+        }
+        if ((fenceMask & 0b0001) != 0) {
+            fenceInstruction.append('w');
+        }
+    }
 }

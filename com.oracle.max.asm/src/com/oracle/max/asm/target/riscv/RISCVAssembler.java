@@ -592,7 +592,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param successorMask
      */
     public void fence(int predecessorMask, int successorMask) {
-        itype(FENCE, x0, 0, x0, predecessorMask + successorMask);
+        itype(FENCE, x0, 0, x0, predecessorMask << 4 | successorMask);
     }
 
     /**
