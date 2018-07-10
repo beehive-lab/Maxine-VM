@@ -808,4 +808,12 @@ public class RISCV64Assembler extends AbstractAssembler {
         rtype(SRAW, rd, 5, rs1, rs2, 32);
     }
 
+    public void mul(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    // Floating point instructions
+    public void fadd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
 }
