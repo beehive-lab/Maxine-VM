@@ -46,3 +46,42 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         addi(RISCV64.x0, RISCV64.x0, 0);
     }
 }
+    public void push(CiRegister reg) {
+        subi(RISCV64.sp, RISCV64.sp, 32);
+        sw(reg, RISCV64.sp, 0);
+    }
+
+    public void pop(CiRegister reg) {
+        lw(reg, RISCV64.sp, 0);
+        addi(RISCV64.sp, RISCV64.sp, 32);
+    }
+
+    public void push(CiRegister... registers) {
+        for (CiRegister register : registers) {
+            push(register);
+        }
+    }
+
+    public void pop(CiRegister... registers) {
+        for (CiRegister register : registers) {
+            pop(register);
+        }
+    }
+
+    public void push(int registerList) {
+        for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
+            if (registerList % 2 == 1) {
+                push(RISCV64.cpuRegisters[regNumber]);
+            }
+
+            registerList = registerList >> 1;
+        }
+    }
+
+    public void pop(int registerList) {
+        for (int regNumber = Integer.SIZE - 1; regNumber >= 0; regNumber--) {
+            if ((registerList >> regNumber) % 2 == 1) {
+                pop(RISCV64.cpuRegisters[regNumber]);
+            }
+        }
+    }
