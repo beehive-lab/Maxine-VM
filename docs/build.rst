@@ -1,6 +1,8 @@
 Build and Usage Instructions
 ============================
 
+.. _platform-label:
+
 Platform
 --------
 
