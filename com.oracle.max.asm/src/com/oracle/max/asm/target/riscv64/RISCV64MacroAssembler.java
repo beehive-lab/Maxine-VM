@@ -34,11 +34,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         and(dst, src, src);
     }
 
-    public void mov64BitConstant(CiRegister dst, CiRegister src) {
+    public void mov64BitConstant(CiRegister dst, long imm64) {
         throw new UnsupportedOperationException("Unimplemented");
     }
 
-    public void mov32BitConstant(CiRegister dst, CiRegister src) {
+    public void mov32BitConstant(CiRegister dst, int imm32) {
         throw new UnsupportedOperationException("Unimplemented");
     }
 
