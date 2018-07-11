@@ -598,6 +598,16 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     /**
      *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void mul(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MULW, rd, 0, rs1, rs2, 1);
+    }
+
+    /**
+     *
      * @param predecessorMask
      * @param successorMask
      */
@@ -808,12 +818,24 @@ public class RISCV64Assembler extends AbstractAssembler {
         rtype(SRAW, rd, 5, rs1, rs2, 32);
     }
 
-    public void mul(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
-    }
-
     // Floating point instructions
     public void fadd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    public void fmvxd(CiRegister rd, CiRegister rs) {
+        if(rd.isFpu() && rs.isGeneral()) {
+            throw new UnsupportedOperationException("Unimplemented");
+        }
+
+        throw new Error("should not reach here");
+    }
+
+    public void fmvdx(CiRegister rd, CiRegister rs) {
+        if(rd.isGeneral() && rs.isFpu()) {
+            throw new UnsupportedOperationException("Unimplemented");
+        }
+
+        throw new Error("should not reach here");
     }
 }

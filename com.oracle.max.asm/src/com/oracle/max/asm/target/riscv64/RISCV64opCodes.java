@@ -50,7 +50,9 @@ public enum RISCV64opCodes {
     SUBW((byte) 0b0111011),
     SRAW((byte) 0b0111011),
     LD((byte) 0b0000011),
-    SD((byte) 0b0100011);
+    SD((byte) 0b0100011),
+
+    MULW((byte) 0b0110011);
 
     public byte getValue() {
         return value;
