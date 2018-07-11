@@ -8,17 +8,17 @@ Platform
 
 Maxine is being developed and tested on the following configurations:
 
-+----------------+----------------------+----------------------------+--------------------+
-| Architecture   | OS                   | Java                       | MaxineVM Version   |
-+================+======================+============================+====================+
-| X86            | Ubuntu 16.04/18.04   | OpenJDK 7 u151 and 8u151   | 2.4.0              |
-+----------------+----------------------+----------------------------+--------------------+
-| Aarch64        | Ubuntu 16.04         | OpenJDK 7 u151 and 8u151   | 2.4.0              |
-+----------------+----------------------+----------------------------+--------------------+
-| ARMv7          | Ubuntu 16.04         | OpenJDK 7 u131             | 2.3.0              |
-+----------------+----------------------+----------------------------+--------------------+
++----------------+----------------------+--------------------------+--------------------+
+| Architecture   | OS                   | Java                     | MaxineVM Version   |
++================+======================+==========================+====================+
+| X86            | Ubuntu 16.04/18.04   | OpenJDK 7 and 8 (u151)   | 2.4.0              |
++----------------+----------------------+--------------------------+--------------------+
+| Aarch64        | Ubuntu 16.04         | OpenJDK 7 and 8 (u151)   | 2.4.0              |
++----------------+----------------------+--------------------------+--------------------+
+| ARMv7          | Ubuntu 16.04         | OpenJDK 7 u151           | 2.4.0              |
++----------------+----------------------+--------------------------+--------------------+
 
-To get OpenJDK 7 u151 in Ubuntu 16.04 on x86 you can use the following
+To get OpenJDK 8 u151 in Ubuntu 16.04 on x86 you can use the following
 debian packages:
 
 .. code-block:: shell
@@ -44,19 +44,19 @@ MaxineVM - JDK version compatibility table
 The table below shows the JDK version required to build each version of
 MaxineVM.
 
-+--------------------+-----------------------------+
-| MaxineVM Version   | Java Version                |
-+====================+=============================+
-| >= 2.4.0           | Open JDK 7 u151 or 8 u151   |
-+--------------------+-----------------------------+
-| 2.2 - 2.3.0        | Open JDK 7 u131 or 8 u151   |
-+--------------------+-----------------------------+
-| 2.1.1              | Open JDK 7 u131             |
-+--------------------+-----------------------------+
-| 2.0 - 2.1.0        | Oracle JDK 7 u25            |
-+--------------------+-----------------------------+
-| < 2.0              | Oracle JDK 7 u6             |
-+--------------------+-----------------------------+
++--------------------+------------------------+
+| MaxineVM Version   | Java Version           |
++====================+========================+
+| >= 2.4.0           | Open JDK 7 or 8 u151   |
++--------------------+------------------------+
+| 2.2 - 2.3.0        | Open JDK 7 or 8 u151   |
++--------------------+------------------------+
+| 2.1.1              | Open JDK 7 u131        |
++--------------------+------------------------+
+| 2.0 - 2.1.0        | Oracle JDK 7 u25       |
++--------------------+------------------------+
+| < 2.0              | Oracle JDK 7 u6        |
++--------------------+------------------------+
 
 Structure of the Source Code
 ----------------------------
@@ -102,7 +102,13 @@ Environment variables
 
    ::
 
-       export PATH=$PATH:$GRAAL_HOME/mxtool/:$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/
+       export PATH=$PATH:$GRAAL_HOME/mxtool/:$MAXINE_HOME/com.oracle.max.vm.native/generated/Linux/
+
+#. Define ``LD_LIBRARY_PATH``:
+
+   ::
+
+      $ export LD_LIBRARY_PATH=$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/
 
 Building Maxine
 ---------------
@@ -258,7 +264,7 @@ To launch the VM (or any other command for that matter) without using ``mx``, th
 Debugging
 ---------
 
-Please see `Debugging <./Debugging>`__.
+Please see :doc:`Debugging <./Debugging>`.
 
 Profiling
 ---------
@@ -266,7 +272,7 @@ Profiling
 Various profiling tools are available for the Java platform, with varying degrees of overhead.
 Some tools require VM support and the Maxine VM includes two such tools.
 The first is a simple sampling based profiler with minimal overhead that is provided in the standard VM image and enabled by the ``-Xprof`` command line option.
-The second tool is the `Virtual Machine Level Analysis <./Virtual-Machine-Level-Analysis>`__ (VMA) system that works by instrumenting compiled code.
+The second tool is the :doc:`Virtual Machine Level Analysis <./Virtual-Machine-Level-Analysis>` (VMA) system that works by instrumenting compiled code.
 Using VMA requires a custom VM image to be built.
 
 Sampling Profiler
