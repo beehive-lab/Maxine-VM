@@ -92,6 +92,11 @@ public class MaxineRISCV64Tester extends CrossISATester {
         return new ProcessBuilder("qemu-system-riscv64", "-M", "virt", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
     }
 
+    public long[] runRegisteredSimulation() throws Exception {
+        runSimulation();
+        return simulatedLongRegisters;
+    }
+
     /**
      * Sets the expected value of a register and enables it for inspection.
      *
@@ -186,5 +191,4 @@ public class MaxineRISCV64Tester extends CrossISATester {
         MaxineRISCV64Tester tester = new MaxineRISCV64Tester(args);
         tester.run();
     }
-
 }
