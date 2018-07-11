@@ -45,6 +45,14 @@ public class MaxineRISCV64Tester extends CrossISATester {
         }
     }
 
+    public MaxineRISCV64Tester(long[] expected, boolean[] test, BitsFlag[] range) {
+        super();
+        initializeQemu();
+        bitMasks = range;
+        expectedLongRegisters = expected;
+        testLongRegisters = test;
+    }
+
     public MaxineRISCV64Tester() {
         super();
         initializeQemu();
