@@ -109,6 +109,7 @@ Table of Contents
    Debugging
    FAQ
    Glossary
+   Actors
    JDK-Interoperation
    Boot-Image
    Memory-Management
