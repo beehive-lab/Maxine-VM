@@ -112,7 +112,7 @@ frame walker:
    -  Target method (optional)
       This stack walk is used with different visitors for exception
       handling, reference map preparation, the
-      `inspector <./Inspector>`__, and deoptimization.
+      :doc:`inspector <./Inspector>`, and deoptimization.
 
 #. **High Level Inspection:** The stack frame walker returns a list of
    method objects denoting the methods for each frame on the stack.
@@ -131,7 +131,7 @@ included in the stack trace.
 Inspector
 ~~~~~~~~~
 
-`The Maxine Inspector <./Inspector>`__ wants to get a detailed view of all
+:doc:`The Maxine Inspector <./Inspector>` wants to get a detailed view of all
 stack frames for display in the Stack Inspector view.
 For Java methods at stop positions or JIT methods, the JVM bytecode
 level local variables, operand stack and monitor state is of

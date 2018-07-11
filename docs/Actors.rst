@@ -106,7 +106,7 @@ implementation of the class to which the field belongs.
 A subclass of ``FieldActor``, ``InjectedReferenceFieldActor``, represents a
 synthesized field that has been added dynamically to a JDK class.
 
-See :doc:`field injection <./JDK-Interoperation#field-injection>` for
+See :doc:`field injection <./JDK-Interoperation>` for
 details and examples.
 
 MethodActor

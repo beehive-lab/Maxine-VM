@@ -40,7 +40,7 @@ processed by the class ``VMConfigurator``, and represented during boot
 image generation and VM runtime by an instance of class
 ``VMConfiguration``.
 
-The Boot Image Inspector view in the `Maxine Inspector <./Inspector>`__
+The Boot Image Inspector view in the :doc:`Maxine Inspector <./Inspector>`
 displays, among the other information about the specific boot image
 being viewed, the specific bindings for each of Maxine's schemes.
 
@@ -56,9 +56,9 @@ These phases are defined in the enum Phase in class
 ``com.sun.max.vm.MaxineVM``.
 
 Phase ``BOOTSTRAPPING`` is assigned during
-`boot image generation <./Boot-Image#boot-image-generation>`__ when the
+:doc:`boot image generation <./Boot-Image>` when the
 scheme implementation is loaded, something of a misnomer since the term
-`bootstrapping <./Boot-Image>`__ is generally used to describe the startup
+:doc:`bootstrapping <./Boot-Image>` is generally used to describe the startup
 sequence of the VM.
 
 The following list describes the initialization calls that each scheme
@@ -87,7 +87,7 @@ Object Layout (LayoutScheme)
 An implementation of the scheme defined by interface
 ``com.sun.max.vm.layout.LayoutScheme`` configures how objects are
 represented in memory, including header and fields.
-See `Object layout <./Objects#object-layout>`__ for more details.
+See :doc:`Object layout <./Objects>` for more details.
 
 Object References (ReferenceScheme)
 -----------------------------------
@@ -97,7 +97,7 @@ An implementation of the scheme defined by interface
 accessed for mutator use, for example direct pointers or handles.
 The default binding is ``DirectReferenceScheme``.
 
-Note also that the `Inspector <./Inspector>`__, which runs in a separate
+Note also that the :doc:`Inspector <./Inspector>`, which runs in a separate
 process than the VM, is able to reuse a considerable amount of VM code
 in a uniform way by creating a pseudo-configuration and binding a custom
 implementation of ``ReferenceScheme`` that encapsulates a boxed address in

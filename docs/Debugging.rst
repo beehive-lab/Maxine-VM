@@ -235,7 +235,7 @@ In practice the values are logged as untyped ``Word`` values, but
 extensive automated support is provided to handle the conversion to/from
 ``Word`` types.
 The optional tracing support is driven from the values in the log.
-For more details see :doc:`Type-based Logging <./Type‐based-Loging>`.
+For more details see :doc:`Type-based Logging <./Type-based-Logging>`.
 
 Debugging Maxine Java Tasks
 ---------------------------

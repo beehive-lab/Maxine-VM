@@ -147,7 +147,7 @@ memory.
 However, VM code is arranged in some places to make inspection easier,
 and there are a few critical places where the VM does respond to
 information written into its memory by the Inspector.
-See :doc:`Inspector-VM Interaction <./Inspector‐VM-Interaction>`.
+See :doc:`Inspector-VM Interaction <./Inspector-VM-Interaction>`.
 
 What happened to the "primordial thread"?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

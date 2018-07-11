@@ -116,17 +116,10 @@ these interns:
 | na    |              |       | Editio |
 |       |              |       | n      |
 +-------+--------------+-------+--------+
-| `Thom | Johannes     | summe | C1X    |
+| Thom  | Johannes     | summe | C1X    |
 | as    | Kepler U.    | r     | and    |
 | Würth | Linz         | 2009  | XIR    |
 | inger |              |       |        |
-| <htt  |              |       |        |
-| ps:// |              |       |        |
-| githu |              |       |        |
-| b.com |              |       |        |
-| /thom |              |       |        |
-| aswue |              |       |        |
-| >`__  |              |       |        |
 +-------+--------------+-------+--------+
 | Marce | UC Irvine    | summe | interp |
 | lo    |              | r     | reter  |
@@ -184,17 +177,14 @@ these interns:
 |       |              |       | zation |
 |       |              |       | s      |
 +-------+--------------+-------+--------+
-| `Chri | U.           | summe | genera |
+| Chri  | U.           | summe | genera |
 | stos  | Manchester   | r     | tional |
 | Kotse |              | 2008  | garbag |
 | lidis |              |       | e      |
-| <htt  |              |       | collec |
-| ps:// |              |       | tion   |
-| githu |              |       | (Beltw |
-| b.com |              |       | ay)    |
-| /kots |              |       |        |
-| elidi |              |       |        |
-| s>`__ |              |       |        |
+|       |              |       | collec |
+|       |              |       | tion   |
+|       |              |       | (Beltw |
+|       |              |       | ay)    |
 +-------+--------------+-------+--------+
 | Karth | UC Irvine    | summe | genera |
 | ik    |              | r     | tional |
@@ -205,17 +195,13 @@ these interns:
 |       |              |       | (Beltw |
 |       |              |       | ay)    |
 +-------+--------------+-------+--------+
-| `Thom | Johannes     | summe | IR     |
+| Thom  | Johannes     | summe | IR     |
 | as    | Kepler U.    | r     | visual |
 | Würth | Linz         | 2008  | izatio |
 | inger |              |       | n,     |
-| <htt  |              |       | Inspec |
-| ps:// |              |       | tor    |
-| githu |              |       | GUI    |
-| b.com |              |       |        |
-| /thom |              |       |        |
-| aswue |              |       |        |
-| >`__  |              |       |        |
+|       |              |       | Inspec |
+|       |              |       | tor    |
+|       |              |       | GUI    |
 +-------+--------------+-------+--------+
 | Aritr | Colorado     | summe | IR     |
 | a     | State U.     | r     | visual |

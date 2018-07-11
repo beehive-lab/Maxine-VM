@@ -1,6 +1,6 @@
 As a research VM, Maxine should make it is easy as possible to analyze
 the behavior of applications and Maxine itself.
-Since Maxine is `meta-circular <./Glossary#metacircular-vm>`__, many of the
+Since Maxine is meta-circular, many of the
 techniques used to analyze applications are also applicable to Maxine,
 although some aspects of meta-circularity can cause problems that can be
 hard to foresee, such as trying to allocate on the heap during a garbage

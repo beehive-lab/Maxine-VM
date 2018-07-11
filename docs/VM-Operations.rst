@@ -6,7 +6,7 @@ A VM operation, implemented by class
 performed on one or more target threads by the ``VmOperationThread`` VM
 operation thread.
 In the normal case a VM operation is performed after the target threads
-are frozen at a `safepoint <./Threads#safepoints>`__, in which case every
+are frozen at a :doc:`safepoint <./Threads>`, in which case every
 frame of a compiled/interpreted method on a frozen thread's stack is
 guaranteed to be at an execution point where the complete frame state of
 the method is available.
@@ -189,7 +189,7 @@ The choice of which synchronization mechanism to use is specified by the
 Freezing a thread requires making it enter native code.
 For threads already in native code, this is trivial, i.e., there's
 nothing to do except to transition them to the frozen state.
-For threads executing in Java code, `safepoints <./Threads#safepoints>`__
+For threads executing in Java code, :doc:`safepoints <./Threads>`
 are employed.
 Safepoints are small polling code sequences injected by the compiler at
 prudently chosen execution points.
