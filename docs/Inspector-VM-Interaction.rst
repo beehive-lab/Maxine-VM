@@ -1,7 +1,7 @@
 How the Inspector interacts with the Maxine VM
 ==============================================
 
-This page describes how the `Maxine Inspector <./Inspector>`__'s
+This page describes how the :doc:`Maxine Inspector <./Inspector>`'s
 interaction with a running VM is *implemented*.
 
 General goals for the Inspector all deal with making development and

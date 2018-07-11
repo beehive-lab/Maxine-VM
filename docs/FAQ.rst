@@ -3,7 +3,7 @@ The Maxine Project: Frequently Asked Questions
 
 Here are some of the most frequently asked questions, along with answers
 that have been updated as the project evolves.
-You might also want to browse the Maxine "`Glossary <./Glossary>`__".
+You might also want to browse the Maxine ":doc:`Glossary <./Glossary>`".
 
 Does Maxine support the GNU classpath libraries?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -33,7 +33,7 @@ How much optimization does the baseline compiler do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Essentially none.
-See `T1X <./T1X>`__.
+See :ref:`t1x-compiler-label`.
 
 Does the Maxine VM use Green Threads?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -41,7 +41,7 @@ Does the Maxine VM use Green Threads?
 No; Maxine does not use green threads.
 Maxine uses native threads and a state-of-the-art safepoint mechanism
 for preemption.
-See `Threads <./Threads>`__.
+See :doc:`Threads <./Threads>`.
 
 Can I use my favorite debugger?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -82,7 +82,6 @@ Does the Maxine VM have an interpreter?
 
 Maxine doesn't do interpretation.
 It instead uses a very fast baseline compiler.
-See `T1X <./T1X>`__.
 
 How can I enable low-level logging when the Maxine VM crashes during startup?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -98,6 +97,7 @@ How should I do logging in the Maxine VM?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 See `logging and tracing <./Glossary#logging-and-tracing>`__.
+See :ref:`t1x-compiler-label`.
 
 Why am I getting an error message about "hosted" being missing when trying to build an image?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -197,7 +197,7 @@ memory.
 However, VM code is arranged in some places to make inspection easier,
 and there are a few critical places where the VM does respond to
 information written into its memory by the Inspector.
-See `Inspector-VM Interaction <./Inspector‐VM-Interaction>`__.
+See :doc:`Inspector-VM Interaction <./Inspector‐VM-Interaction>`.
 
 What happened to the "primordial thread"?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -208,10 +208,10 @@ steps needed to bootstrap the VM and then wait until the Java VM exited.
 From February 2011 onward, the original process thread eventually
 becomes the main thread, i.e.
 the thread on which the Java main thread runs.
-See `Threads <./Threads>`__.
 
 How can I contribute to Maxine?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Users of Maxine are invited to contribute bug fixes, features, enhancements, etc.
 Remarks on how contributions need to be handled are collected on `Contributing <./intro#contributing-to-maxine>`__.
+See :doc:`Threads <./Threads>`.

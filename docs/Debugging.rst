@@ -12,7 +12,7 @@ Launching the Inspector is as simple as using the ``mx inspect`` command.
     mx inspect -cp com.oracle.max.tests/bin test.output.GCTest2
 
 The Inspector window should appear in a few moments.
-Go `here <./Inspector>`__ for other ways of launching the
+Go :doc:`here <./Inspector>` for other ways of launching the
 Inspector.
 
 Testing Maxine

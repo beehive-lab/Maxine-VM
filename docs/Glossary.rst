@@ -312,6 +312,8 @@ LayoutScheme
 
 See `Schemes <./Schemes#object-layout-(layoutscheme)>`__.
 
+.. _logging-tracing-label:
+
 Logging and Tracing
 -------------------
 
@@ -560,6 +562,8 @@ safepoint.
 The location of all references on the stack are precisely known when at
 a stop position.
 See `Threads <./Threads>`__.
+
+.. _t1x-compiler-label:
 
 T1X compiler
 ------------
