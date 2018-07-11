@@ -45,7 +45,17 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public void nop() {
         addi(RISCV64.x0, RISCV64.x0, 0);
     }
-}
+
+    public void nop(int times) {
+        for(int i = 0; i < times; i++) {
+            nop();
+        }
+    }
+
+    public void subi(CiRegister rd, CiRegister rs, int imm32) {
+        addi(rd, rs, -imm32);
+    }
+
     public void push(CiRegister reg) {
         subi(RISCV64.sp, RISCV64.sp, 32);
         sw(reg, RISCV64.sp, 0);
