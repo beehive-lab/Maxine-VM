@@ -66,3 +66,4 @@ maxine-tester/junit-tests/FileReader.input
 maxine-tester/junit-tests/GetResource.input
 maxine-tester/junit-tests/ZipFileReader.input
         
+/docs/_build/
