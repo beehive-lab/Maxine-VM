@@ -40,6 +40,19 @@ Getting Started
 -  Read the :doc:`Glossary <./Glossary>` and :doc:`FAQ <./FAQ>`.
 -  Contact us on the `the mailing list <https://groups.google.com/forum/#!forum/maxinevm>`__ (or `in private <mailto:christos.kotselidis@manchester.ac.uk>`__) and tell us about your work.
 
+Features
+--------
+
+Some of the features of Maxine that make it a compelling platform for (J)VM research include:
+
+-  Nearly all of the code base is written in Java and exploits advanced language features appearing in JDK 5 and beyond: for example annotations, static imports, and generics.
+-  The VM integrates with openJDK.
+   There's no need to download (and build) other implementations of the standard Java classes.
+-  The source code supports development in Eclipse, Netbeans or IntelliJ all of which provide excellent support for cross-referencing and browsing the code.
+   It also means that refactoring can be confidently employed to continuously improve the structure of the code.
+-  :doc:`The Maxine Inspector <./Inspector>` produces visualizations of nearly every aspect of the VM runtime state, and provides advanced, VM-specific debugging.
+-  The source code is hosted on GitHub making downloading and collaboration easier.
+
 Roadmap
 -------
 
