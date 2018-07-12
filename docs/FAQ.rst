@@ -3,7 +3,7 @@ The Maxine Project: Frequently Asked Questions
 
 Here are some of the most frequently asked questions, along with answers
 that have been updated as the project evolves.
-You might also want to browse the Maxine "`Glossary <./Glossary>`__".
+You might also want to browse the Maxine ":doc:`Glossary <./Glossary>`".
 
 Does Maxine support the GNU classpath libraries?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -33,7 +33,7 @@ How much optimization does the baseline compiler do?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Essentially none.
-See `T1X <./T1X>`__.
+See :ref:`t1x-compiler-label`.
 
 Does the Maxine VM use Green Threads?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -41,7 +41,7 @@ Does the Maxine VM use Green Threads?
 No; Maxine does not use green threads.
 Maxine uses native threads and a state-of-the-art safepoint mechanism
 for preemption.
-See `Threads <./Threads>`__.
+See :doc:`Threads <./Threads>`.
 
 Can I use my favorite debugger?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -82,22 +82,7 @@ Does the Maxine VM have an interpreter?
 
 Maxine doesn't do interpretation.
 It instead uses a very fast baseline compiler.
-See `T1X <./T1X>`__.
-
-How can I enable low-level logging when the Maxine VM crashes during startup?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-See `logging and tracing <./Glossary#logging-and-tracing>`__.
-
-How can I get a core dump from a running Maxine VM process?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-See `Build and Usage Instructions <./build>`__.
-
-How should I do logging in the Maxine VM?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-See `logging and tracing <./Glossary#logging-and-tracing>`__.
+See :ref:`t1x-compiler-label`.
 
 Why am I getting an error message about "hosted" being missing when trying to build an image?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -139,9 +124,7 @@ up via ``Reference.setReference(...)`` and ``Reference.writeReference(...)``
 instead of ``Pointer.setReference(...)`` and ``Pointer.writeReference(...)``
 there is still no need for an extra abstraction.
 It would be far simpler to annotate the method(s) doing the update with
-an annotation (e.g.
-
-@NO\_BARRIERS) that would instruct the compiler not to insert write
+an annotation (e.g. ``@NO_BARRIERS``) that would instruct the compiler not to insert write
 barriers.
 
 Of course, Maxine's abstractions should support more than just write
@@ -151,39 +134,6 @@ read & write barriers for all data types in an software transactional
 memory implementation, etc.
 I cannot say for certain that the support for these is sufficient right
 now, but I'm confident they can be programmed without grips.
-
-Why are three thread local areas (TLAs) used instead of just one?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-See `Thread locals area <./Threads#thread-locals-area-(tla)>`__.
-
-When exactly are entries in one of the three thread local areas (TLAs) changed but not in the others?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Each thread local has a nature that is fixed for its lifetime and
-determines its read and write protocol with respect to the three thread
-local areas (TLAs).
-See `Thread local variables <./Threads#thread-local-variables>`__.
-
-Where exactly are the thread local areas (TLAs) and the complete thread locals block (TLB) located on the stack?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-They are not on the stack, but rather in separately allocated memory.
-See `Thread locals block <./Threads#thread-locals-block-(tlb)>`__.
-
-How large is the reference map that is part of the thread locals block (TLB)?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The reference map in the thread locals block (TLB) uses one bit per word
-on the stack so it is about 3% of the stack size on a 32-bit system and
-about 1.5% on a 54-bit system.
-See `Thread-local memory <./Threads#thread-local-memory>`__.
-
-How can I arrange to have some of my own classes built into the boot image?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-See `Extending the Boot
-Image <./Boot-Image#extending-the-boot-image>`__.
 
 How does the Inspector process communicate with the inspected Maxine VM process?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -197,7 +147,7 @@ memory.
 However, VM code is arranged in some places to make inspection easier,
 and there are a few critical places where the VM does respond to
 information written into its memory by the Inspector.
-See `Inspector-VM Interaction <./Inspector‐VM-Interaction>`__.
+See :doc:`Inspector-VM Interaction <./Inspector-VM-Interaction>`.
 
 What happened to the "primordial thread"?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -208,10 +158,4 @@ steps needed to bootstrap the VM and then wait until the Java VM exited.
 From February 2011 onward, the original process thread eventually
 becomes the main thread, i.e.
 the thread on which the Java main thread runs.
-See `Threads <./Threads>`__.
-
-How can I contribute to Maxine?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Users of Maxine are invited to contribute bug fixes, features, enhancements, etc.
-Remarks on how contributions need to be handled are collected on `Contributing <./intro#contributing-to-maxine>`__.
+See :doc:`Threads <./Threads>`.

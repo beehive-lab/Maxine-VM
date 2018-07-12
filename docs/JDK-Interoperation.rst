@@ -2,9 +2,9 @@ JDK interoperation
 ==================
 
 The Maxine VM is designed to work with a standard, unmodified JDK, which requires special machinery for dealing dynamically with important JDK classes.
-This machinery is implemented by compiler extensions, configured by `annotations <./Glossary#annotations>`__.
+This machinery is implemented by compiler extensions, configured by :doc:`annotations <./Glossary>`.
 
-JDK classes in the JDK can be modified during VM bootstrapping, both by adding fields (`field injection <#field-injection>`__) and by replacing methods (`method substitution <#method-substitution>`__).
+JDK classes in the JDK can be modified during VM bootstrapping, both by adding fields and by replacing methods.
 
 Aliases
 -------
@@ -50,8 +50,7 @@ comments for the annotation ``com.sun.max.annotate.@ALIAS``.
 Aliasing is often used together with method substitution, so that a
 method substituted into a different class will have access to otherwise
 inaccessible members of that different class.
-See `Method substitution <#method-substitution>`__ for an example of how
-this is done.
+See below an example of how this is done.
 
 Method substitution
 -------------------

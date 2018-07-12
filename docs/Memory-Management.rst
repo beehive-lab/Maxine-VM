@@ -5,7 +5,7 @@ management, a time-consuming and error-prone activity.
 Meta-circularity and memory management
 --------------------------------------
 
-As a `meta-circular virtual machine <./Glossary#metacircular-vm>`__, Maxine
+As a :doc:`meta-circular virtual machine <./Glossary>`, Maxine
 can benefit from automatic memory management as well, something that VMs
 written in lower-level languages such as C or C++ cannot.
 

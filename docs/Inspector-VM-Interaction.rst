@@ -1,7 +1,7 @@
 How the Inspector interacts with the Maxine VM
 ==============================================
 
-This page describes how the `Maxine Inspector <./Inspector>`__'s
+This page describes how the :doc:`Maxine Inspector <./Inspector>`'s
 interaction with a running VM is *implemented*.
 
 General goals for the Inspector all deal with making development and
@@ -106,7 +106,7 @@ Logging
 
 The Inspector's low-level interaction with the VM process can be
 observed.
-See `Low-level logging <./Glossary#native-code-tracing>`__ for instructions
+See :doc:`Low-level logging <./Debugging>` for instructions
 on enabling all low-level VM logging.
 In order to observe only Inspector-related events, change ``log_TELE`` to 1
 in ``Native/share/log.h``, rather than ``log-ALL``.
@@ -126,17 +126,17 @@ Locating critical VM resources
 The Inspector leverages considerable knowledge of the VM's internal data
 representations to build its model of VM state, but it must have
 somewhere to start when beginning to read from a memory image.
-The `boot image generator <./Boot-Image#boot-image-generation>`__ stores in
-the `boot image header <./Boot-Image#boot-image-contents>`__ a number of
+The boot image generator stores in
+the boot image header a number of
 addresses and other data that help the Inspector (and VM) find things.
 These addresses get relocated, along with the contents of the heap,
-during `VM startup <./Glossary#bootstrap>`__.
+during :doc:`Bootstrap <./Glossary>`.
 The Inspector leverages detailed knowledge of the header's contents in
 order to locate, among others:
 
--  the VM's `schemes <./Schemes>`__ bindings, which are loaded into the
+-  the VM's :doc:`schemes <./Schemes>` bindings, which are loaded into the
    Inspector
--  the `boot heap <./Boot-Image#boot-image-contents>`__
+-  the :doc:`boot heap <./Boot-Image>`
 -  the boot code region
 -  the class registry
 -  the list of dynamically allocated heap segments
@@ -223,7 +223,7 @@ There are several flavors of support mechanisms:
 
 As a matter of organization, this kind of support is implemented mainly
 by VM classes in the package ``com.sun.max.vm.tele``, but it often imposes
-some obligations on specific `scheme <./Schemes>`__ implementations, for
+some obligations on specific :doc:`scheme <./Schemes>` implementations, for
 example to store a value or call a method.
 These obligations are increasingly specified and documented in scheme
 definitions.
@@ -301,7 +301,7 @@ Heap-related support
 ~~~~~~~~~~~~~~~~~~~~
 
 Implementations of the Maxine VM's
-`heap scheme <./Schemes#heap-allocation-and-garbage-collection-(heapscheme)>`__
+:doc:`heap scheme <./Schemes>`
 are obliged to make certain calls, as documented and supported by the
 scheme's static inner class ``com.sun.max.vm.heap.HeapScheme.Inspect``.
 All of these calls delegate to the VM class
@@ -390,13 +390,13 @@ Code-related support
 
 The Inspector's breakpoint mechanism requires active support from the
 Maxine VM's
-`compilation scheme <./Schemes#compiler-strategy-(compilationbroker)>`__.
+:doc:`compilation scheme <./Schemes>`.
 As a machine-level debugger, the natural kind of breakpoint supported by
 the Inspector (and by the underlying platform) is specified in terms of
 a memory location in compiled machine code.
 However, the Inspector also supports breakpoints specified in terms of a
 method's signature, so-called
-`bytecode breakpoints <./Glossary#bytecode-breakpoint>`__.
+:doc:`bytecode breakpoints <./Glossary>`.
 The Maxine VM runs only compiled code, so a bytecode breakpoint is
 understood to mean that there should be a corresponding machine code
 breakpoint set in every compilation of the method, present or future.
@@ -423,7 +423,7 @@ Inspector writes into VM memory an easily parsed list of textual type
 descriptors for those classes for which one or more bytecode breakpoints
 are currently set.
 Implementations of the VM's
-`compilation scheme <./Schemes#compiler-strategy-(compilationbroker)>`__
+:doc:`compilation scheme <./Schemes>`
 are required to call a static notification method in the scheme's static
 inner class ``com.sun.max.vm.heap.HeapScheme.Inspect`` at the beginning
 and end of each method compilation.
@@ -442,13 +442,13 @@ Inspector evolution
 The Inspector's life began long before the Maxine VM could run usefully,
 a period during which the novel meta-circular, highly modular
 architecture was refined and techniques for generating the Maxine
-`boot image <./Boot-Image>`__ developed. The Inspector's original role was
+:doc:`boot image <./Boot-Image>` developed. The Inspector's original role was
 static visualization and exploration of the binary boot image in terms
 of the higher level abstractions of the VM, something that could not be
 done by any existing tool.
 
 As the VM became increasingly able to run through its startup
-(`bootstrap sequence <(./Glossary#bootstrap)>`__), basic debugging features
+(:doc:`bootstrap sequence <./Glossary>`), basic debugging features
 were added: process controls and breakpoints, along with register and
 stack visualization.
 The Inspector remained monolithic (with no model/view separation) and

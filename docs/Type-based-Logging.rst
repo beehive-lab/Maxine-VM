@@ -41,7 +41,7 @@ In other words it is message oriented, similar to the platform logging
 framework.
 ``VMLogger`` is more "type" oriented and is targeted towards in-memory log
 storage, with log inspection handled by
-the `Maxine Inspector <./Inspector>`__.
+the :doc:`Maxine Inspector <./Inspector>`.
 By storing object values directly in the log, rather than a string
 encoding, the Inspector mechanisms for drilling down into the fields of
 an object can be exploited.
@@ -61,7 +61,7 @@ It is also expected is that most loggers will be implemented using the
 automatic generation features of ``VMLoggerGenerator`` and not be
 hand-written, except as regards custom tracing support.
 See the section below entitled
-`Automatic Generation <#automatic-generation>`__.
+`Automatic Generation`_.
 
 ``VMLogger`` does not define the implementation of the log storage.
 This is handled by ``VMLog``, which is an abstract class that is capable
@@ -322,7 +322,7 @@ In particular, string concatenation and formatting should not be used.
 Inspector Integration
 ---------------------
 
-The `Inspector <./Inspector>`__ is generally able to display the log
+The :doc:`Inspector <./Inspector>` is generally able to display the log
 arguments appropriately, by using reflection to discover the types of
 the arguments.
 
@@ -399,7 +399,7 @@ essentially equivalent to setting the associated trace options, except
 for that the data might be "stale" by delaying the interpretation until
 the log is flushed.
 
-The `Maxine Inspector <./Inspector>`__ can interpret a file of ``VMLog``
+The :doc:`Maxine Inspector <./Inspector>` can interpret a file of ``VMLog``
 records using ``mx view -vmlog=file``.
 The simplest way to create the file is to redirect the log output to a
 file by setting export ``MAXINE_LOG_FILE=maxine.log`` before running the

@@ -23,7 +23,7 @@ Goals
 -----
 
 In addition to enhancing the productivity of our own development team, the Maxine Inspector is part of our strategic goal of making VM experimentation more accessible to a wider audience.
-By leveraging the `meta-circularity <./Glossary#metacircular-vm>`__ of the VM itself (and sharing a great deal of the VM's source code), the Inspector makes it possible to visualize concisely many aspects of VM state that are elusive and widely distributed in other systems.
+By leveraging the meta-circularity of the VM itself (and sharing a great deal of the VM's source code), the Inspector makes it possible to visualize concisely many aspects of VM state that are elusive and widely distributed in other systems.
 These same advantages also make it possible to debug the VM with a single tool, highly specialized for this purpose.
 
 Background and Rationale
@@ -48,7 +48,7 @@ Specific issues include:
 -  Special considerations arise when debugging garbage collection, for
    example the Inspector's dependence on the VM's meta-information
    about classes, methods, etc., which are represented as ordinary
-   `Java objects <./Objects>`__ in the heap; garbage collection,
+   :doc:`Java objects <./Objects>` in the heap; garbage collection,
    however,
    routinely breaks the heap invariants that make those objects
    accessible.
@@ -59,19 +59,19 @@ Specific issues include:
    representation levels.
 -  Finally, these services must be available to developers in a wide
    variety of contexts: examining a pre-execution
-   `boot image <./Boot-Image>`__, examining and controlling a live VM
+   :doc:`boot image <./Boot-Image>`, examining and controlling a live VM
    process (local or remote), and post-mortem examination of a VM core
    dump.
 
 Furthermore, the Inspector's design exploits the fact that it is implemented in the same language that the VM implements and is implemented in; this gives rise to many code reuse opportunities.
-For example, the same mechanisms used by the VM's `boot image generator <./Boot-Image#boot-image-generation>`__, which allow the creation of objects in the binary runtime format for a potentially different platform, can be used by the Inspector to examine binary runtime state for a potentially different platform than the Inspector's host.
+For example, the same mechanisms used by the VM's :doc:`boot image generator <./Boot-Image>`, which allow the creation of objects in the binary runtime format for a potentially different platform, can be used by the Inspector to examine binary runtime state for a potentially different platform than the Inspector's host.
 
 Downloading and Building the Inspector
 --------------------------------------
 
 The Inspector source code is part of the Maxine VM repository.
-It will `download and build <./build>`__ automatically with the rest of the Maxine code.
-See also Inspector-specific issues on `various platforms <./build#platform>`__.
+It will :doc:`download and build <./build>` automatically with the rest of the Maxine code.
+See also Inspector-specific issues on :doc:`various platforms <./build>`.
 
 A Tour Through The Maxine Inspector
 -----------------------------------

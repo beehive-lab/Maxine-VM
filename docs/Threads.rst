@@ -6,7 +6,7 @@ operating system, in contrast to the "green threads" approach.
 Each thread is represented in the VM as an instance of class
 ``com.sun.max.vm.thread.VmThread``.
 
-The *Threads Inspector View* of the `Maxine Inspector <./Inspector>`__
+The *Threads Inspector View* of the :doc:`Maxine Inspector <./Inspector>`
 displays information about all currently existing threads in the VM.
 
 .. image:: images/Inspector-Threads.jpg
@@ -277,7 +277,7 @@ reserved for allocation by a single thread.
 This allows heap allocation without synchronization, typically via a
 simple pointer increment.
 Fast access to the thread's TLAB is provided via thread local variables
-stored in the `TLA <#thread-locals-area>`__.
+stored in the `Thread locals area (TLA)`_.
 Most object allocation goes via the TLAB of the thread requesting the
 allocation first.
 

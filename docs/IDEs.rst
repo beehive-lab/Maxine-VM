@@ -89,7 +89,7 @@ discovering and importing projects.
 
 Building the boot image
 ~~~~~~~~~~~~~~~~~~~~~~~
-Assuming all the sources compiled successfully, you can build the VM boot image by following the instructions `here <./build#build>`__.
+Assuming all the sources compiled successfully, you can build the VM boot image by following the instructions :doc:`here <./build>`.
 
 To run the VM, open a console and use ``mx vm``.
 

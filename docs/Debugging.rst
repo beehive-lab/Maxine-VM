@@ -12,7 +12,7 @@ Launching the Inspector is as simple as using the ``mx inspect`` command.
     mx inspect -cp com.oracle.max.tests/bin test.output.GCTest2
 
 The Inspector window should appear in a few moments.
-Go `here <./Inspector>`__ for other ways of launching the
+Go :doc:`here <./Inspector>` for other ways of launching the
 Inspector.
 
 Testing Maxine
@@ -161,6 +161,81 @@ following in gdb
 ::
 
     #set riscv use_compressed_breakpoint off
+
+.. _logging-tracing-label:
+
+Logging and Tracing
+-------------------
+
+Maxine provides two related mechanisms for logging and/or tracing the
+behavior of the VM, manual string-based logging using the
+``com.sun.max.vm.Log`` class, or more automated, type-based logging, that
+is integrated with the :doc:`Inspector <./Inspector>`, using
+``com.sun.max.vm.log.VMLogger``.
+These are related in that ``VMLogger`` includes string based logging as an
+option and so can replace the use of ``Log``.
+Currently the VM uses a mixture of these two mechanisms, with conversion
+being done opportunistically.
+For simplicity, we will use the term tracing to describe string-based
+logging in the following.
+If you are adding logging to a VM component you are strongly encouraged
+to use the ``VMLogger`` approach.
+
+Manual Tracing
+~~~~~~~~~~~~~~
+
+Use the class ``com.sun.max.vm.Log`` to do manual tracing.
+The class includes a variety of methods for printing objects of various
+types.
+By default the output goes to the standard output but can be re-directed
+to a file by setting the environment variable ``MAXINE_LOG_FILE`` before
+running the VM.
+To selectively enable specific tracing in the VM, define a
+``com.sun.max.vm.VMOption`` with the name ``-XX:+TraceXXX``, where ``XXX``
+identifies the tracing.
+
+You should avoid string concatenation (or any other code involving
+allocation) in tracing code, especially inside a ``VmOperation``.
+While this should not break the VM (allocation will fail fast with an
+error message if a VM operation does not allow it), allocation can add
+noise to your logs.
+Lastly, if the logging sequence involves more than one logging
+statement, you should bound the sequence with this pattern:
+
+.. code:: java
+
+    boolean lockDisabledSafepoints = Log.lock();
+    // multiple calls to Log.print...() methods
+    Log.unlock(lockDisabledSafepoints);
+
+This will serialize logging performed by multiple threads.
+Of course, it will also serialize the execution of the VM and may well
+make the race you are trying to debug disappear!
+
+Native Code Tracing
+~~~~~~~~~~~~~~~~~~~
+
+Maxine provides some tracing of the small amount of native code that
+supports the VM.
+By default this is conditionally compiled out of the VM image but can be
+selectively enabled by editing ``com.oracle.max.vm.native/share/log.h``
+and rebuilding with ``mx build`` and rebuilding the VM image.
+This is particularly useful if the the VM crashes during startup.
+For example to enable all tracing set ``log-ALL`` to 1.
+
+Type-based Logging
+~~~~~~~~~~~~~~~~~~
+
+In type-based logging, the actual values that you want to log are passed
+to an instance of the ``com.sun.max.vm.log.VMLogger`` class using methods
+defined in the class.
+Evidently, at the ``VMLogger`` level, type-based logging is something of a
+misnomer, as it cannot know the types of the actual values.
+In practice the values are logged as untyped ``Word`` values, but
+extensive automated support is provided to handle the conversion to/from
+``Word`` types.
+The optional tracing support is driven from the values in the log.
+For more details see :doc:`Type-based Logging <./Type-based-Logging>`.
 
 Debugging Maxine Java Tasks
 ---------------------------
