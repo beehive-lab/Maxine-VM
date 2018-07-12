@@ -824,7 +824,7 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fmvxd(CiRegister rd, CiRegister rs) {
-        if(rd.isFpu() && rs.isGeneral()) {
+        if (rd.isFpu() && rs.isGeneral()) {
             throw new UnsupportedOperationException("Unimplemented");
         }
 
@@ -832,7 +832,7 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fmvdx(CiRegister rd, CiRegister rs) {
-        if(rd.isGeneral() && rs.isFpu()) {
+        if (rd.isGeneral() && rs.isFpu()) {
             throw new UnsupportedOperationException("Unimplemented");
         }
 

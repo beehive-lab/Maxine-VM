@@ -39,7 +39,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void mov32BitConstant(CiRegister dst, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        lui(dst, imm32 >> 12);
+        addi(dst, dst, imm32 % (2 << 11));
+    }
+
+    public void mov(CiRegister rd, long imm) {
+        if (imm <= Integer.MAX_VALUE) {
+            mov32BitConstant(rd, (int) imm);
+        } else {
+            mov64BitConstant(rd, imm);
+        }
     }
 
     public void nop() {
@@ -47,7 +56,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void nop(int times) {
-        for(int i = 0; i < times; i++) {
+        for (int i = 0; i < times; i++) {
             nop();
         }
     }
@@ -123,10 +132,19 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             assert delta == (int) delta;
             super.addi(dest, source, (int) delta);
         } else {
-            throw new UnsupportedOperationException("Unimplemented");
-//            assert dest != scratchRegister;
-//            assert source != scratchRegister;
-//            mov(scratchRegister, delta);
-//            add(dest, source, scratchRegister);
+            assert dest != scratchRegister;
+            assert source != scratchRegister;
+            mov(scratchRegister, delta);
+            add(dest, source, scratchRegister);
         }
     }
+
+    /**
+     * Applies a delta value to the contents of reg as a 32bit quantity.
+     * @param reg
+     * @param delta
+     */
+    public void increment32(CiRegister reg, int delta) {
+        add(reg, reg, delta);
+    }
+}
