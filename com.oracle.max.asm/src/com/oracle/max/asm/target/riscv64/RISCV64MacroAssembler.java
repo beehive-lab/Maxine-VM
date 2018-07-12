@@ -95,3 +95,38 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             }
         }
     }
+
+    /**
+     * Checks whether immediate can be encoded as an arithmetic immediate.
+     *
+     * @param imm Immediate has to be either an unsigned 12bit value or an unsigned 24bit value with
+     *            the lower 12 bits 0.
+     * @return true if valid arithmetic immediate, false otherwise.
+     */
+    public static boolean isAimm(int imm) {
+        return NumUtil.isUnsignedNbit(12, imm) ||
+                NumUtil.isUnsignedNbit(12, imm >>> 12) && (imm & 0xfff) == 0;
+    }
+
+    /**
+     * @return True if immediate can be used directly for arithmetic instructions (add/sub), false otherwise.
+     */
+    public static boolean isArithmeticImmediate(long imm) {
+        // If we have a negative immediate we just use the opposite operator. I.e.: x - (-5) == x + 5.
+        return NumUtil.isInt(Math.abs(imm)) && isAimm((int) Math.abs(imm));
+    }
+
+    public void add(CiRegister dest, CiRegister source, long delta) {
+        if (delta == 0) {
+            mov(dest, source);
+        } else if (isArithmeticImmediate(delta)) {
+            assert delta == (int) delta;
+            super.addi(dest, source, (int) delta);
+        } else {
+            throw new UnsupportedOperationException("Unimplemented");
+//            assert dest != scratchRegister;
+//            assert source != scratchRegister;
+//            mov(scratchRegister, delta);
+//            add(dest, source, scratchRegister);
+        }
+    }
