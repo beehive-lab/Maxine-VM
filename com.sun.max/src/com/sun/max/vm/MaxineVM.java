@@ -50,6 +50,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.profilers.dynamic.Profiler;
 
 /**
  * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time.
@@ -119,6 +120,11 @@ public final class MaxineVM {
 
     private static long startupTime;
     private static long startupTimeNano;
+
+    /**
+     * Dynamic profiler objects
+     */
+    public static Profiler dynamicProfiler = new Profiler();
 
     /**
      * Allows the Inspector access to the thread locals block for the primordial thread.
