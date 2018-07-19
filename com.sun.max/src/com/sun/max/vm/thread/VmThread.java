@@ -239,6 +239,10 @@ public class VmThread {
      */
     public final int uuid;
 
+    /**
+     * Dynamic Profiler thread local flag
+     */
+    public boolean PROFILE;
 
     /**
      * Denotes if this thread was started as a daemon. This property is only set once a thread
@@ -606,6 +610,7 @@ public class VmThread {
         thread.stackFrameWalker.setTLA(etla);
         thread.stackDumpStackFrameWalker.setTLA(etla);
         thread.yellowZone = yellowZone;
+        thread.PROFILE = false;
 
         VM_THREAD.store3(etla, Reference.fromJava(thread));
         VmThreadMap.addThreadLocals(thread, etla, daemon);
