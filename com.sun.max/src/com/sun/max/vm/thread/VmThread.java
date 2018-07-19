@@ -240,7 +240,7 @@ public class VmThread {
     public final int uuid;
 
     /**
-     * Dynamic Profiler thread local flag
+     * Dynamic Profiler thread local flag.
      */
     public boolean PROFILE;
 

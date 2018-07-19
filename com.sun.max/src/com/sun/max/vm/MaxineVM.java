@@ -122,7 +122,7 @@ public final class MaxineVM {
     private static long startupTimeNano;
 
     /**
-     * Dynamic profiler objects
+     * Dynamic profiler objects.
      */
     public static Profiler dynamicProfiler = new Profiler();
 
