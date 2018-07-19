@@ -24,6 +24,7 @@ package com.sun.max.vm.heap;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+import static com.sun.max.vm.MaxineVM.dynamicProfiler;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -527,6 +528,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
+        dynamicProfiler.profile(size);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
 
@@ -539,6 +541,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             Object result = Cell.plantTuple(cell, hub);
             return result;
         } else {
+            dynamicProfiler.profile(hub.tupleSize);
             return Cell.plantTuple(cell, hub);
         }
     }
@@ -547,6 +550,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
+        dynamicProfiler.profile(size);
         return Cell.plantHybrid(cell, size, hub);
     }
 
