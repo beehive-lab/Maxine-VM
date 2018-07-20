@@ -11,9 +11,9 @@ import java.util.concurrent.locks.*;
  */
 @METHOD_SUBSTITUTIONS(ReentrantReadWriteLock.class)
 public final class JDK_java_util_concurrent_locks_ReentrantReadWriteLock {
-   
+
     @SUBSTITUTE(optional = true)
-    static final long getThreadId(Thread thread) {
-	return thread.getId();
+    static long getThreadId(Thread thread) {
+        return thread.getId();
     }
 }
