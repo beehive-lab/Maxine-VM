@@ -79,6 +79,21 @@ public class Profiler {
      * Dump the histogram.
      */
     public void dumpHistogram() {
-        Log.println(histogram);
+
+        /*Log.println("Original HashMap");
+        for (Long key : histogram.keySet()) {
+            Log.println(key + " " + histogram.get(key));
+        }*/
+
+        Log.println("Sorted HashMap");
+        Map<Long, Integer> map = new TreeMap<Long, Integer>(histogram);
+        Set set2 = map.entrySet();
+        Iterator iterator2 = set2.iterator();
+        while(iterator2.hasNext()) {
+            Map.Entry me2 = (Map.Entry)iterator2.next();
+            Log.print(me2.getKey() + ": ");
+            Log.println(me2.getValue());
+        }
+
     }
 }
