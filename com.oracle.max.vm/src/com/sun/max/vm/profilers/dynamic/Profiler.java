@@ -46,15 +46,25 @@ public class Profiler {
      */
 
     /**
-     * This method is called when a profiled object is allocated.
-     * Increments the number of the equal-size allocated objects.
-     * */
+     * Records the object with that size.
+     * If that size has never been recorded again, records a new entry.
+     * Else it increments the number of the equal-size allocated objects.
+     * @param size
+     */
     public void record(Size size) {
-        //histogram.get(size);
-        Log.println("Size=" + size.toLong() + " Bytes, ThreadId=" + VmThread.current().id());
+        //Log.println("Size=" + size.toLong() + " Bytes, ThreadId=" + VmThread.current().id());
+        if (!histogram.containsKey(size)) {
+            histogram.put(size, 1);
+        } else {
+            histogram.put(size, histogram.get(size) + 1);
+        }
 
     }
 
+    /**
+     * This method is called when a profiled object is allocated.
+     *
+     * */
     public void profile(Size size) {
         // if the thread local profiling flag is enabled
         if (!VmThread.current().PROFILE) {
