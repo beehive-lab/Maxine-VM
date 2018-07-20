@@ -25,20 +25,19 @@ import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.thread.VmThread;
 
-import java.util.Hashtable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Profiler {
 
     /**
      * Histogram: the data structure that stores the profiling outcome.
      */
+    public Map<Size, Integer> histogram;
 
-    public Hashtable histogram;
 
-
-    //constructor
     public Profiler() {
-        this.histogram = new Hashtable();
+        histogram = new ConcurrentHashMap<Size, Integer>();
     }
 
 
