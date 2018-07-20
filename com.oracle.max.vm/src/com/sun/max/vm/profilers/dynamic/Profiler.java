@@ -25,7 +25,7 @@ import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.thread.VmThread;
 
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Profiler {
@@ -33,11 +33,11 @@ public class Profiler {
     /**
      * Histogram: the data structure that stores the profiling outcome.
      */
-    public Map<Size, Integer> histogram;
+    public Map<Long, Integer> histogram;
 
 
     public Profiler() {
-        histogram = new ConcurrentHashMap<Size, Integer>();
+        histogram = new ConcurrentHashMap<Long, Integer>();
     }
 
 
@@ -51,7 +51,7 @@ public class Profiler {
      * Else it increments the number of the equal-size allocated objects.
      * @param size
      */
-    public void record(Size size) {
+    public void record(Long size) {
         //Log.println("Size=" + size.toLong() + " Bytes, ThreadId=" + VmThread.current().id());
         if (!histogram.containsKey(size)) {
             histogram.put(size, 1);
@@ -65,10 +65,11 @@ public class Profiler {
      * This method is called when a profiled object is allocated.
      *
      * */
-    public void profile(Size size) {
+    public void profile(Long size) {
         // if the thread local profiling flag is enabled
         if (!VmThread.current().PROFILE) {
             if (MaxineVM.isRunning()) {
+                //Log.println("Size="+size+" Bytes");
                 record(size);
             }
         }
