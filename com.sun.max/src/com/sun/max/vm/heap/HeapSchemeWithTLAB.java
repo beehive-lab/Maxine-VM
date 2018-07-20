@@ -528,7 +528,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
-        dynamicProfiler.profile(size);
+        dynamicProfiler.profile(size.toLong());
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
 
@@ -541,7 +541,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             Object result = Cell.plantTuple(cell, hub);
             return result;
         } else {
-            dynamicProfiler.profile(hub.tupleSize);
+            dynamicProfiler.profile(hub.tupleSize.toLong());
             return Cell.plantTuple(cell, hub);
         }
     }
@@ -550,7 +550,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
-        dynamicProfiler.profile(size);
+        dynamicProfiler.profile(size.toLong());
         return Cell.plantHybrid(cell, size, hub);
     }
 
