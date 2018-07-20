@@ -73,4 +73,11 @@ public class Profiler {
             }
         }
     }
+
+    /**
+     * Dump the histogram.
+     */
+    public void dumpHistogram() {
+        Log.println(histogram);
+    }
 }
