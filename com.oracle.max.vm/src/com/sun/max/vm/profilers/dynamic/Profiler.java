@@ -32,27 +32,27 @@ public class Profiler {
 
     /**
      * Histogram: the data structure that stores the profiling outcome.
+     * The bins/buckets (the keys of the HashMap) contain Long type object sizes.
+     * The values of the HashMap contain the sum of the equal-sized objects have been profiled so far.
      */
     public Map<Long, Integer> histogram;
 
-
+    /**
+     * A Concurrent HashMap is used for the histogram (flexible and thread-safe).
+     */
     public Profiler() {
         histogram = new ConcurrentHashMap<Long, Integer>();
     }
 
 
     /**
-     * Methods to manage the histogram.
-     */
-
-    /**
-     * Records the object with that size.
-     * If that size has never been recorded again, records a new entry.
-     * Else it increments the number of the equal-size allocated objects.
+     * Updates the histogram with the size of the profiled object.
+     * If that size has never been met again, a new bin/bucket is inserted.
+     * Else, the value of the corresponding bin/bucket is incremented.
+     *
      * @param size
      */
     public void record(Long size) {
-        //Log.println("Size=" + size.toLong() + " Bytes, ThreadId=" + VmThread.current().id());
         if (!histogram.containsKey(size)) {
             histogram.put(size, 1);
         } else {
@@ -63,29 +63,19 @@ public class Profiler {
 
     /**
      * This method is called when a profiled object is allocated.
-     *
-     * */
+     */
     public void profile(Long size) {
-        // if the thread local profiling flag is enabled
-        if (!VmThread.current().PROFILE) {
+        if (VmThread.current().PROFILE) {
             if (MaxineVM.isRunning()) {
-                //Log.println("Size="+size+" Bytes");
                 record(size);
             }
         }
     }
 
     /**
-     * Dump the histogram.
+     * Dump the histogram to Maxine's Log output.
      */
     public void dumpHistogram() {
-
-        /*Log.println("Original HashMap");
-        for (Long key : histogram.keySet()) {
-            Log.println(key + " " + histogram.get(key));
-        }*/
-
-        Log.println("Sorted HashMap");
         Map<Long, Integer> map = new TreeMap<Long, Integer>(histogram);
         Set set2 = map.entrySet();
         Iterator iterator2 = set2.iterator();
