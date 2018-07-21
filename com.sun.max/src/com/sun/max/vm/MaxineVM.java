@@ -640,6 +640,7 @@ public final class MaxineVM {
      * @param code exit code for the VM process
      */
     public static void exit(int code) {
+        dynamicProfiler.dumpHistogram();
         VMOptions.beforeExit();
 
         // This prevents further thread creation
