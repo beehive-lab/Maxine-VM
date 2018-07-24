@@ -72,7 +72,7 @@ public class CompilationBroker {
      */
     public final RuntimeCompiler baselineCompiler;
 
-    /** 
+    /**
      * The optimizing compiler.
      */
     public final RuntimeCompiler optimizingCompiler;
@@ -87,10 +87,19 @@ public class CompilationBroker {
      */
     private HashMap<String, RuntimeCompiler> altCompilers = new HashMap<String, RuntimeCompiler>();
 
+    /**
+     * Create an array of strings, that holds the method chain between given Entrypoint and Exitpoint.
+     */
+    private ArrayList<String> methodChain = new ArrayList<String>();
+
     private static boolean opt;
     private static boolean FailOverCompilation = true;
+    private static boolean addToChain = false;
     private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
+
+    private static String AddEntryPoint;
+    private static String AddExitPoint;
 
     private static boolean offline = false;
     private static boolean simulateAdapter = false;
@@ -108,6 +117,8 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
+        addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint, Name:Class");
+        addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint, Name:Class");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
 
@@ -287,6 +298,16 @@ public class CompilationBroker {
     }
 
     /**
+     * Return EntryPoint & ExitPoint for debugging.
+     */
+    public String returnEntryExitPoint() {
+        if (AddEntryPoint != null && AddExitPoint != null) {
+            return AddEntryPoint + ", " + AddExitPoint;
+        }
+        return null;
+    }
+
+    /**
      * Gets a string describing the compilation mode.
      *
      * @return a string suitable for inclusion in the output produced by the {@link sun.misc.Version -version} VM option
@@ -320,6 +341,10 @@ public class CompilationBroker {
      * @param phase the phase of VM starting up.
      */
     public void initialize(MaxineVM.Phase phase) {
+        if (!MaxineVM.isHosted()) {
+            Log.println(returnEntryExitPoint()); // for debugging
+        }
+
         optimizingCompiler.initialize(phase);
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
@@ -478,6 +503,18 @@ public class CompilationBroker {
                     } else {
                         tm = compilation.compile();
                         VMTI.handler().methodCompiled(cma);
+                    }
+                    if (!MaxineVM.isHosted()) {
+                        if (tm.toString().equals(AddEntryPoint)) {
+                            addToChain = true;
+                        }
+                        if (addToChain == true) {
+                            methodChain.add(tm.toString());
+                            Log.println("###### TargetMethod(" + (methodChain.size() - 1) + "): " + methodChain.get(methodChain.size() - 1) + " ######");
+                        }
+                        if (tm.toString().equals(AddExitPoint)) {
+                            addToChain = false;
+                        }
                     }
                     return tm;
                 } else {
