@@ -341,10 +341,6 @@ public class CompilationBroker {
      * @param phase the phase of VM starting up.
      */
     public void initialize(MaxineVM.Phase phase) {
-        if (!MaxineVM.isHosted()) {
-            Log.println(returnEntryExitPoint()); // for debugging
-        }
-
         optimizingCompiler.initialize(phase);
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
@@ -510,7 +506,6 @@ public class CompilationBroker {
                         }
                         if (addToChain == true) {
                             methodChain.add(tm.toString());
-                            Log.println("###### TargetMethod(" + (methodChain.size() - 1) + "): " + methodChain.get(methodChain.size() - 1) + " ######");
                         }
                         if (tm.toString().equals(AddExitPoint)) {
                             addToChain = false;
