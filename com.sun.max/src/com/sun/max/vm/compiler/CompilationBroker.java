@@ -501,13 +501,13 @@ public class CompilationBroker {
                         VMTI.handler().methodCompiled(cma);
                     }
                     if (!MaxineVM.isHosted()) {
-                        if (tm.toString().equals(AddEntryPoint)) {
+                        if (tm.toString().substring(0, tm.toString().indexOf('(')).equals(AddEntryPoint)) {
                             addToChain = true;
                         }
                         if (addToChain == true) {
-                            methodChain.add(tm.toString());
+                            methodChain.add(tm.toString().substring(0, tm.toString().indexOf('(')));
                         }
-                        if (tm.toString().equals(AddExitPoint)) {
+                        if (tm.toString().substring(0, tm.toString().indexOf('(')).equals(AddExitPoint)) {
                             addToChain = false;
                         }
                     }
