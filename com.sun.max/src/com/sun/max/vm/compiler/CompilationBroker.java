@@ -109,6 +109,7 @@ public class CompilationBroker {
 
     private static boolean BackgroundCompilation = false;
     private static boolean backgroundCompilationInitialized = false;
+    private static boolean ArgumentListOn = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
@@ -119,6 +120,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
         addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint, Name:Class");
         addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint, Name:Class");
+        addFieldOption("-XX:", "ArgumentListOn", CompilationBroker.class, "Enable ArgumentList for Entry & Exitpoint (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
 
@@ -335,6 +337,11 @@ public class CompilationBroker {
     }
 
     /**
+     * Flags if ArgumentList is on/off on Entry & Exitpoint arguments.
+     */
+    private boolean argumentListOn;
+
+    /**
      * This method initializes the adaptive compilation system, either while bootstrapping or
      * at VM startup time. This implementation may create daemon threads for background compilation.
      *
@@ -345,6 +352,8 @@ public class CompilationBroker {
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
         }
+
+        argumentListOn = ArgumentListOn;
 
         if (phase == MaxineVM.Phase.HOSTED_COMPILING || phase == MaxineVM.Phase.STARTING) {
             if (AddCompiler != null) {
@@ -493,6 +502,7 @@ public class CompilationBroker {
             try {
                 if (doCompile) {
                     TargetMethod tm = null;
+                    String methodCheck = "";
                     if (backgroundCompilationInitialized && nature == Nature.OPT) {
                         compilationThreadPool.addCompilationToQueue(compilation);
                         compilation.relinquishOwnership();
@@ -500,14 +510,19 @@ public class CompilationBroker {
                         tm = compilation.compile();
                         VMTI.handler().methodCompiled(cma);
                     }
+                    if (!argumentListOn) {
+                        methodCheck = tm.toString().substring(0, tm.toString().indexOf('('));
+                    } else {
+                        methodCheck = tm.toString();
+                    }
                     if (!MaxineVM.isHosted()) {
-                        if (tm.toString().substring(0, tm.toString().indexOf('(')).equals(AddEntryPoint)) {
+                        if (methodCheck.equals(AddEntryPoint)) {
                             addToChain = true;
                         }
                         if (addToChain == true) {
-                            methodChain.add(tm.toString().substring(0, tm.toString().indexOf('(')));
+                            methodChain.add(methodCheck);
                         }
-                        if (tm.toString().substring(0, tm.toString().indexOf('(')).equals(AddExitPoint)) {
+                        if (methodCheck.equals(AddExitPoint)) {
                             addToChain = false;
                         }
                     }
