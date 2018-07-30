@@ -31,6 +31,7 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
+import com.sun.max.vm.thread.VmThread;
 
 import com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler;
 import com.sun.cri.ci.*;
@@ -518,12 +519,14 @@ public class CompilationBroker {
                     if (!MaxineVM.isHosted()) {
                         if (methodCheck.equals(AddEntryPoint)) {
                             addToChain = true;
+                            VmThread.current().PROFILE = true;
                         }
                         if (addToChain == true) {
                             methodChain.add(methodCheck);
                         }
                         if (methodCheck.equals(AddExitPoint)) {
                             addToChain = false;
+                            VmThread.current().PROFILE = false;
                         }
                     }
                     return tm;
