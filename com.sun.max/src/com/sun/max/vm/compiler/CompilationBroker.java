@@ -29,6 +29,7 @@ import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
+import java.io.*;
 
 import java.util.*;
 import com.sun.max.vm.thread.VmThread;
@@ -97,10 +98,12 @@ public class CompilationBroker {
     private static boolean FailOverCompilation = true;
     private static boolean addToChain = false;
     private static boolean VMExtOpt;
+    private static Integer tmCounter = 0;
     static int PrintCodeCacheMetrics;
 
     private static String AddEntryPoint;
     private static String AddExitPoint;
+    private static String MethodListFile = null;
 
     private static boolean offline = false;
     private static boolean simulateAdapter = false;
@@ -119,8 +122,9 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
-        addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint, Name:Class");
-        addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint, Name:Class");
+        addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint method");
+        addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint method");
+        addFieldOption("-XX:", "MethodListFile", CompilationBroker.class, "Set a MethodList File name, which holds the whole method chain");
         addFieldOption("-XX:", "ArgumentListOn", CompilationBroker.class, "Enable ArgumentList for Entry & Exitpoint (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
@@ -298,16 +302,6 @@ public class CompilationBroker {
         RuntimeCompiler compiler = instantiateCompiler(className);
         singleton.altCompilers.put(name, compiler);
         return compiler;
-    }
-
-    /**
-     * Return EntryPoint & ExitPoint for debugging.
-     */
-    public String returnEntryExitPoint() {
-        if (AddEntryPoint != null && AddExitPoint != null) {
-            return AddEntryPoint + ", " + AddExitPoint;
-        }
-        return null;
     }
 
     /**
@@ -517,12 +511,23 @@ public class CompilationBroker {
                         methodCheck = tm.toString();
                     }
                     if (!MaxineVM.isHosted()) {
+                        if (MethodListFile != null) {
+                            tmCounter++;
+                            try (FileWriter fw = new FileWriter(MethodListFile + ".txt", true);
+                                BufferedWriter bw = new BufferedWriter(fw);
+                                PrintWriter out = new PrintWriter(bw)) {
+                                out.println("TargetMethod(" + tmCounter + "): " + tm);
+                            } catch (IOException e) {
+                                //exception handling left as an exercise for the reader
+                            }
+                        }
                         if (methodCheck.equals(AddEntryPoint)) {
                             addToChain = true;
                             VmThread.current().PROFILE = true;
                         }
                         if (addToChain == true) {
                             methodChain.add(methodCheck);
+                            Log.println("###### TargetMethod(" + (methodChain.size() - 1) + "): " + methodChain.get(methodChain.size() - 1) + " ######");
                         }
                         if (methodCheck.equals(AddExitPoint)) {
                             addToChain = false;
