@@ -510,7 +510,7 @@ public class CompilationBroker {
                     } else {
                         methodCheck = tm.toString();
                     }
-                    if (!MaxineVM.isHosted()) {
+                    if (MaxineVM.isRunning()) {
                         if (MethodListFile != null) {
                             tmCounter++;
                             try (FileWriter fw = new FileWriter(MethodListFile + ".txt", true);
