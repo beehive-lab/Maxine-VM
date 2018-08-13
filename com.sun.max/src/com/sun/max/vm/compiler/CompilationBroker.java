@@ -510,13 +510,13 @@ public class CompilationBroker {
                     } else {
                         methodCheck = tm.toString();
                     }
-                    if (MaxineVM.isRunning()) {
+                    if (!MaxineVM.isHosted()) {
                         if (MethodListFile != null) {
                             tmCounter++;
                             try (FileWriter fw = new FileWriter(MethodListFile + ".txt", true);
                                 BufferedWriter bw = new BufferedWriter(fw);
                                 PrintWriter out = new PrintWriter(bw)) {
-                                out.println("TargetMethod(" + tmCounter + "): " + tm);
+                                out.println("TargetMethod(" + tmCounter + ")(" + selectRetryCompiler(cma, nature, selectCompiler(cma, nature, isDeopt)) + "): " + tm);
                             } catch (IOException e) {
                                 //exception handling left as an exercise for the reader
                             }
