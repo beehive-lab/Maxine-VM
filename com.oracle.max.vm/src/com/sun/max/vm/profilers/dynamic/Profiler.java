@@ -67,11 +67,11 @@ public class Profiler {
      * This method is called when a profiled object is allocated.
      */
     public void profile(Long size) {
-        if (VmThread.current().PROFILE) {
-            if (MaxineVM.isRunning()) {
+        //if (VmThread.current().PROFILE) {
+            //if (MaxineVM.isRunning()) {
                 record(size);
-            }
-        }
+            //}
+        //}
     }
 
     /**

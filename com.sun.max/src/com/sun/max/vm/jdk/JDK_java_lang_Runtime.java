@@ -21,6 +21,8 @@
 package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.HeapScheme.GCRequest;
 
@@ -77,6 +79,10 @@ public final class JDK_java_lang_Runtime {
         if (!Heap.gcDisabled()) {
             final GCRequest gcRequest = GCRequest.clearedGCRequest();
             gcRequest.explicit = true;
+            Log.println("Reported heap free space = " + Heap.reportFreeSpace());
+            Log.println("Reported heap used space = " + Heap.reportUsedSpace());
+            MaxineVM.dynamicProfiler.dumpHistogram();
+            MaxineVM.dynamicProfiler.resetHistogram();
             Heap.collectGarbage();
         }
     }
