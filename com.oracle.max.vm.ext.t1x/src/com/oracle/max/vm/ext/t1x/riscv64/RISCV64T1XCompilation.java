@@ -87,8 +87,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     public void incStack(int numberOfSlots) {
         assert numberOfSlots > 0;
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.sub(sp, sp, numberOfSlots * JVMS_SLOT_SIZE);
+        asm.sub(sp, sp, numberOfSlots * JVMS_SLOT_SIZE);
     }
 
     @Override
