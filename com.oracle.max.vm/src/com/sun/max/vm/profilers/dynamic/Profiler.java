@@ -36,12 +36,14 @@ public class Profiler {
      * The values of the HashMap contain the sum of the equal-sized objects have been profiled so far.
      */
     public Map<Long, Integer> histogram;
+    public long totalObjectsize;
 
     /**
      * A Concurrent HashMap is used for the histogram (flexible and thread-safe).
      */
     public Profiler() {
         histogram = new ConcurrentHashMap<Long, Integer>();
+        totalObjectsize = 0;
     }
 
 
@@ -58,7 +60,7 @@ public class Profiler {
         } else {
             histogram.put(size, histogram.get(size) + 1);
         }
-
+        totalObjectsize = totalObjectsize + size.longValue();
     }
 
     /**
@@ -73,17 +75,28 @@ public class Profiler {
     }
 
     /**
-     * Dump the histogram to Maxine's Log output.
+     * Sort and dump the histogram to Maxine's Log output.
      */
     public void dumpHistogram() {
-        Map<Long, Integer> map = new TreeMap<Long, Integer>(histogram);
-        Set set2 = map.entrySet();
-        Iterator iterator2 = set2.iterator();
-        while (iterator2.hasNext()) {
-            Map.Entry me2 = (Map.Entry) iterator2.next();
-            Log.print(me2.getKey() + ": ");
-            Log.println(me2.getValue());
-        }
+        Map<Long, Integer> histogramMap = new TreeMap<Long, Integer>(histogram);
 
+        Set valueSet = histogramMap.entrySet();
+        Iterator iterator = valueSet.iterator();
+
+        Log.println("Histogram total object size = " + totalObjectsize);
+
+        while (iterator.hasNext()) {
+            Map.Entry histogramEntry = (Map.Entry) iterator.next();
+            Log.print(histogramEntry.getKey() + ": ");
+            Log.println(histogramEntry.getValue());
+        }
+    }
+
+    /**
+     * Reset the histogram.
+     */
+    public void resetHistogram() {
+        histogram.clear();
+        totalObjectsize = 0;
     }
 }
