@@ -34,7 +34,7 @@ import com.sun.max.vm.compiler.*;
 public class Package extends BootImagePackage {
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        if (platform().isa == ISA.RISCV && platform().cpu == CPU.RISCV64) {
+        if (platform().isa == ISA.RISCV64) {
             return isT1X(CompilationBroker.optName()) || isT1X(CompilationBroker.baselineName());
         }
         return false;

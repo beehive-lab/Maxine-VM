@@ -730,7 +730,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     @FOLD
     public static boolean isRISCV64() {
-        return platform().isa == ISA.RISCV && platform().cpu == CPU.RISCV64;
+        return platform().isa == ISA.RISCV64;
     }
 
     /**

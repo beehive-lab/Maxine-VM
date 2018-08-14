@@ -38,6 +38,6 @@ public class Package extends BootImagePackage {
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return platform().isa == ISA.RISCV && platform().cpu == CPU.RISCV64;
+        return platform().isa == ISA.RISCV64;
     }
 }
