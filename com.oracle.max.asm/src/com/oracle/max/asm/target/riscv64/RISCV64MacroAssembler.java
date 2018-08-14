@@ -139,6 +139,10 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void sub(CiRegister dest, CiRegister source, long delta) {
+        add(dest, source, -delta);
+    }
+
     /**
      * Applies a delta value to the contents of reg as a 32bit quantity.
      * @param reg
