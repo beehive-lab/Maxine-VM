@@ -216,6 +216,11 @@ public class RISCV64 extends CiArchitecture {
         f25, f26, f27, f28, f29, f30, f31
     };
 
+    @Override
+    public boolean isRISCV64() {
+        return true;
+    }
+
     public RISCV64() {
         super("RISCV64",                        //architecture name
               8,                                //word size (8 bytes)
