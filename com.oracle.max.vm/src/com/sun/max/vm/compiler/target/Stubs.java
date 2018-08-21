@@ -1388,6 +1388,10 @@ public class Stubs {
                     case Int:
                     case Long:
                     case Object:
+                        // PC is kept in x0 which happens to be the return register as well, thus we need to move its
+                        // value to the scratch register and then jump to it
+                        asm.mov(64, asm.scratchRegister, pc);
+                        pc = asm.scratchRegister;
                         asm.mov(64, registerConfig.getReturnRegister(CiKind.Int), reg);
                         break;
                     case Float:
