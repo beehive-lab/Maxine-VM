@@ -65,7 +65,8 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
     public Aarch64AdapterGenerator(Adapter.Type adapterType) {
         super(adapterType);
-        scratch = opt.getScratchRegister();
+        // Use the second scratch register since Aarch64MacroAssembler.getAddressInFrame may use the first
+        scratch = opt.getScratchRegister1();
     }
 
     public static class Baseline2Opt extends Aarch64AdapterGenerator {
