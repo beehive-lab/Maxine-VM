@@ -1388,6 +1388,10 @@ public class Stubs {
                     case Int:
                     case Long:
                     case Object:
+                        // PC is kept in x0 which happens to be the return register as well, thus we need to move its
+                        // value to the scratch register and then jump to it
+                        asm.mov(64, asm.scratchRegister, pc);
+                        pc = asm.scratchRegister;
                         asm.mov(64, registerConfig.getReturnRegister(CiKind.Int), reg);
                         break;
                     case Float:
@@ -1424,7 +1428,7 @@ public class Stubs {
         FatalError.unexpected("stub should be overwritten");
     }
 
-    // TODO: Is ARM (+Aarch64) version working?
+    // TODO: Is ARM version working?
     @HOSTED_ONLY
     private Stub genUnroll(CiValue[] unrollArgs) {
         if (platform().isa == ISA.AMD64) {
@@ -1486,9 +1490,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.crashme();
-            // We are called from Java so we do need to push the LR.
-            asm.push(Aarch64.linkRegister);
+
             asm.mov(64, asm.scratchRegister, Aarch64.sp);
             asm.sub(64, asm.scratchRegister, asm.scratchRegister, Aarch64.r1);
             asm.mov(64, Aarch64.sp, asm.scratchRegister);
@@ -1500,10 +1502,8 @@ public class Stubs {
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
-            // should never reach here ...
-            asm.mov64BitConstant(asm.scratchRegister, 0xffffffff);
-            asm.jmp(asm.scratchRegister);
             // Should never reach here
+            asm.crashme();
             asm.hlt();
 
             byte[] code = asm.codeBuffer.close(true);
@@ -1632,12 +1632,18 @@ public class Stubs {
 
             int instruction = Aarch64MacroAssembler.movzHelper(64, Aarch64.r16, (int) disp & 0xffff, 0);
             patchAddr.writeInt(0, instruction);
-            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 16) & 0xffff, 16);
-            patchAddr.writeInt(4, instruction);
-            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 32) & 0xffff, 32);
-            patchAddr.writeInt(8, instruction);
-            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 48) & 0xffff, 48);
-            patchAddr.writeInt(12, instruction);
+            if (disp >> 16 != 0) {
+                instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 16) & 0xffff, 16);
+                patchAddr.writeInt(4, instruction);
+                if (disp >> 32 != 0) {
+                    instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 32) & 0xffff, 32);
+                    patchAddr.writeInt(8, instruction);
+                    if (disp >> 48 != 0) {
+                        instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r16, (int) (disp >> 48) & 0xffff, 48);
+                        patchAddr.writeInt(12, instruction);
+                    }
+                }
+            }
 
             ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 16);
         }
@@ -1849,28 +1855,11 @@ public class Stubs {
 
             return stub;
         } else if (platform().isa == ISA.Aarch64) {
-            /*
-             * The deopt stub initially executes in the frame of the method that was returned to and is about to be
-             * deoptimized. It then allocates a temporary frame of 2 slots to transfer control to the deopt
-             * routine by "returning" to it. As execution enters the deopt routine, the stack looks like
-             * the about-to-be-deoptimized frame called the deopt routine directly.
-             *
-             * [ mov  rcx, rax ]                               // if non-void return value, copy it into arg3 (omitted for void/float/double values)
-             *   mov  rdi [rsp + DEOPT_RETURN_ADDRESS_OFFSET]  // copy deopt IP into arg0
-             *   mov  rsi, rsp                                 // copy deopt SP into arg1
-             *   mov  rdx, rbp                                 // copy deopt FP into arg2
-             *   subq rsp, 16                                  // allocate 2 slots
-             *   mov  [rsp + 8], rdi                           // put deopt IP (i.e. original return address) into first slot
-             *   mov  scratch, 0xFFFFFFFFFFFFFFFFL             // put (placeholder) address of deopt ...
-             *   mov  [rsp], scratch                           // ... routine into second slot
-             *   ret                                           // call deopt method by "returning" to it
-             */
             CiRegisterConfig registerConfig = registerConfigs.standard;
             CiCalleeSaveLayout csl = registerConfig.csl;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
-            asm.crashme();
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
             try {
@@ -1885,7 +1874,9 @@ public class Stubs {
                 CiRegister arg4 = args[4].asRegister();
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
                 if (arg4 != returnRegister) {
-                    if (kind.isFloat() || kind.isDouble()) {
+                    if (kind.isFloat()) {
+                        asm.fmov(32, arg4, returnRegister);
+                    } else if (kind.isDouble()) {
                         asm.fmov(64, arg4, returnRegister);
                     } else {
                         asm.mov(64, arg4, returnRegister);
@@ -1895,38 +1886,25 @@ public class Stubs {
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.ldr(64, arg0, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldr(64, arg0, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, DEOPT_RETURN_ADDRESS_OFFSET));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
             asm.mov(64, arg1, Aarch64.sp);
 
-            // Copy original frame pointer into arg 2 (i.e. 'sp')
+            // Copy original frame pointer into arg 2 (i.e. 'fp')
             CiRegister arg2 = args[2].asRegister();
             asm.mov(64, arg2, Aarch64.fp);
 
             // Zero arg 3 (i.e. 'csa')
             CiRegister arg3 = args[3].asRegister();
-            asm.xorq(arg3, arg3);
+            asm.mov(arg3, 0);
 
-            // Allocate 2 extra stack slots ? one in ARM?
-            asm.sub(64, Aarch64.sp, Aarch64.sp, 8);
-
-            // Put original return address into high slot
-            asm.mov(64, asm.scratchRegister, Aarch64.sp);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), 4));
-            asm.str(64, arg0, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-
-            // Put deopt method entry point into low slot
-            asm.mov64BitConstant(asm.scratchRegister, 0xffffffff);
-            final int patchPos = asm.codeBuffer.position() - 4;
-            asm.setUpRegister(Aarch64.r17, new CiAddress(WordUtil.archKind(), Aarch64.rsp));
-            asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r17));
-
-            asm.mov64BitConstant(asm.scratchRegister, 0xfeeff00f);
-            asm.ret();
+            // Put deopt method entry point into scratch register
+            CiRegister scratch = registerConfig.getScratchRegister();
+            final int patchPos = asm.codeBuffer.position();
+            asm.nop(4); // This will be patched by com.sun.max.vm.compiler.target.Stubs.Aarch64DeoptStubPatch.apply
+            asm.ret(scratch);
 
             String stubName = runtimeRoutineName + "Stub";
             byte[] code = asm.codeBuffer.close(true);
@@ -2190,13 +2168,11 @@ public class Stubs {
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
         } else if (platform().isa == ISA.Aarch64) {
-//FIXME
             CiCalleeSaveLayout csl = registerConfig.csl;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
-            int frameSize = platform().target.alignFrameSize(csl.size);
-            int cfo = frameSize + 8; // Caller frame offset
+            int frameSize = target().alignFrameSize(csl.size);
+            int cfo = frameSize + target().stackAlignment; // Caller frame offset
 
-            asm.crashme();
             String runtimeRoutineName;
             if (kind == null) {
                 runtimeRoutineName = "deoptimizeAtSafepoint";
@@ -2212,10 +2188,10 @@ public class Stubs {
             }
 
             // now allocate the frame for this method (including return address slot)
-//            asm.subq(AMD64.rsp, frameSize + 8);
+            asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize + target().stackAlignment);
 
             // save all the callee save registers
-//            asm.save(csl, csl.frameOffsetToCSA);
+            asm.save(csl, csl.frameOffsetToCSA);
 
             CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
@@ -2224,50 +2200,53 @@ public class Stubs {
                 CiRegister arg4 = args[4].asRegister();
                 CiStackSlot ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
                 assert ss.index() == 1 : "compiler stub return value slot index has changed?";
-                CiAddress src = new CiAddress(kind, AMD64.RSP, cfo + (ss.index() * 8));
+                asm.mov(64, asm.scratchRegister, Aarch64.sp);
+                asm.add(64, asm.scratchRegister, asm.scratchRegister, cfo + (ss.index() * 8));
+                Aarch64Address src = Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister);
                 if (kind.isFloat()) {
-//                    asm.movflt(arg4, src);
+                    asm.fldr(32, arg4, src);
                 } else if (kind.isDouble()) {
-//                    asm.movdbl(arg4, src);
+                    asm.fldr(64, arg4, src);
                 } else {
-//                    asm.movq(arg4, src);
+                    asm.ldr(64, arg4, src);
                 }
             }
 
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-//            asm.movq(arg0, new CiAddress(WordUtil.archKind(), AMD64.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.add(64, asm.scratchRegister, asm.scratchRegister, cfo + DEOPT_RETURN_ADDRESS_OFFSET);
+            asm.ldr(64, arg0, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
-//            asm.leaq(arg1, new CiAddress(WordUtil.archKind(), AMD64.RSP, cfo));
+            asm.add(64, arg1, Aarch64.sp, cfo);
 
-            // Copy original frame pointer into arg 2 (i.e. 'sp')
+            // Copy original frame pointer into arg 2 (i.e. 'fp')
             CiRegister arg2 = args[2].asRegister();
-//            asm.movq(arg2, AMD64.rbp);
+            asm.mov(64, arg2, Aarch64.fp);
 
             // Copy callee save area into arg3 (i.e. 'csa')
             CiRegister arg3 = args[3].asRegister();
-//            asm.movq(arg3, AMD64.rsp);
+            asm.mov(64, arg3, Aarch64.sp);
 
-            // Patch return address of deopt stub frame to look
-            // like it was called by frame being deopt'ed.
-//            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.RSP, frameSize), arg0);
+            // Patch return address of deopt stub frame to look like it was called by frame being deopt'ed.
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.add(64, asm.scratchRegister, asm.scratchRegister, frameSize);
+            asm.str(64, arg0, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Call runtime routine
-//            asm.alignForPatchableDirectCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
             // should never reach here
-//            asm.brk();
+            asm.crashme();
+            asm.brk();
 
             String stubName = runtimeRoutineName + "StubWithCSA";
-
-            asm.nop(); // dummy
-
             byte[] code = asm.codeBuffer.close(true);
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);

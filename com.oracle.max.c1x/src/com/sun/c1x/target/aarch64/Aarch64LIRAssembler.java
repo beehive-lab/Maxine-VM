@@ -94,10 +94,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         switch (op) {
             case HERE:
                 tasm.recordSafepoint(codePos(), info);
-                int beforeLea = masm.codeBuffer.position();
                 masm.adr(dst.asRegister(), 0);
-                int afterLea = masm.codeBuffer.position();
-                masm.adr(dst.asRegister(), beforeLea - afterLea, beforeLea);
                 break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
@@ -142,10 +139,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         if (fromReg != toReg) {
             masm.mov(64, toReg, fromReg);
         }
-    }
-
-    private void swapReg(CiRegister a, CiRegister b) {
-        masm.xchgptr(a, b);
     }
 
     @Override
@@ -255,10 +248,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         CiConstant constant = (CiConstant) src;
         CiAddress addr = asAddress(dst);
         CiKind storeKind = setScratchRegister(constant);
-        if (info != null) {
-            tasm.recordImplicitException(codePos(), info);
-        }
         masm.store(scratchRegister, addr, storeKind);
+        if (info != null) {
+            tasm.recordImplicitException(codePos() - 4, info);
+        }
     }
 
     @Override
@@ -322,10 +315,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert dest.isRegister() : "dest=" + dest;
 
         CiAddress addr = (CiAddress) src;
-        if (info != null) {
-            tasm.recordImplicitException(codePos(), info);
-        }
         masm.load(dest.asRegister(), addr, kind);
+        if (info != null) {
+            tasm.recordImplicitException(codePos() - 4, info);
+        }
     }
 
     @Override
@@ -716,6 +709,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                 }
                 masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 rreg = Aarch64.d30;
                 masm.load(rreg, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), kind);
             }
@@ -762,9 +756,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         } else {
             assert kind.isInt();
             CiAddress laddr = asAddress(left);
+            masm.load(scratchRegister, laddr, kind);
             if (right.isRegister()) {
                 CiRegister rreg = right.asRegister();
-                masm.load(scratchRegister, laddr, kind);
                 switch (code) {
                     case Add:
                         masm.add(32, scratchRegister, scratchRegister, rreg);
@@ -776,21 +770,21 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         throw Util.shouldNotReachHere();
 
                 }
-                masm.store(scratchRegister, laddr, kind);
             } else {
                 assert right.isConstant();
                 int c = ((CiConstant) right).asInt();
                 switch (code) {
                     case Add:
-                        masm.increment32(laddr, c);
+                        masm.add(32, scratchRegister, scratchRegister, (long) c);
                         break;
                     case Sub:
-                        masm.increment32(laddr, -c);
+                        masm.sub(32, scratchRegister, scratchRegister, (long) c);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
             }
+            masm.store(scratchRegister, laddr, kind);
         }
     }
 
@@ -1055,6 +1049,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         assert false : "not tested";
                         tasm.recordDataReferenceInCode(CiConstant.forFloat(c.asFloat()));
                         masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                        masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                         masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
                         masm.ucomisd(32, reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
@@ -1062,6 +1057,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         assert false : "not tested";
                         tasm.recordDataReferenceInCode(CiConstant.forDouble(c.asDouble()));
                         masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                        masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                         masm.fldr(64, Aarch64.d15, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
                         masm.ucomisd(64, reg1, Aarch64.d15, opr1.kind, CiKind.Double);
                         break;
@@ -1316,8 +1312,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         if (C1XOptions.NullCheckUniquePc) {
             masm.nop();
         }
-        tasm.recordImplicitException(codePos(), info);
         masm.nullCheck(src.asRegister());
+        tasm.recordImplicitException(codePos() - 4, info);
     }
 
     @Override
@@ -1651,8 +1647,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 case NullCheck: {
                     CiValue pointer = operands[inst.x().index];
-                    tasm.recordImplicitException(codePos(), info);
                     masm.nullCheck(pointer.asRegister());
+                    tasm.recordImplicitException(codePos() - 4, info);
                     break;
                 }
                 case Align: {
@@ -1871,7 +1867,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 assert false : "Object inlining not supported";
             } else {
                 tasm.recordDataReferenceInCode(obj);
-                masm.adr(scratchRegister, 0); // This gets patched
+                masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 masm.load(dst, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), obj.kind);
             }
         }
