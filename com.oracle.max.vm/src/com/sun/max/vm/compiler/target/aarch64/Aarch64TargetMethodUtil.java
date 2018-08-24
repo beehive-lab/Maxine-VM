@@ -41,9 +41,8 @@ public final class Aarch64TargetMethodUtil {
      */
     private static final Object PatchingLock = new Object();
 
-    public static final int INSTRUCTION_SIZE = 4;
     public static final int NUMBER_OF_NOPS = 4;
-    public static final int RIP_CALL_INSTRUCTION_SIZE = INSTRUCTION_SIZE;
+    public static final int RIP_CALL_INSTRUCTION_SIZE = Aarch64MacroAssembler.INSTRUCTION_SIZE;
     public static final int RET = 0xD65F_0000;
 
     /**
@@ -65,7 +64,7 @@ public final class Aarch64TargetMethodUtil {
         if (Aarch64Assembler.isBimmInstruction(instruction)) {
             return Aarch64Assembler.bImmExtractDisplacement(instruction);
         } else {
-            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE);
             int movzInstruction = nopSite.readInt(4);
             int movkInstruction = nopSite.readInt(8);
             int addSubInstruction = nopSite.readInt(12);
@@ -75,7 +74,7 @@ public final class Aarch64TargetMethodUtil {
             if (!Aarch64Assembler.isAddInstruction(addSubInstruction)) {
                 oldDisplacement = -oldDisplacement;
             }
-            oldDisplacement -= NUMBER_OF_NOPS * INSTRUCTION_SIZE;
+            oldDisplacement -= NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE;
             return oldDisplacement;
         }
     }
@@ -162,7 +161,7 @@ public final class Aarch64TargetMethodUtil {
             return readCall32Target(callSite).equals(jumpTarget);
         }
         // Else check for jumps with 32bit displacement. Move the callSite pointer to the actual branch instruction.
-        callSite = callSite.plus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+        callSite = callSite.plus(NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE);
         callSitePointer = callSite.toPointer();
         instruction = callSitePointer.readInt(0);
         if (Aarch64Assembler.isBranchInstruction(instruction)) {
@@ -250,7 +249,7 @@ public final class Aarch64TargetMethodUtil {
         final boolean isLinked = Aarch64Assembler.isBranchInstructionLinked(instruction);
 
         // overwrite the four nops from com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.call()
-        final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+        final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE);
         if (NumUtil.isSignedNbit(28, disp32)) {
             nopSite.writeInt(0, Aarch64Assembler.nopHelper());
             nopSite.writeInt(4, Aarch64Assembler.nopHelper());
@@ -259,8 +258,8 @@ public final class Aarch64TargetMethodUtil {
             nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchImmInstructionHelper(disp32, isLinked));
         } else {
             // Since adr is invoked NUMBER_OF_NOPS instructions before the actual branch we need to adjust the displacement
-            FatalError.check(disp32 <= Integer.MAX_VALUE - (NUMBER_OF_NOPS * INSTRUCTION_SIZE), "Code displacement out of 32-bit range");
-            disp32 += NUMBER_OF_NOPS * INSTRUCTION_SIZE;
+            FatalError.check(disp32 <= Integer.MAX_VALUE - (NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE), "Code displacement out of 32-bit range");
+            disp32 += NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE;
             final boolean isNegative = disp32 < 0;
             if (isNegative) {
                 disp32 = -disp32;
@@ -344,7 +343,7 @@ public final class Aarch64TargetMethodUtil {
         }
         // If it is not a branch immediate we need to check the previous instructions as well
         if (!Aarch64MacroAssembler.isBimmInstruction(instruction)) {
-            final Pointer nopSite = callIP.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
+            final Pointer nopSite = callIP.minus(NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE);
             int movzInstruction = nopSite.readInt(4);
             if (!Aarch64MacroAssembler.isMovz(movzInstruction)) {
                 return false;

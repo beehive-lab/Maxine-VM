@@ -86,7 +86,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
              */
             @Override
             public int callOffsetInPrologue() {
-                return 5 * INSTRUCTION_SIZE;
+                return 5 * Aarch64MacroAssembler.INSTRUCTION_SIZE;
             }
 
             @Override
@@ -448,7 +448,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         /**
          * The offset in the prologue of the call to the adapter.
          */
-        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + 5 * INSTRUCTION_SIZE;
+        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + 5 * Aarch64MacroAssembler.INSTRUCTION_SIZE;
 
         static final int PROLOGUE_SIZE = CALL_OFFSET_IN_PROLOGUE + RIP_CALL_INSTRUCTION_SIZE;
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = OPTIMIZED_ENTRY_POINT.offset();
@@ -616,7 +616,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected int emitPrologue(Object out, Adapter adapter) {
             Aarch64MacroAssembler masm = out instanceof OutputStream ? new Aarch64MacroAssembler(Platform.target(), null) : (Aarch64MacroAssembler) out;
             if (adapter == null) {
-                masm.nop(PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE / INSTRUCTION_SIZE);
+                masm.nop(PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE / Aarch64MacroAssembler.INSTRUCTION_SIZE);
                 assert masm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE : masm.codeBuffer.position();
                 copyIfOutputStream(masm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;

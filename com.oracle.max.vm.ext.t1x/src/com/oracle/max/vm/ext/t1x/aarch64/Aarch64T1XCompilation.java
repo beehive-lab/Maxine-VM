@@ -856,7 +856,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
                     asm.mov64BitConstant(scratch2, offset);
                     asm.add(64, scratch, scratch, scratch2);
                     int endPos = buf.position();
-                    assert endPos - startPos <= Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS : endPos - startPos;
+                    assert endPos - startPos <= Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS * Aarch64MacroAssembler.INSTRUCTION_SIZE : endPos - startPos;
                 }
             } else {
                 throw new InternalError("Unknown PatchInfoAARCH64." + tag);
