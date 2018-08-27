@@ -26,16 +26,22 @@ debian packages:
     cd /tmp
 
     export ARCH=amd64                      # or arm64
-    export VERSION=7u151-2.6.11-3          # or 8u151-b12-1
+    export JAVA_VERSION=7u151-2.6.11-3     # or 8u151-b12-1
     export JAVA=openjdk-7                  # or openjdk-8
+    export FCONFIG_VERSION=2.12.3-0.2
     export BASE_URL=http://snapshot.debian.org/archive/debian/20171124T100538Z
 
     for package in jre jre-headless jdk dbg; do
-    wget ${BASE_URL}/pool/main/o/${JAVA}/${JAVA}-${package}_${VERSION}_${ARCH}.deb
+    wget ${BASE_URL}/pool/main/o/${JAVA}/${JAVA}-${package}_${JAVA_VERSION}_${ARCH}.deb
+    done
+
+    for package in fontconfig-config libfontconfig1; do
+    wget ${BASE_URL}/pool/main/f/fontconfig/${package}_${FCONFIG_VERSION}_all.deb
     done
 
     wget http://ftp.uk.debian.org/debian/pool/main/libj/libjpeg-turbo/libjpeg62-turbo_1.5.1-2_${ARCH}.deb
-    sudo dpkg -i ${JAVA}-jdk_${VERSION}_${ARCH}.deb ${JAVA}-jre_${VERSION}_${ARCH}.deb ${JAVA}-jre-headless_${VERSION}_${ARCH}.deb ${JAVA}-dbg_${VERSION}_${ARCH}.deb libjpeg62-turbo_1.5.1-2_${ARCH}.deb
+
+    sudo dpkg -i ${JAVA}-jdk_${JAVA_VERSION}_${ARCH}.deb ${JAVA}-jre_${JAVA_VERSION}_${ARCH}.deb ${JAVA}-jre-headless_${JAVA_VERSION}_${ARCH}.deb ${JAVA}-dbg_${JAVA_VERSION}_${ARCH}.deb libjpeg62-turbo_1.5.1-2_${ARCH}.deb fontconfig-config_${FCONFIG_VERSION}_all.deb libfontconfig1_${FCONFIG_VERSION}_all.deb
     sudo apt-get install -f
 
 MaxineVM - JDK version compatibility table
