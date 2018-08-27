@@ -52,7 +52,8 @@ public class TestOpt2Baseline_IIIIIIIII_I extends Opt2BaselineAarch64AdapterTest
         masm.mov(Aarch64.r6, 7);
         masm.mov(Aarch64.r7, 8);
         masm.mov(masm.scratchRegister, 9);
-        masm.push(masm.scratchRegister);
+        masm.sub(64, Aarch64.sp, Aarch64.sp, 16); // Increase stack preserving alignment
+        masm.str(64, masm.scratchRegister, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, 8));
         // Branch to optimised entry point +16 for the bl, pops and ret below.
         masm.bl(PROLOGUE_SIZE + 4 * 4);
         masm.pop(masm.scratchRegister);

@@ -25,7 +25,6 @@ import com.sun.cri.ci.*;
 import com.sun.max.Utils;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.ISA;
-import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -37,7 +36,6 @@ import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
 import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
-import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.MethodProfile;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -47,10 +45,12 @@ import com.sun.max.vm.thread.VmThread;
 import java.util.ArrayList;
 
 import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.platform.Platform.target;
 import static com.sun.max.vm.MaxineVM.vm;
 import static com.sun.max.vm.compiler.CallEntryPoint.VTABLE_ENTRY_POINT;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
+import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
 import static com.sun.max.vm.stack.VMFrameLayout.STACK_SLOT_SIZE;
 
 /**
@@ -358,7 +358,9 @@ public class Deoptimization extends VmOperation {
     @NEVER_INLINE
     public static void unroll(Info info) {
         ArrayList<CiConstant> slots = info.slots;
-        Pointer sp = info.slotsAddr.plus(info.slotsSize() - STACK_SLOT_SIZE);
+        Pointer sp = info.slotsAddr.plus(info.slotsSize() - STACK_SLOT_SIZE); // -1 slot for the first write
+        assert info.sp.isAligned(target().stackAlignment) : info.sp.to0xHexString();
+        assert info.fp.isAligned(target().stackAlignment) : info.fp.to0xHexString();
         if (deoptLogger.enabled()) {
             deoptLogger.logUnroll(info, slots, sp);
         }
@@ -386,7 +388,18 @@ public class Deoptimization extends VmOperation {
             Stubs.unwind(info.ip.asPointer(), info.sp, info.fp);
         } else {
             if (StackReferenceMapPreparer.VerifyRefMaps || deoptLogger.enabled() || DeoptimizeALot != 0) {
-                StackReferenceMapPreparer.verifyReferenceMaps(VmThread.current(), info.ip.vmIP(), info.sp, info.fp);
+                CodePointer ip = info.ip.vmIP();
+                TargetMethod tm = ip.toTargetMethod();
+                assert tm != null;
+                // The unrolling happens at the cause position of a safepoint, which in the case of calls doesn't match
+                // the safepoint position. As a result, in such cases we need to move the ip to the safepoint to make
+                // verifyReferenceMaps work.
+                if (tm.findSafepointIndex(info.ip.vmIP()) < 0) {
+                    final int indexOfNextDirectCall = tm.safepoints().indexOf(tm.posFor(ip), true);
+                    assert indexOfNextDirectCall != -1;
+                    ip = tm.codeAt(tm.safepoints().posAt(indexOfNextDirectCall));
+                }
+                StackReferenceMapPreparer.verifyReferenceMaps(VmThread.current(), ip, info.sp, info.fp);
             }
 
             // Re-enable safepoints
@@ -727,6 +740,7 @@ public class Deoptimization extends VmOperation {
      *                    deoptimizing upon return)
      */
     public static void deoptimize(CodePointer ip, Pointer sp, Pointer fp, Pointer csa, CiCalleeSaveLayout csl, CiConstant returnValue) {
+        assert sp.isAligned(target().stackAlignment) : sp.to0xHexString();
         SafepointPoll.disable();
         Info info = new Info(VmThread.current(), ip.toPointer(), sp, fp);
         TargetMethod tm = info.tm;
@@ -817,7 +831,7 @@ public class Deoptimization extends VmOperation {
         // As such there is no current need to reconstruct an adapter frame between the lowest
         // deoptimized frame and the frame of its caller. This may need to be revisited for
         // other platforms so use an assertion for now.
-        assert platform().isa == ISA.AMD64 || platform().isa == ISA.ARM;
+        assert platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64;
 
         // Fix up the caller details for the bottom most deoptimized frame
         cont.tm = info.callerTM();
@@ -826,7 +840,8 @@ public class Deoptimization extends VmOperation {
         cont.setFP(info, WordUtil.archConstant(info.callerFP));
 
         int slotsSize = info.slotsSize();
-        Pointer slotsAddrs = sp.plus(tm.frameSize() + STACK_SLOT_SIZE).minus(slotsSize);
+        int linkRegisterSlotSize = target().arch.isAarch64() ? JVMS_SLOT_SIZE : STACK_SLOT_SIZE;
+        Pointer slotsAddrs = sp.plus(tm.frameSize() + linkRegisterSlotSize).minus(slotsSize);
         info.slotsAddr = slotsAddrs;
 
         // Fix up slots referring to other slots (the references are encoded as CiKind.Jsr values)
@@ -843,6 +858,8 @@ public class Deoptimization extends VmOperation {
         // Compute the physical frame details for the top most deoptimized frame
         sp = slotsAddrs.plus(topCont.sp * STACK_SLOT_SIZE);
         fp = slotsAddrs.plus(topCont.fp * STACK_SLOT_SIZE);
+        assert sp.isAligned(target().stackAlignment) : sp.to0xHexString();
+        assert fp.isAligned(target().stackAlignment) : fp.to0xHexString();
 
         // Set the deopt continuation to the top most deoptimized frame
         info.ip.copyFrom(topCont.ip);
@@ -854,7 +871,7 @@ public class Deoptimization extends VmOperation {
         // the top most deoptimized frame and use it to ensure that the unroll method
         // executes with enough stack space below it to unroll the deoptimized frames
         int used = info.sp.minus(VMRegister.getCpuStackPointer()).toInt() + tm.frameSize();
-        int frameSize = Platform.target().alignFrameSize(Math.max(slotsSize - used, 0));
+        int frameSize = target().alignFrameSize(Math.max(slotsSize - used, 0));
         Stubs.unroll(info, frameSize);
         FatalError.unexpected("should not reach here: unrolled deopt error");
     }

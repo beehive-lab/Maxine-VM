@@ -31,7 +31,6 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.*;
@@ -55,6 +54,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
+import com.sun.max.vm.methodhandle.VMTarget;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.aarch64.*;
@@ -139,6 +139,12 @@ public class MaxXirGenerator implements RiXirGenerator {
     private DynamicHub[] arrayHubs;
 
     private XirPair[] multiNewArrayTemplate;
+
+    private XirTemplate invokeHandleTemplate;
+    private XirTemplate linkToSpecialTemplate;
+    private XirTemplate linkToInterfaceTemplate;
+    private XirTemplate linkToVirtualTemplate;
+    private XirTemplate linkToStaticTemplate;
 
     private XirTemplate safepointTemplate;
     private XirTemplate arraylengthTemplate;
@@ -274,6 +280,12 @@ public class MaxXirGenerator implements RiXirGenerator {
         invokeSpecialTemplates = buildInvokeSpecial();
         invokeStaticTemplates = buildInvokeStatic();
 
+        invokeHandleTemplate = buildInvokeHandle();
+        linkToVirtualTemplate = buildLinkToVirtual();
+        linkToInterfaceTemplate = buildLinkToInterface();
+        linkToSpecialTemplate = buildLinkToSpecial();
+        linkToStaticTemplate = buildLinkToStatic();
+
         multiNewArrayTemplate = new XirPair[MAX_MULTIANEWARRAY_RANK + 1];
 
         for (int i = 1; i < MAX_MULTIANEWARRAY_RANK + 1; i++) {
@@ -377,6 +389,11 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @Override
+    public XirSnippet genInvokeHandle(XirSite site, XirArgument actor) {
+        return new XirSnippet(invokeHandleTemplate, actor);
+    }
+
+    @Override
     public XirSnippet genInvokeInterface(XirSite site, XirArgument receiver, RiMethod method) {
         XirPair pair = invokeInterfaceTemplates;
         if (method instanceof RiResolvedMethod) {
@@ -423,6 +440,26 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         XirArgument guard = XirArgument.forObject(guardFor(method));
         return new XirSnippet(invokeStaticTemplates.unresolved, guard);
+    }
+
+    @Override
+    public XirSnippet genLinkToSpecial(XirSite site, XirArgument memberName, RiMethod target) {
+        return new XirSnippet(linkToSpecialTemplate, memberName);
+    }
+
+    @Override
+    public XirSnippet genLinkToInterface(XirSite site, XirArgument receiver, XirArgument memberName, RiMethod target) {
+        return new XirSnippet(linkToInterfaceTemplate, memberName, receiver);
+    }
+
+    @Override
+    public XirSnippet genLinkToVirtual(XirSite site, XirArgument receiver, XirArgument memberName, RiMethod target) {
+        return new XirSnippet(linkToVirtualTemplate, memberName, receiver);
+    }
+
+    @Override
+    public XirSnippet genLinkToStatic(XirSite site, XirArgument memberName, RiMethod target) {
+        return new XirSnippet(linkToStaticTemplate, memberName);
     }
 
     @Override
@@ -818,6 +855,15 @@ public class MaxXirGenerator implements RiXirGenerator {
     }
 
     @HOSTED_ONLY
+    private XirTemplate buildInvokeHandle() {
+        asm.restart();
+        XirParameter actor = asm.createInputParameter("actor", CiKind.Object);
+        XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
+        callRuntimeThroughStub(asm, "invokeHandle", addr, actor);
+        return finishTemplate(asm, addr, "invokehandle");
+    }
+
+    @HOSTED_ONLY
     private XirPair buildInvokeStatic() {
         XirTemplate resolved;
         XirTemplate unresolved;
@@ -949,6 +995,44 @@ public class MaxXirGenerator implements RiXirGenerator {
             unresolved = finishTemplate(asm, addr, "invokevirtual-unresolved");
         }
         return new XirPair(resolved, unresolved);
+    }
+
+    @HOSTED_ONLY
+    private XirTemplate buildLinkToStatic() {
+        asm.restart();
+        XirParameter memberName = asm.createInputParameter("memberName", CiKind.Object);
+        XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
+        callRuntimeThroughStub(asm, "linkToStatic", addr, memberName);
+        return finishTemplate(asm, addr, "linktostatic");
+    }
+
+    @HOSTED_ONLY
+    private XirTemplate buildLinkToInterface() {
+        asm.restart();
+        XirParameter memberName = asm.createInputParameter("memberName", CiKind.Object);
+        XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object);
+        XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
+        callRuntimeThroughStub(asm, "linkToInterface", addr, memberName, receiver);
+        return finishTemplate(asm, addr, "linktointerface");
+    }
+
+    @HOSTED_ONLY
+    private XirTemplate buildLinkToSpecial() {
+        asm.restart();
+        XirParameter memberName = asm.createInputParameter("memberName", CiKind.Object);
+        XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
+        callRuntimeThroughStub(asm, "linkToSpecial", addr, memberName);
+        return finishTemplate(asm, addr, "linktospecial");
+    }
+
+    @HOSTED_ONLY
+    private XirTemplate buildLinkToVirtual() {
+        asm.restart();
+        XirParameter memberName = asm.createInputParameter("memberName", CiKind.Object);
+        XirParameter receiver = asm.createInputParameter("receiver", CiKind.Object);
+        XirOperand addr = asm.createTemp("addr", WordUtil.archKind());
+        callRuntimeThroughStub(asm, "linkToVirtual", addr, memberName, receiver);
+        return finishTemplate(asm, addr, "linktovirtual");
     }
 
     private void alignArraySize(XirParameter length, XirOperand arraySize, int elemSize, Scale scale) {
@@ -1943,6 +2027,32 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         public static int resolveInterfaceID(ResolutionGuard.InPool guard) {
             return Snippets.resolveInterfaceMethod(guard).holder().id;
+        }
+
+        public static Word invokeHandle(ClassMethodActor actor) {
+            return Snippets.makeEntrypoint(actor, OPTIMIZED_ENTRY_POINT);
+        }
+
+        public static Word linkToSpecial(Object memberName) {
+            VMTarget target = VMTarget.fromMemberName(memberName);
+            return Snippets.makeEntrypoint(UnsafeCast.asClassMethodActor(target.getVmTarget()), OPTIMIZED_ENTRY_POINT);
+        }
+
+        public static Word linkToStatic(Object memberName) {
+            VMTarget target = VMTarget.fromMemberName(memberName);
+            return Snippets.makeEntrypoint(UnsafeCast.asClassMethodActor(target.getVmTarget()), OPTIMIZED_ENTRY_POINT);
+        }
+
+        public static Word linkToInterface(Object memberName, Object receiver) {
+            VMTarget target = VMTarget.fromMemberName(memberName);
+            Address vTableEntrypoint = Snippets.selectInterfaceMethod(receiver, UnsafeCast.asInterfaceMethodActor(target.getVmTarget()));
+            return vTableEntrypoint.plus(OPTIMIZED_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+        }
+
+        public static Word linkToVirtual(Object memberName, Object receiver) {
+            VMTarget target = VMTarget.fromMemberName(memberName);
+            Address vTableEntrypoint = Snippets.selectNonPrivateVirtualMethod(receiver, target.getVMindex());
+            return vTableEntrypoint.plus(OPTIMIZED_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
         }
 
         public static Object allocatePrimitiveArray(DynamicHub hub, int length) {

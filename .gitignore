@@ -48,6 +48,8 @@ mx/
 *.o
 *.bin
 *.elf
+# Don't ignore directories matching the pattern
+!*.elf/
 
 # Debugging related
 codebuffer.c
@@ -64,3 +66,4 @@ maxine-tester/junit-tests/FileReader.input
 maxine-tester/junit-tests/GetResource.input
 maxine-tester/junit-tests/ZipFileReader.input
         
+/docs/_build/

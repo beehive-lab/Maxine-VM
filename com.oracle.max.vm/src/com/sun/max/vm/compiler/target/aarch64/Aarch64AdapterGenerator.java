@@ -65,7 +65,8 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
     public Aarch64AdapterGenerator(Adapter.Type adapterType) {
         super(adapterType);
-        scratch = opt.getScratchRegister();
+        // Use the second scratch register since Aarch64MacroAssembler.getAddressInFrame may use the first
+        scratch = opt.getScratchRegister1();
     }
 
     public static class Baseline2Opt extends Aarch64AdapterGenerator {
@@ -85,7 +86,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
              */
             @Override
             public int callOffsetInPrologue() {
-                return 5 * INSTRUCTION_SIZE;
+                return 5 * Aarch64MacroAssembler.INSTRUCTION_SIZE;
             }
 
             @Override
@@ -394,36 +395,38 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         }
 
         protected void adapt(Aarch64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
+            CiKind loadKind;
             switch(kind.asEnum) {
                 case BYTE:
-                    masm.ldrs(64, 8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Byte;
                     break;
                 case BOOLEAN:
-                    masm.ldr(8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Boolean;
                     break;
                 case SHORT:
-                    masm.ldrs(64, 16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Short;
                     break;
                 case CHAR:
-                    masm.ldr(16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Char;
                     break;
                 case INT:
-                    masm.ldrs(64, 32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Int;
                     break;
                 case WORD:
                 case REFERENCE:
                 case LONG:
-                    masm.ldr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Long;
                     break;
                 case FLOAT:
-                    masm.fldr(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Float;
                     break;
                 case DOUBLE:
-                    masm.fldr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    loadKind = CiKind.Double;
                     break;
                 default :
                     throw ProgramError.unexpected("Bad case");
             }
+            masm.load(reg, masm.getAddressInFrame(Aarch64.sp, offset32), loadKind);
         }
 
         protected void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
@@ -445,7 +448,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         /**
          * The offset in the prologue of the call to the adapter.
          */
-        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + 5 * INSTRUCTION_SIZE;
+        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + 5 * Aarch64MacroAssembler.INSTRUCTION_SIZE;
 
         static final int PROLOGUE_SIZE = CALL_OFFSET_IN_PROLOGUE + RIP_CALL_INSTRUCTION_SIZE;
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = OPTIMIZED_ENTRY_POINT.offset();
@@ -613,7 +616,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected int emitPrologue(Object out, Adapter adapter) {
             Aarch64MacroAssembler masm = out instanceof OutputStream ? new Aarch64MacroAssembler(Platform.target(), null) : (Aarch64MacroAssembler) out;
             if (adapter == null) {
-                masm.nop(PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE / INSTRUCTION_SIZE);
+                masm.nop(PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE / Aarch64MacroAssembler.INSTRUCTION_SIZE);
                 assert masm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE : masm.codeBuffer.position();
                 copyIfOutputStream(masm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
@@ -641,7 +644,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             Aarch64MacroAssembler masm = new Aarch64MacroAssembler(Platform.target(), null);
-            final int adapterFrameSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
+            int adapterFrameSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
             assert adapterFrameSize % Platform.target().stackAlignment == 0 : "Bad stack alignment";
 
             // On entry to the frame, there is 1 return address in the link register and another at [SP]. The one at the
@@ -650,6 +653,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
 
             // adjust stack pointer to accommodate baseline args
             masm.sub(64, Aarch64.sp, Aarch64.sp, adapterFrameSize);
+            adapterFrameSize += BASELINE_SLOT_SIZE; // Add the RIP slot (16-byte aligned)
 
             int baselineStackOffset = 0;
 
@@ -677,37 +681,34 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         }
 
         protected void adapt(Aarch64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
+            CiKind storeKind;
             switch(kind.asEnum) {
                 case BYTE:
                 case BOOLEAN:
-                    masm.str(8, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
-                    break;
                 case SHORT:
                 case CHAR:
-                    masm.str(16, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
-                    break;
                 case INT:
-                    masm.str(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    storeKind = CiKind.Int;
                     break;
                 case WORD:
                 case REFERENCE:
                 case LONG:
-                    masm.str(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    storeKind = CiKind.Long;
                     break;
                 case FLOAT:
-                    masm.fstr(32, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    storeKind = CiKind.Float;
                     break;
                 case DOUBLE:
-                    masm.fstr(64, reg, masm.getAddressInFrame(Aarch64.sp, offset32));
+                    storeKind = CiKind.Double;
                     break;
                 default :
                     throw ProgramError.unexpected("Bad case");
             }
+            masm.store(reg, masm.getAddressInFrame(Aarch64.sp, offset32), storeKind);
         }
 
         protected void adapt(Aarch64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
-            // Add word size to take into account the slot used by the RIP of the caller
-            int src = adapterFrameSize + optStackOffset32 + Word.size();
+            int src = adapterFrameSize + optStackOffset32;
             int dst = baselineStackOffset32;
             stackCopy(asm, kind, src, dst);
         }
@@ -761,7 +762,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
      * @param destStackOffset
      */
     void stackCopy(Aarch64MacroAssembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
-        final int size = kind.width.numberOfBits;
+        final int size = kind.stackKind.width.numberOfBits;
         asm.ldr(size, scratch, asm.getAddressInFrame(Aarch64.sp, sourceStackOffset));
         asm.str(size, scratch, asm.getAddressInFrame(Aarch64.sp, destStackOffset));
     }

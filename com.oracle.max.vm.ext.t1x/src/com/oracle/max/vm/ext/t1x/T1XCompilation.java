@@ -25,7 +25,6 @@ import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
-import java.lang.invoke.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
@@ -59,7 +58,7 @@ import com.sun.max.vm.verifier.*;
  */
 public abstract class T1XCompilation {
 
-    private static final boolean DEBUG_MARKERS = false;
+    private static boolean debugMarkers;
     protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
 
     protected static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();
@@ -83,6 +82,8 @@ public abstract class T1XCompilation {
     protected static final CiAddress[] FP_SLOTS_CACHE = new CiAddress[(FP_SLOTS_CACHE_END_OFFSET - FP_SLOTS_CACHE_START_OFFSET) / JVMS_SLOT_SIZE];
 
     static {
+        String value = System.getenv("ENABLE_DEBUG_METHODS_ID");
+        debugMarkers = value != null && !value.isEmpty();
         for (int i = 0; i < SP_WORD_ADDRESSES_CACHE.length; i++) {
             SP_WORD_ADDRESSES_CACHE[i] = new CiAddress(WordUtil.archKind(), SP, i * JVMS_SLOT_SIZE);
         }
@@ -153,12 +154,6 @@ public abstract class T1XCompilation {
         }
         return new CiAddress(CiKind.Int, FP, offset);
     }
-
-    /**
-     * The minimum value to which {@link T1XOptions#TraceBytecodeParserLevel} must be set to trace
-     * the bytecode instructions as they are parsed.
-     */
-    public static final int TRACELEVEL_INSTRUCTIONS = 1;
 
     // Fields holding info/data structures reused across all compilations
 
@@ -592,7 +587,7 @@ public abstract class T1XCompilation {
     }
 
     protected void start(T1XTemplateTag tag) {
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, tag.ordinal() | (0xbeef << 16));
         }
         T1XTemplate template = getTemplate(tag);
@@ -604,11 +599,11 @@ public abstract class T1XCompilation {
      * Starts the process of emitting a template. This includes emitting code to copy any arguments from the stack to
      * the relevant parameter locations.
      * <p/>
-     * A call to this method must be matched with a call to {@link #finish()} or
-     * {@link #finish(ClassMethodActor, boolean)} once the code for initializing the non-stack-based template parameters
+     * A call to this method must be matched with a call to {@link #finish()} once the code for initializing the
+     * non-stack-based template parameters
      * has been emitted.
      *
-     * @param tag denotes the template to emit
+     * @param startTemplate denotes the template to emit
      */
     protected void start(T1XTemplate startTemplate) {
         assert template == null;
@@ -654,13 +649,13 @@ public abstract class T1XCompilation {
         assert template != null;
         assert assertArgsAreInitialized();
 
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, 0xd00dd00d);
         }
 
         emitAndRecordSafepoints(template);
 
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, 0xbeefd00d);
         }
 
@@ -705,7 +700,7 @@ public abstract class T1XCompilation {
         }
         template = null;
         initializedArgs = 0;
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, 0xdeadd00d);
         }
     }
@@ -991,9 +986,9 @@ public abstract class T1XCompilation {
      * Method handle intrinsics such as invokeBasic need to query the receiver in order to
      * extract the correct target.
      *
-     * @param reveiverStackIndex The receiver's position in the Java operand stack is copied into
+     * @param receiverStackIndex The receiver's position in the Java operand stack is copied into
      *          the receiver register expected by the intrinsic.
-     * @param The {@linkplain Safepoints safepoint} for the call.
+     * @return The {@linkplain Safepoints safepoint} for the call.
      */
     protected abstract int callDirect(int receiverStackIndex);
 
@@ -2306,7 +2301,7 @@ public abstract class T1XCompilation {
         T1XTemplateTag tag = INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
         do_profileExceptionSeen();
-        if (DEBUG_MARKERS) {
+        if (debugMarkers) {
             assignInt(scratch, index | (0xbeaf << 16));
         }
         try {
@@ -2631,14 +2626,18 @@ public abstract class T1XCompilation {
             ClassActor arrayClassActor = classRef.resolve(cp, index);
             assert arrayClassActor.isArrayClass();
             assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
-            assignObject(0, "arrayClassActor", arrayClassActor);
+            // Do the assignment in reverse order since in ARMV7 and Aarch64 r0 holds lengths, and not doing so will
+            // overwrite it with arrayClassActor
             assignObjectReg(1, "lengths", lengths);
+            assignObject(0, "arrayClassActor", arrayClassActor);
             finish();
         } else {
             // Unresolved case
             start(MULTIANEWARRAY);
-            assignObject(0, "guard", cp.makeResolutionGuard(index));
+            // Do the assignment in reverse order since in ARMV7 and Aarch64 r0 holds lengths, and not doing so will
+            // overwrite it with guard
             assignObjectReg(1, "lengths", lengths);
+            assignObject(0, "guard", cp.makeResolutionGuard(index));
             finish();
         }
     }
@@ -2820,6 +2819,11 @@ public abstract class T1XCompilation {
             case STRING: {
                 StringConstant stringConstant = (StringConstant) constant;
                 do_oconst(stringConstant.value);
+                break;
+            }
+            case OBJECT: { // Used only by methodhandle generated code
+                ObjectConstant objectConstant = (ObjectConstant) constant;
+                do_oconst(objectConstant.value());
                 break;
             }
             default: {

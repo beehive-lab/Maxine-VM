@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -56,6 +56,8 @@ import com.sun.cri.xir.CiXirAssembler.XirParameter;
 import com.sun.cri.xir.CiXirAssembler.XirRegister;
 import com.sun.cri.xir.CiXirAssembler.XirTemp;
 import com.sun.cri.xir.*;
+import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
+import com.sun.max.vm.classfile.constant.ConstantPool;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -629,6 +631,45 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
+    public void visitInvokeHandle(InvokeHandle x) {
+        XirArgument actor = XirArgument.forObject(x.target());
+        XirSnippet snippet = xir.genInvokeHandle(site(x), actor);
+        LIRDebugInfo info = stateFor(x, x.stateBefore());
+
+        CiValue destinationAddress = null;
+        // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
+        // implicit calling convention between the XirSnippet and the call.
+        if (!C1XOptions.InvokeSnippetAfterArguments) {
+            destinationAddress = emitXir(snippet, x, info.copy(), x.target(), false);
+        }
+
+        CiValue resultOperand = resultOperandFor(x.kind);
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(x.signature(), JavaCall);
+        List<CiValue> pointerSlots = new ArrayList<>(2);
+        List<CiValue> argList = visitInvokeArguments(cc, x.arguments(), pointerSlots);
+
+        if (C1XOptions.InvokeSnippetAfterArguments) {
+            destinationAddress = emitXir(snippet, x, info.copy(), null, x.target(), false, pointerSlots);
+        }
+
+        // emit direct or indirect call to the destination address
+        if (destinationAddress instanceof CiConstant) {
+            // Direct call
+            assert ((CiConstant) destinationAddress).isDefaultValue() : "destination address should be zero";
+            lir.callDirect(x.target(), resultOperand, argList, info, snippet.marks, pointerSlots);
+        } else {
+            // Indirect call
+            argList.add(destinationAddress);
+            lir.callIndirect(x.target(), resultOperand, argList, info, snippet.marks, pointerSlots);
+        }
+
+        if (resultOperand.isLegal()) {
+            CiValue result = createResultVariable(x);
+            lir.move(resultOperand, result);
+        }
+    }
+
+    @Override
     public void visitNativeCall(NativeCall x) {
         LIRDebugInfo info = stateFor(x, x.stateBefore());
         CiValue resultOperand = resultOperandFor(x.kind);
@@ -767,6 +808,72 @@ public abstract class LIRGenerator extends ValueVisitor {
     public void visitMemoryBarrier(MemoryBarrier x) {
         if (x.barriers != 0) {
             lir.membar(x.barriers);
+        }
+    }
+
+    @Override
+    public void visitLinkTo(LinkTo linkTo) {
+        RiMethod target = linkTo.target();
+        LIRDebugInfo info = stateFor(linkTo, linkTo.stateBefore());
+
+        XirSnippet snippet;
+
+        String intrinsic = linkTo.intrinsic();
+        XirArgument memberName;
+        XirArgument receiver;
+        switch (intrinsic) {
+            case IntrinsicIDs.LINKTOSPECIAL:
+                memberName = toXirArgument(linkTo.memberName());
+                snippet = xir.genLinkToSpecial(site(linkTo), memberName, target);
+                break;
+            case IntrinsicIDs.LINKTOINTERFACE:
+                memberName = toXirArgument(linkTo.memberName());
+                receiver = toXirArgument(linkTo.receiver());
+                snippet = xir.genLinkToInterface(site(linkTo), receiver, memberName, target);
+                break;
+            case IntrinsicIDs.LINKTOVIRTUAL:
+                memberName = toXirArgument(linkTo.memberName());
+                receiver = toXirArgument(linkTo.receiver());
+                snippet = xir.genLinkToVirtual(site(linkTo), receiver, memberName, target);
+                break;
+            case IntrinsicIDs.LINKTOSTATIC:
+                memberName = toXirArgument(linkTo.memberName());
+                snippet = xir.genLinkToStatic(site(linkTo), memberName, target);
+                break;
+            default:
+                throw Util.shouldNotReachHere();
+        }
+
+        CiValue destinationAddress = null;
+        // emitting the template earlier can ease pressure on register allocation, but the argument loading can destroy an
+        // implicit calling convention between the XirSnippet and the call.
+        if (!C1XOptions.InvokeSnippetAfterArguments) {
+            destinationAddress = emitXir(snippet, linkTo, info.copy(), linkTo.target(), false);
+        }
+
+        CiValue resultOperand = resultOperandFor(linkTo.kind);
+        CiCallingConvention cc = compilation.frameMap().getCallingConvention(linkTo.signature(), JavaCall);
+        List<CiValue> pointerSlots = new ArrayList<>(2);
+        List<CiValue> argList = visitInvokeArguments(cc, linkTo.arguments(), pointerSlots);
+
+        if (C1XOptions.InvokeSnippetAfterArguments) {
+            destinationAddress = emitXir(snippet, linkTo, info.copy(), null, linkTo.target(), false, pointerSlots);
+        }
+
+        // emit direct or indirect call to the destination address
+        if (destinationAddress instanceof CiConstant) {
+            // Direct call
+            assert ((CiConstant) destinationAddress).isDefaultValue() : "destination address should be zero";
+            lir.callDirect(target, resultOperand, argList, info, snippet.marks, pointerSlots);
+        } else {
+            // Indirect call
+            argList.add(destinationAddress);
+            lir.callIndirect(target, resultOperand, argList, info, snippet.marks, pointerSlots);
+        }
+
+        if (resultOperand.isLegal()) {
+            CiValue result = createResultVariable(linkTo);
+            lir.move(resultOperand, result);
         }
     }
 

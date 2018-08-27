@@ -847,7 +847,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     public void cleanCache() {
-        if (!MaxineVM.isHosted() && platform().target.arch.isARM()) {
+        if (!MaxineVM.isHosted() && (platform().target.arch.isARM() || platform().target.arch.isAarch64())) {
             int codePreAmble = 0;
             if (scalarLiterals != null) {
                 codePreAmble = scalarLiterals.length;
@@ -1094,7 +1094,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     public int findSafepointIndex(int pos) {
-        return safepoints.indexOf(pos);
+        return safepoints.indexOf(pos, false);
     }
 
     @Override

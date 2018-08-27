@@ -35,36 +35,15 @@ import com.sun.cri.ri.*;
 
 public class Aarch64MacroAssembler extends Aarch64Assembler {
 
+    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 5;
+    public static final int INSTRUCTION_SIZE = 4;
+
     public Aarch64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
     }
 
     public void iadd(CiRegister dest, CiRegister left, CiRegister right) {
         add(32, dest, left, right);
-    }
-
-    public void incrementl(CiRegister reg, int value) {
-        if (value == 0) {
-            return;
-        }
-        assert reg != Aarch64.r16;
-        addq(reg, value);
-    }
-
-    public void decrementl(CiRegister reg, int value) {
-        assert reg == Aarch64.r16 || reg != Aarch64.r17 : "Reg " + reg;
-        mov32BitConstant(Aarch64.r17, value);
-        sub(32, reg, reg, Aarch64.r17);
-    }
-
-    public void decrementl(CiAddress dst, int value) {
-        if (value == 0) {
-            return;
-        }
-        load(Aarch64.r16, dst, CiKind.Int);
-        mov64BitConstant(Aarch64.r17, value);
-        sub(64, Aarch64.r17, Aarch64.r16, Aarch64.r17);
-        store(Aarch64.r17, dst, CiKind.Int);
     }
 
     public void align(int modulus) {
@@ -597,10 +576,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 super.add(size, dest, source, (int) delta);
             }
         } else {
-            assert dest != scratchRegister;
-            assert source != scratchRegister;
-            mov(scratchRegister, delta);
-            add(size, dest, source, scratchRegister);
+            CiRegister deltaRegister;
+            if (source == scratchRegister) {
+                deltaRegister = Aarch64.r17;
+            } else {
+                deltaRegister = scratchRegister;
+            }
+
+            mov(deltaRegister, delta);
+            add(size, dest, source, deltaRegister);
         }
     }
 
@@ -615,10 +599,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 super.sub(size, dest, source, (int) delta);
             }
         } else {
-            assert dest != scratchRegister;
-            assert source != scratchRegister;
-            mov(scratchRegister, delta);
-            sub(size, dest, source, scratchRegister);
+            CiRegister deltaRegister;
+            if (source == scratchRegister) {
+                deltaRegister = Aarch64.r17;
+            } else {
+                deltaRegister = scratchRegister;
+            }
+
+            mov(deltaRegister, delta);
+            sub(size, dest, source, deltaRegister);
         }
     }
 
@@ -629,91 +618,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      */
     public void increment32(CiRegister reg, int delta) {
         add(32, reg, reg, (long) delta);
-    }
-
-    public void increment32(CiAddress dst, int delta) {
-        if (delta == 0) {
-            return;
-        }
-        load(r17, dst, CiKind.Int);
-        increment32(r17, delta);
-        store(r17, dst, CiKind.Int);
-    }
-
-    /**
-     * Add value to the current value pointed by dst.
-     * @param dst
-     * @param value
-     */
-    public void incrementl(Aarch64Address dst, int value) {
-        if (value == 0) {
-            return;
-        }
-        ldr(64, scratchRegister, dst);
-        mov(Aarch64.r17, value);
-        add(64, Aarch64.r17, scratchRegister, Aarch64.r17);
-        str(64, Aarch64.r17, dst);
-    }
-
-    /**
-     * Subtract value from the current value pointed by address dst.
-     * @param dst
-     * @param value
-     */
-    public void decrementl(Aarch64Address dst, int value) {
-        if (value == 0) {
-            return;
-        }
-        ldr(64, scratchRegister, dst);
-        mov(Aarch64.r17, value);
-        sub(64, Aarch64.r17, scratchRegister, Aarch64.r17);
-        str(64, Aarch64.r17, dst);
-    }
-
-    public void decrementq(CiRegister reg, int value) {
-        if (value == Integer.MIN_VALUE) {
-            subq(reg, value);
-            return;
-        }
-        if (value < 0) {
-            incrementq(reg, -value);
-            return;
-        }
-        if (value == 0) {
-            return;
-        }
-        if (value == 1 && AsmOptions.UseIncDec) {
-            decq(reg);
-        } else {
-            subq(reg, value);
-        }
-    }
-
-    public void incrementq(CiRegister reg, int value) {
-        if (value == Integer.MIN_VALUE) {
-            addq(reg, value);
-            return;
-        }
-        if (value < 0) {
-            decrementq(reg, -value);
-            return;
-        }
-        if (value == 0) {
-            return;
-        }
-        if (value == 1 && AsmOptions.UseIncDec) {
-            incq(reg);
-        } else {
-            addq(reg, value);
-        }
-    }
-
-    public void xorptr(CiRegister dst, CiRegister src) {
-        xorq(dst, src);
-    }
-
-    public void xorptr(CiRegister dst, CiAddress src) {
-        xorq(dst, src);
     }
 
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
@@ -732,7 +636,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         if (NumUtil.isSignedNbit(9, displacement)) {
             return Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement);
         } else {
-            mov32BitConstant(scratchRegister, displacement);
+            mov(scratchRegister, displacement);
             return Aarch64Address.createRegisterOffsetAddress(frameRegister, scratchRegister, false);
         }
     }
@@ -900,6 +804,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      */
     @Override
     public void add(int size, CiRegister dst, CiRegister src, int immediate) {
+        assert immediate != Integer.MIN_VALUE;
         if (immediate < 0) {
             sub(size, dst, src, -immediate);
         } else if (!dst.equals(src) || immediate != 0) {
@@ -917,6 +822,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      */
     @Override
     public void sub(int size, CiRegister dst, CiRegister src, int immediate) {
+        assert immediate != Integer.MIN_VALUE;
         if (immediate < 0) {
             add(size, dst, src, -immediate);
         } else if (!dst.equals(src) || immediate != 0) {
@@ -1114,12 +1020,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             return;
         }
 
-        if (size == 32) {
-            mov32BitConstant(scratchRegister, bimm);
-        } else {
-            assert size == 64;
-            mov64BitConstant(scratchRegister, bimm);
-        }
+        mov(scratchRegister, bimm);
         and(size, dst, src, scratchRegister);
     }
 
@@ -1546,32 +1447,26 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void pause() {
-        push(1 | 2 | 4 | 8 | 128);
-        mov32BitConstant(Aarch64.r7, 158); // sched_yield
-        emitInt(0xd4000001); // svc 0
-        pop(1 | 2 | 4 | 8 | 128);
+        hint(SystemHint.YIELD);
     }
 
     public final void crashme() {
+        mov(scratchRegister, 0);
+        ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
         insertForeverLoop();
-        ldr(64, scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.zr));
+    }
+
+    public int insertDivByZeroCheck(int size, CiRegister denominator) {
+        cmp(size, denominator, 0); // Check denominator
+        b(ConditionFlag.NE, 12);  // If non-zero skip the following two commands
+        movz(64, scratchRegister, 0, 0);
+        int offset = codeBuffer.position();
+        ldr(64, zr, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister)); // generate SIGSEGV
+        return offset;
     }
 
     public void insertForeverLoop() {
         b(0);
-    }
-
-    public void asr(CiRegister ciRegister, CiRegister dest, int i) {
-        // TODO Port from ARMv7
-        throw new Error("unimplemented");
-    }
-
-    public void xchgptr(CiRegister src1, CiRegister src2) {
-        CiRegister tmp = Aarch64.r17;
-        assert src1 != tmp && src2 != tmp;
-        mov(64, tmp, src1);
-        mov(64, src1, src2);
-        mov(64, src2, tmp);
     }
 
     public void store(CiRegister src, CiAddress addr, CiKind kind) {

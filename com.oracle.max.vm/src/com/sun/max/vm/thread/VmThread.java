@@ -98,7 +98,7 @@ public class VmThread {
         VMOptions.addFieldOption("-XX:", "TraceThreads",  VmThread.class, "Trace thread start-up and shutdown.", MaxineVM.Phase.PRISTINE);
     }
 
-    private static final Size DEFAULT_STACK_SIZE = Size.K.times(256);
+    private static final Size DEFAULT_STACK_SIZE = Size.K.times(1024);
 
     private static final VMSizeOption STACK_SIZE_OPTION = register(new VMSizeOption("-Xss", DEFAULT_STACK_SIZE, "Stack size of new threads."), MaxineVM.Phase.PRISTINE);
 

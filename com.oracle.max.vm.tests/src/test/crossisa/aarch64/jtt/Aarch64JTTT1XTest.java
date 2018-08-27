@@ -64,8 +64,8 @@ public class Aarch64JTTT1XTest {
         public int fourth;
         public long lfirst;
         public long lsecond;
-        public long ffirst;
-        public long fsecond;
+        public float ffirst;
+        public float fsecond;
 
         Args(int first, int second) {
             this.first = first;
@@ -89,7 +89,7 @@ public class Aarch64JTTT1XTest {
 
         Args(long lfirst, float fsecond) {
             this.lfirst = lfirst;
-            this.fsecond = (long) fsecond;
+            this.fsecond = fsecond;
         }
 
         Args(long lfirst, int second) {
@@ -114,6 +114,14 @@ public class Aarch64JTTT1XTest {
             this.third = third;
             this.lfirst = lfirst;
         }
+
+        Args(float ffirst, float fsecond) {
+            this.first = Float.floatToRawIntBits(ffirst);
+            this.second = Float.floatToRawIntBits(fsecond);
+            this.ffirst = ffirst;
+            this.fsecond = fsecond;
+        }
+
     }
 
     private static final OptionSet options = new OptionSet(false);
@@ -534,6 +542,40 @@ public class Aarch64JTTT1XTest {
         initialiseFrameForCompilation(code, "(I)I");
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(r0, -1);
+        masm.push(r0);
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
+        generateAndTest(1);
+        theCompiler.cleanup();
+    }
+
+    @Test
+    public void t1x_jtt_BC_i2s_3() throws Exception {
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        short answer = jtt.bytecode.BC_i2s.test(Integer.MAX_VALUE);
+        tester.setExpectedValue(r0, answer);
+        byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
+        initialiseFrameForCompilation(code, "(I)I");
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(r0, Integer.MAX_VALUE);
+        masm.push(r0);
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
+        generateAndTest(1);
+        theCompiler.cleanup();
+    }
+
+    @Test
+    public void t1x_jtt_BC_i2s_4() throws Exception {
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        short answer = jtt.bytecode.BC_i2s.test(0xcafebabe);
+        tester.setExpectedValue(r0, answer);
+        byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
+        initialiseFrameForCompilation(code, "(I)I");
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(r0, 0xcafebabe);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
@@ -1532,6 +1574,31 @@ public class Aarch64JTTT1XTest {
             tester.setExpectedValue(r0, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifge_2");
             initialiseFrameForCompilation(code, "(II)I");
+            Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(r0, pair.first);
+            masm.mov32BitConstant(r1, pair.second);
+            masm.push(r0);
+            masm.push(r1);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
+            generateAndTest(2);
+            theCompiler.cleanup();
+        }
+    }
+
+    @Test
+    public void t1x_jtt_BC_fcmpl() throws Exception {
+        List<Args> pairs = new LinkedList<>();
+        pairs.add(new Args(2.5f, 2.5f));
+        pairs.add(new Args(5.0f, 3.0f));
+        pairs.add(new Args(6.0f, 37.5f));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "fcmpl");
+        for (Args pair : pairs) {
+            int answer = jtt.jasm.BC_fcmpl.test(pair.ffirst, pair.fsecond);
+            tester.setExpectedValue(r0, answer);
+            byte[] code = getByteArray("test", "jtt.jasm.BC_fcmpl");
+            initialiseFrameForCompilation(code, "(FF)I");
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.mov32BitConstant(r1, pair.second);

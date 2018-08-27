@@ -149,7 +149,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (!isHosted()) {
             if (install) {
                 linkDirectCalls();
-                if (Platform.target().arch.isARM()) {
+                if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64()) {
                     ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
                 }
             } else {
@@ -278,16 +278,20 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             if (vm().compilationBroker.needsAdapters()) {
                 AMD64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
-            FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
         } else if (platform().isa == ISA.ARM) {
             ARMTargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             if (vm().compilationBroker.needsAdapters()) {
                 ARMTargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
-            FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
+        } else if (platform().isa == ISA.Aarch64) {
+            Aarch64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
+            if (vm().compilationBroker.needsAdapters()) {
+                Aarch64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
+            }
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.redirectTo");
         }
+        FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
     }
 
     @Override
@@ -738,12 +742,13 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     @NEVER_INLINE
     public static void unwindToCalleeEpilogue(CodePointer catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
         // Overwrite return address of callee with catch address
-        final Pointer returnAddressPointer = stackPointer.minus(Word.size());
+        final int slotSize = target().arch.isAarch64() ? JVMSFrameLayout.JVMS_SLOT_SIZE : Word.size();
+        final Pointer returnAddressPointer = stackPointer.minus(slotSize);
         returnAddressPointer.setWord(catchAddress.toAddress());
 
         CodePointer epilogueAddress = lastJavaCallee.codeAt(lastJavaCallee.registerRestoreEpilogueOffset());
 
-        final Pointer calleeStackPointer = stackPointer.minus(Word.size()).minus(lastJavaCallee.frameSize());
+        final Pointer calleeStackPointer = stackPointer.minus(slotSize).minus(lastJavaCallee.frameSize());
         Stubs.unwind(epilogueAddress.toPointer(), calleeStackPointer, Pointer.zero());
     }
 
@@ -785,6 +790,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             return AMD64TargetMethodUtil.returnAddressPointer(frame);
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.returnAddressPointer(frame);
+        } else if (platform().isa == ISA.Aarch64) {
+            return Aarch64TargetMethodUtil.returnAddressPointer(frame);
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.returnAddressPointer");
         }

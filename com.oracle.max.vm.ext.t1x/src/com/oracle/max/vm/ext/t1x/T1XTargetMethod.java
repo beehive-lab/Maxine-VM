@@ -30,10 +30,10 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
-import static com.sun.max.vm.stack.VMFrameLayout.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.aarch64.Aarch64;
 import com.oracle.max.criutils.TTY;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
 import com.sun.cri.bytecode.*;
@@ -249,7 +249,7 @@ public class T1XTargetMethod extends TargetMethod {
         if (!MaxineVM.isHosted()) {
             if (install) {
                 linkDirectCalls();
-                if (Platform.target().arch.isARM()) {
+                if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64()) {
                     ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
                 }
             } else {
@@ -1038,7 +1038,7 @@ public class T1XTargetMethod extends TargetMethod {
         Pointer returnRIP = current.fp().plus(dispToRip);
         int slotSize = Word.size();
         if (isAARCH64()) { // On Aarch64 stack is 16-byte aligned, so we use this as the slot size
-            slotSize = platform().target.stackAlignment;
+            slotSize = target().stackAlignment;
         }
         Pointer callerFP = sfw.readWord(returnRIP, -slotSize).asPointer();
         if (MaxineVM.isHosted()) {
@@ -1165,7 +1165,8 @@ public class T1XTargetMethod extends TargetMethod {
         }
 
         // add alignment slots
-        int numberOfSlots = 1 + templateSlots; // one extra word for the caller FP
+        int fpSlots = target().arch.isAarch64() ? 2 : 1; // one (or two) extra word(s) for the caller FP
+        int numberOfSlots = fpSlots + templateSlots;
         int unalignedSize = (numberOfSlots + (nonParamLocals * STACK_SLOTS_PER_JVMS_SLOT)) * STACK_SLOT_SIZE;
         int alignedSize = target().alignFrameSize(unalignedSize);
         int alignmentSlots = (alignedSize - unalignedSize) / STACK_SLOT_SIZE;
@@ -1176,10 +1177,18 @@ public class T1XTargetMethod extends TargetMethod {
         // add caller FP slot with placeholder value
         int callerFPIndex = info.slotsCount();
         info.addSlot(WordUtil.ZERO, "callerFP");
+        // in Aarch64 FP and LR are pushed separately and each one takes a whole JVMS_SLOT
+        if (target().arch.isAarch64()) {
+            addSlotPadding(info, "callerFP (pad)");
+        }
 
         // add caller return address slot with placeholder value
         int returnAddressIndex = info.slotsCount();
         info.addSlot(WordUtil.ZERO, "returnIP");
+        // in Aarch64 FP and LR are pushed separately and each one takes a whole JVMS_SLOT
+        if (target().arch.isAarch64()) {
+            addSlotPadding(info, "returnIP (pad)");
+        }
 
         // add parameter slots
         for (int i = paramLocals - 1; i >= 0; i--) {
@@ -1257,11 +1266,18 @@ public class T1XTargetMethod extends TargetMethod {
                 int safepointPos = safepoints.posAt(safepointIndex);
                 if (curPos <= safepointPos && safepointPos < succPos) {
                     if (safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
-                        if (isAMD64()) {
+                        if (isAMD64() || isAARCH64()) {
                             // On x86 the safepoint position of a call *is* the return position
                             templateCallReturnPos = safepointPos;
                         } else if (isARM()) {
-                            templateCallReturnPos += 16;
+                            /* On ARMv7 we do a call like this:
+                                movw r12, constLOW
+                                movt r12, constHIGH
+                                add  r12, r12, PC
+                                blx r12
+                                RETURN POINT <------ return address
+                             */
+                            templateCallReturnPos = safepointPos + 16;
                         } else {
                             throw unimplISA();
                         }

@@ -146,6 +146,7 @@ public class Aarch64AssemblerTest {
         masm.mov(r5, 0xFFFF_0000_1234_0000L); // Test forceMov optimization
         masm.mov(r6, 0xFFFF_FFFF_FFFF_FFFFL); // Test 32bit sign-extend optimization
         masm.mov(r7, 0); // Test zero optimization
+        masm.mov(r8, 0xcafebabe);
 
         tester.setExpectedValue(r0, Integer.MAX_VALUE);
         tester.setExpectedValue(r1, Integer.MIN_VALUE);
@@ -155,6 +156,7 @@ public class Aarch64AssemblerTest {
         tester.setExpectedValue(r5, 0xFFFF_0000_1234_0000L);
         tester.setExpectedValue(r6, 0xFFFF_FFFF_FFFF_FFFFL);
         tester.setExpectedValue(r7, 0);
+        tester.setExpectedValue(r8, 0xcafebabe);
     }
 
     @Test
@@ -1011,20 +1013,6 @@ public class Aarch64AssemblerTest {
     }
 
     @Test
-    public void subq() throws Exception {
-        for (int i = 0; i < 10; i++) {
-            masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
-            if (i % 2 == 1) {
-                masm.subq(Aarch64.cpuRegisters[i], 2 * expectedValues[i]);
-                tester.setExpectedValue(Aarch64.cpuRegisters[i], -expectedValues[i]);
-            } else {
-                masm.subq(Aarch64.cpuRegisters[i], expectedValues[i]);
-                tester.setExpectedValue(Aarch64.cpuRegisters[i], 0);
-            }
-        }
-    }
-
-    @Test
     public void addq() throws Exception {
         for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
@@ -1192,23 +1180,4 @@ public class Aarch64AssemblerTest {
         tester.setExpectedValue(r0, 0);
     }
 
-    @Test
-    public void decrementl() throws Exception {
-        masm.mov32BitConstant(r0, 100);
-        masm.push(1);
-        Aarch64Address addr = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, 0);
-        masm.decrementl(addr, 10);
-        masm.pop(1);
-        tester.setExpectedValue(r0, 90);
-    }
-
-    @Test
-    public void incrementl() throws Exception {
-        masm.mov32BitConstant(r0, 100);
-        masm.push(1);
-        Aarch64Address addr = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, 0);
-        masm.incrementl(addr, 10);
-        masm.pop(1);
-        tester.setExpectedValue(r0, 110);
-    }
 }

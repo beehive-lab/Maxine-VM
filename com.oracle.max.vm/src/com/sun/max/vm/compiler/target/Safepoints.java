@@ -282,10 +282,11 @@ public final class Safepoints {
      * Finds the safepoint corresponding to a given code position.
      *
      * @param pos the position to search for
-     * @return the index of the safepoint whose {@linkplain #posAt(int) position} is equal to {@code pos} or -1 if no
-     *         such safepoint exists
+     * @param nextClosest whether to return the next closest safepoint if no safepoint is available at the given position
+     * @return the index of the safepoint whose {@linkplain #posAt(int) position} is equal to {@code pos}, or the next
+     *         closest safepoint if {@code nextClosest} is true or -1 if no such safepoint exists
      */
-    public int indexOf(int pos) {
+    public int indexOf(int pos, boolean nextClosest) {
         // Use binary search since safepoints are sorted by position
         int left = 0;
         assert safepoints != null : "Safepoints:indexOf null";
@@ -300,6 +301,9 @@ public final class Safepoints {
             } else {
                 left = middle + 1;
             }
+        }
+        if (nextClosest && posAt(right) > pos) {
+            return right;
         }
         return -1;
     }

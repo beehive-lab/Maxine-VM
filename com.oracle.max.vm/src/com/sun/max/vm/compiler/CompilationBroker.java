@@ -28,13 +28,13 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.compiler.CompilationThreadPool.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -42,6 +42,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.heap.*;
@@ -67,19 +68,19 @@ public class CompilationBroker {
     private static int RCT = 5000;
 
     /**
-     * A queue of pending compilations.
-     */
-    protected final LinkedList<Compilation> pending = new LinkedList<Compilation>();
-
-    /**
      * The baseline compiler.
      */
     public final RuntimeCompiler baselineCompiler;
 
-    /**
+    /** 
      * The optimizing compiler.
      */
     public final RuntimeCompiler optimizingCompiler;
+
+    /**
+     * Thread pool of compilation threads.
+     */
+    private CompilationThreadPool compilationThreadPool;
 
     /**
      * Other compilers registered with {@link #addCompiler}.
@@ -87,7 +88,6 @@ public class CompilationBroker {
     private HashMap<String, RuntimeCompiler> altCompilers = new HashMap<String, RuntimeCompiler>();
 
     private static boolean opt;
-    private static boolean GCOnRecompilation;
     private static boolean FailOverCompilation = true;
     private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
@@ -98,14 +98,17 @@ public class CompilationBroker {
     @HOSTED_ONLY
     private static boolean needOfflineAdapters = false;
 
+    private static boolean BackgroundCompilation = false;
+    private static boolean backgroundCompilationInitialized = false;
+
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
         addFieldOption("-XX:", "RCT", CompilationBroker.class, "Set the recompilation threshold for methods. Use 0 to disable recompilation. (default: " + RCT + ").");
-        addFieldOption("-XX:", "GCOnRecompilation", CompilationBroker.class, "Force GC before every re-compilation.");
         addFieldOption("-XX:", "FailOverCompilation", CompilationBroker.class, "Retry failed compilations with another compiler (if available).");
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
+        addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
 
     @RESET
@@ -163,8 +166,6 @@ public class CompilationBroker {
      * The default compiler to use.
      */
     private RuntimeCompiler defaultCompiler;
-
-    private static final boolean BACKGROUND_COMPILATION = false;
 
     public boolean needsAdapters() {
         return baselineCompiler != null;
@@ -337,14 +338,7 @@ public class CompilationBroker {
             }
         }
 
-        if (isHosted()) {
-            if (BACKGROUND_COMPILATION) {
-                // launch a compiler thread if background compilation is supported (currently no)
-                final CompilationThread compilationThread = new CompilationThread();
-                compilationThread.setDaemon(true);
-                compilationThread.start();
-            }
-        } else if (phase == MaxineVM.Phase.STARTING) {
+        if (phase == MaxineVM.Phase.STARTING) {
             if (opt) {
                 defaultCompiler = optimizingCompiler;
             }
@@ -352,14 +346,13 @@ public class CompilationBroker {
             if (RCT != 0 && baselineCompiler != null) {
                 MethodInstrumentation.enable(RCT);
             }
-
-            if (BACKGROUND_COMPILATION) {
-                // launch a compiler thread if background compilation is supported (currently no)
-                final CompilationThread compilationThread = new CompilationThread();
-                compilationThread.setDaemon(true);
-                compilationThread.start();
-            }
         } else if (phase == Phase.RUNNING) {
+            if (BackgroundCompilation) {
+                backgroundCompilationInitialized = true;
+                compilationThreadPool = new CompilationThreadPool();
+                compilationThreadPool.setDaemon(true);
+                compilationThreadPool.startThreads();
+            }
             if (PrintCodeCacheMetrics != 0) {
                 Runtime.getRuntime().addShutdownHook(new Thread("CodeCacheMetricsPrinter") {
                     @Override
@@ -478,11 +471,18 @@ public class CompilationBroker {
 
             try {
                 if (doCompile) {
-                    TargetMethod tm = compilation.compile();
-                    VMTI.handler().methodCompiled(cma);
+                    TargetMethod tm = null;
+                    if (backgroundCompilationInitialized && nature == Nature.OPT) {
+                        compilationThreadPool.addCompilationToQueue(compilation);
+                        compilation.relinquishOwnership();
+                    } else {
+                        tm = compilation.compile();
+                        VMTI.handler().methodCompiled(cma);
+                    }
                     return tm;
                 } else {
                     // return result from other thread (which will have send the VMTI event)
+                    // TODO: we don't ever want to be waiting on a compilation
                     return compilation.get();
                 }
             } catch (Throwable t) {
@@ -649,7 +649,7 @@ public class CompilationBroker {
             mpo.entryBackedgeCount = 1000;
             return;
         }
-        if (Compilation.isCompilationRunningInCurrentThread()) {
+        if (!backgroundCompilationInitialized && Compilation.isCompilationRunningInCurrentThread()) {
             logCounterOverflow(mpo, "Stopped recompilation because compilation is running in current thread");
             // We don't want to see another counter overflow in the near future
             mpo.entryBackedgeCount = 1000;
@@ -681,7 +681,7 @@ public class CompilationBroker {
         if (oldMethod == newMethod || newMethod == null) {
             // No compiled method available yet, maybe compilation is pending.
             // We don't want to see another counter overflow in the near future.
-            mpo.entryBackedgeCount = 10000;
+            mpo.entryBackedgeCount = 1000;
         } else {
             assert newMethod != null : oldMethod;
             logPatching(cma, oldMethod, newMethod);
@@ -793,63 +793,6 @@ public class CompilationBroker {
         }
     }
 
-    /**
-     * This class implements a daemon thread that performs compilations in the background. Depending on the compiler
-     * configuration, multiple compilation threads may be working in parallel.
-     */
-    protected class CompilationThread extends Thread {
-
-        protected CompilationThread() {
-            super("compile");
-            setDaemon(true);
-        }
-
-        /**
-         * The current compilation being performed by this thread.
-         */
-        Compilation compilation;
-
-        /**
-         * Continuously polls the compilation queue for work, performing compilations as they are removed from the
-         * queue.
-         */
-        @Override
-        public void run() {
-            while (true) {
-                try {
-                    compileOne();
-                } catch (InterruptedException e) {
-                    // do nothing.
-                } catch (Throwable t) {
-                    Log.print("Exception during compilation of " + compilation.classMethodActor);
-                    t.printStackTrace();
-                }
-            }
-        }
-
-        /**
-         * Polls the compilation queue and performs a single compilation.
-         *
-         * @throws InterruptedException if the thread was interrupted waiting on the queue
-         */
-        void compileOne() throws InterruptedException {
-            compilation = null;
-            synchronized (pending) {
-                while (compilation == null) {
-                    compilation = pending.poll();
-                    if (compilation == null) {
-                        pending.wait();
-                    }
-                }
-            }
-            compilation.compilingThread = Thread.currentThread();
-            if (GCOnRecompilation) {
-                System.gc();
-            }
-            compilation.compile();
-            compilation = null;
-        }
-    }
 
     /**
      * Helper class for patching any direct call sites on the stack corresponding to a target method
@@ -888,80 +831,104 @@ public class CompilationBroker {
 
         @Override
         public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
-            if (platform().isa == ISA.ARM) {
-                if (current.isTopFrame()) {
-                    return true;
-                }
-                Pointer ip = current.ipAsPointer();
-                Pointer newIp = ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-                if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), newIp)) {
-                    CodePointer callSite = CodePointer.from(newIp);
-                    int ripOffset = ARMTargetMethodUtil.ripCallOffset(current.targetMethod(), newIp);
-                    CodePointer target = CodePointer.from(newIp).plus(ripOffset).minus(8);
-                    if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
-                        final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
-                        final TargetMethod tm = current.targetMethod();
-                        final int dcIndex = directCalleePosition(tm, callSite);
-                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
-                        logStaticCallPatch(current, callSite, dcIndex, to);
-                        ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
-                        // Stop traversing the stack after a direct call site has been patched
-                        return false;
-                    }
-                    if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
-                        final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
-                        final TargetMethod tm = current.targetMethod();
-                        final int dcIndex = directCalleePosition(tm, callSite);
-                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
-                        logStaticCallPatch(current, callSite, dcIndex, to);
-                        ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
-                        // Stop traversing the stack after a direct call site has been patched
-                        return false;
-                    }
-                }
-                if (++frameCount > FRAME_SEARCH_LIMIT) {
-                    logNoFurtherStaticCallPatching();
-                    return false;
-                }
+            if (current.isTopFrame()) {
                 return true;
             }
-            if (platform().isa == ISA.AMD64) {
-                if (current.isTopFrame()) {
-                    return true;
-                }
-                Pointer ip = current.ipAsPointer();
-                CodePointer callSite = CodePointer.from(ip.minus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
-                Pointer callSitePointer = callSite.toPointer();
-                if ((callSitePointer.readByte(0) & 0xFF) == AMD64TargetMethodUtil.RIP_CALL) {
-                    CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
-                    if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
-                        final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
-                        final TargetMethod tm = current.targetMethod();
-                        final int dcIndex = directCalleePosition(tm, callSite);
-                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
-                        logStaticCallPatch(current, callSite, dcIndex, to);
-                        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
-                        // Stop traversing the stack after a direct call site has been patched
-                        return false;
+            Pointer ip = current.ipAsPointer();
+            switch (platform().isa) {
+                case AMD64: {
+                    CodePointer callSite = CodePointer.from(ip.minus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
+                    Pointer callSitePointer = callSite.toPointer();
+                    if ((callSitePointer.readByte(0) & 0xFF) == AMD64TargetMethodUtil.RIP_CALL) {
+                        CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
+                        if (amd64PatchCallSite(current, callSite, target, BASELINE_ENTRY_POINT)) {
+                            return false;
+                        }
+                        if (amd64PatchCallSite(current, callSite, target, OPTIMIZED_ENTRY_POINT)) {
+                            return false;
+                        }
                     }
-                    if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
-                        final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
-                        final TargetMethod tm = current.targetMethod();
-                        final int dcIndex = directCalleePosition(tm, callSite);
-                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
-                        logStaticCallPatch(current, callSite, dcIndex, to);
-                        AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
-                        // Stop traversing the stack after a direct call site has been patched
-                        return false;
+                    break;
+                }
+                case ARM: {
+                    Pointer newIp = ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+                    if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), newIp)) {
+                        CodePointer callSite = CodePointer.from(newIp);
+                        int ripOffset = ARMTargetMethodUtil.ripCallOffset(current.targetMethod(), newIp);
+                        CodePointer target = CodePointer.from(newIp).plus(ripOffset).minus(8);
+                        if (armv7PatchCallSite(current, callSite, target, BASELINE_ENTRY_POINT)) {
+                            return false;
+                        }
+                        if (armv7PatchCallSite(current, callSite, target, OPTIMIZED_ENTRY_POINT)) {
+                            return false;
+                        }
                     }
+                    break;
                 }
-                if (++frameCount > FRAME_SEARCH_LIMIT) {
-                    logNoFurtherStaticCallPatching();
-                    return false;
+                case Aarch64: {
+                    Pointer callIP = ip.minus(Aarch64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+                    CodePointer callSite = CodePointer.from(callIP);
+                    if (Aarch64TargetMethodUtil.isRIPCall(callIP)) {
+                        CodePointer target = Aarch64TargetMethodUtil.readCall32Target(callSite);
+                        if (aarch64PatchCallSite(current, callSite, target, BASELINE_ENTRY_POINT)) {
+                            return false;
+                        }
+                        if (aarch64PatchCallSite(current, callSite, target, OPTIMIZED_ENTRY_POINT)) {
+                            return false;
+                        }
+                    }
+                    break;
                 }
+                default:
+                    throw FatalError.unimplemented("com.sun.max.vm.compiler.CompilationBroker.DirectCallPatcher.visitFrame");
+            }
+            if (++frameCount > FRAME_SEARCH_LIMIT) {
+                logNoFurtherStaticCallPatching();
+                return false;
+            }
+            return true;
+        }
+
+        private boolean amd64PatchCallSite(StackFrameCursor current, CodePointer callSite, CodePointer target, CallEntryPoint entryPoint) {
+            if (target.equals(oldMethod.getEntryPoint(entryPoint))) {
+                final CodePointer to = newMethod.getEntryPoint(entryPoint);
+                final TargetMethod tm = current.targetMethod();
+                final int dcIndex = directCalleePosition(tm, callSite);
+                assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                logStaticCallPatch(current, callSite, dcIndex, to);
+                AMD64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                // Stop traversing the stack after a direct call site has been patched
                 return true;
             }
-            throw FatalError.unimplemented("com.sun.max.vm.compiler.CompilationBroker.DirectCallPatcher.visitFrame");
+            return false;
+        }
+
+        private boolean armv7PatchCallSite(StackFrameCursor current, CodePointer callSite, CodePointer target, CallEntryPoint entryPoint) {
+            if (target.equals(oldMethod.getEntryPoint(entryPoint))) {
+                final CodePointer to = newMethod.getEntryPoint(entryPoint);
+                final TargetMethod tm = current.targetMethod();
+                final int dcIndex = directCalleePosition(tm, callSite);
+                assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                logStaticCallPatch(current, callSite, dcIndex, to);
+                ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                // Stop traversing the stack after a direct call site has been patched
+                return true;
+            }
+            return false;
+        }
+
+        private boolean aarch64PatchCallSite(StackFrameCursor current, CodePointer callSite, CodePointer target, CallEntryPoint entryPoint) {
+            if (target.equals(oldMethod.getEntryPoint(entryPoint))) {
+                final CodePointer to = newMethod.getEntryPoint(entryPoint);
+                final TargetMethod tm = current.targetMethod();
+                final int dcIndex = directCalleePosition(tm, callSite);
+                assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                logStaticCallPatch(current, callSite, dcIndex, to);
+                Aarch64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                // Stop traversing the stack after a direct call site has been patched
+                return true;
+            }
+            return false;
         }
     }
 

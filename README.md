@@ -2,19 +2,26 @@
 
 #### Updates
 
+* 2018-08-27: Maxine VM 2.5.0 Release
+  * jsr292 support on C1X
+  * Parallel and asynchronous JIT compilation
+  * Deoptimization in AArch64
+  * New way to test cross-isa assemblers
+  * Inspector fix to work with Java 8
+  * Bug and stability fixes
 * 2018-06-26: Maxine VM 2.4.2 Release
   * Fix checkstyle url
 * 2018-06-14: Maxine VM 2.4.1 Release
   * Bug fix that enables the c1xgraal configuration
 * 2018-05-31: Maxine VM 2.4.0 Release
-  * Initial port to Aarch64 (runs Hello World)
-  * Implemented Aarch64 C1X port
+  * Initial port to AArch64 (runs Hello World)
+  * Implemented AArch64 C1X port
   * Implemented first RISC-V instructions
   * Bug and stability fixes
   * Code refactoring and cleanup
 * 2018-03-09: Maxine VM 2.3.0 Release
-  * Implemented Aarch64 Assembler
-  * Implemented Aarch64 T1X port, Adapters
+  * Implemented AArch64 Assembler
+  * Implemented AArch64 T1X port, Adapters
   * Ported Cross-ISA testing infrastructure to RISC-V
   * Bug and stability fixes
   * Code refactoring and cleanup

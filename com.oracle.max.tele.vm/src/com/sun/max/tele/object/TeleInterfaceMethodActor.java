@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,7 +32,7 @@ import com.sun.max.vm.actor.member.*;
 /**
  * Canonical surrogate for a {@link InterfaceMethodActor} in the {@link TeleVM}.
  */
-public final class TeleInterfaceMethodActor extends TeleMethodActor {
+public final class TeleInterfaceMethodActor extends TeleClassMethodActor {
 
     // Keep construction minimal for both performance and synchronization.
     protected TeleInterfaceMethodActor(TeleVM vm, RemoteReference interfaceMethodActorReference) {
@@ -56,10 +58,6 @@ public final class TeleInterfaceMethodActor extends TeleMethodActor {
 
     public TargetMethodAccess[] getTargetMethods() {
         return new TargetMethodAccess[0];
-    }
-
-    public String getName() {
-        return actorName().string;
     }
 
 }

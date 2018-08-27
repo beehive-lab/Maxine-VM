@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -1042,7 +1042,7 @@ public final class ConstantPool implements RiConstantPool {
                 case INVOKEINTERFACE:
                 case INVOKESPECIAL:
                 case INVOKEVIRTUAL: {
-                    if (method.isStatic()) {
+                    if (method.isStatic() && (opcode != INVOKEVIRTUAL || !method.name().startsWith("invoke"))) {
                         // IncompatibleClassChangeError
                         return null;
                     }
@@ -1052,8 +1052,19 @@ public final class ConstantPool implements RiConstantPool {
                     }
                     break;
                 }
+                case INVOKEDYNAMIC:
+                    // TODO add checks
+                    break;
             }
         }
+        return method;
+    }
+
+    public RiMethod lookupInvokeDynamic(int cpi) {
+        InvokeDynamicConstant constant = invokeDynamicAt(cpi);
+        assert constant.isResolvableWithoutClassLoading(this);
+        MethodActor method = constant.resolve(this, cpi);
+        assert checkResolvedMethodAccess(method, INVOKEDYNAMIC) != null;
         return method;
     }
 

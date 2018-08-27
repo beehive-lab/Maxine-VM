@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -41,6 +41,9 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
+import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
+import com.sun.max.vm.classfile.constant.ConstantPool;
+import com.sun.max.vm.classfile.constant.InvokeDynamicConstant;
 
 /**
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
@@ -927,15 +930,54 @@ public final class GraphBuilder {
         }
     }
 
+    void genInvokeDynamic(RiMethod target, int cpi, RiConstantPool constantPool) {
+        assert target instanceof RiResolvedMethod;
+        RiResolvedMethod resolved = (RiResolvedMethod) target;
+        assert isStatic(resolved.accessFlags());
+        // Pop the arguments -1 which is the appenix to be appended by the compiler
+        Value[] args = curState.popArguments(target.signature().argumentSlots(false) - 1);
+        assert constantPool instanceof ConstantPool;
+        ConstantPool cp = (ConstantPool) constantPool;
+        InvokeDynamicConstant invokeDynamicConstant = cp.invokeDynamicAt(cpi);
+        args = appendObjectToArguments(args, invokeDynamicConstant.getAppendix());
+        appendInvoke(INVOKESTATIC, target, args, true, cpi, constantPool);
+    }
+
     void genInvokeVirtual(RiMethod target, int cpi, RiConstantPool constantPool) {
         target = bindAccessorMethod(target);
         if (target == null) {
             return;
         }
+
+        // Check for MethodHandle static adapter method
+        if (target instanceof RiResolvedMethod) {
+            RiResolvedMethod resolved = (RiResolvedMethod) target;
+            if (isStatic(resolved.accessFlags())) {
+                // Pop the arguments -1 which is the appendix to be appended
+                Value[] args = curState.popArguments(target.signature().argumentSlots(false) - 1);
+                assert constantPool instanceof ConstantPool;
+                ConstantPool cp = (ConstantPool) constantPool;
+                ClassMethodRefConstant methodRefConstant = cp.classMethodAt(cpi);
+                args = appendObjectToArguments(args, methodRefConstant.appendix());
+                appendInvokeHandle(resolved, cpi, constantPool, args);
+                return;
+            }
+        }
+
         Value[] args = curState.popArguments(target.signature().argumentSlots(true));
         if (!tryRemoveCall(target, args, false)) {
             genInvokeIndirect(INVOKEVIRTUAL, target, args, cpi, constantPool);
         }
+    }
+
+    private Value[] appendObjectToArguments(Value[] arguments, Object object) {
+        Value[] args = new Value[arguments.length + 1];
+        int i = 0;
+        for (Value arg: arguments) {
+            args[i++] = arg;
+        }
+        args[i] = new Constant(CiConstant.forObject(object));
+        return args;
     }
 
     void genInvokeSpecial(RiMethod target, RiType knownHolder, int cpi, RiConstantPool constantPool) {
@@ -1076,6 +1118,12 @@ public final class GraphBuilder {
     private void appendInvoke(int opcode, RiMethod target, Value[] args, boolean isStatic, int cpi, RiConstantPool constantPool) {
         CiKind resultType = returnKind(target);
         Value result = append(new Invoke(opcode, resultType.stackKind(), args, isStatic, target, target.signature().returnType(compilation.method.holder()), null));
+        pushReturn(resultType, result);
+    }
+
+    private void appendInvokeHandle(RiResolvedMethod resolved, int cpi, RiConstantPool constantPool, Value[] args) {
+        CiKind resultType = returnKind(resolved);
+        final Value result = append(new InvokeHandle(resolved, args, cpi, constantPool, null, resultType.stackKind()));
         pushReturn(resultType, result);
     }
 
@@ -1842,6 +1890,9 @@ public final class GraphBuilder {
                 }
             }
         }
+        if (target.codeSize() == 0 && target.name().equals("invokeBasic")) {
+            return cannotInline(target, "invokeBasic cannot be inlined yet");
+        }
         return true;
     }
 
@@ -2371,6 +2422,7 @@ public final class GraphBuilder {
             case INVOKESPECIAL  : cpi = s.readCPI(); genInvokeSpecial(constantPool().lookupMethod(cpi, opcode), null, cpi, constantPool()); break;
             case INVOKESTATIC   : cpi = s.readCPI(); genInvokeStatic(constantPool().lookupMethod(cpi, opcode), cpi, constantPool()); break;
             case INVOKEINTERFACE: cpi = s.readCPI(); genInvokeInterface(constantPool().lookupMethod(cpi, opcode), cpi, constantPool()); break;
+            case INVOKEDYNAMIC  : cpi = s.readCPI(); genInvokeDynamic(constantPool().lookupInvokeDynamic(cpi), cpi, constantPool()); break;
             case NEW            : genNewInstance(s.readCPI()); break;
             case NEWARRAY       : genNewTypeArray(s.readLocalIndex()); break;
             case ANEWARRAY      : genNewObjectArray(s.readCPI()); break;
