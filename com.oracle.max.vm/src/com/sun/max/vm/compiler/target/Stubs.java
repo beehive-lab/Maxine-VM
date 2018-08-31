@@ -1594,7 +1594,6 @@ public class Stubs {
         void apply() {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
             patchAddr.writeLong(0, runtimeRoutine.address().toLong());
-            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 8);
         }
     }
 
