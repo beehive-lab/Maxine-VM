@@ -307,7 +307,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         Label notEqualTocmpValue = new Label();
 
         bind(atomicFail);
-        membar(-1);
         ldxr(size, scratchRegister, address); // scratch has the current Value
         cmp(size, cmpValue, scratchRegister); // compare scratch with cmpValue
         branchConditionally(ConditionFlag.NE, notEqualTocmpValue); // value was not equal to the cmpValue
@@ -318,7 +317,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         cbnz(64, scratchRegister, atomicFail);
         mov(64, scratchRegister, cmpValue); // stxr succeeded, set scratch register to the cmp value to indicate success
         bind(notEqualTocmpValue);
-        dmb(BarrierKind.SY);
+        dmb(BarrierKind.ANY_ANY);
     }
 
     /**
