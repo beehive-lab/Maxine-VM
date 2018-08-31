@@ -133,10 +133,10 @@ public final class Aarch64TargetMethodUtil {
             }
 
             synchronized (PatchingLock) {
-                patchSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r16, 0));
-                patchSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r17, disp32 & 0xFFFF, 0));
-                patchSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r17, (disp32 >> 16) & 0xFFFF, 16));
-                patchSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r16, Aarch64.r17, isNegative));
+                patchSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r17, 0));
+                patchSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r16, disp32 & 0xFFFF, 0));
+                patchSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r16, (disp32 >> 16) & 0xFFFF, 16));
+                patchSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r17, Aarch64.r16, isNegative));
                 patchSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, false));
                 ARMTargetMethodUtil.maxine_cache_flush(patchSite, 20);
             }
@@ -265,10 +265,10 @@ public final class Aarch64TargetMethodUtil {
                 disp32 = -disp32;
             }
 
-            nopSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r16, 0));
-            nopSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r17, disp32 & 0xFFFF, 0));
-            nopSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r17, (disp32 >> 16) & 0xFFFF, 16));
-            nopSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r16, Aarch64.r17,
+            nopSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r17, 0));
+            nopSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r16, disp32 & 0xFFFF, 0));
+            nopSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r16, (disp32 >> 16) & 0xFFFF, 16));
+            nopSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r17, Aarch64.r16,
                                                                           isNegative));
             // overwrote the immediate branch with a register branch
             nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, isLinked));
