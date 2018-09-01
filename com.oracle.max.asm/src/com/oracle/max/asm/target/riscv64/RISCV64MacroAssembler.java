@@ -380,3 +380,61 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 throw new UnsupportedOperationException("Unimplemented");
         }
     }
+
+    public void load(CiRegister dest, CiAddress addr, CiKind kind) {
+        RISCV64Address address = calculateAddress(addr);
+
+        switch (kind) {
+            case Object:
+            case Long:
+                ldr(64, dest, address);
+                break;
+            default:
+                assert false : "Unknown kind!";
+        }
+    }
+
+    private RISCV64Address calculateAddress(CiAddress addr) {
+        if (addr instanceof RISCV64Address) {
+            return (RISCV64Address) addr;
+        }
+
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+        int disp = addr.displacement;
+
+        assert addr != CiAddress.Placeholder;
+        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
+
+        if (base == CiRegister.Frame) {
+            base = frameRegister;
+        }
+
+        if (addr.index.isLegal()) {
+            throw new UnsupportedOperationException("Unimplemented");
+        }
+
+        if (disp != 0) {
+            if (NumUtil.isSignedNbit(9, disp)) {
+                return RISCV64Address.createUnscaledImmediateAddress(base, disp);
+            } else {
+                mov(RISCV64.t1, disp);
+                return RISCV64Address.createRegisterOffsetAddress(base, RISCV64.t1, false);
+            }
+        }
+
+        return RISCV64Address.createBaseRegisterOnlyAddress(base);
+    }
+
+    public void store(CiRegister src, CiAddress addr, CiKind kind) {
+        RISCV64Address address = calculateAddress(addr);
+        switch (kind) {
+            case Object:
+            case Long:
+                str(64, src, address);
+                break;
+            default:
+                assert false : "Unknown kind!";
+        }
+    }
