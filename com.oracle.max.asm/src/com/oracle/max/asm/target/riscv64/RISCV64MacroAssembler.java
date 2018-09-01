@@ -305,3 +305,24 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         jal(RISCV64.ra, 0);
     }
 
+    public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
+        for (CiRegister r : csl.registers) {
+            int displacement = csl.offsetOf(r) + frameToCSA;
+            if (r.isCpu()) {
+                if (NumUtil.isSignedNbit(9, displacement)) {
+                    ld(r, frameRegister, displacement);
+                } else {
+                    mov(scratchRegister, displacement);
+                    ld(frameRegister, scratchRegister, 0);
+                }
+            } else if (r.isFpu()) {
+                if (NumUtil.isSignedNbit(9, displacement)) {
+                    fld(r, frameRegister, displacement);
+                } else {
+                    mov(scratchRegister, displacement);
+                    fld(frameRegister, scratchRegister, 0);
+                }
+            }
+        }
+    }
+
