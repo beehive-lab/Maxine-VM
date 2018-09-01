@@ -152,7 +152,7 @@ public final class Safepoints {
      * Mask for extracting position.
      */
 
-    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isARM() || Platform.target().arch.isAarch64() ? 22 : 25;
+    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isARM() || Platform.target().arch.isAarch64() || Platform.target().arch.isRISCV64() ? 22 : 25;
     private static final int POS_MASK = (1 << CAUSE_OFFSET_SHIFT) - 1;
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
     private static final int MAX_CAUSE_OFFSET = (1 << (28 - CAUSE_OFFSET_SHIFT)) - 1;
@@ -385,7 +385,7 @@ public final class Safepoints {
      * @param callSize size of the call instruction
      */
     public static int safepointPosForCall(int callPos, int callSize) {
-        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64) {
+        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64 || platform().isa == ISA.RISCV64) {
             return callPos + callSize;
         } else {
             throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Safepoints.safepointPosForCall");
