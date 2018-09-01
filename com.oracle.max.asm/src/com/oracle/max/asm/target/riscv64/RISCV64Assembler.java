@@ -838,4 +838,12 @@ public class RISCV64Assembler extends AbstractAssembler {
 
         throw new Error("should not reach here");
     }
+
+    public void fld(CiRegister dst, CiRegister base, int offset) {
+        itype(LOAD_FP, dst, 3, base, offset);
+    }
+
+    public void fsd(CiRegister dst, CiRegister base, int offset) {
+        stype(STORE_FP, 3, dst, base, offset);
+    }
 }

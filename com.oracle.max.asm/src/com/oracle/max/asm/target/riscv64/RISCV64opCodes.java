@@ -52,6 +52,10 @@ public enum RISCV64opCodes {
     LD((byte) 0b0000011),
     SD((byte) 0b0100011),
 
+    // Floating-point
+    LOAD_FP((byte) 0b0000111),
+    STORE_FP((byte) 0b0100111),
+
     MULW((byte) 0b0110011);
 
     public byte getValue() {
