@@ -846,4 +846,14 @@ public class RISCV64Assembler extends AbstractAssembler {
     public void fsd(CiRegister dst, CiRegister base, int offset) {
         stype(STORE_FP, 3, dst, base, offset);
     }
+
+    public enum ExtendType {
+        UXTB(0), UXTH(1), UXTW(2), UXTX(3), SXTB(4), SXTH(5), SXTW(6), SXTX(7);
+
+        public final int encoding;
+
+        ExtendType(int encoding) {
+            this.encoding = encoding;
+        }
+    }
 }

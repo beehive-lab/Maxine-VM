@@ -232,4 +232,29 @@ public class RISCV64 extends CiArchitecture {
               8);                               //returnAddressSize (8 bytes)
     }
 
+    /**
+     * @param reg If null this method returns false.
+     * @return true if register is a general purpose register, including the stack pointer and zero register.
+     */
+    public static boolean isIntReg(CiRegister reg) {
+        return reg != null && reg.isCpu();
+    }
+
+    /**
+     * @param reg If null this method returns false..
+     * @return true if register is a floating-point register, false otherwise.
+     */
+    public static boolean isFpuReg(CiRegister reg) {
+        return reg != null && reg.isFpu();
+    }
+
+    /**
+     * @param reg the register that is checked. If null this method returns false.
+     * @return true if register can be used as a general purpose register.
+     * This means the register is neither null nor the zero/discard/stack pointer register.
+     */
+    public static boolean isGeneralPurposeReg(CiRegister reg) {
+        return isIntReg(reg) && !reg.equals(zr) && !reg.equals(sp);
+    }
+
 }
