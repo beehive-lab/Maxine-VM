@@ -1003,6 +1003,62 @@ public class Stubs {
             String stubName = "strampoline";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
+        } else if (platform().isa == ISA.RISCV64) {
+            CiRegisterConfig registerConfig = registerConfigs.trampoline;
+            RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), registerConfig);
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = target().alignFrameSize(csl.size);
+            int frameToCSA = csl.frameOffsetToCSA;
+
+            for (int i = 0; i < prologueSize; ++i) {
+                asm.nop();
+            }
+
+            // compute the static trampoline call site. Since the call to the static trampoline is un-patched the
+            // callSite will be the last command executed before jumping in the trampoline. As a result, we can get the
+            // callsite by subtracting the size of a single instruction from the link register.
+            CiRegister callSite = registerConfig.getScratchRegister();
+            asm.sub(callSite, RISCV64.ra, RISCV64TargetMethodUtil.INSTRUCTION_SIZE);
+
+            // Push the link register
+            asm.push(RISCV64.ra);
+
+            // now allocate the frame for this method
+            asm.sub(RISCV64.sp, RISCV64.sp, frameSize);
+
+            // save all the callee save registers
+            asm.save(csl, frameToCSA);
+
+            CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteRISCV64", null);
+            CiKind[] trampolineParameters = CiUtil.signatureToKinds(patchStaticTrampoline.classMethodActor);
+            CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target(), false).locations;
+
+            // load the static trampoline call site into the first parameter register
+            asm.mov(locations[0].asRegister(), callSite);
+
+            int callPos = asm.codeBuffer.position();
+            ClassMethodActor callee = patchStaticTrampoline.classMethodActor;
+            asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
+
+            // restore all parameter registers before returning
+            int registerRestoreEpilogueOffset = asm.codeBuffer.position();
+            asm.restore(csl, frameToCSA);
+
+            // undo the frame
+            asm.add(RISCV64.sp, RISCV64.sp, frameSize);
+
+            // Pop the link register
+            asm.pop(Aarch64.linkRegister);
+
+            // re-execute the static call. Now that the call has been patched we need to return to the beginning of the
+            // patched call site, thus we need to subtract from the link register the size of the segment preparing the call
+            asm.sub(callSite, RISCV64.ra, 5 * Aarch64TargetMethodUtil.INSTRUCTION_SIZE);
+            asm.ret(callSite);
+
+            String stubName = "strampoline";
+            byte[] code = asm.codeBuffer.close(true);
+            return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
             throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stubs.genStaticTrampoline");
         }
