@@ -156,6 +156,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         add(reg, reg, delta);
     }
 
+    public void b(int offset) {
+        auipc(RISCV64.x28, offset);
+        jalr(RISCV64.zero, RISCV64.x28, 0);
+    }
+
     /**
      * Branch unconditionally to a label.
      * @param label
@@ -165,7 +170,108 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         // branch immediate instruction.
         if (label.isBound()) {
             int offset = label.position() - codeBuffer.position();
-            auipc(RISCV64.zero, offset);
+            b(offset);
+        } else {
+            throw new UnsupportedOperationException("Unimplemented");
+        }
+    }
+
+    /**
+     * Condition Flags for branches. See 4.3
+     */
+    public enum ConditionFlag {
+        // Integer | Floating-point meanings
+        /**
+         * Equal | Equal.
+         */
+        EQ,
+        /**
+         * Not Equal | Not equal or unordered.
+         */
+        NE,
+        /**
+         * signed greater than or equal | greater than or equal.
+         */
+        GE,
+        /**
+         * signed less than | less than or unordered.
+         */
+        LT,
+        /**
+         * signed greater than | greater than.
+         */
+        GT,
+        /**
+         * signed less than or equal | less than, equal or unordered.
+         */
+        LE,
+        /**
+         * always | always.
+         */
+        AL;
+
+        public ConditionFlag negate() {
+            switch (this) {
+                case EQ:
+                    return NE;
+                case NE:
+                    return EQ;
+                case GE:
+                    return LT;
+                case LT:
+                    return GE;
+                case GT:
+                    return LE;
+                case LE:
+                    return GT;
+                case AL:
+                default:
+                    throw new Error("should not reach here");
+            }
+        }
+    }
+
+    public void bgt(CiRegister rs1, CiRegister rs2, int imm32) {
+        blt(rs2, rs1, imm32);
+    }
+
+    public void ble(CiRegister rs1, CiRegister rs2, int imm32) {
+        bge(rs2, rs1, imm32);
+    }
+
+    /** Branches to label if condition is true.
+    *
+    * @param condition any condition value allowed. Non null.
+    * @param label Can only handle 21-bit word-aligned offsets for now. May be unbound. Non null.
+    */
+    public void branchConditionally(ConditionFlag condition, CiRegister rs1, CiRegister rs2, Label label) {
+        // TODO Handle case where offset is too large for a single jump instruction
+        if (label.isBound()) {
+            int offset = label.position() - codeBuffer.position();
+
+            switch(condition) {
+                case EQ:
+                    beq(rs1, rs2, offset);
+                    break;
+                case NE:
+                    bne(rs1, rs2, offset);
+                    break;
+                case GE:
+                    bne(rs1, rs2, offset);
+                    break;
+                case LT:
+                    blt(rs1, rs2, offset);
+                    break;
+                case GT:
+                    bgt(rs1, rs2, offset);
+                    break;
+                case LE:
+                    ble(rs1, rs2, offset);
+                    break;
+                case AL:
+                    b(offset);
+                    break;
+            }
         } else {
             throw new UnsupportedOperationException("Unimplemented");
         }
