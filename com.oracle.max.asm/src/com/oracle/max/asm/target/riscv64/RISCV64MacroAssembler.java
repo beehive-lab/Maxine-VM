@@ -452,3 +452,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         sub(scratchRegister, RISCV64.sp, scratchRegister);
         str(64, RISCV64.zr, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister));
     }
+
+    public final void call(CiRegister src) {
+        jal(src, 0);
+    }
+}
