@@ -92,96 +92,83 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void adjustReg(CiRegister reg, int delta) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.increment32(reg, delta);
+        asm.increment32(reg, delta);
     }
 
     @Override
     public void peekObject(CiRegister dst, int index) {
         CiAddress a = spWord(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Object);
+        asm.load(dst, a, CiKind.Object);
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
         CiAddress a = spWord(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Object);
+        asm.store(src, a, CiKind.Object);
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
         CiAddress a = spWord(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Long);
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     public void pokeWord(CiRegister src, int index) {
         CiAddress a = spWord(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Long);
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     public void peekInt(CiRegister dst, int index) {
         CiAddress a = spInt(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Int);
+        asm.load(dst, a, CiKind.Int);
     }
 
     @Override
     public void pokeInt(CiRegister src, int index) {
         CiAddress a = spInt(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Int);
+        asm.store(src, a, CiKind.Int);
     }
 
     @Override
     public void peekLong(CiRegister dst, int index) {
         CiAddress a = spLong(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Long);
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     public void pokeLong(CiRegister src, int index) {
         CiAddress a = spLong(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Long);
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
         CiAddress a = spLong(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Double);
+        asm.load(dst, a, CiKind.Double);
     }
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
         assert src.isFpu();
         CiAddress a = spLong(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Double);
+        asm.store(src, a, CiKind.Double);
     }
 
     @Override
     public void peekFloat(CiRegister dst, int index) {
         assert dst.isFpu();
         CiAddress a = spInt(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Float);
+        asm.load(dst, a, CiKind.Float);
     }
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
         assert src.isFpu();
         CiAddress a = spInt(index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Float);
+        asm.store(src, a, CiKind.Float);
     }
 
     @Override
@@ -197,16 +184,14 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignLong(CiRegister dst, long value) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.mov64BitConstant(dst, value);
+        asm.mov64BitConstant(dst, value);
     }
 
     @Override
     protected void assignObject(CiRegister dst, Object value) {
         if (value == null) {
-            throw new UnsupportedOperationException("Unimplemented");
-//            asm.mov(dst, 0);
-//            return;
+            asm.mov(dst, 0);
+            return;
         }
 
         int index = objectLiterals.size();
@@ -220,63 +205,54 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     protected void loadInt(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Int);
+        asm.load(dst, a, CiKind.Int);
     }
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Long);
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     protected void loadWord(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Long);
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     protected void loadObject(CiRegister dst, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.load(dst, a, CiKind.Long);
+        asm.load(dst, a, CiKind.Long);
     }
 
     @Override
     protected void storeInt(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Int);
+        asm.store(src, a, CiKind.Int);
     }
 
     @Override
     protected void storeLong(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Long);
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     protected void storeWord(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Long);
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     protected void storeObject(CiRegister src, int index) {
         CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.store(src, a, CiKind.Long);
+        asm.store(src, a, CiKind.Long);
     }
 
     @Override
     public void assignInt(CiRegister dst, int value) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.mov32BitConstant(dst, value);
+        asm.mov32BitConstant(dst, value);
     }
 
     @Override
@@ -332,11 +308,10 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     protected int callDirect() {
         alignDirectCall(buf.position());
         int causePos = buf.position();
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.call();
-//        int safepointPos = buf.position();
-//        asm.nop();
-//        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
+        asm.call();
+        int safepointPos = buf.position();
+        asm.nop();
+        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
     }
 
     @Override
@@ -346,11 +321,10 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         }
         alignDirectCall(buf.position());
         int causePos = buf.position();
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.call();
-//        int safepointPos = buf.position();
-//        asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
-//        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
+        asm.call();
+        int safepointPos = buf.position();
+        asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
+        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
     }
 
     @Override
@@ -363,11 +337,10 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             peekObject(RISCV64.x0, receiverStackIndex);
         }
         int causePos = buf.position();
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.call(target);
-//        int safepointPos = buf.position();
-//        asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
-//        return Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
+        asm.call(target);
+        int safepointPos = buf.position();
+        asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
+        return Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
     }
 
     @Override
@@ -409,38 +382,37 @@ public class RISCV64T1XCompilation extends T1XCompilation {
          * of the other machinery e.g. stack walking if there is the assumption that the caller's FP lives
          * in a single JVMS_STACK_SLOT.
          */
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.push(RISCV64.linkRegister);
-//        asm.push(RISCV64.fp);
-//        asm.sub(RISCV64.fp, RISCV64.sp, framePointerAdjustment()); // fp set relative to sp
-////        /*
-////         * Extend the stack pointer past the frame size minus the slot used for the callers
-////         * frame pointer.
-////         */
-////        asm.sub(RISCV64.sp, RISCV64.sp, frameSize - JVMS_SLOT_SIZE);
-//
-//
-//        if (Trap.STACK_BANGING) {
-//            int pageSize = platform().pageSize;
-//            int framePages = frameSize / pageSize;
-//            // emit multiple stack bangs for methods with frames larger than a page
-//            for (int i = 0; i <= framePages; i++) {
-//                int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
-//                // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
-//                offset = offset - frameSize;
-//                asm.bangStackWithOffset(offset);
-//            }
-//        }
-//        if (T1XOptions.DebugMethods) {
-//            int a = debugMethodWriter.getNextID();
-//            asm.mov64BitConstant(scratch, a);
-//            try {
-//                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//        return adapter;
+        asm.push(RISCV64.ra);
+        asm.push(RISCV64.fp);
+        asm.sub(RISCV64.fp, RISCV64.sp, framePointerAdjustment()); // fp set relative to sp
+        /*
+         * Extend the stack pointer past the frame size minus the slot used for the callers
+         * frame pointer.
+         */
+        asm.sub(RISCV64.sp, RISCV64.sp, frameSize - JVMS_SLOT_SIZE);
+
+
+        if (Trap.STACK_BANGING) {
+            int pageSize = platform().pageSize;
+            int framePages = frameSize / pageSize;
+            // emit multiple stack bangs for methods with frames larger than a page
+            for (int i = 0; i <= framePages; i++) {
+                int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
+                // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
+                offset = offset - frameSize;
+                asm.bangStackWithOffset(offset);
+            }
+        }
+        if (T1XOptions.DebugMethods) {
+            int a = debugMethodWriter.getNextID();
+            asm.mov64BitConstant(scratch, a);
+            try {
+                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return adapter;
     }
 
     @Override
@@ -457,19 +429,18 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     protected void emitEpilogue() {
         // rewind stack pointer
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.add(RISCV64.sp, RISCV64.fp, framePointerAdjustment());
-//        asm.pop(RISCV64.fp);
-//        asm.pop(RISCV64.linkRegister);
-//        asm.add(RISCV64.sp, RISCV64.sp, frame.sizeOfParameters());
-//        asm.ret(RISCV64.linkRegister);
-//        if (T1XOptions.DebugMethods) {
-//            try {
-//                debugMethodWriter.flushDebugMethod();
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
+        asm.add(RISCV64.sp, RISCV64.fp, framePointerAdjustment());
+        asm.pop(RISCV64.fp);
+        asm.pop(RISCV64.ra);
+        asm.add(RISCV64.sp, RISCV64.sp, frame.sizeOfParameters());
+        asm.ret(RISCV64.ra);
+        if (T1XOptions.DebugMethods) {
+            try {
+                debugMethodWriter.flushDebugMethod();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /*
