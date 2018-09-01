@@ -339,3 +339,44 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         jal(RISCV64.ra, 0);
     }
 
+    public void ldr(int srcSize, CiRegister rd, CiRegister rs, int offset) {
+        if(srcSize == 32) {
+            lw(rd, rs, offset);
+        } else if(srcSize == 64) {
+            ld(rd, rs, offset);
+        }
+    }
+
+    public void str(int srcSize, CiRegister rd, CiRegister rs, int offset) {
+        if(srcSize == 32) {
+            sw(rd, rs, offset);
+        } else if(srcSize == 64) {
+            sd(rd, rs, offset);
+        }
+    }
+
+    public void ldr(int srcSize, CiRegister rt, RISCV64Address a) {
+        switch(a.getAddressingMode()) {
+            case BASE_REGISTER_ONLY:
+                ldr(srcSize, rt, a.getBase(), 0);
+                break;
+            case REGISTER_OFFSET:
+                ldr(srcSize, rt, a.getBase(), a.displacement);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unimplemented");
+        }
+    }
+
+    public void str(int srcSize, CiRegister rt, RISCV64Address a) {
+        switch(a.getAddressingMode()) {
+            case BASE_REGISTER_ONLY:
+                str(srcSize, rt, a.getBase(), 0);
+                break;
+            case REGISTER_OFFSET:
+                str(srcSize, rt, a.getBase(), a.displacement);
+                break;
+            default:
+                throw new UnsupportedOperationException("Unimplemented");
+        }
+    }
