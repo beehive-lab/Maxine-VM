@@ -149,6 +149,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
     /**
      * Applies a delta value to the contents of reg as a 32bit quantity.
+     *
      * @param reg
      * @param delta
      */
@@ -163,6 +164,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
     /**
      * Branch unconditionally to a label.
+     *
      * @param label
      */
     public void b(Label label) {
@@ -239,17 +241,18 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         bge(rs2, rs1, imm32);
     }
 
-    /** Branches to label if condition is true.
-    *
-    * @param condition any condition value allowed. Non null.
-    * @param label Can only handle 21-bit word-aligned offsets for now. May be unbound. Non null.
-    */
+    /**
+     * Branches to label if condition is true.
+     *
+     * @param condition any condition value allowed. Non null.
+     * @param label     Can only handle 21-bit word-aligned offsets for now. May be unbound. Non null.
+     */
     public void branchConditionally(ConditionFlag condition, CiRegister rs1, CiRegister rs2, Label label) {
         // TODO Handle case where offset is too large for a single jump instruction
         if (label.isBound()) {
             int offset = label.position() - codeBuffer.position();
 
-            switch(condition) {
+            switch (condition) {
                 case EQ:
                     beq(rs1, rs2, offset);
                     break;
@@ -276,7 +279,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             throw new UnsupportedOperationException("Unimplemented");
         }
     }
-}
 
     public void save(CiCalleeSaveLayout csl, int frameToCSA) {
         for (CiRegister r : csl.registers) {
@@ -437,4 +439,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             default:
                 assert false : "Unknown kind!";
         }
+    }
+
+    /**
+     * @param offset the offset RSP at which to bang. Note that this offset is relative to RSP after RSP has been
+     *            adjusted to allocated the frame for the method. It denotes an offset "down" the stack. For very large
+     *            frames, this means that the offset may actually be negative (i.e. denoting a slot "up" the stack above
+     *            RSP).
+     */
+    public void bangStackWithOffset(int offset) {
+        mov32BitConstant(scratchRegister, offset);
+        sub(scratchRegister, RISCV64.sp, scratchRegister);
+        str(64, RISCV64.zr, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister));
     }
