@@ -300,3 +300,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public final void call() {
+        nop(4);
+        jal(RISCV64.ra, 0);
+    }
+
