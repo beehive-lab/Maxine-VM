@@ -151,4 +151,19 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public void increment32(CiRegister reg, int delta) {
         add(reg, reg, delta);
     }
+
+    /**
+     * Branch unconditionally to a label.
+     * @param label
+     */
+    public void b(Label label) {
+        // TODO Handle case where offset is too large for a single
+        // branch immediate instruction.
+        if (label.isBound()) {
+            int offset = label.position() - codeBuffer.position();
+            auipc(RISCV64.zero, offset);
+        } else {
+            throw new UnsupportedOperationException("Unimplemented");
+        }
+    }
 }
