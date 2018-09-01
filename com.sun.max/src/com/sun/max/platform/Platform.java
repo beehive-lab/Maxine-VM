@@ -188,9 +188,6 @@ public final class Platform {
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
-        } else if (isa == ISA.RISCV32) {
-            arch = new RISCV32();
-            throw new UnsupportedOperationException("Unimplemented");
         } else {
             return null;
         }
