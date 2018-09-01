@@ -35,6 +35,8 @@ import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
+import com.oracle.max.asm.target.riscv64.RISCV64;
+import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -50,6 +52,7 @@ import com.sun.max.vm.compiler.target.Stub.*;
 import com.sun.max.vm.compiler.target.aarch64.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil;
 import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.object.*;
@@ -807,6 +810,22 @@ public class Stubs {
 
         final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
         Aarch64TargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
+
+        // remember calls from boot code region to baseline code cache
+        if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
+            CodeManager.recordBootToBaselineCaller(caller);
+        }
+    }
+
+    @PLATFORM(cpu = "riscv64")
+    private static void patchStaticTrampolineCallSiteRISCV64(Pointer callSite) {
+        CodePointer cpCallSite = CodePointer.from(callSite);
+
+        final TargetMethod caller = cpCallSite.toTargetMethod();
+        final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
+
+        final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
+        RISCV64TargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
 
         // remember calls from boot code region to baseline code cache
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
