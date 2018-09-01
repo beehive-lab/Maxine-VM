@@ -326,3 +326,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public final void ret(int imm16) {
+        if (imm16 == 0) {
+            jal(RISCV64.ra, 0);
+        } else {
+            add(RISCV64.sp, RISCV64.sp, imm16);
+            jal(RISCV64.ra, 0);
+        }
+    }
+
+    public final void ret(CiRegister r) {
+        jal(RISCV64.ra, 0);
+    }
+
