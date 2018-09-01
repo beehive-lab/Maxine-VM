@@ -29,12 +29,12 @@ import com.sun.cri.ci.*;
 
 public class RISCV64AssemblerTest {
 
-    private RISCV64Assembler asm;
+    private RISCV64MacroAssembler asm;
     private MaxineRISCV64Tester tester = new MaxineRISCV64Tester();
 
     public RISCV64AssemblerTest() {
         CiTarget risc64 = new CiTarget(new RISCV64(), true, 8, 0, 4096, 0, false, false, false, true);
-        asm = new RISCV64Assembler(risc64);
+        asm = new RISCV64MacroAssembler(risc64);
     }
 
     @Before
