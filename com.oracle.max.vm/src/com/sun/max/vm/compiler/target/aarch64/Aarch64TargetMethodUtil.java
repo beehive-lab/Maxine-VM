@@ -21,7 +21,6 @@
 package com.sun.max.vm.compiler.target.aarch64;
 
 import com.oracle.max.asm.NumUtil;
-import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.ci.CiCalleeSaveLayout;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.platform.Platform;
@@ -34,6 +33,10 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.StackFrameCursor;
 import com.sun.max.vm.stack.StackFrameWalker;
 
+import static com.oracle.max.asm.target.aarch64.Aarch64.*;
+import static com.oracle.max.asm.target.aarch64.Aarch64Assembler.*;
+import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.*;
+
 public final class Aarch64TargetMethodUtil {
 
     /**
@@ -41,8 +44,6 @@ public final class Aarch64TargetMethodUtil {
      */
     private static final Object PatchingLock = new Object();
 
-    public static final int NUMBER_OF_NOPS = 4;
-    public static final int RIP_CALL_INSTRUCTION_SIZE = Aarch64MacroAssembler.INSTRUCTION_SIZE;
     public static final int RET = 0xD65F_0000;
 
     /**
@@ -57,26 +58,6 @@ public final class Aarch64TargetMethodUtil {
                ((code[idx + 2] & 0xFF) << 16) |
                ((code[idx + 1] & 0xFF) << 8) |
                (code[idx + 0] & 0xFF);
-    }
-
-    private static int getOldDisplacement(Pointer callSitePointer) {
-        final int instruction = callSitePointer.readInt(0);
-        if (Aarch64Assembler.isBimmInstruction(instruction)) {
-            return Aarch64Assembler.bImmExtractDisplacement(instruction);
-        } else {
-            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE);
-            int movzInstruction = nopSite.readInt(4);
-            int movkInstruction = nopSite.readInt(8);
-            int addSubInstruction = nopSite.readInt(12);
-            short low = Aarch64Assembler.movExtractImmediate(movzInstruction);
-            short high = Aarch64Assembler.movExtractImmediate(movkInstruction);
-            int oldDisplacement = high << 16 | low & 0xFFFF;
-            if (!Aarch64Assembler.isAddInstruction(addSubInstruction)) {
-                oldDisplacement = -oldDisplacement;
-            }
-            oldDisplacement -= NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE;
-            return oldDisplacement;
-        }
     }
 
     /**
@@ -98,9 +79,66 @@ public final class Aarch64TargetMethodUtil {
      * @return the absolute target address of the CALL
      */
     public static CodePointer readCall32Target(CodePointer callSite) {
-        final Pointer callSitePointer = callSite.toPointer();
-        final int disp32 = getOldDisplacement(callSitePointer);
-        return callSite.plus(disp32);
+        Pointer callSitePointer = callSite.toPointer();
+        int instruction = callSitePointer.readInt(0);
+        assert isBimmInstruction(instruction) : instruction;
+        final int offset = bImmExtractDisplacement(instruction);
+        assert offset == CALL_TRAMPOLINE1_OFFSET || offset == CALL_TRAMPOLINE2_OFFSET : offset;
+        callSitePointer = callSitePointer.plus(offset);
+        int displacement = getDisplacementFromTrampoline(callSitePointer);
+        final CodePointer branchSite = callSite.plus(CALL_BRANCH_OFFSET);
+        return branchSite.plus(displacement);
+    }
+
+    private static int getDisplacementFromTrampoline(Pointer callSitePointer) {
+        int displacement;
+        int movzInstruction   = callSitePointer.readInt(4);
+        int movkInstruction   = callSitePointer.readInt(8);
+        int addSubInstruction = callSitePointer.readInt(12);
+        short low  = movExtractImmediate(movzInstruction);
+        short high = movExtractImmediate(movkInstruction);
+        displacement = high << 16 | low & 0xFFFF;
+        if (!isAddInstruction(addSubInstruction)) {
+            displacement = -displacement;
+        }
+        return displacement;
+    }
+
+    private static void patchCallTrampoline(Pointer patchSite, int displacement, boolean isLinked) {
+        int instruction = patchSite.readInt(0);
+        int offset = bImmExtractDisplacement(instruction);
+        // The bimm offset must either point to one of the two trampolines or outside of them
+        assert (offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET) : offset;
+        // Get the offset of the unused trampoline
+        offset = offset == CALL_TRAMPOLINE1_OFFSET ? CALL_TRAMPOLINE2_OFFSET : CALL_TRAMPOLINE1_OFFSET;
+        // Create the new trampoline
+        patchBranchRegister(patchSite, displacement, isLinked, offset);
+    }
+
+    private static void patchBranchRegister(Pointer patchSite, int displacement, boolean isLinked, int offset) {
+        final boolean isNegative = displacement < 0;
+        if (isNegative) {
+            displacement = -displacement;
+        }
+        patchSite.writeInt(offset + 4, movzHelper(64, r16, displacement & 0xFFFF, 0));
+        patchSite.writeInt(offset + 8, movkHelper(64, r16, (displacement >> 16) & 0xFFFF, 16));
+        patchSite.writeInt(offset + 12, addSubInstructionHelper(r16, r17, r16, isNegative));
+        patchSite.writeInt(CALL_BRANCH_OFFSET, unconditionalBranchRegInstructionHelper(r16, isLinked));
+        // Patch the branch immediate to jump to the new trampoline
+        patchSite.writeInt(0, unconditionalBranchImmInstructionHelper(offset, false));
+        ARMTargetMethodUtil.maxine_cache_flush(patchSite, RIP_CALL_INSTRUCTION_SIZE);
+    }
+
+    private static void writeJump(Pointer patchSite, CodePointer target) {
+        long disp64 = target.toLong() - patchSite.plus(CALL_BRANCH_OFFSET).toLong();
+        int displacement = (int) disp64;
+        assert displacement == disp64;
+        int branchOffset = CALL_BRANCH_OFFSET - CALL_TRAMPOLINE1_OFFSET;
+        patchSite.writeInt(CALL_TRAMPOLINE1_OFFSET, adrHelper(r17, branchOffset));
+        branchOffset -= (CALL_TRAMPOLINE_INSTRUCTIONS - 1) * INSTRUCTION_SIZE;
+        patchSite.writeInt(CALL_TRAMPOLINE1_OFFSET + 16, unconditionalBranchImmInstructionHelper(branchOffset, false));
+        // Don't move this call higher since it flushes the cache
+        patchBranchRegister(patchSite, displacement, false, CALL_TRAMPOLINE1_OFFSET);
     }
 
     /**
@@ -116,30 +154,8 @@ public final class Aarch64TargetMethodUtil {
 
         final Pointer patchSite = tm.codeAt(pos).toPointer();
 
-        long disp64 = target.toLong() - patchSite.toLong();
-        int disp32 = (int) disp64;
-        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-
-        if (NumUtil.isSignedNbit(28, disp32)) {
-            synchronized (PatchingLock) {
-                patchSite.writeInt(0, Aarch64Assembler.unconditionalBranchImmInstructionHelper(disp32, false));
-                ARMTargetMethodUtil.maxine_cache_flush(patchSite, 4);
-            }
-        } else {
-            // Since adr is invoked NUMBER_OF_NOPS instructions before the actual branch we need to adjust the displacement
-            final boolean isNegative = disp32 < 0;
-            if (isNegative) {
-                disp32 = -disp32;
-            }
-
-            synchronized (PatchingLock) {
-                patchSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r17, 0));
-                patchSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r16, disp32 & 0xFFFF, 0));
-                patchSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r16, (disp32 >> 16) & 0xFFFF, 16));
-                patchSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r17, Aarch64.r16, isNegative));
-                patchSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, false));
-                ARMTargetMethodUtil.maxine_cache_flush(patchSite, 20);
-            }
+        synchronized (PatchingLock) {
+            writeJump(patchSite, target);
         }
     }
 
@@ -153,21 +169,10 @@ public final class Aarch64TargetMethodUtil {
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
-        CodePointer callSite = tm.codeAt(pos);
-        Pointer callSitePointer = callSite.toPointer();
-        int instruction = callSitePointer.readInt(0);
-        // first check for branch immediate (jump with 28bit displacement)
-        if (Aarch64Assembler.isBimmInstruction(instruction)) {
-            return readCall32Target(callSite).equals(jumpTarget);
+        if (!isBranchInstruction(tm.codeAt(pos).toPointer().readInt(0))) {
+            return false;
         }
-        // Else check for jumps with 32bit displacement. Move the callSite pointer to the actual branch instruction.
-        callSite = callSite.plus(NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE);
-        callSitePointer = callSite.toPointer();
-        instruction = callSitePointer.readInt(0);
-        if (Aarch64Assembler.isBranchInstruction(instruction)) {
-            return readCall32Target(callSite).equals(jumpTarget);
-        }
-        return false;
+        return readCall32Target(tm, pos).equals(jumpTarget);
     }
 
     /**
@@ -179,17 +184,15 @@ public final class Aarch64TargetMethodUtil {
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
-        final long disp64 = target.toLong() - callSite.toLong();
-        final Pointer callSitePointer = callSite.toPointer();
-        final int oldDisp32 = getOldDisplacement(callSitePointer);
-        if (oldDisp32 != disp64) {
+        CodePointer oldTarget = readCall32Target(callSite);
+        if (!oldTarget.equals(target)) {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
                 // (although the lock excludes ALL concurrent patching)
                 fixupCall32Site(callSite, target);
             }
         }
-        return callSite.plus(oldDisp32);
+        return oldTarget;
     }
 
     /**
@@ -201,15 +204,41 @@ public final class Aarch64TargetMethodUtil {
      * @param displacement - the new displacement.
      * @return the previous displacement
      */
+    @HOSTED_ONLY
     public static int fixupCall28Site(byte [] code, int callOffset, int displacement) {
+        final boolean isNegative = displacement < 0;
+        if (isNegative) {
+            displacement = -displacement;
+        }
         int instruction = extractInstruction(code, callOffset);
-        int oldDisplacement = Aarch64Assembler.bImmExtractDisplacement(instruction);
-        instruction = Aarch64Assembler.bImmPatch(instruction, displacement);
-        code[callOffset + 0] = (byte) (instruction       & 0xFF);
-        code[callOffset + 1] = (byte) (instruction >> 8  & 0xFF);
-        code[callOffset + 2] = (byte) (instruction >> 16 & 0xFF);
-        code[callOffset + 3] = (byte) (instruction >> 24 & 0xFF);
-        return oldDisplacement;
+        int offset = bImmExtractDisplacement(instruction);
+        // The bimm offset must either point to one of the two trampolines or outside of them
+        assert (offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET) : offset;
+        // Get the offset of the unused trampoline
+        offset = offset == CALL_TRAMPOLINE1_OFFSET ? CALL_TRAMPOLINE2_OFFSET : CALL_TRAMPOLINE1_OFFSET;
+        final int trampolineOffset = callOffset + offset;
+        // Create the new trampoline
+        instruction = movzHelper(64, r16, displacement & 0xFFFF, 0);
+        writeInstruction(code, trampolineOffset + 4, instruction);
+        instruction = movkHelper(64, r16, (displacement >> 16) & 0xFFFF, 16);
+        writeInstruction(code, trampolineOffset + 8, instruction);
+        instruction = addSubInstructionHelper(r16, r17, r16, isNegative);
+        writeInstruction(code, trampolineOffset + 12, instruction);
+        instruction = extractInstruction(code, callOffset + CALL_BRANCH_OFFSET);
+        final boolean isLinked = isBranchInstructionLinked(instruction);
+        instruction = unconditionalBranchRegInstructionHelper(r16, isLinked);
+        writeInstruction(code, callOffset + CALL_BRANCH_OFFSET, instruction);
+        // Patch the branch immediate to jump to the new trampoline
+        instruction = unconditionalBranchImmInstructionHelper(offset, false);
+        writeInstruction(code, callOffset, instruction);
+        return 0;
+    }
+
+    private static void writeInstruction(byte[] code, int offset, int instruction) {
+        code[offset + 0] = (byte) (instruction       & 0xFF);
+        code[offset + 1] = (byte) (instruction >> 8  & 0xFF);
+        code[offset + 2] = (byte) (instruction >> 16 & 0xFF);
+        code[offset + 3] = (byte) (instruction >> 24 & 0xFF);
     }
 
     /**
@@ -224,7 +253,7 @@ public final class Aarch64TargetMethodUtil {
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
         CodePointer callSite = tm.codeAt(callOffset);
         if (MaxineVM.isHosted()) {
-            long disp64 = target.toLong() - callSite.toLong();
+            long disp64 = target.toLong() - callSite.plus(CALL_BRANCH_OFFSET).toLong();
             int disp32 = (int) disp64;
             FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
             assert NumUtil.isSignedNbit(28, disp32);
@@ -237,45 +266,22 @@ public final class Aarch64TargetMethodUtil {
     }
 
     private static CodePointer fixupCall32Site(CodePointer callSite, CodePointer target) {
-        long disp64 = target.toLong() - callSite.toLong();
+        final Pointer callSitePointer = callSite.toPointer();
+        CodePointer oldTarget = readCall32Target(callSite);
+        if (oldTarget.equals(target)) {
+            return oldTarget;
+        }
+        assert isBimmInstruction(callSitePointer.readInt(0)) : callSitePointer.readInt(0);
+        Pointer branchSitePointer = callSitePointer.plus(CALL_BRANCH_OFFSET);
+        int instruction = branchSitePointer.readInt(0);
+        final boolean isLinked = isBranchInstructionLinked(instruction);
+
+        long disp64 = target.toLong() - branchSitePointer.toLong();
         int disp32 = (int) disp64;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-        final Pointer callSitePointer = callSite.toPointer();
-        int oldDisplacement = getOldDisplacement(callSitePointer);
-        if (oldDisplacement == disp32) {
-            return callSite.plus(oldDisplacement);
-        }
-        final int instruction = callSitePointer.readInt(0);
-        final boolean isLinked = Aarch64Assembler.isBranchInstructionLinked(instruction);
+        patchCallTrampoline(callSitePointer, disp32, isLinked);
 
-        // overwrite the four nops from com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.call()
-        final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE);
-        if (NumUtil.isSignedNbit(28, disp32)) {
-            nopSite.writeInt(0, Aarch64Assembler.nopHelper());
-            nopSite.writeInt(4, Aarch64Assembler.nopHelper());
-            nopSite.writeInt(8, Aarch64Assembler.nopHelper());
-            nopSite.writeInt(12, Aarch64Assembler.nopHelper());
-            nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchImmInstructionHelper(disp32, isLinked));
-        } else {
-            // Since adr is invoked NUMBER_OF_NOPS instructions before the actual branch we need to adjust the displacement
-            FatalError.check(disp32 <= Integer.MAX_VALUE - (NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE), "Code displacement out of 32-bit range");
-            disp32 += NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE;
-            final boolean isNegative = disp32 < 0;
-            if (isNegative) {
-                disp32 = -disp32;
-            }
-
-            nopSite.writeInt(0, Aarch64Assembler.adrHelper(Aarch64.r17, 0));
-            nopSite.writeInt(4, Aarch64Assembler.movzHelper(64, Aarch64.r16, disp32 & 0xFFFF, 0));
-            nopSite.writeInt(8, Aarch64Assembler.movkHelper(64, Aarch64.r16, (disp32 >> 16) & 0xFFFF, 16));
-            nopSite.writeInt(12, Aarch64Assembler.addSubInstructionHelper(Aarch64.r16, Aarch64.r17, Aarch64.r16,
-                                                                          isNegative));
-            // overwrote the immediate branch with a register branch
-            nopSite.writeInt(16, Aarch64Assembler.unconditionalBranchRegInstructionHelper(Aarch64.r16, isLinked));
-        }
-        ARMTargetMethodUtil.maxine_cache_flush(nopSite, 20);
-
-        return callSite.plus(oldDisplacement);
+        return oldTarget;
     }
 
     public static boolean isPatchableCallSite(CodePointer callSite) {
@@ -322,8 +328,8 @@ public final class Aarch64TargetMethodUtil {
         // Skip the saved link register. Skip stackAlignment bytes since the push is 16-byte aligned as well
         Pointer callerSP = ripPointer.plus(Platform.target().stackAlignment);
         Pointer callerFP;
-        if (!csa.isZero() && csl.contains(Aarch64.fp.getEncoding())) {
-            callerFP = sfw.readWord(csa, csl.offsetOf(Aarch64.fp.getEncoding())).asPointer();
+        if (!csa.isZero() && csl.contains(fp.getEncoding())) {
+            callerFP = sfw.readWord(csa, csl.offsetOf(fp.getEncoding())).asPointer();
         } else {
             callerFP = current.fp();
         }
@@ -337,27 +343,9 @@ public final class Aarch64TargetMethodUtil {
 
     public static boolean isRIPCall(Pointer callIP) {
         int instruction = callIP.readInt(0);
-        // If it is not a branch instruction then it is definitely not a RIP Call
-        if (!Aarch64MacroAssembler.isBranchInstruction(instruction)) {
-            return false;
-        }
-        // If it is not a branch immediate we need to check the previous instructions as well
-        if (!Aarch64MacroAssembler.isBimmInstruction(instruction)) {
-            final Pointer nopSite = callIP.minus(NUMBER_OF_NOPS * Aarch64MacroAssembler.INSTRUCTION_SIZE);
-            int movzInstruction = nopSite.readInt(4);
-            if (!Aarch64MacroAssembler.isMovz(movzInstruction)) {
-                return false;
-            }
-            int movkInstruction = nopSite.readInt(8);
-            if (!Aarch64MacroAssembler.isMovk(movkInstruction)) {
-                return false;
-            }
-            int addSubInstruction = nopSite.readInt(12);
-            if (!Aarch64Assembler.isAddSubInstruction(addSubInstruction)) {
-                return false;
-            }
-        }
-        return true;
+        return isBimmInstruction(instruction)
+            && (bImmExtractDisplacement(instruction) == CALL_TRAMPOLINE1_OFFSET
+            || bImmExtractDisplacement(instruction) == CALL_TRAMPOLINE2_OFFSET);
     }
 
     public static Pointer returnAddressPointer(StackFrameCursor frame) {

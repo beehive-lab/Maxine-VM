@@ -152,8 +152,8 @@ public final class Safepoints {
      * Mask for extracting position.
      */
 
-    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isARM() ? 23 : 25;
-    public static final int POS_MASK = (1 << CAUSE_OFFSET_SHIFT) - 1;
+    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isARM() || Platform.target().arch.isAarch64() ? 22 : 25;
+    private static final int POS_MASK = (1 << CAUSE_OFFSET_SHIFT) - 1;
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
     private static final int MAX_CAUSE_OFFSET = Platform.target().arch.isARM() || Platform.target().arch.isAarch64() ? 31 : 7;
 

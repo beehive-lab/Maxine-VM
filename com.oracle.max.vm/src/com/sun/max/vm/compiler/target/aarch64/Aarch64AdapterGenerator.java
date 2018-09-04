@@ -19,11 +19,11 @@
  */
 package com.sun.max.vm.compiler.target.aarch64;
 
+import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil.*;
 
 import java.io.*;
 
@@ -86,7 +86,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
              */
             @Override
             public int callOffsetInPrologue() {
-                return 5 * Aarch64MacroAssembler.INSTRUCTION_SIZE;
+                return INSTRUCTION_SIZE;
             }
 
             @Override
@@ -275,7 +275,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         /**
          * The size in bytes of the prologue, see {@link Baseline2Opt#emitPrologue(Object, Adapter)}.
          */
-        public static final int PROLOGUE_SIZE = 6 * 4;
+        public static final int PROLOGUE_SIZE = RIP_CALL_INSTRUCTION_SIZE + INSTRUCTION_SIZE;
 
         @Override
         public int prologueSizeForCallee(ClassMethodActor callee) {
@@ -289,12 +289,18 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
          * The assembler code is as follows:
          * <pre>
          *     +0:  str lr, [sp,#-16]!
-         *     +4:  nop
+         *     +4:  bl <adapter>
          *     +8:  nop
          *     +12: nop
          *     +16: nop
-         *     +20: bl <adapter>
-         *     +24: optimised method body
+         *     +20: nop
+         *     +24: nop
+         *     +28: nop
+         *     +32: nop
+         *     +36: nop
+         *     +40: nop
+         *     +44: nop
+         *     +48: optimised method body
          * </pre>
          */
         @Override
@@ -448,7 +454,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         /**
          * The offset in the prologue of the call to the adapter.
          */
-        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + 5 * Aarch64MacroAssembler.INSTRUCTION_SIZE;
+        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + INSTRUCTION_SIZE;
 
         static final int PROLOGUE_SIZE = CALL_OFFSET_IN_PROLOGUE + RIP_CALL_INSTRUCTION_SIZE;
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = OPTIMIZED_ENTRY_POINT.offset();
@@ -591,7 +597,13 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
          *     +12: nop
          *     +16: nop
          *     +20: nop
-         *     +24: method body   <- optimized entry point
+         *     +24: nop
+         *     +28: nop
+         *     +32: nop
+         *     +36: nop
+         *     +40: nop
+         *     +44: nop
+         *     +48: method body   <- optimized entry point
          * </pre>
          *
          * With Adaptation:
@@ -602,13 +614,25 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
          *     +12: nop
          *     +16: nop
          *     +20: nop
-         *     +24: str lr, [sp,#-16]!  <- optimized entry point
+         *     +24: nop
          *     +28: nop
          *     +32: nop
          *     +36: nop
          *     +40: nop
-         *     +44: bl <adapter>
-         * L1  +48: method body
+         *     +44: nop
+         *     +48: str lr, [sp,#-16]!  <- optimized entry point
+         *     +52: bl <adapter>
+         *     +56: nop
+         *     +60: nop
+         *     +64: nop
+         *     +68: nop
+         *     +72: nop
+         *     +76: nop
+         *     +80: nop
+         *     +84: nop
+         *     +88: nop
+         *     +92: nop
+         * L1  +96: method body
          * </pre>
          *
          */
@@ -616,7 +640,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         protected int emitPrologue(Object out, Adapter adapter) {
             Aarch64MacroAssembler masm = out instanceof OutputStream ? new Aarch64MacroAssembler(Platform.target(), null) : (Aarch64MacroAssembler) out;
             if (adapter == null) {
-                masm.nop(PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE / Aarch64MacroAssembler.INSTRUCTION_SIZE);
+                masm.nop(PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE / INSTRUCTION_SIZE);
                 assert masm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE : masm.codeBuffer.position();
                 copyIfOutputStream(masm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
