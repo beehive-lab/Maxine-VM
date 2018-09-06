@@ -58,8 +58,8 @@ For Maxine VM >= v2.1 please cite:
 #### Acknowledgments
 
 This work in Maxine VM is partially supported by EPSRC grants Anyscale
-EP/L000725/1, PAMELA EP/K008730/1, DOME EP/J016330/1, and EU Horizon
-2020 ACTiCLOUD 732366 grant.
+EP/L000725/1, PAMELA EP/K008730/1, DOME EP/J016330/1, and [EU Horizon
+2020 ACTiCLOUD 732366 grant](https://acticloud.eu).
 
 #### Users Mailing list
 
@@ -69,10 +69,8 @@ maxinevm@googlegroups.com
 
 #### Collaborations
 
-We welcome collaborations! Please
-contact
-[Christos Kotselidis](mailto:christos.kotselidis@manchester.ac.uk) for
-external collaborations.
+For academic collaborations please contact
+[Christos Kotselidis](mailto:christos.kotselidis@manchester.ac.uk) or [Mikel Luján](mailto:mikel.lujan@manchester.ac.uk).
 
 #### Relevant Projects
 
