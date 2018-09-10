@@ -1087,6 +1087,8 @@ public class MaxXirGenerator implements RiXirGenerator {
         Scale scale = Scale.fromInt(elemSize);
         alignArraySize(length, arraySize, elemSize, scale);
 
+        callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize);
+
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
         asm.add(newMark, cell, arraySize);
@@ -1137,8 +1139,11 @@ public class MaxXirGenerator implements RiXirGenerator {
         Scale scale = Scale.fromInt(elemSize);
         alignArraySize(length, arraySize, elemSize, scale);
 
+        callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize);
+
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
+
         asm.add(newMark, cell, arraySize);
         asm.jgt(slowPath, newMark, tlabEnd);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
@@ -1274,6 +1279,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
+
+        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize);
+
         asm.add(newMark, cell, tupleSize);
         asm.jlteq(ok, newMark, tlabEnd);
         // Slow path.
@@ -1339,6 +1347,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
+        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize);
         asm.add(newMark, cell, tupleSize);
         asm.jgt(slowPath, newMark, tlabEnd);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
@@ -1356,6 +1365,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), asm.i(hubFirstWordIndex()), false);
         }
         asm.mov(result, cell);
+
         asm.bindOutOfLine(slowPath);
         callRuntimeThroughStub(asm, "slowPathAllocate", cell, tupleSize, etla);
         asm.jmp(done);
@@ -2088,6 +2098,14 @@ public class MaxXirGenerator implements RiXirGenerator {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
             return ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xSlowPathAllocate(Size.fromInt(size), etla);
+        }
+
+        public static void callProfiler(int size) {
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xCallsProfiler(size);
+        }
+
+        public static void callProfilerArray(int size) {
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xCallsProfilerArray(size);
         }
 
         public static Pointer flushLog(Pointer logTail) {
