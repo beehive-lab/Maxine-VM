@@ -79,11 +79,12 @@ public final class JDK_java_lang_Runtime {
         if (!Heap.gcDisabled()) {
             final GCRequest gcRequest = GCRequest.clearedGCRequest();
             gcRequest.explicit = true;
-            Log.println("Reported heap free space = " + Heap.reportFreeSpace());
-            Log.println("Reported heap used space = " + Heap.reportUsedSpace());
+            Log.println("== Explicit GC ==");
+            MaxineVM.dynamicProfiler.reportHeap();
             MaxineVM.dynamicProfiler.dumpHistogram();
-            MaxineVM.dynamicProfiler.resetHistogram();
             Heap.collectGarbage();
+            MaxineVM.dynamicProfiler.resetHistogram();
+
         }
     }
 
