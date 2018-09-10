@@ -438,6 +438,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @INLINE
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     protected final Pointer tlabAllocate(Size size) {
+        dynamicProfiler.profile(size.toInt());
         if (MaxineVM.isDebug() && ((!size.isDoubleWordAligned() && Platform.target().arch.isARM()) || (!size.isWordAligned() && !Platform.target().arch.isARM()))) {
             FatalError.unexpected("size is not word aligned in heap allocation request");
         }
@@ -448,6 +449,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer end = cell.plus(size);
 
         if (end.greaterThan(tlabEnd)) {
+            final Pointer tlabLeftovers = tlabEnd.minus(oldAllocationMark);
+            //dynamicProfiler.profile(tlabLeftovers.toInt());
             return slowPathAllocate(size, etla, oldAllocationMark, tlabEnd);
         }
         TLAB_MARK.store(etla, end);
@@ -481,6 +484,18 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
     }
 
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NEVER_INLINE
+    public final void c1xCallsProfiler(int size) {
+        dynamicProfiler.profile(size);
+    }
+
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NEVER_INLINE
+    public final void c1xCallsProfilerArray(int size) {
+        dynamicProfiler.profile(size);
+    }
+
     /**
      * Handling of custom allocation by sub-classes.
      * The normal allocation path. may be escaped by temporarily enabling use of a custom allocator identified with an opaque identifier.
@@ -501,6 +516,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         // Check for the second here.
         checkAllocationEnabled(size);
         // Check for custom allocation
+
+        //dynamicProfiler.profile(size.toLong());
 
         final Pointer customAllocator = CUSTOM_ALLOCATION_ENABLED.load(etla);
         if (!customAllocator.isZero()) {
@@ -528,7 +545,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
-        dynamicProfiler.profile(size.toLong());
+        //dynamicProfiler.profile(size.toInt());
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
 
@@ -541,7 +558,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             Object result = Cell.plantTuple(cell, hub);
             return result;
         } else {
-            dynamicProfiler.profile(hub.tupleSize.toLong());
+            //dynamicProfiler.profile(hub.tupleSize.toInt());
             return Cell.plantTuple(cell, hub);
         }
     }
@@ -550,7 +567,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
-        dynamicProfiler.profile(size.toLong());
+        //dynamicProfiler.profile(size.toInt());
         return Cell.plantHybrid(cell, size, hub);
     }
 
@@ -558,6 +575,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Size size = Layout.hybridLayout().getArraySize(length);
         final Pointer cell = tlabAllocate(size);
+        //dynamicProfiler.profile(size.toInt());
         return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
 
@@ -565,6 +583,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object clone(Object object) {
         final Size size = Layout.size(Reference.fromJava(object));
         final Pointer cell = tlabAllocate(size);
+        //dynamicProfiler.profile(size.toInt());
         return Cell.plantClone(cell, size, object);
     }
 
