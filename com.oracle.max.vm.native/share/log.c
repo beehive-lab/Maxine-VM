@@ -41,9 +41,11 @@ void log_assert(boolean condition, char *conditionString, char *fileName, int li
 }
 
 static mutex_Struct log_mutexStruct;
+static mutex_Struct dynamicProfiler_mutexStruct;
 
 void log_initialize(const char *path) {
     mutex_initialize(&log_mutexStruct);
+    mutex_initialize(&dynamicProfiler_mutexStruct);
 #if !os_MAXVE
     if (path == NULL) {
         path = "stdout";
@@ -73,11 +75,25 @@ void log_lock(void) {
 	}
 }
 
+void dynamicProfiler_lock(void) {
+    int result;
+    if ((result = mutex_enter_nolog(&dynamicProfiler_mutexStruct)) != 0) {
+        log_exit(-1, "Thread %p could not lock mutex %p: %s", thread_self(), &dynamicProfiler_mutexStruct, strerror(result));
+    }
+}
+
 void log_unlock(void) {
     int result;
 	if ((result = mutex_exit_nolog(&log_mutexStruct)) != 0) {
         log_exit(-1, "Thread %p could not unlock mutex %p: %s", thread_self(), &log_mutexStruct, strerror(result));
 	}
+}
+
+void dynamicProfiler_unlock(void) {
+    int result;
+    if ((result = mutex_exit_nolog(&dynamicProfiler_mutexStruct)) != 0) {
+        log_exit(-1, "Thread %p could not unlock mutex %p: %s", thread_self(), &dynamicProfiler_mutexStruct, strerror(result));
+    }
 }
 
 void log_print_format(const char *format, ...) {
