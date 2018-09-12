@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -48,7 +50,7 @@ public final class ARMImmediates {
                 return immed | i << 7;
             }
         }
-        throw new IllegalArgumentException("Invalid immediate operand value");
+        throw new IllegalArgumentException("Invalid immediate operand value: " + value);
     }
 
     /**
