@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -650,11 +652,13 @@ public abstract class AssemblyTester<Template_Type extends Template> {
                 Trace.line(3, "assembleInternally-negative[" + illegalTestCaseNumber + "]: " + assembly().createMethodCallString(template, argumentList));
                 try {
                     assembly().assemble(assembler, template, argumentList);
-                } catch (IllegalArgumentException e) {
-                    final String exceptionMessage = e.getMessage();
-                    uniqueExceptionMessages.add(exceptionMessage);
-                    ++illegalTestCaseNumber;
-                    continue;
+                } catch (AssemblyException e) {
+                    if (e.getCause() instanceof IllegalArgumentException) {
+                        final String exceptionMessage = e.getMessage();
+                        uniqueExceptionMessages.add(exceptionMessage);
+                        ++illegalTestCaseNumber;
+                        continue;
+                    }
                 }
 
                 System.err.println("illegal assembler test case " + illegalTestCaseNumber + " did not throw an exception for template: " + template);
