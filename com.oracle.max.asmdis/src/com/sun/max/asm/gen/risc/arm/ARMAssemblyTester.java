@@ -52,7 +52,7 @@ public class ARMAssemblyTester extends RiscAssemblyTester<RiscTemplate> {
 
     @Override
     protected String assemblerCommand() {
-        return "as -EB";
+        return "arm-none-eabi-as -EB";
     }
 
     @Override
