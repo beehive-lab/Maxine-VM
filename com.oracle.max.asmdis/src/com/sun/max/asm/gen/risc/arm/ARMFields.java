@@ -62,12 +62,9 @@ public final class ARMFields {
     public static final ImmediateOperandField bits_11_4 = ImmediateOperandField.createDescending(11, 4);
     public static final ImmediateOperandField bits_4_0 = ImmediateOperandField.createDescending(4, 0);
     public static final ImmediateOperandField bits_19_16 = ImmediateOperandField.createDescending(19, 16);
-    public static final ImmediateOperandField sbz_19_16 = ImmediateOperandField.createDescending(19, 16);
-    public static final ImmediateOperandField sbz_15_12 = ImmediateOperandField.createDescending(15, 12);
-    public static final ImmediateOperandField sbz_11_0 = ImmediateOperandField.createDescending(11, 0);
-    public static final ImmediateOperandField sbz_11_8 = ImmediateOperandField.createDescending(11, 8);
-    public static final ImmediateOperandField sbo_19_16 = ImmediateOperandField.createDescending(19, 16);
-    public static final ImmediateOperandField sbo_11_8 = ImmediateOperandField.createDescending(11, 8);
+    public static final ImmediateOperandField bits_15_12 = ImmediateOperandField.createDescending(15, 12);
+    public static final ImmediateOperandField bits_11_0 = ImmediateOperandField.createDescending(11, 0);
+    public static final ImmediateOperandField bits_11_8 = ImmediateOperandField.createDescending(11, 8);
     public static final ImmediateOperandField bits_5_0 = new ImmediateOperandField(new DescendingBitRange(5, 0)) {
         @Override
         public ArgumentRange argumentRange() {
@@ -167,23 +164,23 @@ public final class ARMFields {
     public static RiscConstant bits_19_16(int value) {
         return bits_19_16.constant(value);
     }
-    public static RiscConstant sbz_19_16(int value) {
-        return sbz_19_16.constant(value);
+    public static RiscConstant sbz_19_16() {
+        return bits_19_16.constant(0);
     }
-    public static RiscConstant sbz_15_12(int value) {
-        return sbz_15_12.constant(value);
+    public static RiscConstant sbz_15_12() {
+        return bits_15_12.constant(0);
     }
-    public static RiscConstant sbz_11_0(int value) {
-        return sbz_11_0.constant(value);
+    public static RiscConstant sbz_11_0() {
+        return bits_11_0.constant(0);
     }
-    public static RiscConstant sbz_11_8(int value) {
-        return sbz_11_8.constant(value);
+    public static RiscConstant sbz_11_8() {
+        return bits_11_8.constant(0);
     }
-    public static RiscConstant sbo_19_16(int value) {
-        return sbo_19_16.constant(value);
+    public static RiscConstant sbo_19_16() {
+        return bits_19_16.constant(0b1111);
     }
-    public static RiscConstant sbo_11_8(int value) {
-        return sbo_11_8.constant(value);
+    public static RiscConstant sbo_11_8() {
+        return bits_11_8.constant(0b1111);
     }
     public static RiscConstant bits_27_21(int value) {
         return bits_27_21.constant(value);

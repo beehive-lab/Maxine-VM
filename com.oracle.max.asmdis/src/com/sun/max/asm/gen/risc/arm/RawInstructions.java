@@ -103,10 +103,9 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
     }
 
     private void generateStatusRegisterAccess() {
-     // TODO Auto-generated method stub
         setCurrentArchitectureManualSection("4.1.31");
-        define("mrscpsr", cond, bit_27(0), bit_26(0), bit_25(0), bit_24(1), bit_23(0), r(0), bit_21(0), bit_20(0), sbo_19_16(15), Rd, sbz_11_0(0), ", cpsr").setExternalName("mrs");
-        define("mrsspsr", cond, bit_27(0), bit_26(0), bit_25(0), bit_24(1), bit_23(0), r(1), bit_21(0), bit_20(0), sbo_19_16(15), Rd, sbz_11_0(0), ", spsr").setExternalName("mrs");
+        define("mrscpsr", condWithoutNV, bits_27_20(0b00010000), sbo_19_16(), Rd.withExcludedExternalTestArguments(GPR.PC), sbz_11_0(), ", cpsr").setExternalName("mrs");
+        define("mrsspsr", condWithoutNV, bits_27_20(0b00010100), sbo_19_16(), Rd.withExcludedExternalTestArguments(GPR.PC), sbz_11_0(), ", spsr").setExternalName("mrs");
         //setCurrentArchitectureManualSection("4.1.32");
         //define("msr");
     }
