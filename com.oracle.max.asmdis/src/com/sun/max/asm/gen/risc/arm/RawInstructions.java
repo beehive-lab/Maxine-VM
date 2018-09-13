@@ -103,16 +103,16 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
     }
 
     private void generateStatusRegisterAccess() {
-        setCurrentArchitectureManualSection("4.1.31");
-        define("mrscpsr", condWithoutNV, bits_27_20(0b00010000), sbo_19_16(), Rd.withExcludedExternalTestArguments(GPR.PC), sbz_11_0(), ", cpsr").setExternalName("mrs");
-        define("mrsspsr", condWithoutNV, bits_27_20(0b00010100), sbo_19_16(), Rd.withExcludedExternalTestArguments(GPR.PC), sbz_11_0(), ", spsr").setExternalName("mrs");
+        setCurrentArchitectureManualSection("A8.8.109");
+        define("mrscpsr", condWithoutNV, bits_27_20(0b00010000), sbo_19_16(), Rd, sbz_11_0(), ", cpsr", ne(Rd, GPR.PC)).setExternalName("mrs");
+        define("mrsspsr", condWithoutNV, bits_27_20(0b00010100), sbo_19_16(), Rd, sbz_11_0(), ", spsr", ne(Rd, GPR.PC)).setExternalName("mrs");
         //setCurrentArchitectureManualSection("4.1.32");
         //define("msr");
     }
 
     private void generateMiscellaneousArithmetic() {
         setCurrentArchitectureManualSection("4.1.12");
-        define("clz", cond, bits_27_20(22), sbo_19_16(15), Rd, sbo_11_8(15), bits_7_4(1), Rm, ne(Rd, 15), ne(Rm, 15));
+        define("clz", condWithoutNV, bits_27_20(22), sbo_19_16(), Rd, sbo_11_8(), bits_7_4(1), Rm, ne(Rd, GPR.PC), ne(Rm, GPR.PC));
     }
 
     private void generateMultiply() {

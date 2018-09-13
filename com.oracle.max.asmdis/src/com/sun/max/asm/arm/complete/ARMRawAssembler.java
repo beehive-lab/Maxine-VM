@@ -26,6 +26,7 @@
 package com.sun.max.asm.arm.complete;
 
 import com.sun.max.asm.arm.*;
+import static com.sun.max.asm.arm.GPR.*;
 
 public abstract class ARMRawAssembler extends AbstractARMAssembler {
 
@@ -3319,16 +3320,16 @@ public abstract class ARMRawAssembler extends AbstractARMAssembler {
      * Pseudo-external assembler syntax: {@code clz[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rm</i>
      * Example disassembly syntax: {@code clzeq         r0, r0}
      * <p>
-     * Constraint: {@code Rd.value() != 15}<br />
-     * Constraint: {@code Rm.value() != 15}<br />
+     * Constraint: {@code Rd != PC}<br />
+     * Constraint: {@code Rm != PC}<br />
      *
      * @see "ARM Architecture Reference Manual ARMv7-A and ARMv7-R edition Issue C - Section 4.1.12"
      */
     // Template#: 170, Serial#: 170
     public void clz(final ConditionCode cond, final GPR Rd, final GPR Rm) {
         int instruction = 0x016F0F10;
-        checkConstraint(Rd.value() != 15, "Rd.value() != 15");
-        checkConstraint(Rm.value() != 15, "Rm.value() != 15");
+        checkConstraint(Rd != PC, "Rd != PC");
+        checkConstraint(Rm != PC, "Rm != PC");
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((Rd.value() & 0xf) << 12);
         instruction |= (Rm.value() & 0xf);
@@ -3338,12 +3339,15 @@ public abstract class ARMRawAssembler extends AbstractARMAssembler {
     /**
      * Pseudo-external assembler syntax: {@code mrs[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>
      * Example disassembly syntax: {@code mrseq         r0, cpsr}
+     * <p>
+     * Constraint: {@code Rd != PC}<br />
      *
-     * @see "ARM Architecture Reference Manual ARMv7-A and ARMv7-R edition Issue C - Section 4.1.31"
+     * @see "ARM Architecture Reference Manual ARMv7-A and ARMv7-R edition Issue C - Section A8.8.109"
      */
     // Template#: 171, Serial#: 171
     public void mrscpsr(final ConditionCode cond, final GPR Rd) {
         int instruction = 0x010F0000;
+        checkConstraint(Rd != PC, "Rd != PC");
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((Rd.value() & 0xf) << 12);
         emitInt(instruction);
@@ -3352,12 +3356,15 @@ public abstract class ARMRawAssembler extends AbstractARMAssembler {
     /**
      * Pseudo-external assembler syntax: {@code mrs[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>
      * Example disassembly syntax: {@code mrseq         r0, spsr}
+     * <p>
+     * Constraint: {@code Rd != PC}<br />
      *
-     * @see "ARM Architecture Reference Manual ARMv7-A and ARMv7-R edition Issue C - Section 4.1.31"
+     * @see "ARM Architecture Reference Manual ARMv7-A and ARMv7-R edition Issue C - Section A8.8.109"
      */
     // Template#: 172, Serial#: 172
     public void mrsspsr(final ConditionCode cond, final GPR Rd) {
         int instruction = 0x014F0000;
+        checkConstraint(Rd != PC, "Rd != PC");
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((Rd.value() & 0xf) << 12);
         emitInt(instruction);
