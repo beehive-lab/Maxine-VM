@@ -73,10 +73,6 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
     }
 
     private void generateSemaphore() {
-        setCurrentArchitectureManualSection("4.1.51");
-        define("swp", cond, Rd, Rm, ", [", Rn, "]", bits_27_20(16), sbz_11_8(0), bits_7_4(9), ne(Rd, 15), ne(Rm, 15), ne(Rn, 15), ne(Rn, Rd), ne(Rn, Rm));
-        setCurrentArchitectureManualSection("4.1.52");
-        define("swpb", cond, Rd, Rm, ", [", Rn, "]", bits_27_20(20), sbz_11_8(0), bits_7_4(9), ne(Rd, 15), ne(Rm, 15), ne(Rn, 15), ne(Rn, Rd), ne(Rn, Rm));
     }
 
     private void generateLoadAndStoreMultiple() {
