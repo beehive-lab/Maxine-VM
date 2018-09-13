@@ -139,18 +139,18 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
         setCurrentArchitectureManualSection("A8.8.17");
         define("asr", condWithoutNV, bits_27_26(0), i(0), opcode(0b1101), s, bits_19_16(0), Rd, Rn3, Rm2, bits_7_4(0b0101));
         defineDataProcessingForAllAddressingModes("4.1.6", "bic", s, Rn, Rd, 14, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.13", "cmn", s(1), Rn, sbz_15_12(0), 11, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.14", "cmp", s(1), Rn, sbz_15_12(0), 10, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.13", "cmn", s(1), Rn, sbz_15_12(), 11, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.14", "cmp", s(1), Rn, sbz_15_12(), 10, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.15", "eor", s, Rn, Rd, 1, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.29", "mov", s, sbz_19_16(0), Rd, 13, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.34", "mvn", s, sbz_19_16(0), Rd, 15, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.29", "mov", s, sbz_19_16(), Rd, 13, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.34", "mvn", s, sbz_19_16(), Rd, 15, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.35", "orr", s, Rn, Rd, 12, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.36", "rsb", s, Rn, Rd, 3, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.37", "rsc", s, Rn, Rd, 7, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.38", "sbc", s, Rn, Rd, 6, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.49", "sub", s, Rn, Rd, 2, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.53", "teq", s(1), Rn, sbz_15_12(0), 9, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.54", "tst", s(1), Rn, sbz_15_12(0), 8, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.53", "teq", s(1), Rn, sbz_15_12(), 9, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.54", "tst", s(1), Rn, sbz_15_12(), 8, immedConstraint);
     }
 
     private void generateBranch() {
