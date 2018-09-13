@@ -57,7 +57,7 @@ public class ARMAssemblyTester extends RiscAssemblyTester<RiscTemplate> {
 
     @Override
     protected void assembleExternally(IndentWriter writer, RiscTemplate template, List<Argument> argumentList, String label) {
-        final RiscExternalInstruction instruction = new RiscExternalInstruction(template, argumentList);
+        final RiscExternalInstruction instruction = new ARMExternalInstruction(template, argumentList);
         writer.println(instruction.toString());
     }
 
