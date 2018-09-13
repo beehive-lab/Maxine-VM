@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -59,6 +61,7 @@ public final class ARMFields {
     public static final ImmediateOperandField bits_7_4 = ImmediateOperandField.createDescending(7, 4);
     public static final ImmediateOperandField bits_11_4 = ImmediateOperandField.createDescending(11, 4);
     public static final ImmediateOperandField bits_4_0 = ImmediateOperandField.createDescending(4, 0);
+    public static final ImmediateOperandField bits_19_16 = ImmediateOperandField.createDescending(19, 16);
     public static final ImmediateOperandField sbz_19_16 = ImmediateOperandField.createDescending(19, 16);
     public static final ImmediateOperandField sbz_15_12 = ImmediateOperandField.createDescending(15, 12);
     public static final ImmediateOperandField sbz_11_0 = ImmediateOperandField.createDescending(11, 0);
@@ -132,6 +135,8 @@ public final class ARMFields {
     public static final InputOperandField shift_imm2 = (InputOperandField) InputOperandField.create(bits_5_0).withExcludedExternalTestArguments(new Immediate32Argument(0)).setVariableName("shift_imm");
     public static final InputOperandField immediate2 = InputOperandField.create(new ImmediateOperandField(new DescendingBitRange(15, 0))).setVariableName("immediate");
 
+    public static final BranchDisplacementOperandField label24 = BranchDisplacementOperandField.createDescendingBranchDisplacementOperandField(23, 0);
+
     public static RiscConstant s(int value) {
         return s.constant(value);
     }
@@ -158,6 +163,9 @@ public final class ARMFields {
     }
     public static RiscConstant bits_11_4(int value) {
         return bits_11_4.constant(value);
+    }
+    public static RiscConstant bits_19_16(int value) {
+        return bits_19_16.constant(value);
     }
     public static RiscConstant sbz_19_16(int value) {
         return sbz_19_16.constant(value);
@@ -253,12 +261,17 @@ public final class ARMFields {
     public static OperandField<ImmediateArgument> immed_3_0(Expression expression) {
         return immed_3_0.bindTo(expression);
     }
+    public static OperandField<ImmediateArgument> immed_24(Expression expression) {
+        return immed_24.bindTo(expression);
+    }
 
     public static final SymbolicOperandField<GPR> Rn = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 19, 16);
     public static final SymbolicOperandField<GPR> Rn2 = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 15, 12).setVariableName("Rn");
+    public static final SymbolicOperandField<GPR> Rn3 = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 3, 0).setVariableName("Rn");
     public static final SymbolicOperandField<GPR> Rd = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 15, 12);
     public static final SymbolicOperandField<GPR> Rd2 = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 19, 16).setVariableName("Rd");
     public static final SymbolicOperandField<GPR> Rm = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 3, 0);
+    public static final SymbolicOperandField<GPR> Rm2 = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 11, 8).setVariableName("Rm");
     public static final SymbolicOperandField<GPR> Rs = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 11, 8);
     public static final SymbolicOperandField<GPR> RdHi = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 19, 16);
     public static final SymbolicOperandField<GPR> RdLo = SymbolicOperandField.createDescending(GPR_SYMBOLIZER, 15, 12);

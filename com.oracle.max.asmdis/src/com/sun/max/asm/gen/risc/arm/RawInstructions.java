@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,6 +36,7 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.arm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
+import com.sun.max.asm.gen.risc.field.*;
 
 /**
  * Definitions of ARM instructions.
@@ -41,6 +44,8 @@ import com.sun.max.asm.gen.risc.*;
 
 public final class RawInstructions extends ARMInstructionDescriptionCreator {
     final Immediate32Argument zero = new Immediate32Argument(0);
+    private final SymbolicOperandField<ConditionCode> condWithoutNV = cond.withExcludedExternalTestArguments(ConditionCode.NV);
+    private final OperandField<ImmediateArgument> shift_immWithoutZero = shift_imm.withExcludedExternalTestArguments(zero);
 
     RawInstructions(RiscTemplateCreator templateCreator) {
         super(templateCreator);
@@ -61,8 +66,8 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
     }
 
     private void generateExceptionGenerating() {
-        setCurrentArchitectureManualSection("4.1.7");
-        define("bkpt", bits_31_28(14), bits_27_20(18), bits_7_4(7), immediate2, immed_19_8(and(rightShift(immediate2, 4), 0xfff)), immed_3_0(and(immediate2, 0xf)));
+        setCurrentArchitectureManualSection("A8.8.24");
+        define("bkpt", bits_31_28(0b1110), bits_27_20(0b10010), bits_7_4(0b111), immediate2, immed_19_8(and(rightShift(immediate2, 4), 0xfff)), immed_3_0(and(immediate2, 0xf)));
         setCurrentArchitectureManualSection("4.1.50");
         define("swi", cond, bits_27_24(15), immed_24);
     }
@@ -130,9 +135,14 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
         final Method validImmedMethod = getPredicateMethod(ARMImmediates.class, "isValidImmediate", int.class);
         final InstructionConstraint immedConstraint = new TestOnlyInstructionConstraint(makePredicate(validImmedMethod, immediate));
 
-        defineDataProcessingForAllAddressingModes("4.1.2", "adc", s, Rn, Rd, 5, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.3", "add", s, Rn, Rd, 4, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.4", "and", s, Rn, Rd, 0, immedConstraint);
+        defineDataProcessingForAllAddressingModes("A8.8.1-3", "adc", s, Rn, Rd, 0b0101, immedConstraint);
+        // Excluding PC from add testing due to arm-none-eabi bug!?
+        defineDataProcessingForAllAddressingModes("A8.8.5-11", "add", s, Rn.withExcludedExternalTestArguments(GPR.PC), Rd, 0b0100, immedConstraint);
+        defineDataProcessingForAllAddressingModes("A8.8.13-15", "and", s, Rn, Rd, 0, immedConstraint);
+        setCurrentArchitectureManualSection("A8.8.16");
+        define("asr", condWithoutNV, bits_27_26(0), i(0), opcode(0b1101), s, bits_19_16(0), Rd, bits_6_4(0b100), Rm, ", #", shift_imm2, shift_imm(shift_imm2));
+        setCurrentArchitectureManualSection("A8.8.17");
+        define("asr", condWithoutNV, bits_27_26(0), i(0), opcode(0b1101), s, bits_19_16(0), Rd, Rn3, Rm2, bits_7_4(0b0101));
         defineDataProcessingForAllAddressingModes("4.1.6", "bic", s, Rn, Rd, 14, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.13", "cmn", s(1), Rn, sbz_15_12(0), 11, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.14", "cmp", s(1), Rn, sbz_15_12(0), 10, immedConstraint);
@@ -149,8 +159,8 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
     }
 
     private void generateBranch() {
-        // TODO Auto-generated method stub
-
+        setCurrentArchitectureManualSection("A8.8.18");
+        define("b", condWithoutNV, bits_27_24(0b1010), label24);
     }
 
     /**
@@ -167,21 +177,26 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
 
         setCurrentArchitectureManualSection(section);
 
-        define(mnemonic, cond, bits_27_26(0), i(1), opcode(opc), sFld, dest, source, ", #", immediate, constraints, shifter_operand(encodeShifterOperand(immediate)));
-        define(mnemonic, cond, bits_27_26(0), i(1), opcode(opc), sFld, dest, source, ", #", immed_8, ", ", rotate_amount, even(rotate_amount), rotate_imm(div(rotate_amount, 2)));
-        define(mnemonic, cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, bits_11_7(0), bits_6_4(0));
+        // Immediate variant
+        define(mnemonic, condWithoutNV, bits_27_26(0), i(1), opcode(opc), sFld, dest, source, ", #", immediate, constraints, shifter_operand(encodeShifterOperand(immediate)));
 
-        define(mnemonic + "lsl", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsl #", shift_imm, bits_6_4(0)).setExternalName(mnemonic);
-        define(mnemonic + "lsr", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsr #", shift_imm2, shift_imm(mod(shift_imm2, 32)), bits_6_4(2)).setExternalName(mnemonic);
-        define(mnemonic + "asr", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", asr #", shift_imm2, shift_imm(mod(shift_imm2, 32)), bits_6_4(4)).setExternalName(mnemonic);
-        define(mnemonic + "ror", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), bits_6_4(6)).setExternalName(mnemonic);
+        // Register variant
+        define(mnemonic, condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, bits_11_7(0), bits_6_4(0));
 
-        define(mnemonic + "lsl", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsl ", Rs, bits_7_4(1)).setExternalName(mnemonic);
-        define(mnemonic + "lsr", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsr ", Rs, bits_7_4(3)).setExternalName(mnemonic);
-        define(mnemonic + "asr", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", asr ", Rs, bits_7_4(5)).setExternalName(mnemonic);
-        define(mnemonic + "ror", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", ror ", Rs, bits_7_4(7)).setExternalName(mnemonic);
+        // immediate-shifted register variants
+        define(mnemonic + "lsl", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsl #", shift_immWithoutZero, bits_6_4(0)).setExternalName(mnemonic);
+        define(mnemonic + "lsr", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsr #", shift_immWithoutZero, bits_6_4(2)).setExternalName(mnemonic);
+        define(mnemonic + "asr", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", asr #", shift_immWithoutZero, bits_6_4(4)).setExternalName(mnemonic);
+        define(mnemonic + "ror", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", ror #", shift_immWithoutZero, bits_6_4(6)).setExternalName(mnemonic);
 
-        define(mnemonic + "rrx", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", rrx ", bits_11_4(6)).setExternalName(mnemonic);
+        // register-shifted register variants
+        define(mnemonic + "lsl", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsl ", Rs, bits_7_4(1)).setExternalName(mnemonic);
+        define(mnemonic + "lsr", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsr ", Rs, bits_7_4(3)).setExternalName(mnemonic);
+        define(mnemonic + "asr", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", asr ", Rs, bits_7_4(5)).setExternalName(mnemonic);
+        define(mnemonic + "ror", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", ror ", Rs, bits_7_4(7)).setExternalName(mnemonic);
+
+//        define(mnemonic, condWithoutNV, bits_27_26(0), i(1), opcode(opc), sFld, dest, source, ", #", immed_8, ", ", rotate_amount, even(rotate_amount), rotate_imm(div(rotate_amount, 2)));
+//        define(mnemonic + "rrx", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", rrx ", bits_11_4(6)).setExternalName(mnemonic);
     }
 
     /**

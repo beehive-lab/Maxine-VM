@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,6 +25,9 @@
 
 package com.sun.max.asm.arm.complete;
 
+import com.sun.max.asm.*;
+import com.sun.max.asm.arm.ConditionCode;
+
 public abstract class ARMLabelAssembler extends ARMRawAssembler {
 
     protected ARMLabelAssembler(int startAddress) {
@@ -34,5 +39,32 @@ public abstract class ARMLabelAssembler extends ARMRawAssembler {
     }
 
 // START GENERATED LABEL ASSEMBLER METHODS
+    /**
+     * Pseudo-external assembler syntax: {@code b[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>label</i>
+     * Example disassembly syntax: {@code beq           L1: -33554432}
+     * <p>
+     * Constraint: {@code (-33554432 <= label && label <= 33554428) && ((label % 4) == 0)}<br />
+     *
+     * @see "ARM Architecture Reference Manual ARMv7-A and ARMv7-R edition Issue C - Section A8.8.18"
+     */
+    // Template#: 1, Serial#: 1
+    public void b(final ConditionCode cond, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new b_1(startPosition, 4, cond, label);
+    }
+
+    class b_1 extends InstructionWithOffset {
+        private final ConditionCode cond;
+        b_1(int startPosition, int endPosition, ConditionCode cond, Label label) {
+            super(ARMLabelAssembler.this, startPosition, currentPosition(), label);
+            this.cond = cond;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            b(cond, offsetAsInt());
+        }
+    }
+
 // END GENERATED LABEL ASSEMBLER METHODS
 }
