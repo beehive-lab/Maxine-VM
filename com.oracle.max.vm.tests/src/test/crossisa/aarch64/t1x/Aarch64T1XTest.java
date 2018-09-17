@@ -141,7 +141,6 @@ public class Aarch64T1XTest extends MaxTestCase {
         MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
-        r.assembleStartup();
         r.compile();
         r.link();
         r.runSimulation();

@@ -107,14 +107,6 @@ public class MaxineAarch64Tester extends CrossISATester {
     }
 
     @Override
-    protected ProcessBuilder getAssemblerProcessBuilder() {
-        if (assemblerProcessBuilder != null) {
-            return assemblerProcessBuilder;
-        }
-        return new ProcessBuilder("true");
-    }
-
-    @Override
     protected ProcessBuilder getLinkerProcessBuilder() {
         if (linkerProcessBuilder != null) {
             return linkerProcessBuilder;

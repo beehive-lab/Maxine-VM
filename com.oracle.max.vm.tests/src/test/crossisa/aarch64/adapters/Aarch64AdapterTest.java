@@ -182,7 +182,6 @@ public abstract class Aarch64AdapterTest extends MaxTestCase {
         MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
-        r.assembleStartup();
         r.assemble("adapter_test.s", "adapter_test.o");
         r.link("test_aarch64_adapters.ld", "startup_aarch64.o", "adapter_test.o");
         long[] simulatedRegisters = r.runRegisteredSimulation();

@@ -54,7 +54,6 @@ public abstract class CrossISATester {
     protected Process qemu;
     protected Process gdb;
     protected ProcessBuilder gccProcessBuilder;
-    protected ProcessBuilder assemblerProcessBuilder;
     protected ProcessBuilder linkerProcessBuilder;
     protected ProcessBuilder qemuProcessBuilder;
     protected ProcessBuilder gdbProcessBuilder;
@@ -78,9 +77,6 @@ public abstract class CrossISATester {
         gccProcessBuilder = getCompilerProcessBuilder();
         gccProcessBuilder.redirectOutput(gccOutput);
         gccProcessBuilder.redirectError(gccErrors);
-        assemblerProcessBuilder = getAssemblerProcessBuilder();
-        assemblerProcessBuilder.redirectOutput(asOutput);
-        assemblerProcessBuilder.redirectError(asErrors);
         linkerProcessBuilder = getLinkerProcessBuilder();
         linkerProcessBuilder.redirectOutput(linkOutput);
         linkerProcessBuilder.redirectError(linkErrors);
@@ -709,18 +705,11 @@ public abstract class CrossISATester {
 
     protected abstract ProcessBuilder getCompilerProcessBuilder();
 
-    public void assembleStartup() {
-        assembler = runBlocking(assemblerProcessBuilder);
-    }
-
-    protected abstract ProcessBuilder getAssemblerProcessBuilder();
-
     protected abstract ProcessBuilder getQEMUProcessBuilder();
 
     protected abstract ProcessBuilder getGDBProcessBuilder();
 
     public void run() throws Exception {
-        assembleStartup();
         compile();
         link();
         runSimulation();
