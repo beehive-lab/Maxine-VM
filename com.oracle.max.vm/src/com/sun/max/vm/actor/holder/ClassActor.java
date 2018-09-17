@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -76,11 +76,11 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      *
      * @return the {@code methodActor} of the method or {@code null} if not found
      */
-    public InterfaceMethodActor findInterfaceMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
-        InterfaceMethodActor ma = null;
+    public MethodActor findInterfaceMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
+        MethodActor ma = null;
         // check in each interface that this class implements
         for (InterfaceActor interfaceActor : getAllInterfaceActors()) {
-            ma = interfaceActor.findLocalInterfaceMethodActor(name, descriptor);
+            ma = interfaceActor.findLocalMethodActor(name, descriptor);
             if (ma != null) {
                 break;
             }
