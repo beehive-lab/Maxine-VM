@@ -101,8 +101,6 @@ public interface MethodHandleConstant extends ResolvableConstant<MethodHandleCon
             // 2. Resolve the type
             Object type;
             if (descriptor.string.charAt(0) == '(') {
-                Class               returnType;
-                Class[]             parameterTypes;
                 SignatureDescriptor signature = SignatureDescriptor.create(descriptor.string);
                 type = signature.getMethodHandleType(pool.classLoader());
             } else {
