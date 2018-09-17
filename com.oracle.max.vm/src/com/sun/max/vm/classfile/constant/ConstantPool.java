@@ -945,7 +945,12 @@ public final class ConstantPool implements RiConstantPool {
     }
 
     public MethodActor resolveInvokeStatic(int cpi) {
-        final StaticMethodActor staticMethodActor = classMethodAt(cpi).resolveStatic(this, cpi);
+        StaticMethodActor staticMethodActor;
+        if (at(cpi) instanceof InterfaceMethodRefConstant) {
+            staticMethodActor = interfaceMethodAt(cpi).resolveStatic(this, cpi);
+        } else {
+            staticMethodActor = classMethodAt(cpi).resolveStatic(this, cpi);
+        }
         if (staticMethodActor.isConstructor()) {
             throw new VerifyError("<init> must be invoked with invokespecial");
         }

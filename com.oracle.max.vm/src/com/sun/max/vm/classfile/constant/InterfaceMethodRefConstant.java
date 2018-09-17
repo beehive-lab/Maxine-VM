@@ -67,6 +67,8 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
 
     InterfaceMethodRefKey key(ConstantPool pool);
 
+    StaticMethodActor resolveStatic(ConstantPool pool, int index);
+
     final class Resolved extends ResolvedMethodRefConstant<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant, InterfaceMethodRefKey {
 
         public Resolved(MethodActor methodActor) {
@@ -91,6 +93,10 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         @Override
         public int hashCode() {
             return InterfaceMethodRefKey.Util.hashCode(this);
+        }
+
+        public StaticMethodActor resolveStatic(ConstantPool pool, int index) {
+            return verifyIsStatic(methodActor(), pool);
         }
     }
 
@@ -142,6 +148,10 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
 
         public MethodActor resolve(ConstantPool pool, int index) {
             return resolve(pool, index, holder, name, signature());
+        }
+
+        public StaticMethodActor resolveStatic(ConstantPool pool, int index) {
+            return Resolved.verifyIsStatic(resolve(pool, index), pool);
         }
 
         @Override
@@ -198,6 +208,10 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         public MethodActor resolve(ConstantPool pool, int index) {
             final ClassActor classActor = pool.classAt(classIndex).resolve(pool, classIndex);
             return Unresolved.resolve(pool, index, classActor, name(pool), signature(pool));
+        }
+
+        public StaticMethodActor resolveStatic(ConstantPool pool, int index) {
+            return Resolved.verifyIsStatic(resolve(pool, index), pool);
         }
 
         @Override
