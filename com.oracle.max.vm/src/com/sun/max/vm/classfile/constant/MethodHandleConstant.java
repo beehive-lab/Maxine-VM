@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -91,9 +91,10 @@ public interface MethodHandleConstant extends ResolvableConstant<MethodHandleCon
             Descriptor        descriptor = calleeRef.descriptor(pool);
 
             assert (referenceKind.isFieldRef() && calleeRef.tag() == FIELD_REF)
-                    || (referenceKind.isMethodRef() && calleeRef.tag() == METHOD_REF)
+                    || ((referenceKind == ReferenceKind.REF_invokeVirtual || referenceKind == ReferenceKind.REF_newInvokeSpecial) && calleeRef.tag() == METHOD_REF)
+                    || ((referenceKind == ReferenceKind.REF_invokeStatic || referenceKind == ReferenceKind.REF_invokeSpecial) && (calleeRef.tag() == METHOD_REF || calleeRef.tag() == INTERFACE_METHOD_REF))
                     || (referenceKind.isInterfaceRef() && calleeRef.tag() == INTERFACE_METHOD_REF)
-                    : "Corrupted constant pool, methodHandle constant references can only be fields, methods, or interface methods";
+                    : "Corrupted constant pool, methodHandle constant references can only be fields, methods, or interface methods! calleeref = " + calleeRef.tag() + " referenceKind = " + referenceKind;
 
             // 1. Resolve the callee
             Class callee = ((MemberActor) calleeRef.resolve(pool, referenceIndex)).holder().javaClass();
