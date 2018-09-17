@@ -29,7 +29,6 @@ import static com.sun.max.vm.jdk.JDK_java_lang_invoke_MethodHandleNatives.*;
 import java.lang.invoke.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.type.*;
@@ -55,7 +54,6 @@ public interface MethodHandleConstant extends ResolvableConstant<MethodHandleCon
 
         @Override
         public boolean isResolvableWithoutClassLoading(ConstantPool pool) {
-            ProgramWarning.message("isResolvableWithoutClassLoading for MethodHandleConstant Not implemented yet");
             return true;
         }
 
