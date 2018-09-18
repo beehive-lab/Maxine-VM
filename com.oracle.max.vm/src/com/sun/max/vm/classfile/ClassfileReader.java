@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -33,6 +33,7 @@ import static com.sun.max.vm.type.JavaTypeDescriptor.*;
 import java.io.*;
 import java.lang.annotation.*;
 import java.lang.instrument.*;
+import java.nio.ByteBuffer;
 import java.security.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -731,7 +732,7 @@ public final class ClassfileReader {
             try {
                 annotations = holder.getDeclaredMethod(name.string, sig.resolveParameterTypes(ClassfileReader.class.getClassLoader())).getAnnotations();
             } catch (NoSuchMethodException noSuchMethodException) {
-                Trace.line(1, "getAnnotations: method " + holder.getName() + "." + name.string + " is hidden to relection");
+                Trace.line(1, "getAnnotations: method " + holder.getName() + "." + name.string + " is hidden to reflection");
                 annotations = new Annotation[0];
             }
         }
@@ -841,6 +842,7 @@ public final class ClassfileReader {
                         if (attributeName.equals("Signature")) {
                             genericSignature = constantPool.utf8At(classfileStream.readUnsigned2(), "signature index");
                         } else if (attributeName.equals("RuntimeVisibleAnnotations")) {
+                            assert runtimeVisibleAnnotationsBytes == NO_RUNTIME_VISIBLE_ANNOTATION_BYTES;
                             runtimeVisibleAnnotationsBytes = classfileStream.readByteArray(attributeSize);
                         } else if (attributeName.equals("RuntimeVisibleParameterAnnotations")) {
                             runtimeVisibleParameterAnnotationsBytes = classfileStream.readByteArray(attributeSize);
@@ -907,7 +909,8 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (MaxineVM.isHosted() && classLoader != HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER && runtimeVisibleAnnotationsBytes != null) {
+                if (MaxineVM.isHosted() && classLoader != HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER
+                        && runtimeVisibleAnnotationsBytes != NO_RUNTIME_VISIBLE_ANNOTATION_BYTES) {
                     for (Annotation annotation : getAnnotations(name, descriptor)) {
                         if (annotation.annotationType() == HOSTED_ONLY.class) {
                             continue nextMethod;
@@ -987,11 +990,15 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
-                    for (Annotation annotation : getAnnotations(name, descriptor)) {
-                        if (annotation.annotationType() == CallerSensitive.class) {
-                            flags |= CALLER_SENSITIVE;
+                if (runtimeVisibleAnnotationsBytes != NO_RUNTIME_VISIBLE_ANNOTATION_BYTES) {
+                    if (MaxineVM.isHosted()) {
+                        for (Annotation annotation : getAnnotations(name, descriptor)) {
+                            if (annotation.annotationType() == CallerSensitive.class) {
+                                flags |= CALLER_SENSITIVE;
+                            }
                         }
+                    } else {
+                        flags |= parseRuntimeVisibleAnnotationsBytes(runtimeVisibleAnnotationsBytes);
                     }
                 }
 
@@ -1074,6 +1081,86 @@ public final class ClassfileReader {
             }
         }
         return result;
+    }
+
+    private int parseRuntimeVisibleAnnotationsBytes(byte[] runtimeVisibleAnnotationsBytes) {
+        int flags = 0;
+        ByteBuffer buf = ByteBuffer.wrap(runtimeVisibleAnnotationsBytes);
+        short numAnnotations = buf.getShort();
+        for (short j = 0; j < numAnnotations; j++) {
+            flags |= parseAnnotation(buf);
+        }
+        return flags;
+    }
+
+    private int parseAnnotation(ByteBuffer buf) {
+        short typeIndex = buf.getShort();
+        if (constantPool.utf8At(typeIndex).equals("Lsun/reflect/CallerSensitive;")) {
+            return CALLER_SENSITIVE;
+        }
+        short numElementValuePairs = buf.getShort();
+        for (short k = 0; k < numElementValuePairs; k++) {
+            parseElementValuePair(buf);
+        }
+        return 0;
+    }
+
+    private void parseElementValuePair(ByteBuffer buf) {
+        short elementNameIndex = buf.getShort();
+        assert constantPool.at(elementNameIndex) instanceof Utf8Constant;
+        parseElementValue(buf);
+    }
+
+    private void parseElementValue(ByteBuffer buf) {
+        char tag = (char) buf.get();
+        short constValue;
+        switch (tag) {
+            case 'B':
+            case 'C':
+            case 'I':
+            case 'S':
+            case 'Z':
+                constValue = buf.getShort(); // const_value_index
+                assert constantPool.at(constValue) instanceof IntegerConstant;
+                break;
+            case 'D':
+                constValue = buf.getShort(); // const_value_index
+                assert constantPool.at(constValue) instanceof DoubleConstant;
+                break;
+            case 'F':
+                constValue = buf.getShort(); // const_value_index
+                assert constantPool.at(constValue) instanceof FloatConstant;
+                break;
+            case 'J':
+                constValue = buf.getShort(); // const_value_index
+                assert constantPool.at(constValue) instanceof LongConstant;
+                break;
+            case 's':
+                constValue = buf.getShort(); // const_value_index
+                assert constantPool.at(constValue) instanceof Utf8Constant;
+                break;
+            case 'e':
+                constValue = buf.getShort(); // type_name_index
+                assert constantPool.at(constValue) instanceof Utf8Constant;
+                constValue = buf.getShort(); // const_name_index
+                assert constantPool.at(constValue) instanceof Utf8Constant;
+                break;
+            case 'c':
+                constValue = buf.getShort(); // class_info_index
+                assert constantPool.at(constValue) instanceof Utf8Constant;
+                break;
+            case '@':
+                parseAnnotation(buf);
+                break;
+            case '[':
+                constValue = buf.getShort(); // num_values
+                for (int i = 0; i < constValue; i++) {
+                    parseElementValue(buf);
+                }
+                break;
+            default:
+                throw FatalError.unexpected("Unexpected tag: " + (int) tag);
+        }
     }
 
     protected void readInnerClassesAttribute() {
