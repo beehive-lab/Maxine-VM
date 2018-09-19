@@ -453,6 +453,17 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
     }
 
     /**
+     * Initialise a constructor MemberName and plant the vmindex / vmtarget. see methodHandles.cpp : init_method_MemberName()
+     *
+     * @param memberName
+     * @param constructor
+     * @param doDispatch
+     */
+    private static Object init_method_MemberName(Object memberName, Constructor constructor, boolean doDispatch, Class klazz) {
+        return init_method_MemberName(memberName, MethodActor.fromJavaConstructor(constructor), doDispatch, klazz);
+    }
+
+    /**
      * Initialise a method MemberName and plant the vmindex / vmtarget.
      *
      * MethodHandles::init_method_MemberName (methodHandles.cpp)
@@ -537,8 +548,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
             init_method_MemberName(memberName, (Method) ref, true, ref.getClass());
         } else if (ref instanceof Constructor) {
             Trace.line(1, "Got Constructor");
-            // TODO: Implement me
-            throw new RuntimeException("Implement me");
+            init_method_MemberName(memberName, (Constructor) ref, true, ref.getClass());
         } else if (ref.getClass().equals(MemberName_Class)) {
             Trace.line(1, "Got MemberName");
             // TODO: Implement me
