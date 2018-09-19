@@ -80,8 +80,7 @@ public final class JDK_java_lang_Runtime {
             final GCRequest gcRequest = GCRequest.clearedGCRequest();
             gcRequest.explicit = true;
             Log.println("== Explicit GC ==");
-            MaxineVM.dynamicProfiler.reportHeap();
-            MaxineVM.dynamicProfiler.dumpHistogram();
+            MaxineVM.dynamicProfiler.printStats();
             Heap.collectGarbage();
             MaxineVM.dynamicProfiler.resetHistogram();
 
