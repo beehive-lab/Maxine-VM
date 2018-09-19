@@ -2150,7 +2150,7 @@ public abstract class T1XCompilation {
         branch(opcode, targetBCI, bci);
     }
 
-    protected void finishCall(T1XTemplateTag tag, Kind returnKind, int safepoint, ClassMethodActor directCallee) {
+    protected void finishCall(T1XTemplateTag tag, Kind returnKind, int safepoint, MethodActor directCallee) {
         safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, directCallee);
 
         if (returnKind != Kind.VOID) {
@@ -2206,7 +2206,7 @@ public abstract class T1XCompilation {
         assignInvokeTemplatesProfileInstrumentationParameters();
     }
 
-    protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+    protected void do_invokespecial_resolved(T1XTemplateTag tag, MethodActor methodActor, int receiverStackIndex) {
         peekObject(scratch, receiverStackIndex);
         nullCheck(scratch);
     }
@@ -2400,22 +2400,22 @@ public abstract class T1XCompilation {
     }
 
     protected void do_invokespecial(int index) {
-        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        Kind kind = invokeKind(classMethodRef.signature(cp));
-        SignatureDescriptor signature = classMethodRef.signature(cp);
+        MethodRefConstant methodRef = cp.methodAt(index);
+        Kind kind = invokeKind(methodRef.signature(cp));
+        SignatureDescriptor signature = methodRef.signature(cp);
         T1XTemplateTag tag = INVOKESPECIALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
         do_profileExceptionSeen();
         try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-                if (processIntrinsic(virtualMethodActor, index)) {
+            if (methodRef.isResolvableWithoutClassLoading(cp)) {
+                MethodActor methodActor = methodRef.resolve(cp, index);
+                if (processIntrinsic(methodActor, index)) {
                     return;
                 }
-                do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
+                do_invokespecial_resolved(tag, methodActor, receiverStackIndex);
 
                 int safepoint = callDirect();
-                finishCall(tag, kind, safepoint, virtualMethodActor);
+                finishCall(tag, kind, safepoint, methodActor);
                 return;
             }
         } catch (LinkageError error) {
