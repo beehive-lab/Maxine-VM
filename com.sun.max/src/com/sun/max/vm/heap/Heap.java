@@ -452,6 +452,12 @@ public final class Heap {
     }
 
     private static boolean heapLockedCollectGarbage() {
+        /** PROFILE **/
+        if(!VmThread.current().gcRequest.explicit){
+            Log.println("== Implicit GC ==");
+            MaxineVM.dynamicProfiler.printStats();
+        }
+        /***/
         if (verbose()) {
             VmThread.current().gcRequest.printBeforeGC();
         }
@@ -459,6 +465,11 @@ public final class Heap {
         if (verbose()) {
             VmThread.current().gcRequest.printAfterGC(result);
         }
+        /** PROFILE **/
+        if(!VmThread.current().gcRequest.explicit){
+            MaxineVM.dynamicProfiler.resetHistogram();
+        }
+        /***/
         return result;
     }
 
