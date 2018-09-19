@@ -373,7 +373,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
 
         accessFlags |= IS_FIELD | ((fieldActor.isStatic() ? JVM_REF_getStatic : JVM_REF_getField) << REFERENCE_KIND_SHIFT);
         if (isSetter) {
-            accessFlags += JVM_REF_putField - JVM_REF_getField << REFERENCE_KIND_SHIFT;
+            accessFlags += (JVM_REF_putField - JVM_REF_getField) << REFERENCE_KIND_SHIFT;
         }
         asMemberName(mname).flags = accessFlags;
         if (asMemberName(mname).name == null) {
@@ -531,8 +531,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
             TypeDescriptor type = JavaTypeDescriptor.forJavaClass(f.getType());
             FieldActor fa = ClassActor.fromJava(c).findFieldActor(name, type);
             int flags = fa.accessFlags();
-            // TODO: Implement me
-            throw new RuntimeException("Implement me");
+            init_field_MemberName(memberName, fa, flags);
         } else if (ref instanceof Method) {
             Trace.line(1, "Got Method");
             init_method_MemberName(memberName, (Method) ref, true, ref.getClass());
