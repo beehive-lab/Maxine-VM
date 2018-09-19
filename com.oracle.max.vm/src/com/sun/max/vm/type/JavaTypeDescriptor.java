@@ -211,7 +211,7 @@ public final class JavaTypeDescriptor {
         assert dimensions > 0;
         String componentString = descriptor.toString();
         if (getArrayDimensions(descriptor) + dimensions > 255) {
-            throw classFormatError("Array type with more than 255 dimensions");
+            throw new IllegalArgumentException("Array type with more than 255 dimensions");
         }
         for (int i = 0; i != dimensions; ++i) {
             componentString = "[" + componentString;
