@@ -21,6 +21,7 @@
 package com.sun.max.vm.profilers.dynamic;
 
 import com.sun.max.annotate.C_FUNCTION;
+import com.sun.max.annotate.INLINE;
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.program.ProgramError;
@@ -47,14 +48,18 @@ public class Profiler {
      * The bins/buckets (the keys of the HashMap) contain Long type object sizes.
      * The values of the HashMap contain the sum of the equal-sized objects have been profiled so far.
      */
-    //public static int SIZE = 52428800; //50MB
     public static int SIZE = 10000;
     public static int SIZE2 = 2;
     public static int[][] histogram = new int[SIZE][SIZE2];
     public static int totalObjectsize, totalRecordedObjects;
     public static int lastEntry;
+    public static float padding;
+    public static int collectedObjectSize;
     private static boolean PrintHistogram;
 
+    /**
+     * Use -XX:+PrintHistogram flag to accompany the profiler stats with a complete histogram view.
+     */
     static{
         VMOptions.addFieldOption("-XX:", "PrintHistogram", Profiler.class, "Print Dynamic Profiler's Histogram after every GC. (default: false)", MaxineVM.Phase.PRISTINE);
     }
@@ -67,6 +72,7 @@ public class Profiler {
         lastEntry = 0;
         totalObjectsize = 0;
         totalRecordedObjects = 0;
+        collectedObjectSize = 0;
     }
 
     /**
@@ -74,7 +80,7 @@ public class Profiler {
      * @param size
      * @return found index
      */
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public int searchFor(int size){
         for(int i=0; i<lastEntry; i++){
             if (histogram[i][0] == size)
@@ -83,13 +89,13 @@ public class Profiler {
         return -1;
     }
 
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public void recordNewEntry(int size, int index){
         histogram[index][0] = size;
         histogram[index][1] = 1;
     }
 
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public void increment(int index){
         histogram[index][1]++;
     }
@@ -101,9 +107,9 @@ public class Profiler {
      *
      * @param size
      */
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
-    synchronized void record(int size) {
+    public void record(int size) {
         int entry = searchFor(size);
 
         if (entry == -1){
@@ -120,7 +126,7 @@ public class Profiler {
     /**
      * This method is called when a profiled object is allocated.
      */
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void profile(int size) {
         //if (VmThread.current().PROFILE) {
@@ -132,8 +138,10 @@ public class Profiler {
         //}
     }
 
-    // bubble sort
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    /**
+     * A simple sort histogram implementation (using bubble sort).
+     */
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void sortHistogram() {
         int n = lastEntry+1;
@@ -148,7 +156,7 @@ public class Profiler {
         }
     }
 
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void swapEntries(int i, int j) {
         int temp0,temp1;
@@ -163,7 +171,7 @@ public class Profiler {
     /**
      * Sort and print Histogram.
      */
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public void printHistogram(){
         sortHistogram();
 
@@ -183,56 +191,77 @@ public class Profiler {
     }
 
     /**
-     * Dump Profiler findings to Maxine's Log output.
+     * Round a number with decimals
+     * @param number
+     * @param decimals
+     * @return
      */
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
-    @NEVER_INLINE
-    public void dumpHistogram() {
-        final boolean lockDisabledSafepoints = lock();
-        Log.print("Histogram total object size = ");
-        Log.print(totalObjectsize);
-        Log.print("\n");
-        Log.print("Histogram total object size = ");
-        Log.print(totalObjectsize/1048576);
-        Log.print(" MB");
-        Log.print("\n");
+    @INLINE
+    public double roundDecimals(double number, int decimals){
+        int factor = 1;
 
-        if (PrintHistogram)
-            printHistogram();
-        unlock(lockDisabledSafepoints);
+        //calc the factor out of the requested decimals
+        for (int i =0; i< decimals; i++)
+            factor = factor * 10;
+
+        //extract the whole part using casting
+        int wholePart = (int) number;
+
+        //calculate the decimal part
+        double decimalPart = number - wholePart;
+        decimalPart = decimalPart * factor;
+        int intDecimalPart = (int) decimalPart;
+        decimalPart = (double)intDecimalPart;
+        decimalPart =  decimalPart/factor;
+
+        //add whole and decimal parts and return
+        return wholePart + decimalPart;
     }
 
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    /**
+     * Dump Profiler findings/stats to Maxine's Log output (for validation purposes).
+     * TODO: create a -XX option for that functionality
+     */
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
-    public void reportHeap(){
+    public void printStats() {
         final boolean lockDisabledSafepoints = lock();
-        Log.print("Reported heap free space = ");
-        Log.print(Heap.reportFreeSpace()/1048576);
-        Log.println(" MB");
+        final float reportInMbs = (float)Heap.reportUsedSpace()/1048576;
+        final float histogramInMbs = (float)totalObjectsize/1048576;
 
         Log.print("Reported heap used space = ");
-        Log.println(Heap.reportUsedSpace());
-
-        Log.print("Reported heap used space = ");
-        Log.print(Heap.reportUsedSpace()/1048576);
+        Log.print(reportInMbs);
         Log.println(" MB");
+
+        Log.print("Histogram total object size = ");
+        Log.print(histogramInMbs);
+        Log.println(" MB");
+
+        padding = reportInMbs - histogramInMbs;
+        Log.print("TLAB Padding = ");
+        Log.print(padding);
+        Log.println(" MB\n");
+
+        if(PrintHistogram)
+            printHistogram();
+
         unlock(lockDisabledSafepoints);
     }
 
     /**
      * Reset the histogram.
      */
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void resetHistogram() {
         final boolean lockDisabledSafepoints = lock();
-        Log.print("Collected heap used space = ");
-        Log.println(Heap.reportUsedSpace());
-        Log.print("Collected heap used space = ");
+        //Log.print("Collected heap used space = ");
+        //Log.println(Heap.reportUsedSpace());
+        //Log.print("Collected heap used space = ");
         long survived = Heap.reportUsedSpace();
-        Log.print(survived/1048576);
-        Log.println(" MB");
-        Log.println(" ");
+        //Log.print(survived/1048576);
+        //Log.println(" MB");
+        //Log.println(" ");
         for(int i=0; i<lastEntry; i++){
             histogram[i][0] = 0;
             histogram[i][1] = 0;
@@ -254,18 +283,10 @@ public class Profiler {
     }
 
     /**
-     * Attempts to acquire the global lock on all debug output, blocking until the lock is successfully acquired. This
-     * lock can be acquired recursively by a thread. The lock is not released for other threads until the thread that
-     * owns the lock calls {@link #unlock} the same number of times it called this method.
+     * lock() and unlock() methods have been implemented according to the Log.lock() and Log.unlock() ones.
      *
-     * This method ensures that safepoints are disabled before it returns.
-     *
-     * @return true if this call caused safepoints to be disabled (i.e. they were enabled upon entry to this method).
-     *         This value must be passed to the paired call to {@link #unlock} so that safepoints are restored to the
-     *         appropriate state (i.e. the state they had before the sequence of code protected by this lock was
-     *         entered).
      */
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public static boolean lock() {
         if (isHosted()) {
@@ -275,7 +296,7 @@ public class Profiler {
         boolean wasDisabled = SafepointPoll.disable();
         Profiler.dynamicProfiler_lock();
         if (lockDepth == 0) {
-            FatalError.check(lockOwner == null, "log lock should have no owner with depth 0");
+            FatalError.check(lockOwner == null, "dynamic profiler lock should have no owner with depth 0");
             lockOwner = VmThread.current();
         }
         lockDepth++;
@@ -283,14 +304,10 @@ public class Profiler {
     }
 
     /**
-     * Attempts to releases the global lock on all debug output. This must only be called by a thread that currently
-     * owns the lock - failure to do so causes the VM to exit. The lock is not released for other threads until this
-     * method is called the same number of times as {@link #lock()} was called when acquiring the lock.
+     * lock() and unlock() methods have been implemented according to the Log.lock() and Log.unlock() ones.
      *
-     * @param lockDisabledSafepoints specifies if the adjoining call to {@link #lock()} disabled safepoints. If so, then
-     *            this call will re-enable them.
      */
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public static void unlock(boolean lockDisabledSafepoints) {
         if (isHosted()) {
@@ -299,12 +316,12 @@ public class Profiler {
 
         --lockDepth;
         FatalError.check(lockDepth >= 0, "mismatched lock/unlock");
-        FatalError.check(lockOwner == VmThread.current(), "log lock should be owned by current thread");
+        FatalError.check(lockOwner == VmThread.current(), "dynamic profiler lock should be owned by current thread");
         if (lockDepth == 0) {
             lockOwner = null;
         }
         Profiler.dynamicProfiler_unlock();
-        ProgramError.check(SafepointPoll.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Log.lock() and Log.unlock()");
+        ProgramError.check(SafepointPoll.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Profiler.lock() and Profiler.unlock()");
         if (lockDisabledSafepoints) {
             SafepointPoll.enable();
         }
