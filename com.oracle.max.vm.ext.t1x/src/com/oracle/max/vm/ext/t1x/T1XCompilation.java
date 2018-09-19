@@ -2211,7 +2211,7 @@ public abstract class T1XCompilation {
         nullCheck(scratch);
     }
 
-    protected void do_invokestatic_resolved(T1XTemplateTag tag, StaticMethodActor staticMethodActor) {
+    protected void do_invokestatic_resolved(T1XTemplateTag tag, MethodActor methodActor) {
     }
 
     private void do_invokehandle(int index, ClassMethodRefConstant classMethodRef, SignatureDescriptor signature, MethodActor methodActor) {
@@ -2494,21 +2494,21 @@ public abstract class T1XCompilation {
     }
 
     protected void do_invokestatic(int index) {
-        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        Kind kind = invokeKind(classMethodRef.signature(cp));
+        MethodRefConstant methodRef = cp.methodAt(index);
+        Kind kind = invokeKind(methodRef.signature(cp));
         T1XTemplateTag tag = INVOKESTATICS.get(kind.asEnum);
         do_profileExceptionSeen();
         try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(cp, index);
-                if (processIntrinsic(staticMethodActor, index)) {
+            if (methodRef.isResolvableWithoutClassLoading(cp)) {
+                MethodActor methodActor = methodRef.resolve(cp, index);
+                if (processIntrinsic(methodActor, index)) {
                     return;
                 }
-                if (staticMethodActor.holder().isInitialized()) {
-                    do_invokestatic_resolved(tag, staticMethodActor);
+                if (methodActor.holder().isInitialized()) {
+                    do_invokestatic_resolved(tag, methodActor);
 
                     int safepoint = callDirect();
-                    finishCall(tag, kind, safepoint, staticMethodActor);
+                    finishCall(tag, kind, safepoint, methodActor);
                     return;
                 }
             }
