@@ -51,7 +51,8 @@ public class Profiler {
     public static int SIZE = 10000;
     public static int SIZE2 = 2;
     public static int[][] histogram = new int[SIZE][SIZE2];
-    public static int totalObjectsize, totalRecordedObjects;
+    public static int totalObjectsize;
+    public static int totalRecordedObjects;
     public static int lastEntry;
     public static float padding;
     public static int collectedObjectSize;
@@ -60,12 +61,12 @@ public class Profiler {
     /**
      * Use -XX:+PrintHistogram flag to accompany the profiler stats with a complete histogram view.
      */
-    static{
+    static {
         VMOptions.addFieldOption("-XX:", "PrintHistogram", Profiler.class, "Print Dynamic Profiler's Histogram after every GC. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
-    public Profiler(){
-        for(int i=0; i<SIZE; i++){
+    public Profiler() {
+        for (int i = 0; i < SIZE; i++) {
             histogram[i][0] = 0;
             histogram[i][1] = 0;
         }
@@ -81,22 +82,23 @@ public class Profiler {
      * @return found index
      */
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public int searchFor(int size){
-        for(int i=0; i<lastEntry; i++){
-            if (histogram[i][0] == size)
+    public int searchFor(int size) {
+        for (int i = 0; i < lastEntry; i++) {
+            if (histogram[i][0] == size) {
                 return i;
+            }
         }
         return -1;
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public void recordNewEntry(int size, int index){
+    public void recordNewEntry(int size, int index) {
         histogram[index][0] = size;
         histogram[index][1] = 1;
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public void increment(int index){
+    public void increment(int index) {
         histogram[index][1]++;
     }
 
@@ -112,11 +114,10 @@ public class Profiler {
     public void record(int size) {
         int entry = searchFor(size);
 
-        if (entry == -1){
-            recordNewEntry(size,lastEntry);
+        if (entry == -1) {
+            recordNewEntry(size, lastEntry);
             lastEntry++;
-        }
-        else{
+        } else {
             increment(entry);
         }
         totalRecordedObjects++;
@@ -131,9 +132,9 @@ public class Profiler {
     public void profile(int size) {
         //if (VmThread.current().PROFILE) {
             //if (MaxineVM.isRunning()) {
-                final boolean lockDisabledSafepoints = lock();
-                record(size);
-                unlock(lockDisabledSafepoints);
+        final boolean lockDisabledSafepoints = lock();
+        record(size);
+        unlock(lockDisabledSafepoints);
             //}
         //}
     }
@@ -144,7 +145,7 @@ public class Profiler {
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void sortHistogram() {
-        int n = lastEntry+1;
+        int n = lastEntry + 1;
         int k;
         for (int m = n; m >= 0; m--) {
             for (int i = 0; i < n - 1; i++) {
@@ -159,7 +160,8 @@ public class Profiler {
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void swapEntries(int i, int j) {
-        int temp0,temp1;
+        int temp0;
+        int temp1;
         temp0 = histogram[i][0];
         temp1 = histogram[i][1];
         histogram[i][0] = histogram[j][0];
@@ -172,11 +174,11 @@ public class Profiler {
      * Sort and print Histogram.
      */
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public void printHistogram(){
+    public void printHistogram() {
         sortHistogram();
 
         Log.println("====HISTOGRAM====");
-        for(int i=1; i<lastEntry; i++) {
+        for (int i = 1; i < lastEntry; i++) {
             //if (histogram[i][0] > 0) {
             Log.print("[");
             Log.print(histogram[i][0]);
@@ -191,18 +193,19 @@ public class Profiler {
     }
 
     /**
-     * Round a number with decimals
+     * Round a number with decimals.
      * @param number
      * @param decimals
      * @return
      */
     @INLINE
-    public double roundDecimals(double number, int decimals){
+    public double roundDecimals(double number, int decimals) {
         int factor = 1;
 
         //calc the factor out of the requested decimals
-        for (int i =0; i< decimals; i++)
+        for (int i = 0; i < decimals; i++) {
             factor = factor * 10;
+        }
 
         //extract the whole part using casting
         int wholePart = (int) number;
@@ -211,8 +214,8 @@ public class Profiler {
         double decimalPart = number - wholePart;
         decimalPart = decimalPart * factor;
         int intDecimalPart = (int) decimalPart;
-        decimalPart = (double)intDecimalPart;
-        decimalPart =  decimalPart/factor;
+        decimalPart = (double) intDecimalPart;
+        decimalPart =  decimalPart / factor;
 
         //add whole and decimal parts and return
         return wholePart + decimalPart;
@@ -226,8 +229,8 @@ public class Profiler {
     @NEVER_INLINE
     public void printStats() {
         final boolean lockDisabledSafepoints = lock();
-        final float reportInMbs = (float)Heap.reportUsedSpace()/1048576;
-        final float histogramInMbs = (float)totalObjectsize/1048576;
+        final float reportInMbs = (float) Heap.reportUsedSpace() / 1048576;
+        final float histogramInMbs = (float) totalObjectsize / 1048576;
 
         Log.print("Reported heap used space = ");
         Log.print(reportInMbs);
@@ -242,8 +245,9 @@ public class Profiler {
         Log.print(padding);
         Log.println(" MB\n");
 
-        if(PrintHistogram)
+        if (PrintHistogram) {
             printHistogram();
+        }
 
         unlock(lockDisabledSafepoints);
     }
@@ -262,7 +266,7 @@ public class Profiler {
         //Log.print(survived/1048576);
         //Log.println(" MB");
         //Log.println(" ");
-        for(int i=0; i<lastEntry; i++){
+        for (int i = 0; i < lastEntry; i++) {
             histogram[i][0] = 0;
             histogram[i][1] = 0;
         }
