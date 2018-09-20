@@ -401,10 +401,10 @@ public class MaxineTesterConfiguration {
         final String vmaLayout = "-layout=xohm";
         imageConfig("vma-t1x", vmaLayout, vmaBaseline, vmaRun);
 
-        c1xTest("opt0", "-J-Dmax.c1x.optlevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.sun.c1x", "^com.sun.cri");
-        c1xTest("opt1", "-J-Dmax.c1x.optlevel=1", "^jtt", "^com.sun.c1x", "^com.sun.cri");
-        c1xTest("opt2", "-J-Dmax.c1x.optlevel=2", "^jtt", "^com.sun.c1x", "^com.sun.cri");
-        c1xTest("opt3", "-J-Dmax.c1x.optlevel=3", "^jtt", "^com.sun.c1x", "^com.sun.cri");
+        c1xTest("opt0", "-J-Dmax.c1x.optlevel=0", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.sun.c1x", "!com.sun.c1x.alloc.LinearScan", "^com.sun.cri");
+        c1xTest("opt1", "-J-Dmax.c1x.optlevel=1", "^jtt", "^com.sun.c1x", "!com.sun.c1x.alloc.LinearScan", "^com.sun.cri");
+        c1xTest("opt2", "-J-Dmax.c1x.optlevel=2", "^jtt", "^com.sun.c1x", "!com.sun.c1x.alloc.LinearScan", "^com.sun.cri");
+        c1xTest("opt3", "-J-Dmax.c1x.optlevel=3", "^jtt", "^com.sun.c1x", "!com.sun.c1x.alloc.LinearScan", "^com.sun.cri");
 
         graalTest("default", "^jtt", "!jtt.max", "!jtt.max.", "!jtt.jvmni.", "!jtt.exbytecode.", "!jtt.jni.", "^com.oracle.vm.ext.graal");
     }
