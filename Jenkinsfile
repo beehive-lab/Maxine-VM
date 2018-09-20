@@ -5,7 +5,7 @@ pipeline {
         timeout(time: 1, unit: 'HOURS')
     }
     tools {
-        jdk 'openJDK7u131'
+        jdk 'openJDK8'
     }
     environment {
         MAXINE_HOME="$WORKSPACE/maxine"
