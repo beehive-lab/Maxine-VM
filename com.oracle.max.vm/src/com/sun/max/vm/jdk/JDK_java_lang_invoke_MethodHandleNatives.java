@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.methodhandle.MaxMethodHandles.*;
+import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.type.*;
 
 /**
@@ -381,7 +382,11 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         }
 
         if (asMemberName(mname).type == null) {
-            asMemberName(mname).type = methodType(fieldActor.getClass());
+            asMemberName(mname).type = fieldActor.type().javaClass();
+        }
+
+        if (asMemberName(mname).clazz == null) {
+            asMemberName(mname).clazz = fieldActor.holder().javaClass();
         }
 
         VMTarget vmTarget = VMTarget.create(mname);
@@ -537,7 +542,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         if (ref instanceof Field) {
             Trace.line(1, "Got Field");
             Field f = (Field) ref;
-            Class c = f.getClass();
+            Class c = f.getDeclaringClass();
             Utf8Constant name = SymbolTable.makeSymbol(f.getName());
             TypeDescriptor type = JavaTypeDescriptor.forJavaClass(f.getType());
             FieldActor fa = ClassActor.fromJava(c).findFieldActor(name, type);
@@ -553,6 +558,8 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
             Trace.line(1, "Got MemberName");
             // TODO: Implement me
             throw new RuntimeException("Implement me");
+        } else {
+            throw FatalError.unimplemented();
         }
 
         int flags = asMemberName(memberName).flags;
