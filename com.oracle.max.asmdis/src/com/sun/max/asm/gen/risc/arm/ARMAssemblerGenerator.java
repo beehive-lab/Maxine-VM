@@ -43,7 +43,7 @@ public final class ARMAssemblerGenerator extends RiscAssemblerGenerator<RiscTemp
     @Override
     protected String getJavadocManualReference(RiscTemplate template) {
         final String section = template.instructionDescription().architectureManualSection();
-        return "\"ARM Architecture Reference Manual, Second Edition - Section " + section + "\"";
+        return "\"ARM Architecture Reference Manual ARMv7-A and ARMv7-R edition Issue C - Section " + section + "\"";
     }
 
     public static void main(String[] programArguments) {

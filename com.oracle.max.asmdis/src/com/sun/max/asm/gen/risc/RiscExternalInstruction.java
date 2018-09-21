@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -103,7 +105,7 @@ public class RiscExternalInstruction implements RiscInstructionDescriptionVisito
     }
 
     private void printBranchDisplacement(ImmediateArgument immediateArgument) {
-        final int delta = (int) immediateArgument.asLong();
+        int delta = (int) immediateArgument.asLong();
         if (address != null) {
             final ImmediateArgument targetAddress = address.plus(delta);
             final DisassembledLabel label = addressMapper.labelAt(targetAddress);
@@ -114,10 +116,15 @@ public class RiscExternalInstruction implements RiscInstructionDescriptionVisito
             // (tw) No longer checked for absolute branch, always print "."
             print(". ");
         }
+        delta = getDelta(delta);
         if (delta >= 0) {
             print("+");
         }
         print(Integer.toString(delta));
+    }
+
+    protected int getDelta(int delta) {
+        return delta;
     }
 
     private Object previousSpecification;

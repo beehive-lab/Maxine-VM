@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,6 +36,7 @@ import com.sun.max.asm.*;
 import com.sun.max.asm.arm.*;
 import com.sun.max.asm.gen.*;
 import com.sun.max.asm.gen.risc.*;
+import com.sun.max.asm.gen.risc.field.*;
 
 /**
  * Definitions of ARM instructions.
@@ -41,6 +44,8 @@ import com.sun.max.asm.gen.risc.*;
 
 public final class RawInstructions extends ARMInstructionDescriptionCreator {
     final Immediate32Argument zero = new Immediate32Argument(0);
+    private final SymbolicOperandField<ConditionCode> condWithoutNV = cond.withExcludedExternalTestArguments(ConditionCode.NV);
+    private final OperandField<ImmediateArgument> shift_immWithoutZero = shift_imm.withExcludedExternalTestArguments(zero);
 
     RawInstructions(RiscTemplateCreator templateCreator) {
         super(templateCreator);
@@ -61,17 +66,13 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
     }
 
     private void generateExceptionGenerating() {
-        setCurrentArchitectureManualSection("4.1.7");
-        define("bkpt", bits_31_28(14), bits_27_20(18), bits_7_4(7), immediate2, immed_19_8(and(rightShift(immediate2, 4), 0xfff)), immed_3_0(and(immediate2, 0xf)));
+        setCurrentArchitectureManualSection("A8.8.24");
+        define("bkpt", bits_31_28(0b1110), bits_27_20(0b10010), bits_7_4(0b111), immediate2, immed_19_8(and(rightShift(immediate2, 4), 0xfff)), immed_3_0(and(immediate2, 0xf)));
         setCurrentArchitectureManualSection("4.1.50");
-        define("swi", cond, bits_27_24(15), immed_24);
+        define("swi", condWithoutNV, bits_27_24(15), immed_24);
     }
 
     private void generateSemaphore() {
-        setCurrentArchitectureManualSection("4.1.51");
-        define("swp", cond, Rd, Rm, ", [", Rn, "]", bits_27_20(16), sbz_11_8(0), bits_7_4(9), ne(Rd, 15), ne(Rm, 15), ne(Rn, 15), ne(Rn, Rd), ne(Rn, Rm));
-        setCurrentArchitectureManualSection("4.1.52");
-        define("swpb", cond, Rd, Rm, ", [", Rn, "]", bits_27_20(20), sbz_11_8(0), bits_7_4(9), ne(Rd, 15), ne(Rm, 15), ne(Rn, 15), ne(Rn, Rd), ne(Rn, Rm));
     }
 
     private void generateLoadAndStoreMultiple() {
@@ -98,59 +99,63 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
     }
 
     private void generateStatusRegisterAccess() {
-     // TODO Auto-generated method stub
-        setCurrentArchitectureManualSection("4.1.31");
-        define("mrscpsr", cond, bit_27(0), bit_26(0), bit_25(0), bit_24(1), bit_23(0), r(0), bit_21(0), bit_20(0), sbo_19_16(15), Rd, sbz_11_0(0), ", cpsr").setExternalName("mrs");
-        define("mrsspsr", cond, bit_27(0), bit_26(0), bit_25(0), bit_24(1), bit_23(0), r(1), bit_21(0), bit_20(0), sbo_19_16(15), Rd, sbz_11_0(0), ", spsr").setExternalName("mrs");
+        setCurrentArchitectureManualSection("A8.8.109");
+        define("mrscpsr", condWithoutNV, bits_27_20(0b00010000), sbo_19_16(), Rd, sbz_11_0(), ", cpsr", ne(Rd, GPR.PC)).setExternalName("mrs");
+        define("mrsspsr", condWithoutNV, bits_27_20(0b00010100), sbo_19_16(), Rd, sbz_11_0(), ", spsr", ne(Rd, GPR.PC)).setExternalName("mrs");
         //setCurrentArchitectureManualSection("4.1.32");
         //define("msr");
     }
 
     private void generateMiscellaneousArithmetic() {
         setCurrentArchitectureManualSection("4.1.12");
-        define("clz", cond, bits_27_20(22), sbo_19_16(15), Rd, sbo_11_8(15), bits_7_4(1), Rm, ne(Rd, 15), ne(Rm, 15));
+        define("clz", condWithoutNV, bits_27_20(22), sbo_19_16(), Rd, sbo_11_8(), bits_7_4(1), Rm, ne(Rd, GPR.PC), ne(Rm, GPR.PC));
     }
 
     private void generateMultiply() {
         setCurrentArchitectureManualSection("4.1.28");
-        define("mla", cond, bits_27_21(1), s, Rd2, Rm, Rs, Rn2, bits_7_4(9), ne(Rd2, Rm), ne(Rd2, 15), ne(Rm, 15), ne(Rs, 15), ne(Rn2, 15));
+        define("mla", condWithoutNV, bits_27_21(1), s, Rd2, Rm, Rs, Rn2, bits_7_4(9), ne(Rd2, Rm), ne(Rd2, 15), ne(Rm, 15), ne(Rs, 15), ne(Rn2, 15));
         setCurrentArchitectureManualSection("4.1.33");
-        define("mul", cond, bits_27_21(0), s, Rd2, Rm, Rs, sbz_15_12(0), bits_7_4(9), ne(Rd2, Rm), ne(Rd2, 15), ne(Rm, 15), ne(Rs, 15));
+        define("mul", condWithoutNV, bits_27_21(0), s, Rd2, Rm, Rs, sbz_15_12(), bits_7_4(9), ne(Rd2, Rm), ne(Rd2, 15), ne(Rm, 15), ne(Rs, 15));
         setCurrentArchitectureManualSection("4.1.39");
-        define("smlal", cond, bits_27_21(7), s, RdLo, RdHi, Rm, Rs, bits_7_4(9), ne(RdLo, RdHi), ne(RdLo, Rm), ne(RdHi, Rm), ne(RdHi, 15), ne(RdLo, 15), ne(Rm, 15), ne(Rs, 15));
+        define("smlal", condWithoutNV, bits_27_21(7), s, RdLo, RdHi, Rm, Rs, bits_7_4(9), ne(RdLo, RdHi), ne(RdLo, Rm), ne(RdHi, Rm), ne(RdHi, 15), ne(RdLo, 15), ne(Rm, 15), ne(Rs, 15));
         setCurrentArchitectureManualSection("4.1.40");
-        define("smull", cond, bits_27_21(6), s, RdLo, RdHi, Rm, Rs, bits_7_4(9), ne(RdLo, RdHi), ne(RdLo, Rm), ne(RdHi, Rm), ne(RdHi, 15), ne(RdLo, 15), ne(Rm, 15), ne(Rs, 15));
+        define("smull", condWithoutNV, bits_27_21(6), s, RdLo, RdHi, Rm, Rs, bits_7_4(9), ne(RdLo, RdHi), ne(RdLo, Rm), ne(RdHi, Rm), ne(RdHi, 15), ne(RdLo, 15), ne(Rm, 15), ne(Rs, 15));
         setCurrentArchitectureManualSection("4.1.55");
-        define("umlal", cond, bits_27_21(5), s, RdLo, RdHi, Rm, Rs, bits_7_4(9), ne(RdLo, RdHi), ne(RdLo, Rm), ne(RdHi, Rm), ne(RdHi, 15), ne(RdLo, 15), ne(Rm, 15), ne(Rs, 15));
+        define("umlal", condWithoutNV, bits_27_21(5), s, RdLo, RdHi, Rm, Rs, bits_7_4(9), ne(RdLo, RdHi), ne(RdLo, Rm), ne(RdHi, Rm), ne(RdHi, 15), ne(RdLo, 15), ne(Rm, 15), ne(Rs, 15));
         setCurrentArchitectureManualSection("4.1.56");
-        define("umull", cond, bits_27_21(4), s, RdLo, RdHi, Rm, Rs, bits_7_4(9), ne(RdLo, RdHi), ne(RdLo, Rm), ne(RdHi, Rm), ne(RdHi, 15), ne(RdLo, 15), ne(Rm, 15), ne(Rs, 15));
+        define("umull", condWithoutNV, bits_27_21(4), s, RdLo, RdHi, Rm, Rs, bits_7_4(9), ne(RdLo, RdHi), ne(RdLo, Rm), ne(RdHi, Rm), ne(RdHi, 15), ne(RdLo, 15), ne(Rm, 15), ne(Rs, 15));
     }
 
     private void generateDataProcessing() {
         final Method validImmedMethod = getPredicateMethod(ARMImmediates.class, "isValidImmediate", int.class);
         final InstructionConstraint immedConstraint = new TestOnlyInstructionConstraint(makePredicate(validImmedMethod, immediate));
 
-        defineDataProcessingForAllAddressingModes("4.1.2", "adc", s, Rn, Rd, 5, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.3", "add", s, Rn, Rd, 4, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.4", "and", s, Rn, Rd, 0, immedConstraint);
+        defineDataProcessingForAllAddressingModes("A8.8.1-3", "adc", s, Rn, Rd, 0b0101, immedConstraint);
+        // Excluding PC from add testing due to arm-none-eabi bug!?
+        defineDataProcessingForAllAddressingModes("A8.8.5-11", "add", s, Rn.withExcludedExternalTestArguments(GPR.PC), Rd, 0b0100, immedConstraint);
+        defineDataProcessingForAllAddressingModes("A8.8.13-15", "and", s, Rn, Rd, 0, immedConstraint);
+        setCurrentArchitectureManualSection("A8.8.16");
+        define("asr", condWithoutNV, bits_27_26(0), i(0), opcode(0b1101), s, bits_19_16(0), Rd, bits_6_4(0b100), Rm, ", #", shift_imm2, shift_imm(shift_imm2));
+        setCurrentArchitectureManualSection("A8.8.17");
+        define("asr", condWithoutNV, bits_27_26(0), i(0), opcode(0b1101), s, bits_19_16(0), Rd, Rn3, Rm2, bits_7_4(0b0101));
         defineDataProcessingForAllAddressingModes("4.1.6", "bic", s, Rn, Rd, 14, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.13", "cmn", s(1), Rn, sbz_15_12(0), 11, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.14", "cmp", s(1), Rn, sbz_15_12(0), 10, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.13", "cmn", s(1), Rn, sbz_15_12(), 11, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.14", "cmp", s(1), Rn, sbz_15_12(), 10, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.15", "eor", s, Rn, Rd, 1, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.29", "mov", s, sbz_19_16(0), Rd, 13, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.34", "mvn", s, sbz_19_16(0), Rd, 15, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.29", "mov", s, sbz_19_16(), Rd, 13, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.34", "mvn", s, sbz_19_16(), Rd, 15, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.35", "orr", s, Rn, Rd, 12, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.36", "rsb", s, Rn, Rd, 3, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.37", "rsc", s, Rn, Rd, 7, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.38", "sbc", s, Rn, Rd, 6, immedConstraint);
         defineDataProcessingForAllAddressingModes("4.1.49", "sub", s, Rn, Rd, 2, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.53", "teq", s(1), Rn, sbz_15_12(0), 9, immedConstraint);
-        defineDataProcessingForAllAddressingModes("4.1.54", "tst", s(1), Rn, sbz_15_12(0), 8, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.53", "teq", s(1), Rn, sbz_15_12(), 9, immedConstraint);
+        defineDataProcessingForAllAddressingModes("4.1.54", "tst", s(1), Rn, sbz_15_12(), 8, immedConstraint);
     }
 
     private void generateBranch() {
-        // TODO Auto-generated method stub
-
+        setCurrentArchitectureManualSection("A8.8.18");
+        define("b", condWithoutNV, bits_27_24(0b1010), label24);
     }
 
     /**
@@ -167,21 +172,26 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
 
         setCurrentArchitectureManualSection(section);
 
-        define(mnemonic, cond, bits_27_26(0), i(1), opcode(opc), sFld, dest, source, ", #", immediate, constraints, shifter_operand(encodeShifterOperand(immediate)));
-        define(mnemonic, cond, bits_27_26(0), i(1), opcode(opc), sFld, dest, source, ", #", immed_8, ", ", rotate_amount, even(rotate_amount), rotate_imm(div(rotate_amount, 2)));
-        define(mnemonic, cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, bits_11_7(0), bits_6_4(0));
+        // Immediate variant
+        define(mnemonic, condWithoutNV, bits_27_26(0), i(1), opcode(opc), sFld, dest, source, ", #", immediate, constraints, shifter_operand(encodeShifterOperand(immediate)));
 
-        define(mnemonic + "lsl", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsl #", shift_imm, bits_6_4(0)).setExternalName(mnemonic);
-        define(mnemonic + "lsr", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsr #", shift_imm2, shift_imm(mod(shift_imm2, 32)), bits_6_4(2)).setExternalName(mnemonic);
-        define(mnemonic + "asr", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", asr #", shift_imm2, shift_imm(mod(shift_imm2, 32)), bits_6_4(4)).setExternalName(mnemonic);
-        define(mnemonic + "ror", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), bits_6_4(6)).setExternalName(mnemonic);
+        // Register variant
+        define(mnemonic, condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, bits_11_7(0), bits_6_4(0));
 
-        define(mnemonic + "lsl", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsl ", Rs, bits_7_4(1)).setExternalName(mnemonic);
-        define(mnemonic + "lsr", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsr ", Rs, bits_7_4(3)).setExternalName(mnemonic);
-        define(mnemonic + "asr", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", asr ", Rs, bits_7_4(5)).setExternalName(mnemonic);
-        define(mnemonic + "ror", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", ror ", Rs, bits_7_4(7)).setExternalName(mnemonic);
+        // immediate-shifted register variants
+        define(mnemonic + "lsl", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsl #", shift_immWithoutZero, bits_6_4(0)).setExternalName(mnemonic);
+        define(mnemonic + "lsr", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsr #", shift_immWithoutZero, bits_6_4(2)).setExternalName(mnemonic);
+        define(mnemonic + "asr", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", asr #", shift_immWithoutZero, bits_6_4(4)).setExternalName(mnemonic);
+        define(mnemonic + "ror", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", ror #", shift_immWithoutZero, bits_6_4(6)).setExternalName(mnemonic);
 
-        define(mnemonic + "rrx", cond, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", rrx ", bits_11_4(6)).setExternalName(mnemonic);
+        // register-shifted register variants
+        define(mnemonic + "lsl", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsl ", Rs, bits_7_4(1)).setExternalName(mnemonic);
+        define(mnemonic + "lsr", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", lsr ", Rs, bits_7_4(3)).setExternalName(mnemonic);
+        define(mnemonic + "asr", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", asr ", Rs, bits_7_4(5)).setExternalName(mnemonic);
+        define(mnemonic + "ror", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", ror ", Rs, bits_7_4(7)).setExternalName(mnemonic);
+
+//        define(mnemonic, condWithoutNV, bits_27_26(0), i(1), opcode(opc), sFld, dest, source, ", #", immed_8, ", ", rotate_amount, even(rotate_amount), rotate_imm(div(rotate_amount, 2)));
+//        define(mnemonic + "rrx", condWithoutNV, bits_27_26(0), i(0), opcode(opc), sFld, dest, source, Rm, ", rrx ", bits_11_4(6)).setExternalName(mnemonic);
     }
 
     /**
@@ -195,55 +205,56 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
         setCurrentArchitectureManualSection(section);
 
         //Addressing mode 1
-        define(mnemonic + "add", cond, bits_27_26(1), Rd, ", [", Rn, i(0), p(1), u(1), bFld, w(0), lFld, ", #+", offset_12, "]").setExternalName(mnemonic);
-        define(mnemonic + "sub", cond, bits_27_26(1), Rd, ", [", Rn, i(0), p(1), u(0), bFld, w(0), lFld, ", #-", offset_12.withExcludedExternalTestArguments(zero), "]").setExternalName(mnemonic);
+        define(mnemonic + "add", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(0), p(1), u(1), bFld, w(0), lFld, ", #+", offset_12, "]").setExternalName(mnemonic);
+        define(mnemonic + "sub", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(0), p(1), u(0), bFld, w(0), lFld, ", #-", offset_12.withExcludedExternalTestArguments(zero), "]").setExternalName(mnemonic);
 
         //Addressing mode 2
-        define(mnemonic + "add", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, "]", bits_11_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "sub", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, "]", bits_11_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "add", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, "]", bits_11_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "sub", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, "]", bits_11_4(0), ne(Rm, 15)).setExternalName(mnemonic);
 
         //Addressing mode 3
-        define(mnemonic + "addlsl", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", lsl #", shift_imm, "]", shift(0), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "sublsl", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", lsl #", shift_imm.withExcludedExternalTestArguments(zero), "]", shift(0), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "addlsr", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", lsr #", shift_imm2, "]", shift_imm(mod(shift_imm2, 32)), shift(1), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "sublsr", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", lsr #", shift_imm2, "]", shift_imm(mod(shift_imm2, 32)), shift(1), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "addasr", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", asr #", shift_imm2, "]", shift_imm(mod(shift_imm2, 32)), shift(2), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "subasr", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", asr #", shift_imm2, "]", shift_imm(mod(shift_imm2, 32)), shift(2), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "addror", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), "]",
+        define(mnemonic + "addlsl", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", lsl #", shift_imm, "]", shift(0), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "sublsl", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", lsl #", shift_imm.withExcludedExternalTestArguments(zero), "]",
+               shift(0), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "addlsr", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", lsr #", shift_imm2, "]", shift_imm(mod(shift_imm2, 32)), shift(1), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "sublsr", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", lsr #", shift_imm2, "]", shift_imm(mod(shift_imm2, 32)), shift(1), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "addasr", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", asr #", shift_imm2, "]", shift_imm(mod(shift_imm2, 32)), shift(2), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "subasr", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", asr #", shift_imm2, "]", shift_imm(mod(shift_imm2, 32)), shift(2), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "addror", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), "]",
                 shift(3), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "subror", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), "]",
+        define(mnemonic + "subror", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), "]",
                 shift(3), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "addrrx", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", rrx", "]", shift_imm(0), shift(3), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "subrrx", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", rrx", "]", shift_imm(0), shift(3), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "addrrx", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(0), lFld, ", +", Rm, ", rrx", "]", shift_imm(0), shift(3), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "subrrx", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(0), lFld, ", -", Rm, ", rrx", "]", shift_imm(0), shift(3), bit_4(0), ne(Rm, 15)).setExternalName(mnemonic);
 
         //Addressing mode 4
-        define(mnemonic + "addw", cond, bits_27_26(1), Rd, ", [", Rn, i(0), p(1), u(1), bFld, w(1), lFld, ", #+", offset_12, "]", "!", ne(Rd, Rn), ne(Rn, 15)).setExternalName(mnemonic);
-        define(mnemonic + "subw", cond, bits_27_26(1), Rd, ", [", Rn, i(0), p(1), u(0), bFld, w(1), lFld, ", #-", offset_12.withExcludedExternalTestArguments(zero), "]", "!", ne(Rd, Rn), ne(Rn, 15)).setExternalName(mnemonic);
+        define(mnemonic + "addw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(0), p(1), u(1), bFld, w(1), lFld, ", #+", offset_12, "]", "!", ne(Rd, Rn), ne(Rn, 15)).setExternalName(mnemonic);
+        define(mnemonic + "subw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(0), p(1), u(0), bFld, w(1), lFld, ", #-", offset_12.withExcludedExternalTestArguments(zero), "]", "!", ne(Rd, Rn), ne(Rn, 15)).setExternalName(mnemonic);
 
         //Addressing mode 5
-        define(mnemonic + "addw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, "]", bits_11_4(0), "!", ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "subw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, "]", bits_11_4(0), "!", ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "addw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, "]", bits_11_4(0), "!", ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "subw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, "]", bits_11_4(0), "!", ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
 
         //Addressing mode 6
-        define(mnemonic + "addlslw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", lsl #", shift_imm, "]", "!", shift(0), bit_4(0), ne(Rd, Rn),
+        define(mnemonic + "addlslw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", lsl #", shift_imm, "]", "!", shift(0), bit_4(0), ne(Rd, Rn),
                 ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "sublslw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", lsl #", shift_imm.withExcludedExternalTestArguments(zero), "]", "!", shift(0), bit_4(0), ne(Rd, Rn),
+        define(mnemonic + "sublslw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", lsl #", shift_imm.withExcludedExternalTestArguments(zero), "]", "!", shift(0), bit_4(0), ne(Rd, Rn),
                 ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "addlsrw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", lsr #", shift_imm2, "]", "!", shift_imm(mod(shift_imm2, 32)),
+        define(mnemonic + "addlsrw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", lsr #", shift_imm2, "]", "!", shift_imm(mod(shift_imm2, 32)),
                 shift(1), bit_4(0), ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "sublsrw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", lsr #", shift_imm2, "]", "!", shift_imm(mod(shift_imm2, 32)),
+        define(mnemonic + "sublsrw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", lsr #", shift_imm2, "]", "!", shift_imm(mod(shift_imm2, 32)),
                 shift(1), bit_4(0), ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "addasrw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", asr #", shift_imm2, "]", "!", shift_imm(mod(shift_imm2, 32)),
+        define(mnemonic + "addasrw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", asr #", shift_imm2, "]", "!", shift_imm(mod(shift_imm2, 32)),
                 shift(2), bit_4(0), ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "subasrw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", asr #", shift_imm2, "]", "!", shift_imm(mod(shift_imm2, 32)),
+        define(mnemonic + "subasrw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", asr #", shift_imm2, "]", "!", shift_imm(mod(shift_imm2, 32)),
                 shift(2), bit_4(0), ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "addrorw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), "]", "!",
+        define(mnemonic + "addrorw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), "]", "!",
                 shift(3), bit_4(0), ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "subrorw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), "]", "!",
+        define(mnemonic + "subrorw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero), "]", "!",
                 shift(3), bit_4(0), ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "addrrxw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", rrx", "]", "!", shift_imm(0), shift(3), bit_4(0),
+        define(mnemonic + "addrrxw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(1), bFld, w(1), lFld, ", +", Rm, ", rrx", "]", "!", shift_imm(0), shift(3), bit_4(0),
                 ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "subrrxw", cond, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", rrx", "]", "!", shift_imm(0), shift(3), bit_4(0),
+        define(mnemonic + "subrrxw", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, i(1), p(1), u(0), bFld, w(1), lFld, ", -", Rm, ", rrx", "]", "!", shift_imm(0), shift(3), bit_4(0),
                 ne(Rd, Rn), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
 
     }
@@ -257,31 +268,31 @@ public final class RawInstructions extends ARMInstructionDescriptionCreator {
      */
     public void defineLoadAndStoreForPostIndexedAddressingModes(String section, String mnemonic, Object bFld, Object lFld, Object wFld) {
         //Addressing mode 7
-        define(mnemonic + "add" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(0), p(0), u(1), bFld, wFld, lFld, ", #+", offset_12, ne(Rn, 15)).setExternalName(mnemonic);
-        define(mnemonic + "sub" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(0), p(0), u(0), bFld, wFld, lFld, ", #-", offset_12.withExcludedExternalTestArguments(zero), ne(Rn, 15)).setExternalName(mnemonic);
+        define(mnemonic + "add" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(0), p(0), u(1), bFld, wFld, lFld, ", #+", offset_12, ne(Rn, 15)).setExternalName(mnemonic);
+        define(mnemonic + "sub" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(0), p(0), u(0), bFld, wFld, lFld, ", #-", offset_12.withExcludedExternalTestArguments(zero), ne(Rn, 15)).setExternalName(mnemonic);
 
         //Addressing mode 8
-        define(mnemonic + "add" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, bits_11_4(0), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
-        define(mnemonic + "sub" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, bits_11_4(0), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "add" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, bits_11_4(0), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
+        define(mnemonic + "sub" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, bits_11_4(0), ne(Rm, Rn), ne(Rn, 15), ne(Rm, 15)).setExternalName(mnemonic);
 
         //Addressing mode 9
-        define(mnemonic + "addlsl" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", lsl #", shift_imm, shift(0), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
-        define(mnemonic + "sublsl" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", lsl #", shift_imm.withExcludedExternalTestArguments(zero),
+        define(mnemonic + "addlsl" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", lsl #", shift_imm, shift(0), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
+        define(mnemonic + "sublsl" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", lsl #", shift_imm.withExcludedExternalTestArguments(zero),
                 shift(0), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
-        define(mnemonic + "addlsr" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", lsr #", shift_imm2, shift_imm(mod(shift_imm2, 32)),
+        define(mnemonic + "addlsr" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", lsr #", shift_imm2, shift_imm(mod(shift_imm2, 32)),
                 shift(1), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
-        define(mnemonic + "sublsr" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", lsr #", shift_imm2, shift_imm(mod(shift_imm2, 32)),
+        define(mnemonic + "sublsr" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", lsr #", shift_imm2, shift_imm(mod(shift_imm2, 32)),
                 shift(1), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
-        define(mnemonic + "addasr" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", asr #", shift_imm2, shift_imm(mod(shift_imm2, 32)),
+        define(mnemonic + "addasr" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", asr #", shift_imm2, shift_imm(mod(shift_imm2, 32)),
             shift(2), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
-        define(mnemonic + "subasr" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", asr #", shift_imm2, shift_imm(mod(shift_imm2, 32)),
+        define(mnemonic + "subasr" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", asr #", shift_imm2, shift_imm(mod(shift_imm2, 32)),
             shift(2), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
-        define(mnemonic + "addror" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero),
+        define(mnemonic + "addror" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero),
                 shift(3), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
-        define(mnemonic + "subror" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero),
+        define(mnemonic + "subror" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", ror #", shift_imm.withExcludedExternalTestArguments(zero),
                 shift(3), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
-        define(mnemonic + "addrrx" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", rrx", shift_imm(0), shift(3), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
-        define(mnemonic + "subrrx" + "post", cond, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", rrx", shift_imm(0), shift(3), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
+        define(mnemonic + "addrrx" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(1), bFld, wFld, lFld, ", +", Rm, ", rrx", shift_imm(0), shift(3), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
+        define(mnemonic + "subrrx" + "post", condWithoutNV, bits_27_26(1), Rd, ", [", Rn, "]", i(1), p(0), u(0), bFld, wFld, lFld, ", -", Rm, ", rrx", shift_imm(0), shift(3), bit_4(0), ne(Rm, 15), ne(Rn, 15), ne(Rm, Rn)).setExternalName(mnemonic);
 
     }
 

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -50,12 +52,12 @@ public class ARMAssemblyTester extends RiscAssemblyTester<RiscTemplate> {
 
     @Override
     protected String assemblerCommand() {
-        return "as -EB";
+        return "arm-none-eabi-as -EB";
     }
 
     @Override
     protected void assembleExternally(IndentWriter writer, RiscTemplate template, List<Argument> argumentList, String label) {
-        final RiscExternalInstruction instruction = new RiscExternalInstruction(template, argumentList);
+        final RiscExternalInstruction instruction = new ARMExternalInstruction(template, argumentList);
         writer.println(instruction.toString());
     }
 
