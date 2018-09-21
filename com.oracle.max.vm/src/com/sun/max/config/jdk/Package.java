@@ -61,6 +61,11 @@ public class Package extends BootImagePackage {
         MaxineVM.registerKeepClassInit("sun.misc.Perf");
         MaxineVM.registerKeepClassInit("sun.misc.Launcher");
 
+        // The following are needed to make -Dsun.misc.URLClassPath.*=value make an effect
+        Extensions.resetField("sun.misc.URLClassPath", "DEBUG");
+        Extensions.resetField("sun.misc.URLClassPath", "DEBUG_LOOKUP_CACHE");
+        Extensions.resetField("sun.misc.URLClassPath", "DISABLE_JAR_CHECKING");
+        Extensions.registerClassForReInit("sun.misc.URLClassPath");
         // The following are needed to make -Djava.lang.invoke.MethodHandle.*=value make an effect
         Extensions.resetField("java.lang.invoke.MethodHandleStatics", "DEBUG_METHOD_HANDLE_NAMES");
         Extensions.resetField("java.lang.invoke.MethodHandleStatics", "DUMP_CLASS_FILES");

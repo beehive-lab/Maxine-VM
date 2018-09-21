@@ -5,7 +5,7 @@ pipeline {
         timeout(time: 1, unit: 'HOURS')
     }
     tools {
-        jdk 'openJDK7u131'
+        jdk 'openJDK8'
     }
     environment {
         MAXINE_HOME="$WORKSPACE/maxine"
@@ -62,8 +62,7 @@ pipeline {
             steps {
                 parallel 'test': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX test -image-configs=java -tests=c1x,graal,junit:test.com,output'
-                        sh '$MX test -maxvm-configs=jsr292 -image-configs=java -tests=jsr292'
+                        sh '$MX test -image-configs=java -tests=c1x,graal,junit:test.com,output,jsr292'
                         sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
                     }
                 }, 'crossisa': {

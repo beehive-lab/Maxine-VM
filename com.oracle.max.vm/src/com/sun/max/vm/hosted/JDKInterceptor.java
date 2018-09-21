@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -26,6 +26,7 @@ import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.nio.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import sun.misc.*;
 
@@ -167,6 +168,7 @@ public final class JDKInterceptor {
             "sys_paths",
             new ValueField("loadedLibraryNames", ReferenceValue.from(new Vector())).makeNonFinal(),
             new ValueField("systemNativeLibraries", ReferenceValue.from(systemNativeLibraries)).makeNonFinal(),
+            new ValueField("parallelLockMap", ReferenceValue.from(new ConcurrentHashMap<String, Object>())).makeNonFinal(),
         JDK.java_util_EnumMap,
             "entrySet",
         JDK.java_lang_invoke_CallSite,
@@ -246,6 +248,9 @@ public final class JDKInterceptor {
             new ArrayIndexScaleRecomputation("ARRAY_FLOAT_INDEX_SCALE", float[].class),
             new ArrayIndexScaleRecomputation("ARRAY_DOUBLE_INDEX_SCALE", double[].class),
             new ArrayIndexScaleRecomputation("ARRAY_OBJECT_INDEX_SCALE", Object[].class),
+        JDK.sun_misc_URLClassPath,
+            new ValueField("loaders", ReferenceValue.from(new ArrayList())).makeNonFinal(),
+            new ValueField("lmap", ReferenceValue.from(new HashMap())).makeNonFinal(),
         JDK.sun_net_www_protocol_jar_JarFileFactory,
             new ValueField("fileCache", ReferenceValue.from(new HashMap())).makeNonFinal(),
             new ValueField("urlCache", ReferenceValue.from(new HashMap())).makeNonFinal(),
@@ -520,6 +525,8 @@ public final class JDKInterceptor {
             "PRECISION",
             "ZONE",
             "ZONE_ID",
+        JDK.sun_misc_Launcher$ExtClassLoader,
+            "instance",
         JDK.sun_misc_SharedSecrets,
             "javaObjectInputStreamAccess",
    };
