@@ -154,6 +154,9 @@ public class Package extends BootImagePackage {
             Extensions.registerClassForReInit("java.lang.UNIXProcess");
             Extensions.resetField("java.io.File", "fs");
             Extensions.registerClassForReInit("java.io.File");
+
+            Extensions.resetField("java.util.concurrent.atomic.Striped64", "NCPU");
+            Extensions.registerClassForReInit("java.util.concurrent.atomic.Striped64");
         }
     }
 

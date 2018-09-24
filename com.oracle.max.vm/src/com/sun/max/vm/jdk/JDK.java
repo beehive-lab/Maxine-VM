@@ -190,6 +190,7 @@ public class JDK {
     public static final ClassRef java_util_concurrent_atomic_AtomicLongFieldUpdater$LockedUpdater = new LazyClassRef(java.util.concurrent.atomic.AtomicLongFieldUpdater.class, "LockedUpdater");
     public static final ClassRef java_util_concurrent_atomic_AtomicStampedReference = new LazyClassRef(java.util.concurrent.atomic.AtomicStampedReference.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicMarkableReference = new LazyClassRef(java.util.concurrent.atomic.AtomicMarkableReference.class);
+    public static final ClassRef java_util_concurrent_atomic_Striped64 = new LazyClassRef("java.util.concurrent.atomic.Striped64");
 
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class);
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer$Node = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class, "Node");
