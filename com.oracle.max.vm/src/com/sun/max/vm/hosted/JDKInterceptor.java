@@ -501,7 +501,7 @@ public final class JDKInterceptor {
         JDK.java_util_concurrent_ForkJoinTask,
             new FieldOffsetRecomputation("STATUS", "status"),
         JDK.java_util_concurrent_locks_ReentrantReadWriteLock,
-            new ArrayBaseOffsetRecomputation("TID_OFFSET", Object[].class),
+            new FieldOffsetRecomputation("TID_OFFSET", JDK.java_lang_Thread, "tid"),
         JDK.java_util_concurrent_ThreadLocalRandom,
             new FieldOffsetRecomputation("SEED", JDK.java_lang_Thread, "threadLocalRandomSeed"),
             new FieldOffsetRecomputation("PROBE", JDK.java_lang_Thread, "threadLocalRandomProbe"),
