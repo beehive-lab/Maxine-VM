@@ -78,6 +78,4 @@ it is thus omitted from the pass-rate.
 Issues
 ------
 
-Any known issues are reported in the `issue tracker <https://github.com/beehive-lab/Maxine-VM/issues>`__.
-
-For reporting new issues please see :ref:`reporting-bugs-label`.
+Any issues are reported in the `issue tracker <https://github.com/beehive-lab/Maxine-VM/issues>`__.
