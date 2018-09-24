@@ -3,14 +3,20 @@ The Maxine Project: Contributors
 
 This page lists the people who have been associated with the Maxine
 project.
+For code contribution statistics see `github contributions <https://github.com/beehive-lab/Maxine-VM/graphs/contributors>`__.
 
 The University of Manchester
 ----------------------------
 
 -  `Andrey Rodchenko <https://github.com/arodchen>`__
--  Andy Nisbet
+-  `Andy Nisbet <https://github.com/drandynisbet>`__
+-  Mikel Lujan
 -  `Christos Kotselidis <https://github.com/kotselidis>`__
 -  `Foivos Zakkak <https://github.com/zakkak>`__
+-  `Tim Hartley <https://github.com/timhartley>`__
+-  `Iain Apreotesei <https://github.com/ibriq>`__
+-  `Andreas Andronikakis <https://github.com/aandronikakis>`__
+-  `Costas Lebesis <https://github.com/lebco>`__
 
 Oracle Labs
 -----------
