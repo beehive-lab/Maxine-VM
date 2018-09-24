@@ -157,6 +157,10 @@ public class Package extends BootImagePackage {
 
             Extensions.resetField("java.util.concurrent.atomic.Striped64", "NCPU");
             Extensions.registerClassForReInit("java.util.concurrent.atomic.Striped64");
+
+            Extensions.resetField("sun.misc.InnocuousThread", "ACC");
+            Extensions.resetField("sun.misc.InnocuousThread", "THREADGROUP");
+            Extensions.registerClassForReInit("sun.misc.InnocuousThread");
         }
     }
 

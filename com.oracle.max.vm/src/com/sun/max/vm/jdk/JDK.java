@@ -201,6 +201,7 @@ public class JDK {
     public static final ClassRef java_util_concurrent_locks_StampedLock = new LazyClassRef("java.util.concurrent.locks.StampedLock");
     public static final ClassRef java_util_concurrent_locks_StampedLock$WNode = new LazyClassRef("java.util.concurrent.locks.StampedLock$WNode");
 
+    public static final ClassRef sun_misc_InnocuousThread            = new ClassRef(sun.misc.InnocuousThread.class);
     public static final ClassRef sun_misc_VM                         = new ClassRef(sun.misc.VM.class);
     public static final ClassRef sun_misc_Version                    = new ClassRef(sun.misc.Version.class);
     public static final ClassRef sun_misc_SharedSecrets              = new ClassRef(sun.misc.SharedSecrets.class);
