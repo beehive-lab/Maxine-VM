@@ -194,7 +194,7 @@ public class DependenciesStats {
                 // Skip unused ids
                 do {
                     classActor = ClassIDManager.toClassActor(classId++);
-                } while(classActor == null && classId <= largestClassId);
+                } while (classActor == null && classId <= largestClassId);
                 if (classId > largestClassId) {
                     break;
                 }

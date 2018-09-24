@@ -37,9 +37,9 @@ public enum CompiledStackFrameColumnKind implements ColumnKind {
         }
     },
     NAME("Name", "Abstract name of the frame slot", true, -1),
-    ADDRESS ("Address", "Absolute memory location of the frame slot", false, -1),
-    OFFSET_SP ("Offset(SP)", "Offset in bytes from the Stack Pointer of the frame slot", false, -1),
-    OFFSET_FP ("Offset(FP)", "Offset in bytes from the Frame Pointer of the frame slot", false, -1),
+    ADDRESS("Address", "Absolute memory location of the frame slot", false, -1),
+    OFFSET_SP("Offset(SP)", "Offset in bytes from the Stack Pointer of the frame slot", false, -1),
+    OFFSET_FP("Offset(FP)", "Offset in bytes from the Frame Pointer of the frame slot", false, -1),
     VALUE("Value", "value as a word of the frame slot", true, 20),
     REGION("Region", "Memory region pointed to by value of the frame slot", false, 20);
 

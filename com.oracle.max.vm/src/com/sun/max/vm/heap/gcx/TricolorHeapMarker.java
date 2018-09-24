@@ -1565,7 +1565,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
                     // find the next black object with this word.
                     bitIndexInWord += 2;
                     w = bitmapWord >>> bitIndexInWord;
-                } while(w != 0L);
+                } while (w != 0L);
                 bitmapWordIndex = bitmapWordIndex(nextBitmapWordLimit);
             } else {
                 bitmapWordIndex++;
@@ -1643,7 +1643,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
                 preciseRegionSweep(regionsSweeper);
             }
             regionsSweeper.endSweep();
-        } while(regionsSweeper.endOfSweepingRegion().lessThan(endOfRightmostLiveObject));
+        } while (regionsSweeper.endOfSweepingRegion().lessThan(endOfRightmostLiveObject));
         regionsSweeper.reachedRightmostLiveRegion();
     }
 
@@ -1756,7 +1756,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
                     }
                     bitIndexInWord += 2;
                     w = bitmapWord >>> bitIndexInWord;
-                } while(w != 0L);
+                } while (w != 0L);
                 bitmapWordIndex = nextCellBitmapWordIndex;
             } else {
                 bitmapWordIndex++;

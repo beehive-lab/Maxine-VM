@@ -134,7 +134,7 @@ public class JVMTIEvents {
         // Checkstyle: stop
         @HOSTED_ONLY
         // Checkstyle: resume
-        private E(int code, int phases) {
+        E(int code, int phases) {
             if (code > 0) {
                 FatalError.check(code - JVMTIConstants.JVMTI_MIN_EVENT_TYPE_VAL == ordinal(), "JVMTIEvent code mismatch");
             }

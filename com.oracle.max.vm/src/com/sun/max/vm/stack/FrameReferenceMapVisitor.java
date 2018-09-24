@@ -51,7 +51,7 @@ public abstract class FrameReferenceMapVisitor {
     /**
      * @see StackReferenceMapPreparer#logReferenceMapByteAfter(Pointer, int, byte)
      */
-    public abstract void logReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, final byte referenceMapByte);
+    public abstract void logReferenceMapByteAfter(Pointer framePointer, int baseSlotIndex, byte referenceMapByte);
 
     /**
      * Gets the reference-map index of a given stack slot (i.e. which bit in the reference map is correlated with the slot).

@@ -705,8 +705,7 @@ public class ClassfileWriter {
                             case BYTE:
                             case CHAR:
                             case SHORT:
-                            case INT:
-                            {
+                            case INT: {
                                 cf.writeUnsigned2(cf.indexOf(createIntegerConstant(constantValue.toInt())));
                                 break;
                             }

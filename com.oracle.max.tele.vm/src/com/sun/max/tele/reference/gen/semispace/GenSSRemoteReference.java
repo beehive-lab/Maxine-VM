@@ -489,7 +489,7 @@ public class GenSSRemoteReference extends RemoteReference {
             }
         },
 
-        REF_DEAD ("Dead") {
+        REF_DEAD("Dead") {
             // Properties
             @Override ObjectStatus status() {
                 return DEAD;

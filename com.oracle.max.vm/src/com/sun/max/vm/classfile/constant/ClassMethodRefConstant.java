@@ -77,7 +77,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
 
     VirtualMethodActor resolveVirtual(ConstantPool pool, int index);
 
-    ClassMethodRefKey key(final ConstantPool pool);
+    ClassMethodRefKey key(ConstantPool pool);
 
     final class Resolved extends ResolvedMethodRefConstant<ClassMethodRefConstant> implements ClassMethodRefConstant, ClassMethodRefKey {
 

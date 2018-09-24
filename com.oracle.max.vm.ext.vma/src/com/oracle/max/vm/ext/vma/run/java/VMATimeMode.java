@@ -56,7 +56,7 @@ public enum VMATimeMode {
     /**
      * Wall clock in milliseconds.
      */
-    WALLMS (false){
+    WALLMS(false){
         @Override
         public long getTime() {
             return System.currentTimeMillis();

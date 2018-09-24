@@ -478,7 +478,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
                     cont = sub.allSubclassesDo(c);
                 }
                 classId = sub.nextSiblingId;
-            } while(classId != NULL_CLASS_ID && cont);
+            } while (classId != NULL_CLASS_ID && cont);
         }
         return cont;
     }

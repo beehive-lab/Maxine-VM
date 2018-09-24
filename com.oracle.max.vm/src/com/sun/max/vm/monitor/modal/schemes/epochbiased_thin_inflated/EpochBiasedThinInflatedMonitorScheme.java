@@ -35,7 +35,7 @@ import com.sun.max.vm.monitor.modal.schemes.*;
 public class EpochBiasedThinInflatedMonitorScheme extends ModalMonitorScheme {
     @HOSTED_ONLY
     public EpochBiasedThinInflatedMonitorScheme() {
-         super(BiasedLockModeHandler.asFastPath(true,
+        super(BiasedLockModeHandler.asFastPath(true,
                                 ThinLockModeHandler.asBiasedLockDelegate(
                                 InflatedMonitorModeHandler.asThinLockDelegate())));
     }

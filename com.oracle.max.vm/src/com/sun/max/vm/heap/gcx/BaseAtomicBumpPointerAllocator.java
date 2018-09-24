@@ -232,7 +232,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
                 // Already at end
                 return cell.asPointer();
             }
-        } while(!thisAddress.compareAndSwapWord(topOffset(), cell, hardLimit).equals(cell));
+        } while (!thisAddress.compareAndSwapWord(topOffset(), cell, hardLimit).equals(cell));
         return cell.asPointer();
     }
 
@@ -254,7 +254,7 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
             if (!cell.equals(oldTop)) {
                 return false;
             }
-        } while(!thisAddress.compareAndSwapWord(topOffset(), oldTop, retiredTop).equals(oldTop));
+        } while (!thisAddress.compareAndSwapWord(topOffset(), oldTop, retiredTop).equals(oldTop));
         return true;
     }
 

@@ -352,7 +352,7 @@ public interface HeapScheme extends VMScheme {
             return flags | mask;
         }
 
-        public static final int makePinSupportFlags(boolean supported, boolean queryable, boolean canNest) {
+        public static int makePinSupportFlags(boolean supported, boolean queryable, boolean canNest) {
             int flags = IS_INITIALIZED.or(0);
             if (supported) {
                 flags = IS_SUPPORTED.or(flags);
