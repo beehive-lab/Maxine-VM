@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -46,11 +46,6 @@ public class JDK {
      * Version number of the JDK.
      */
     public static final int JDK_VERSION = jdkVersionValue(JDK_VERSION_STRING);
-
-    /**
-     * Value for {@linkplain JDK_VERSION} for JDK 6.
-     */
-    public static final int JDK_6 = 6;
 
     /**
      * Value for {@linkplain JDK_VERSION} for JDK 7.
