@@ -202,6 +202,8 @@ public class JDK {
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class, "Node");
     public static final ClassRef java_util_concurrent_locks_LockSupport = new LazyClassRef(java.util.concurrent.locks.LockSupport.class);
     public static final ClassRef java_util_concurrent_locks_ReentrantReadWriteLock = new LazyClassRef("java.util.concurrent.locks.ReentrantReadWriteLock");
+    public static final ClassRef java_util_concurrent_locks_StampedLock = new LazyClassRef("java.util.concurrent.locks.StampedLock");
+    public static final ClassRef java_util_concurrent_locks_StampedLock$WNode = new LazyClassRef("java.util.concurrent.locks.StampedLock$WNode");
 
     public static final ClassRef sun_misc_VM                         = new ClassRef(sun.misc.VM.class);
     public static final ClassRef sun_misc_Version                    = new ClassRef(sun.misc.Version.class);
