@@ -33,6 +33,7 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
 
+import static com.sun.max.vm.MaxineVM.dynamicProfiler;
 import static com.sun.max.vm.MaxineVM.isHosted;
 
 public class Profiler {
@@ -51,9 +52,13 @@ public class Profiler {
     public static int SIZE = 10000;
     public static int SIZE2 = 2;
     public static int[][] histogram = new int[SIZE][SIZE2];
+    public static int[][] histogramGC = new int[SIZE][SIZE2];
     public static int totalObjectsize;
     public static int totalRecordedObjects;
+    public static int totalObjectsizeGC;
+    public static int totalRecordedObjectsGC;
     public static int lastEntry;
+    public static int lastEntryGC;
     public static float padding;
     public static int collectedObjectSize;
     private static boolean PrintHistogram;
@@ -69,11 +74,28 @@ public class Profiler {
         for (int i = 0; i < SIZE; i++) {
             histogram[i][0] = 0;
             histogram[i][1] = 0;
+            histogramGC[i][0] = 0;
+            histogramGC[i][1] = 0;
         }
         lastEntry = 0;
         totalObjectsize = 0;
         totalRecordedObjects = 0;
         collectedObjectSize = 0;
+
+        lastEntryGC = 0;
+        totalObjectsizeGC = 0;
+        totalRecordedObjectsGC = 0;
+    }
+
+    /**
+     * Grow the histogram array after GC
+     * @param when
+     */
+    public void growHistogram(Heap.GCCallbackPhase when) {
+
+        Log.println("post gc");
+        Object tmp = new Object();
+
     }
 
     /**
@@ -92,14 +114,35 @@ public class Profiler {
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    public int searchForGC(int size) {
+        for (int i = 0; i < lastEntryGC; i++) {
+            if (histogramGC[i][0] == size) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public void recordNewEntry(int size, int index) {
         histogram[index][0] = size;
         histogram[index][1] = 1;
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    public void recordNewEntryGC(int size, int index) {
+        histogramGC[index][0] = size;
+        histogramGC[index][1] = 1;
+    }
+
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public void increment(int index) {
         histogram[index][1]++;
+    }
+
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    public void incrementGC(int index) {
+        histogramGC[index][1]++;
     }
 
     /**
@@ -124,6 +167,21 @@ public class Profiler {
         totalObjectsize = totalObjectsize + size;
     }
 
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public void recordGC(int size) {
+        int entry = searchForGC(size);
+
+        if (entry == -1) {
+            recordNewEntryGC(size, lastEntryGC);
+            lastEntryGC++;
+        } else {
+            incrementGC(entry);
+        }
+        totalRecordedObjectsGC++;
+        totalObjectsizeGC = totalObjectsizeGC + size;
+    }
+
     /**
      * This method is called when a profiled object is allocated.
      */
@@ -136,6 +194,18 @@ public class Profiler {
         record(size);
         unlock(lockDisabledSafepoints);
             //}
+        //}
+    }
+
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public void profileGC(int size) {
+        //if (VmThread.current().PROFILE) {
+        //if (MaxineVM.isRunning()) {
+        final boolean lockDisabledSafepoints = lock();
+        recordGC(size);
+        unlock(lockDisabledSafepoints);
+        //}
         //}
     }
 
@@ -253,14 +323,17 @@ public class Profiler {
     }
 
     /**
-     * Reset the histogram.
+     * Reset the histogram and post GC operations.
      */
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void resetHistogram() {
         final boolean lockDisabledSafepoints = lock();
-        //Log.print("Collected heap used space = ");
-        //Log.println(Heap.reportUsedSpace());
+        Log.print("Collected heap used space = ");
+        Log.println(Heap.reportUsedSpace());
+
+        Log.print("HistogramGC heap used space = ");
+        Log.println(totalObjectsizeGC);
         //Log.print("Collected heap used space = ");
         long survived = Heap.reportUsedSpace();
         //Log.print(survived/1048576);
@@ -269,9 +342,18 @@ public class Profiler {
         for (int i = 0; i < lastEntry; i++) {
             histogram[i][0] = 0;
             histogram[i][1] = 0;
+
+            histogramGC[i][0] = 0;
+            histogramGC[i][1] = 0;
         }
         lastEntry = 0;
         totalObjectsize = (int) survived;
+        lastEntryGC = 0;
+        totalObjectsizeGC = 0;
+
+        ///
+        growHistogram(Heap.GCCallbackPhase.AFTER);
+
         unlock(lockDisabledSafepoints);
     }
 
