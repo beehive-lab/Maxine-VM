@@ -15,7 +15,7 @@
 
 #### Roadmap
 
-Maxine VM's roadmap can be found in the [wiki](https://github.com/beehive-lab/Maxine-VM/wiki#roadmap).
+Maxine VM's roadmap can be found [here](https://maxine-vm.readthedocs.io/en/latest/#roadmap).
 
 #### Publications
 
@@ -46,7 +46,7 @@ For academic collaborations please contact
 
 [MaxSim: A simulation platform for Managed Applications, Andrey Rodchenko](https://github.com/beehive-lab/MaxSim)
 
-## Wiki
+## Read the Docs
 
 For more information please visit
-the [Maxine VM's wiki](https://github.com/beehive-lab/Maxine-VM/wiki)
+the [Maxine VM's readthedocs page](https://maxine-vm.readthedocs.io/en/latest/)
