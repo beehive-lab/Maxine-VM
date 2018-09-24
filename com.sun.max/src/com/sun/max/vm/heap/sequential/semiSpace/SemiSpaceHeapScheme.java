@@ -21,6 +21,7 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
+import static com.sun.max.vm.MaxineVM.dynamicProfiler;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
@@ -561,6 +562,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             }
 
             Memory.copyBytes(fromCell, toCell, size);
+            //call the profiler
+            dynamicProfiler.profileGC(size.toInt());
 
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Reference toRef = Reference.fromOrigin(toOrigin);
