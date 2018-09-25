@@ -541,7 +541,6 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.crashme();
             asm.push(Aarch64.linkRegister);
 
             // now allocate the frame for this method
@@ -569,6 +568,8 @@ public class Stubs {
 
             // pop this method's frame
             asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
+            // restore linkRegister
+            asm.pop(Aarch64.linkRegister);
 
             // jump to the resolved method
             asm.jmp(registerConfig.getScratchRegister1());
