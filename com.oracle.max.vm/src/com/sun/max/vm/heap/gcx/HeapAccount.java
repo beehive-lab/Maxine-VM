@@ -390,7 +390,7 @@ public class HeapAccount<T extends HeapAccountOwner>{
             final Pointer endOfRange = cell.plus(regionRange.numRegions() << log2RegionSizeInBytes);
             do {
                 cell = visitor.visitCell(cell);
-            } while(cell.lessThan(endOfRange));
+            } while (cell.lessThan(endOfRange));
         }
     }
 }

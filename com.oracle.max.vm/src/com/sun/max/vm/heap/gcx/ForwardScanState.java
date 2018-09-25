@@ -166,7 +166,7 @@ final class ForwardScanState extends ColorMapScanState implements SpecialReferen
                 }
                 // Update rightmost for the next iterate over the current range.
                 rightmostBitmapWordIndex = b > rangeRightmostBitmapWordIndex ? rangeRightmostBitmapWordIndex : b;
-            } while(true);
+            } while (true);
         }
     }
 
@@ -181,7 +181,7 @@ final class ForwardScanState extends ColorMapScanState implements SpecialReferen
                 return;
             }
             rightmostBitmapWordIndex = b;
-        } while(true);
+        } while (true);
     }
 
     public boolean isReachable(Reference ref) {

@@ -34,6 +34,7 @@ import com.sun.cri.ri.*;
  */
 public enum C1XIntrinsic {
 
+    // Checkstyle: stop
     // java.lang.Object
     java_lang_Object$init     ("java.lang.Object", "<init>", "()V"),
     java_lang_Object$hashCode ("java.lang.Object", "hashCode", "()I"),
@@ -110,6 +111,7 @@ public enum C1XIntrinsic {
     sun_misc_Unsafe$compareAndSwapObject ("sun.misc.Unsafe", "compareAndSwapObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z"),
     sun_misc_Unsafe$compareAndSwapLong   ("sun.misc.Unsafe", "compareAndSwapLong", "(Ljava/lang/Object;JJJ)Z"),
     sun_misc_Unsafe$compareAndSwapInt    ("sun.misc.Unsafe", "compareAndSwapInt", "(Ljava/lang/Object;JII)Z");
+    // Checkstyle: resume
 
     private static final HashMap<String, HashMap<String, C1XIntrinsic>> intrinsicMap = new HashMap<String, HashMap<String, C1XIntrinsic>>(100);
 

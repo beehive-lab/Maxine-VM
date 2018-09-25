@@ -480,10 +480,12 @@ public class Aarch64Assembler extends AbstractAssembler {
      * See ARM ARM section C5.3
      */
     public enum SystemRegister {
+        // Checkstyle: stop
         NZCV    (0b1101101000010000),
         DAIF    (0b1101101000010001),
         SPSel   (0b1100001000010000),
         SPSR_EL1(0b1100001000000000);
+        // Checkstyle: resume
 
         public final int encoding;
 
@@ -506,9 +508,11 @@ public class Aarch64Assembler extends AbstractAssembler {
      * So these 8 bits are set to zeros here.
      */
     public enum PStateField {
+        // Checkstyle: stop
         PSTATEField_SP     (0b00000000000101),
         PSTATEField_DAIFSet(0b01100000000110),
         PSTATEField_DAIFClr(0b01100000000111);
+        // Checkstyle: resume
 
         public final int encoding;
 

@@ -33,6 +33,7 @@ import com.sun.cri.ri.*;
  * further describing its behavior.
  */
 public enum CiKind {
+    // Checkstyle: stop
     Boolean('z', "boolean", FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
     Byte   ('b', "byte",    FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
     Short  ('s', "short",   FIELD_TYPE | RETURN_TYPE | PRIMITIVE | STACK_INT),
@@ -47,6 +48,7 @@ public enum CiKind {
     Jsr    ('r', "jsr",     0),
     /** The non-type. */
     Illegal('-', "illegal", 0);
+    // Checkstyle: resume
 
     public static final CiKind[] VALUES = values();
     public static final CiKind[] JAVA_VALUES = new CiKind[] {CiKind.Boolean, CiKind.Byte, CiKind.Short, CiKind.Char, CiKind.Int, CiKind.Float, CiKind.Long, CiKind.Double, CiKind.Object};

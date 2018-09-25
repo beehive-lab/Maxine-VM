@@ -160,7 +160,7 @@ public final class CardTable extends  Log2RegionToByteMapTable {
             do {
                 unsafeSet(firstCard, cardValue);
                 firstCard = firstCard.plus(CardTableRSet.CARD_SIZE);
-            } while(lastCard.greaterThan(firstCard));
+            } while (lastCard.greaterThan(firstCard));
         }
     }
 }

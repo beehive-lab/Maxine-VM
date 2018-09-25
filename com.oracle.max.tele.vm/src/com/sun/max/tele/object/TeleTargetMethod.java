@@ -106,7 +106,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
          *
          * @see TargetMethod#scalarLiterals()
          */
-        SCALAR_LITERALS ("array of scalar literals for a compilation"),
+        SCALAR_LITERALS("array of scalar literals for a compilation"),
 
         /**
          * Reference possibly held in a {@link TargetMethod} to an instance of {@code Object[]} in the code cache
@@ -120,7 +120,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
          *
          * @see TargetMethod#referenceLiterals()
          */
-        REFERENCE_LITERALS ("array of reference literals for a compilation"),
+        REFERENCE_LITERALS("array of reference literals for a compilation"),
 
         /**
          * Reference possibly held in a {@link TargetMethod} to an instance of {@code byte[]} in the code cache holding
@@ -133,7 +133,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
          *
          * @see TargetMethod#code()
          */
-        CODE ("byte array holding machine code for a compilation");
+        CODE("byte array holding machine code for a compilation");
 
         private final String label;
 

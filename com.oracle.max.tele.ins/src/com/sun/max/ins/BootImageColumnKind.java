@@ -31,7 +31,7 @@ import com.sun.max.vm.*;
 *
 */
 public enum BootImageColumnKind implements ColumnKind {
-    NAME ("Parameter", "Boot Image configuration parameter", true, 20) {
+    NAME("Parameter", "Boot Image configuration parameter", true, 20) {
         @Override
         public boolean canBeMadeInvisible() {
             return false;

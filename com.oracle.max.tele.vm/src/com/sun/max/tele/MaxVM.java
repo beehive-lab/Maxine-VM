@@ -310,7 +310,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * subject to relocation by GC.
      * @return a {@link RemoteReference} to the object.
      */
-    RemoteReference makeReference(final Address origin);
+    RemoteReference makeReference(Address origin);
 
     /**
      * Creates a remote object reference that can be used for access to a VM <em>quasi</em> object;
@@ -396,7 +396,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void resume(final boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
+    void resume(boolean synchronous, boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM.
@@ -406,7 +406,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void singleStepThread(final MaxThread thread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException;
+    void singleStepThread(MaxThread thread, boolean synchronous) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Single steps a thread in the VM; if the instruction is a call, then resume VM execution until call returns.
@@ -417,7 +417,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @throws InvalidVMRequestException execution not permissible in current VM state.
      * @throws OSExecutionRequestException execution failed in OS.
      */
-    void stepOver(final MaxThread thread, boolean synchronous, final boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
+    void stepOver(MaxThread thread, boolean synchronous, boolean withClientBreakpoints) throws InvalidVMRequestException, OSExecutionRequestException;
 
     /**
      * Resumes execution of the VM with a temporary breakpoint set.
@@ -428,7 +428,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @throws OSExecutionRequestException execution failed in OS.
      * @throws InvalidVMRequestException execution not permissible in current VM state.
      */
-    void runToInstruction(final MaxCodeLocation codeLocation, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
+    void runToInstruction(MaxCodeLocation codeLocation, boolean synchronous, boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
 
     /**
      * @param thread the thread whose top frame should be returned from
@@ -437,7 +437,7 @@ public interface MaxVM extends MaxEntity<MaxVM> {
      * @throws OSExecutionRequestException execution failed in OS.
      * @throws InvalidVMRequestException execution not permissible in current VM state.
      */
-    void returnFromFrame(final MaxThread thread, final boolean synchronous, final boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
+    void returnFromFrame(MaxThread thread, boolean synchronous, boolean withClientBreakpoints) throws OSExecutionRequestException, InvalidVMRequestException;
 
     /**
      * Pauses the running VM.

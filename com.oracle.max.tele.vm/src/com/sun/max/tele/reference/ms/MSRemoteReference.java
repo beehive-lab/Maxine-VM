@@ -64,7 +64,7 @@ public final class MSRemoteReference extends  RemoteReference {
          * Reference to an object known to be reachable (during {@linkplain HeapPhase#MUTATION mutation} and {@linkplain HeapPhase#RECLAIMING reclaiming}
          * phases, or not yet determined unreachable during {@linkplain HeapPhase#ANALYZING analyzing}.
          */
-        MS_LIVE ("LIVE object"){
+        MS_LIVE("LIVE object"){
 
             // Properties
 
@@ -92,7 +92,7 @@ public final class MSRemoteReference extends  RemoteReference {
          * of <em>free space</em>, at which time this quasi-object dies.  This state should not occur
          * during other heap phases.
          */
-        MS_UNREACHABLE ("UNREACHABLE object (during RECLAIMING only)") {
+        MS_UNREACHABLE("UNREACHABLE object (during RECLAIMING only)") {
 
             // Properties
 
@@ -114,7 +114,7 @@ public final class MSRemoteReference extends  RemoteReference {
          * allocation.  When this memory is <em>overwritten</em>, either by allocation of a new object or merged with some other
          * representation of free space, then this quasi-object dies.
          */
-        MS_FREE_CHUNK ("Chunk of allocatable free memory") {
+        MS_FREE_CHUNK("Chunk of allocatable free memory") {
 
             // Properties;
 
@@ -135,7 +135,7 @@ public final class MSRemoteReference extends  RemoteReference {
          * Reference to a <em>quasi-object</em> that fills a region of unallocated memory and which is <em>not</em> available for
          * allocation.
          */
-        MS_DARK_MATTER ("Chunk of unallocatable free memory") {
+        MS_DARK_MATTER("Chunk of unallocatable free memory") {
 
             // Properties;
 
@@ -156,7 +156,7 @@ public final class MSRemoteReference extends  RemoteReference {
          * Reference to a formerly live or quasi-object that has been determined unreachable, and which should be
          * forgotten. No assumptions may be made about memory contents at the location.
          */
-        MS_DEAD ("DEAD object or quasi-object") {
+        MS_DEAD("DEAD object or quasi-object") {
 
             // Properties
             @Override ObjectStatus status() {

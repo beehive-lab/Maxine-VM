@@ -294,7 +294,7 @@ public final class FirstFitMarkSweepSpace<T extends HeapAccountOwner> extends He
                 if (MaxineVM.isDebug()) {
                     checkForSuspisciousGC(gcCount++);
                 }
-            } while(Heap.collectGarbage()); // Always collect for at least one region.
+            } while (Heap.collectGarbage()); // Always collect for at least one region.
             // Not enough freed memory.
             throw outOfMemoryError;
         }

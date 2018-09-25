@@ -309,7 +309,7 @@ public final class FreeHeapSpaceManager extends Sweeper implements HeapSpace {
                 }
                 prevChunk = chunk;
                 chunk = chunk.next;
-            } while(chunk != null);
+            } while (chunk != null);
             return Address.zero();
         }
 

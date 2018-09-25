@@ -1058,8 +1058,7 @@ public abstract class ReferenceMapInterpreter {
                 case IOR:
                 case IXOR:
                 case FCMPL:
-                case FCMPG:
-                {
+                case FCMPG: {
                     popCategory1();
                     break;
                 }
@@ -1075,8 +1074,7 @@ public abstract class ReferenceMapInterpreter {
                 case DREM:
                 case LAND:
                 case LOR:
-                case LXOR:
-                {
+                case LXOR: {
                     popCategory2();
                     break;
                 }
@@ -1090,20 +1088,17 @@ public abstract class ReferenceMapInterpreter {
                 case D2L:
                 case I2B:
                 case I2C:
-                case I2S:
-                {
+                case I2S: {
                     break;
                 }
-                case IINC:
-                {
+                case IINC: {
                     skip2();
                     break;
                 }
                 case I2D:
                 case I2L:
                 case F2L:
-                case F2D:
-                {
+                case F2D: {
                     popCategory1();
                     pushCategory2();
                     break;
@@ -1111,16 +1106,14 @@ public abstract class ReferenceMapInterpreter {
                 case L2I:
                 case L2F:
                 case D2I:
-                case D2F:
-                {
+                case D2F: {
                     popCategory2();
                     pushCategory1();
                     break;
                 }
                 case LCMP:
                 case DCMPL:
-                case DCMPG:
-                {
+                case DCMPG: {
                     popCategory2();
                     popCategory2();
                     pushCategory1();
@@ -1215,8 +1208,7 @@ public abstract class ReferenceMapInterpreter {
                 }
                 case IRETURN:
                 case FRETURN:
-                case ARETURN:
-                {
+                case ARETURN: {
                     popCategory1();
                     if (atSearchBCI) {
                         bciIter.next();
@@ -1224,8 +1216,7 @@ public abstract class ReferenceMapInterpreter {
                     return changed;
                 }
                 case LRETURN:
-                case DRETURN:
-                {
+                case DRETURN: {
                     popCategory2();
                     if (atSearchBCI) {
                         bciIter.next();

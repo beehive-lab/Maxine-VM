@@ -187,7 +187,7 @@ public class ConcreteMethodDependencyProcessor extends DependencyProcessor {
                     return;
                 }
                 classId = subType.nextSibling();
-            } while(classId != NULL_CLASS_ID);
+            } while (classId != NULL_CLASS_ID);
         }
 
         MethodActor uniqueConcreteMethod() {

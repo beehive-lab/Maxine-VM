@@ -46,112 +46,112 @@ public enum ValueComparator {
 
     EQUAL {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return NOT_EQUAL;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return left.equals(right);
         }
     },
     NOT_EQUAL {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return EQUAL;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return !left.equals(right);
         }
     },
     LESS_THAN {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return GREATER_EQUAL;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return left.compareTo(right) < 0;
         }
     },
     LESS_EQUAL {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return GREATER_THAN;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return left.compareTo(right) <= 0;
         }
     },
     GREATER_EQUAL {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return LESS_THAN;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return left.compareTo(right) >= 0;
         }
     },
     GREATER_THAN {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return LESS_EQUAL;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return left.compareTo(right) > 0;
         }
     },
     UNSIGNED_GREATER_THAN {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return UNSIGNED_LESS_EQUAL;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return left.unsignedCompareTo(right) > 0;
         }
     },
 
     UNSIGNED_LESS_EQUAL {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return UNSIGNED_GREATER_THAN;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return left.unsignedCompareTo(right) <= 0;
         }
     },
     UNSIGNED_GREATER_EQUAL {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return UNSIGNED_LESS_THAN;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return left.unsignedCompareTo(right) >= 0;
         }
     },
     UNSIGNED_LESS_THAN {
         @Override
-        public final ValueComparator complement() {
+        public ValueComparator complement() {
             return UNSIGNED_GREATER_EQUAL;
         }
 
         @Override
-        final boolean compare(Value left, Value right) {
+        boolean compare(Value left, Value right) {
             return left.unsignedCompareTo(right) < 0;
         }
     };

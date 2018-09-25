@@ -29,7 +29,7 @@ import com.sun.max.tele.*;
  * Defines the columns that can be displayed describing a breakpoint in the VM.
  */
 public enum BreakpointsColumnKind implements ColumnKind {
-    TAG ("Tag", "[T]arget, [B]ytecode, [S]ource", true, 20) {
+    TAG("Tag", "[T]arget, [B]ytecode, [S]ource", true, 20) {
         @Override
         public boolean canBeMadeInvisible() {
             return false;

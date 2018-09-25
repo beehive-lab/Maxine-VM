@@ -44,22 +44,22 @@ public class ContiguousHeapSpace extends MemoryRegion implements EvacuatingSpace
     private SpaceBounds createSpaceBounds() {
         return new SpaceBounds() {
             @Override
-            final Address lowestAddress() {
+            Address lowestAddress() {
                 return start;
             }
 
             @Override
-            final boolean isIn(Address address) {
+            boolean isIn(Address address) {
                 return address.greaterEqual(start) && address.lessThan(committedEnd);
             }
 
             @Override
-            final boolean isContiguous() {
+            boolean isContiguous() {
                 return true;
             }
 
             @Override
-            final Address highestAddress() {
+            Address highestAddress() {
                 return committedEnd;
             }
         };

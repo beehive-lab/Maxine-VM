@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.management;
 
- import java.lang.management.*;
+import java.lang.management.*;
 
 import javax.management.*;
 

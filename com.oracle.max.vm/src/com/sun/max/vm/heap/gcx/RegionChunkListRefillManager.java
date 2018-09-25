@@ -143,7 +143,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
                 if (MaxineVM.isDebug()) {
                     checkForSuspisciousGC(gcCount++);
                 }
-            } while(Heap.collectGarbage()); // Always collect for at least one region.
+            } while (Heap.collectGarbage()); // Always collect for at least one region.
             // Not enough freed memory.
             throw outOfMemoryError;
         }
@@ -268,7 +268,7 @@ public final class RegionChunkListRefillManager extends ChunkListRefillManager {
                 }
                 spaceNeeded = spaceNeeded.minus(chunkSize);
                 chunk = HeapFreeChunk.getFreeChunkNext(chunk);
-            } while(!chunk.isZero());
+            } while (!chunk.isZero());
             result = nextFreeChunkInRegion;
             if (!(!lastChunk.isZero() || freeSpace.equals(allocatedSize))) {
                 Log.print("lastChunk =");

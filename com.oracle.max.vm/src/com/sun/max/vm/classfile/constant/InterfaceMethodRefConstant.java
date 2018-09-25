@@ -63,7 +63,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         }
     }
 
-    InterfaceMethodRefKey key(final ConstantPool pool);
+    InterfaceMethodRefKey key(ConstantPool pool);
 
     final class Resolved extends ResolvedMethodRefConstant<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant, InterfaceMethodRefKey {
 

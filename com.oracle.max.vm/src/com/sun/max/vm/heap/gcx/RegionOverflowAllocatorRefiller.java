@@ -216,7 +216,7 @@ final public class RegionOverflowAllocatorRefiller extends Refiller {
             }
             // Always collect for at least one region.
             GCRequest.setGCRequest(Size.fromInt(regionSizeInBytes));
-        } while(Heap.collectGarbage());
+        } while (Heap.collectGarbage());
         // Not enough freed memory.
         throw outOfMemoryError;
     }

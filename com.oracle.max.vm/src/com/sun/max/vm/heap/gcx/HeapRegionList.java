@@ -82,7 +82,7 @@ public class HeapRegionList {
             do {
                 sortingArea[index++] = current;
                 current = list.next(current);
-            } while(current != INVALID_REGION_ID);
+            } while (current != INVALID_REGION_ID);
             Arrays.sort(sortingArea, 0, index);
             // Rebuild link list from sorted array.
             list.clear();

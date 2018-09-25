@@ -86,7 +86,7 @@ public class Thread_prodcon01 {
     static class Producer implements Runnable {
         private Drop drop;
 
-        public Producer(Drop drop) {
+        Producer(Drop drop) {
             this.drop = drop;
         }
 
@@ -116,7 +116,7 @@ public class Thread_prodcon01 {
     static class Consumer implements Runnable {
         private Drop drop;
 
-        public Consumer(Drop drop) {
+        Consumer(Drop drop) {
             this.drop = drop;
         }
 

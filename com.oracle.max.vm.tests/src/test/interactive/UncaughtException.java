@@ -48,7 +48,7 @@ public class UncaughtException {
 
     static class TestThreadGroup extends   ThreadGroup {
         Throwable uncaught;
-        public TestThreadGroup() {
+        TestThreadGroup() {
             super("test");
         }
 

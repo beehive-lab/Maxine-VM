@@ -210,7 +210,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             throw new ClassCastException("there is no array layout for void");
         }
 
@@ -269,7 +269,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.intArrayLayout;
         }
     };
@@ -322,7 +322,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.byteArrayLayout;
         }
     };
@@ -376,7 +376,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.booleanArrayLayout;
         }
     };
@@ -430,7 +430,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.shortArrayLayout;
         }
     };
@@ -484,7 +484,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.charArrayLayout;
         }
     };
@@ -538,7 +538,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.floatArrayLayout;
         }
     };
@@ -592,7 +592,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.longArrayLayout;
         }
     };
@@ -646,7 +646,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.doubleArrayLayout;
         }
     };
@@ -703,7 +703,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.wordArrayLayout;
         }
     };
@@ -751,7 +751,7 @@ public abstract class Kind<Value_Type extends Value<Value_Type>> {
         }
 
         @Override
-        public final ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
+        public ArrayLayout arrayLayout(LayoutScheme layoutScheme) {
             return layoutScheme.referenceArrayLayout;
         }
     };

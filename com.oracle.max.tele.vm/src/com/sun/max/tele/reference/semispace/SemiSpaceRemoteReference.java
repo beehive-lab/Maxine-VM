@@ -58,7 +58,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         /**
          * Live reference in To-Space, heap not {@linkplain HeapPhase#ANALYZING analyzing}, not forwarded.
          */
-        SS_LIVE ("LIVE (not Analyzing)"){
+        SS_LIVE("LIVE (not Analyzing)"){
 
             // Properties
             @Override
@@ -88,7 +88,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
         /**
          * Reference in From-Space, heap {@linkplain HeapPhase#ANALYZING analyzing}, not forwarded.
          */
-        SS_FROM ("LIVE (Analyzing: From-only), not forwarded"){
+        SS_FROM("LIVE (Analyzing: From-only), not forwarded"){
 
             // Properties
             @Override ObjectStatus status() {
@@ -159,7 +159,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
          * Reference in To-Space, heap {@linkplain HeapPhase#ANALYZING analyzing},
          * forwarded from a known location in From-Space.
          */
-        SS_FROM_TO ("LIVE (Analyzing: From+To)") {
+        SS_FROM_TO("LIVE (Analyzing: From+To)") {
 
             // Properties
             @Override ObjectStatus status() {
@@ -191,7 +191,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
          * heap {@linkplain HeapPhase#ANALYZING analyzing}, location of
          * new copy in To-space known.
          */
-        SS_FORWARDER ("FORWARDER (Quasi object, only during Analyzing)") {
+        SS_FORWARDER("FORWARDER (Quasi object, only during Analyzing)") {
 
             // Properties
             @Override ObjectStatus status() {
@@ -223,7 +223,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
          * a <em>forwarder</em>, once heap {@linkplain HeapPhase#ANALYZING analyzing is complete},
          * and which should be forgotten. No assumptions may be made about memory contents at the location.
          */
-        SS_DEAD ("Dead") {
+        SS_DEAD("Dead") {
 
             // Properties
             @Override ObjectStatus status() {
