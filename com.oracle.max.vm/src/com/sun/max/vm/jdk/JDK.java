@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -46,11 +46,6 @@ public class JDK {
      * Version number of the JDK.
      */
     public static final int JDK_VERSION = jdkVersionValue(JDK_VERSION_STRING);
-
-    /**
-     * Value for {@linkplain JDK_VERSION} for JDK 6.
-     */
-    public static final int JDK_6 = 6;
 
     /**
      * Value for {@linkplain JDK_VERSION} for JDK 7.
@@ -195,6 +190,7 @@ public class JDK {
     public static final ClassRef java_util_concurrent_atomic_AtomicLongFieldUpdater$LockedUpdater = new LazyClassRef(java.util.concurrent.atomic.AtomicLongFieldUpdater.class, "LockedUpdater");
     public static final ClassRef java_util_concurrent_atomic_AtomicStampedReference = new LazyClassRef(java.util.concurrent.atomic.AtomicStampedReference.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicMarkableReference = new LazyClassRef(java.util.concurrent.atomic.AtomicMarkableReference.class);
+    public static final ClassRef java_util_concurrent_atomic_Striped64 = new LazyClassRef("java.util.concurrent.atomic.Striped64");
 
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class);
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedSynchronizer$Node = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedSynchronizer.class, "Node");
@@ -202,7 +198,10 @@ public class JDK {
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class, "Node");
     public static final ClassRef java_util_concurrent_locks_LockSupport = new LazyClassRef(java.util.concurrent.locks.LockSupport.class);
     public static final ClassRef java_util_concurrent_locks_ReentrantReadWriteLock = new LazyClassRef("java.util.concurrent.locks.ReentrantReadWriteLock");
+    public static final ClassRef java_util_concurrent_locks_StampedLock = new LazyClassRef("java.util.concurrent.locks.StampedLock");
+    public static final ClassRef java_util_concurrent_locks_StampedLock$WNode = new LazyClassRef("java.util.concurrent.locks.StampedLock$WNode");
 
+    public static final ClassRef sun_misc_InnocuousThread            = new ClassRef(sun.misc.InnocuousThread.class);
     public static final ClassRef sun_misc_VM                         = new ClassRef(sun.misc.VM.class);
     public static final ClassRef sun_misc_Version                    = new ClassRef(sun.misc.Version.class);
     public static final ClassRef sun_misc_SharedSecrets              = new ClassRef(sun.misc.SharedSecrets.class);
