@@ -375,6 +375,7 @@ public class JTConfig {
         jtt.jasm.Invokevirtual_private00.class,
         jtt.jasm.Invokevirtual_private01.class,
         jtt.jasm.Loop00.class,
+        jtt.jdk.AtomicIntegerFieldUpdater01.class,
         jtt.jdk.Class_getName.class,
         jtt.jdk.EnumMap01.class,
         jtt.jdk.EnumMap02.class,

@@ -141,9 +141,6 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
         }
 
         static MethodActor resolve(ConstantPool pool, int index, ClassActor classActor, Utf8Constant name, SignatureDescriptor signature) {
-            if (classActor.isInterface() && name != SymbolTable.CLINIT) {
-                throw new IncompatibleClassChangeError();
-            }
             // According to the JVM specification, we would have to look for interface methods,
             // but we do not need to do this here,
             // because we created Miranda methods for the TupleClassActor.

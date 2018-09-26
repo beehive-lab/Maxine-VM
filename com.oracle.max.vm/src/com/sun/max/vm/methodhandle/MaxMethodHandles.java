@@ -227,9 +227,11 @@ public final class MaxMethodHandles {
                         ", name="         + name +
                         ", type="         + type);
         // 1. verify class is not an interface
-        if (classActor.isInterface()) {
-            throw new IncompatibleClassChangeError("Interface found where class expected -->" + classActor.javaClass().getName());
-        }
+        // FIXME: commenting out the following is too permisive, we should allow method resolution from interfaces only
+        // in certain cases, according to the specification
+//        if (classActor.isInterface()) {
+//            throw new IncompatibleClassChangeError("Interface found where class expected -->" + classActor.javaClass().getName());
+//        }
 
         // 2. lookup method in its resolved class and super classes
         MethodActor ma = classActor.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,7 +29,6 @@ import static com.sun.max.vm.jdk.JDK_java_lang_invoke_MethodHandleNatives.*;
 import java.lang.invoke.*;
 
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.type.*;
@@ -55,7 +54,6 @@ public interface MethodHandleConstant extends ResolvableConstant<MethodHandleCon
 
         @Override
         public boolean isResolvableWithoutClassLoading(ConstantPool pool) {
-            ProgramWarning.message("isResolvableWithoutClassLoading for MethodHandleConstant Not implemented yet");
             return true;
         }
 
@@ -91,17 +89,16 @@ public interface MethodHandleConstant extends ResolvableConstant<MethodHandleCon
             Descriptor        descriptor = calleeRef.descriptor(pool);
 
             assert (referenceKind.isFieldRef() && calleeRef.tag() == FIELD_REF)
-                    || (referenceKind.isMethodRef() && calleeRef.tag() == METHOD_REF)
+                    || ((referenceKind == ReferenceKind.REF_invokeVirtual || referenceKind == ReferenceKind.REF_newInvokeSpecial) && calleeRef.tag() == METHOD_REF)
+                    || ((referenceKind == ReferenceKind.REF_invokeStatic || referenceKind == ReferenceKind.REF_invokeSpecial) && (calleeRef.tag() == METHOD_REF || calleeRef.tag() == INTERFACE_METHOD_REF))
                     || (referenceKind.isInterfaceRef() && calleeRef.tag() == INTERFACE_METHOD_REF)
-                    : "Corrupted constant pool, methodHandle constant references can only be fields, methods, or interface methods";
+                    : "Corrupted constant pool, methodHandle constant references can only be fields, methods, or interface methods! calleeref = " + calleeRef.tag() + " referenceKind = " + referenceKind;
 
             // 1. Resolve the callee
             Class callee = ((MemberActor) calleeRef.resolve(pool, referenceIndex)).holder().javaClass();
             // 2. Resolve the type
             Object type;
             if (descriptor.string.charAt(0) == '(') {
-                Class               returnType;
-                Class[]             parameterTypes;
                 SignatureDescriptor signature = SignatureDescriptor.create(descriptor.string);
                 type = signature.getMethodHandleType(pool.classLoader());
             } else {

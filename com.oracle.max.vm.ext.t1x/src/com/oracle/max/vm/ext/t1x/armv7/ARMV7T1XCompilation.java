@@ -198,7 +198,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     @Override
-    protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+    protected void do_invokespecial_resolved(T1XTemplateTag tag, MethodActor methodActor, int receiverStackIndex) {
         peekObject(ARMV7.r8, receiverStackIndex);
         nullCheck(ARMV7.r8);
     }

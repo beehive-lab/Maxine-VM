@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -65,6 +67,8 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
 
     InterfaceMethodRefKey key(ConstantPool pool);
 
+    StaticMethodActor resolveStatic(ConstantPool pool, int index);
+
     final class Resolved extends ResolvedMethodRefConstant<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant, InterfaceMethodRefKey {
 
         public Resolved(MethodActor methodActor) {
@@ -90,6 +94,10 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         public int hashCode() {
             return InterfaceMethodRefKey.Util.hashCode(this);
         }
+
+        public StaticMethodActor resolveStatic(ConstantPool pool, int index) {
+            return verifyIsStatic(methodActor(), pool);
+        }
     }
 
     final class Unresolved extends UnresolvedRef<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant, InterfaceMethodRefKey {
@@ -108,33 +116,11 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
             return this;
         }
 
-        /**
-         * Part of #5.4.3.4.
-         */
-        static MethodActor findInterfaceMethodActor(InterfaceActor interfaceActor, Utf8Constant name, SignatureDescriptor descriptor) {
-            MethodActor result = interfaceActor.findLocalInterfaceMethodActor(name, descriptor);
-            if (result != null) {
-                return result;
-            }
-            for (InterfaceActor i : interfaceActor.localInterfaceActors()) {
-                result = findInterfaceMethodActor(i, name, descriptor);
-                if (result != null) {
-                    return result;
-                }
-            }
-            result = ClassRegistry.OBJECT.findLocalVirtualMethodActor(name, descriptor);
-            if (result != null) {
-                return result;
-            }
-            return null;
-        }
-
         static MethodActor resolve(ConstantPool pool, int index, ClassActor classActor, Utf8Constant name, SignatureDescriptor signature) {
             if (!classActor.isInterface()) {
                 throw new IncompatibleClassChangeError();
             }
-            final InterfaceActor interfaceActor = (InterfaceActor) classActor;
-            MethodActor methodActor = findInterfaceMethodActor(interfaceActor, name, signature);
+            MethodActor methodActor = classActor.findInterfaceMethodActor(name, signature);
             if (methodActor != null) {
                 MethodActor aliasedMethodActor = ALIAS.Static.aliasedMethod(methodActor);
                 if (aliasedMethodActor == null) {
@@ -162,6 +148,10 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
 
         public MethodActor resolve(ConstantPool pool, int index) {
             return resolve(pool, index, holder, name, signature());
+        }
+
+        public StaticMethodActor resolveStatic(ConstantPool pool, int index) {
+            return Resolved.verifyIsStatic(resolve(pool, index), pool);
         }
 
         @Override
@@ -218,6 +208,10 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         public MethodActor resolve(ConstantPool pool, int index) {
             final ClassActor classActor = pool.classAt(classIndex).resolve(pool, classIndex);
             return Unresolved.resolve(pool, index, classActor, name(pool), signature(pool));
+        }
+
+        public StaticMethodActor resolveStatic(ConstantPool pool, int index) {
+            return Resolved.verifyIsStatic(resolve(pool, index), pool);
         }
 
         @Override

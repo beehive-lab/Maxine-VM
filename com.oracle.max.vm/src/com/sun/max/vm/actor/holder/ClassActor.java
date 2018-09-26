@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -76,11 +76,11 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      *
      * @return the {@code methodActor} of the method or {@code null} if not found
      */
-    public InterfaceMethodActor findInterfaceMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
-        InterfaceMethodActor ma = null;
+    public MethodActor findInterfaceMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
+        MethodActor ma = null;
         // check in each interface that this class implements
         for (InterfaceActor interfaceActor : getAllInterfaceActors()) {
-            ma = interfaceActor.findLocalInterfaceMethodActor(name, descriptor);
+            ma = interfaceActor.findLocalMethodActor(name, descriptor);
             if (ma != null) {
                 break;
             }
@@ -353,7 +353,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
         new Deferrable(DEFERRABLE_QUEUE_1) {
             public void run() {
-                final HashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
+                final LinkedHashSet<InterfaceActor> allInterfaceActors = getAllInterfaceActors();
                 List<VirtualMethodActor> virtualMethodActors = gatherVirtualMethodActors(allInterfaceActors, methodLookup);
                 ClassActor.this.allVirtualMethodActors = virtualMethodActors.toArray(new VirtualMethodActor[virtualMethodActors.size()]);
                 assignHolderToLocalMethodActors();
@@ -1137,7 +1137,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         return null;
     }
 
-    private List<VirtualMethodActor> gatherVirtualMethodActors(HashSet<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> lookup) {
+    private List<VirtualMethodActor> gatherVirtualMethodActors(LinkedHashSet<InterfaceActor> allInterfaceActors, Mapping<MethodActor, VirtualMethodActor> lookup) {
         if (!isReferenceClassActor()) {
             return Collections.emptyList();
         }
@@ -1390,8 +1390,8 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
      * Gets all the interfaces specified by this class and its super-classes and super-interfaces.
      * That is, the transitive closure of interfaces inherited or declared by this class actor.
      */
-    public final HashSet<InterfaceActor> getAllInterfaceActors() {
-        final HashSet<InterfaceActor> result = new HashSet<InterfaceActor>();
+    public final LinkedHashSet<InterfaceActor> getAllInterfaceActors() {
+        final LinkedHashSet<InterfaceActor> result = new LinkedHashSet<>();
         if (isInterface()) {
             result.add((InterfaceActor) this);
         }

@@ -35,6 +35,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.methodhandle.MaxMethodHandles.*;
+import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.type.*;
 
 /**
@@ -373,7 +374,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
 
         accessFlags |= IS_FIELD | ((fieldActor.isStatic() ? JVM_REF_getStatic : JVM_REF_getField) << REFERENCE_KIND_SHIFT);
         if (isSetter) {
-            accessFlags += JVM_REF_putField - JVM_REF_getField << REFERENCE_KIND_SHIFT;
+            accessFlags += (JVM_REF_putField - JVM_REF_getField) << REFERENCE_KIND_SHIFT;
         }
         asMemberName(mname).flags = accessFlags;
         if (asMemberName(mname).name == null) {
@@ -381,7 +382,11 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         }
 
         if (asMemberName(mname).type == null) {
-            asMemberName(mname).type = methodType(fieldActor.getClass());
+            asMemberName(mname).type = fieldActor.type().javaClass();
+        }
+
+        if (asMemberName(mname).clazz == null) {
+            asMemberName(mname).clazz = fieldActor.holder().javaClass();
         }
 
         VMTarget vmTarget = VMTarget.create(mname);
@@ -450,6 +455,17 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
      */
     private static Object init_method_MemberName(Object memberName, Method method, boolean doDispatch, Class klazz) {
         return init_method_MemberName(memberName, MethodActor.fromJava(method), doDispatch, klazz);
+    }
+
+    /**
+     * Initialise a constructor MemberName and plant the vmindex / vmtarget. see methodHandles.cpp : init_method_MemberName()
+     *
+     * @param memberName
+     * @param constructor
+     * @param doDispatch
+     */
+    private static Object init_method_MemberName(Object memberName, Constructor constructor, boolean doDispatch, Class klazz) {
+        return init_method_MemberName(memberName, MethodActor.fromJavaConstructor(constructor), doDispatch, klazz);
     }
 
     /**
@@ -526,24 +542,24 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         if (ref instanceof Field) {
             Trace.line(1, "Got Field");
             Field f = (Field) ref;
-            Class c = f.getClass();
+            Class c = f.getDeclaringClass();
             Utf8Constant name = SymbolTable.makeSymbol(f.getName());
             TypeDescriptor type = JavaTypeDescriptor.forJavaClass(f.getType());
             FieldActor fa = ClassActor.fromJava(c).findFieldActor(name, type);
             int flags = fa.accessFlags();
-            // TODO: Implement me
-            throw new RuntimeException("Implement me");
+            init_field_MemberName(memberName, fa, flags);
         } else if (ref instanceof Method) {
             Trace.line(1, "Got Method");
             init_method_MemberName(memberName, (Method) ref, true, ref.getClass());
         } else if (ref instanceof Constructor) {
             Trace.line(1, "Got Constructor");
-            // TODO: Implement me
-            throw new RuntimeException("Implement me");
+            init_method_MemberName(memberName, (Constructor) ref, true, ref.getClass());
         } else if (ref.getClass().equals(MemberName_Class)) {
             Trace.line(1, "Got MemberName");
             // TODO: Implement me
             throw new RuntimeException("Implement me");
+        } else {
+            throw FatalError.unimplemented();
         }
 
         int flags = asMemberName(memberName).flags;

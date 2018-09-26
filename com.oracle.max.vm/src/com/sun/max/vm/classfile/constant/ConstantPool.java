@@ -945,7 +945,12 @@ public final class ConstantPool implements RiConstantPool {
     }
 
     public MethodActor resolveInvokeStatic(int cpi) {
-        final StaticMethodActor staticMethodActor = classMethodAt(cpi).resolveStatic(this, cpi);
+        StaticMethodActor staticMethodActor;
+        if (at(cpi) instanceof InterfaceMethodRefConstant) {
+            staticMethodActor = interfaceMethodAt(cpi).resolveStatic(this, cpi);
+        } else {
+            staticMethodActor = classMethodAt(cpi).resolveStatic(this, cpi);
+        }
         if (staticMethodActor.isConstructor()) {
             throw new VerifyError("<init> must be invoked with invokespecial");
         }
@@ -1062,7 +1067,6 @@ public final class ConstantPool implements RiConstantPool {
 
     public RiMethod lookupInvokeDynamic(int cpi) {
         InvokeDynamicConstant constant = invokeDynamicAt(cpi);
-        assert constant.isResolvableWithoutClassLoading(this);
         MethodActor method = constant.resolve(this, cpi);
         assert checkResolvedMethodAccess(method, INVOKEDYNAMIC) != null;
         return method;

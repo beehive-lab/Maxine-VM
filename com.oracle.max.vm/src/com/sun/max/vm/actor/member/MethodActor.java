@@ -354,15 +354,66 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         }
     }
 
+    /**
+     * Create a dummy {@link Method} without resolving any of its parameter or return types.
+     * This method allows us to get access to the source code annotations without triggering a full method resolution.
+     *
+     * @return the dummy method
+     */
+    private Method toDummyJava() {
+        assert !isInstanceInitializer();
+        if (MaxineVM.isHosted()) {
+            return JavaPrototype.javaPrototype().toJava(this);
+        }
+        final Class<?> javaHolder = holder().toJava();
+        final Class[] nullTypes = new Class[0];
+        return ReflectionFactory.getReflectionFactory().newMethod(
+                javaHolder,
+                name.toString(),
+                nullTypes,
+                null,
+                nullTypes,
+                0,
+                0,
+                genericSignatureString(),
+                runtimeVisibleAnnotationsBytes(),
+                runtimeVisibleParameterAnnotationsBytes(),
+                annotationDefaultBytes());
+    }
+
+    /**
+     * Create a dummy {@link Constructor} without resolving any of its parameter or return types.
+     * This method allows us to get access to the source code annotations without triggering a full method resolution.
+     *
+     * @return the dummy constructor
+     */
+    private Constructor<?> toDummyJavaConstructor() {
+        assert isInstanceInitializer();
+        if (MaxineVM.isHosted()) {
+            return JavaPrototype.javaPrototype().toJavaConstructor(this);
+        }
+        final Class<?> javaHolder = holder().toJava();
+        final Class[] nullTypes = new Class[0];
+        return ReflectionFactory.getReflectionFactory().newConstructor(
+                javaHolder,
+                nullTypes,
+                nullTypes,
+                flags(),
+                -1, // "java.lang.reflect.Constructor.slot", (apparently) not used throughout the JDK
+                genericSignatureString(),
+                runtimeVisibleAnnotationsBytes(),
+                runtimeVisibleParameterAnnotationsBytes());
+    }
+
     public final <A extends Annotation> A getAnnotation(Class<A> annotationClass) {
         if (isInstanceInitializer()) {
-            return toJavaConstructor().getAnnotation(annotationClass);
+            return toDummyJavaConstructor().getAnnotation(annotationClass);
         }
         if (isClassInitializer() || isMiranda() || isProxyToDefault()) {
             return null;
         }
         try {
-            return toJava().getAnnotation(annotationClass);
+            return toDummyJava().getAnnotation(annotationClass);
         } catch (NoSuchMethodError e) {
             // Handles methods that are hidden to reflection (e.g. Unsage.getUnsafe())
             return null;

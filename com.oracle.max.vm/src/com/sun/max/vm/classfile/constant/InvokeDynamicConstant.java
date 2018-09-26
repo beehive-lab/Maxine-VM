@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,9 +27,6 @@ import static com.sun.max.vm.classfile.constant.ConstantPool.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
 import static com.sun.max.vm.jdk.JDK_java_lang_invoke_MemberName.*;
 
-import java.lang.invoke.*;
-
-import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -56,7 +53,6 @@ public class InvokeDynamicConstant extends AbstractPoolConstant<InvokeDynamicCon
     }
 
     public boolean isResolvableWithoutClassLoading(ConstantPool pool) {
-        ProgramWarning.message("isResolvableWithoutClassLoading for InvokeDynamicConstant Not implemented yet");
         return true;
     }
 

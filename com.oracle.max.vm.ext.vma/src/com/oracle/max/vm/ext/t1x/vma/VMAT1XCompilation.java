@@ -167,24 +167,24 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     }
 
     @Override
-    protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+    protected void do_invokespecial_resolved(T1XTemplateTag tag, MethodActor methodActor, int receiverStackIndex) {
         if (templates == defaultTemplates) {
-            super.do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
+            super.do_invokespecial_resolved(tag, methodActor, receiverStackIndex);
         } else {
             start(tag.resolved);
-            assignObject(0, "methodActor", virtualMethodActor);
+            assignObject(0, "methodActor", methodActor);
             peekObject(1, "receiver", receiverStackIndex);
             finish();
         }
     }
 
     @Override
-    protected void do_invokestatic_resolved(T1XTemplateTag tag, StaticMethodActor staticMethodActor) {
+    protected void do_invokestatic_resolved(T1XTemplateTag tag, MethodActor methodActor) {
         if (templates == defaultTemplates) {
-            super.do_invokestatic_resolved(tag, staticMethodActor);
+            super.do_invokestatic_resolved(tag, methodActor);
         } else {
             start(tag.initialized);
-            assignObject(0, "methodActor", staticMethodActor);
+            assignObject(0, "methodActor", methodActor);
             finish();
         }
     }
