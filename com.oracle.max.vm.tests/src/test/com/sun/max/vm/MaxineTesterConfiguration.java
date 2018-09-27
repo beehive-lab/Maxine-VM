@@ -148,6 +148,7 @@ public class MaxineTesterConfiguration {
         output(findOutputTests("test.output."));
 
         jsr292(findOutputTests("test.jsr292."));
+        jsr292(Classes.forName("test.jsr292.MethodHandles_interface02"), FAIL_ALL);
 
         // Refine expectation for certain output tests
         output(Classes.forName("test.output.AWTFont"), FAIL_DARWIN);
@@ -430,6 +431,11 @@ public class MaxineTesterConfiguration {
 
     private static void output(Class... javaClasses) {
         zeeOutputTests.addAll(Arrays.asList(javaClasses));
+    }
+
+    private static void jsr292(Class javaClass, Expectation... results) {
+        assert zeeJSR292Tests.contains(javaClass) : "JSR292 test " + javaClass + " not found by findOutputTests()";
+        addExpectedResults(javaClass.getName(), results);
     }
 
     private static void jsr292(Class... javaClasses) {
