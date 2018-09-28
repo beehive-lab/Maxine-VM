@@ -2305,52 +2305,47 @@ public abstract class T1XCompilation {
             assignInt(scratch, index | (0xbeaf << 16));
         }
         try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                try {
-                    // MethodHandle static adapter method ?
-                    MethodActor methodActor = classMethodRef.resolve(cp, index);
+            // MethodHandle static adapter method ?
+            MethodActor methodActor = classMethodRef.resolve(cp, index);
 
-                    if (methodActor.isStatic()) {
-                        Trace.line(1, "IS Static: " + methodActor);
-                        do_invokehandle(index, classMethodRef, signature, methodActor);
-                        return;
-                    }
-                    VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-                    if (processIntrinsic(virtualMethodActor, index)) {
-                        return;
-                    }
-                    if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
-                        // this is an invokevirtual to a private or final method, treat it like invokespecial
-                        do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
-
-                        int safepoint = callDirect(receiverStackIndex);
-                        finishCall(tag, kind, safepoint, virtualMethodActor);
-                        return;
-                    }
-                    // emit a virtual dispatch
-                    start(methodProfileBuilder == null ? tag.resolved : tag.instrumented);
-                    CiRegister target = template.sig.scratch.reg;
-                    assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
-                    finish();
-
-                    int safepoint = callIndirect(target, receiverStackIndex);
-                    finishCall(tag, kind, safepoint, null);
-                    return;
-                } catch (LinkageError e) {
-                    // fall through
-                }
+            if (methodActor.isStatic()) {
+                Trace.line(1, "IS Static: " + methodActor);
+                do_invokehandle(index, classMethodRef, signature, methodActor);
+                return;
             }
+            if (processIntrinsic(methodActor, index)) {
+                return;
+            }
+            if (methodActor.isPrivate() || methodActor.isFinal() || methodActor.holder().isFinal()) {
+                // this is an invokevirtual to a private or final method, treat it like invokespecial
+                do_invokespecial_resolved(tag, methodActor, receiverStackIndex);
+
+                int safepoint = callDirect(receiverStackIndex);
+                finishCall(tag, kind, safepoint, methodActor);
+                return;
+            }
+
+            // emit a virtual dispatch
+            start(methodProfileBuilder == null ? tag.resolved : tag.instrumented);
+            CiRegister target = template.sig.scratch.reg;
+            assert methodActor instanceof VirtualMethodActor;
+            VirtualMethodActor virtualMethodActor = (VirtualMethodActor) methodActor;
+            assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
+            finish();
+
+            int safepoint = callIndirect(target, receiverStackIndex);
+            finishCall(tag, kind, safepoint, null);
         } catch (LinkageError error) {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
-        }
-        start(tag);
-        CiRegister target = template.sig.scratch.reg;
-        assignObject(0, "guard", cp.makeResolutionGuard(index));
-        peekObject(1, "receiver", receiverStackIndex);
-        finish();
+            start(tag);
+            CiRegister target = template.sig.scratch.reg;
+            assignObject(0, "guard", cp.makeResolutionGuard(index));
+            peekObject(1, "receiver", receiverStackIndex);
+            finish();
 
-        int safepoint = callIndirect(target, receiverStackIndex);
-        finishCall(tag, kind, safepoint, null);
+            int safepoint = callIndirect(target, receiverStackIndex);
+            finishCall(tag, kind, safepoint, null);
+        }
     }
 
     protected void do_invokeinterface(int index) {

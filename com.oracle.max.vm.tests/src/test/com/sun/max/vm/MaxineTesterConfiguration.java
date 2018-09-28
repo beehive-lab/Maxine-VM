@@ -148,7 +148,6 @@ public class MaxineTesterConfiguration {
         output(findOutputTests("test.output."));
 
         jsr292(findOutputTests("test.jsr292."));
-        jsr292(Classes.forName("test.jsr292.MethodHandles_interface02"), FAIL_ALL);
 
         // Refine expectation for certain output tests
         output(Classes.forName("test.output.AWTFont"), FAIL_DARWIN);
