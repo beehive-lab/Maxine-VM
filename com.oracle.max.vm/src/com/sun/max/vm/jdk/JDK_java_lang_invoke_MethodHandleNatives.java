@@ -500,7 +500,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
             xflags |= IS_METHOD | (JVM_REF_invokeInterface << REFERENCE_KIND_SHIFT);
         } else if (!holder.equals(resolvedClass) && holder.isInterface()) {
             Trace.line(1, "is Miranda method");
-            xflags |= IS_METHOD | (JVM_REF_invokeVirtual << REFERENCE_KIND_SHIFT);
+            xflags |= IS_METHOD | (JVM_REF_invokeInterface << REFERENCE_KIND_SHIFT);
         } else if (!doDispatch || methodActor.canBeStaticallyBound()) {
             Trace.line(1, "method can be statically bound");
             xflags |= IS_METHOD | (JVM_REF_invokeSpecial << REFERENCE_KIND_SHIFT);
