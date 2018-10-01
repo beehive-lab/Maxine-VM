@@ -26,6 +26,7 @@ import com.sun.c1x.value.FrameState;
 import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiUtil;
 import com.sun.cri.ri.RiMethod;
+import com.sun.cri.ri.RiSignature;
 
 /**
  * Instruction implementing the semantics of {@link IntrinsicIDs#LINKTOINTERFACE}, {@link IntrinsicIDs#LINKTOSPECIAL},
@@ -67,6 +68,8 @@ public final class LinkTo extends StateSplit {
     }
 
     public Value[] arguments() {
+        Value[] arguments = new Value[this.arguments.length - 1];
+        System.arraycopy(this.arguments, 0, arguments, 0, arguments.length); // Pop of the membername
         return arguments;
     }
 
@@ -75,8 +78,11 @@ public final class LinkTo extends StateSplit {
     }
 
     public CiKind[] signature() {
-        CiKind receiver = target.holder().kind(true);
-        return CiUtil.signatureToKinds(target.signature(), receiver);
+        RiSignature signature = target.signature();
+        CiKind[] argumentKinds = CiUtil.signatureToKinds(signature, null);
+        CiKind[] argumentKindsWithoutMembername = new CiKind[argumentKinds.length - 1];
+        System.arraycopy(argumentKinds, 0, argumentKindsWithoutMembername, 0, argumentKindsWithoutMembername.length);
+        return argumentKindsWithoutMembername;
     }
 
     public Value receiver() {
