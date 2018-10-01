@@ -432,6 +432,11 @@ public class MaxineTesterConfiguration {
         zeeOutputTests.addAll(Arrays.asList(javaClasses));
     }
 
+    private static void jsr292(Class javaClass, Expectation... results) {
+        assert zeeJSR292Tests.contains(javaClass) : "JSR292 test " + javaClass + " not found by findOutputTests()";
+        addExpectedResults(javaClass.getName(), results);
+    }
+
     private static void jsr292(Class... javaClasses) {
         zeeJSR292Tests.addAll(Arrays.asList(javaClasses));
     }
