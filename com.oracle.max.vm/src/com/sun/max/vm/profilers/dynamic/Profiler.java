@@ -114,7 +114,8 @@ public class Profiler {
         //if (VmThread.current().PROFILE) {
             //if (MaxineVM.isRunning()) {
         final boolean lockDisabledSafepoints = lock();
-        record(size);
+        //record(size);
+        histogram[profilingCycle].record(size);
         unlock(lockDisabledSafepoints);
             //}
         //}
@@ -126,41 +127,10 @@ public class Profiler {
         //if (VmThread.current().PROFILE) {
         //if (MaxineVM.isRunning()) {
         final boolean lockDisabledSafepoints = lock();
-        recordGC(size);
+        histogram[profilingCycle].recordGC(size);
         unlock(lockDisabledSafepoints);
         //}
         //}
-    }
-
-    /**
-     * A simple sort histogram implementation (using bubble sort).
-     */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    @NEVER_INLINE
-    public void sortHistogram() {
-        int n = lastEntry + 1;
-        int k;
-        for (int m = n; m >= 0; m--) {
-            for (int i = 0; i < n - 1; i++) {
-                k = i + 1;
-                if (histogram[i][0] > histogram[k][0]) {
-                    swapEntries(i, k);
-                }
-            }
-        }
-    }
-
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    @NEVER_INLINE
-    public void swapEntries(int i, int j) {
-        int temp0;
-        int temp1;
-        temp0 = histogram[i][0];
-        temp1 = histogram[i][1];
-        histogram[i][0] = histogram[j][0];
-        histogram[i][1] = histogram[j][1];
-        histogram[j][0] = temp0;
-        histogram[j][1] = temp1;
     }
 
     /**
@@ -168,50 +138,21 @@ public class Profiler {
      */
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public void printHistogram() {
-        sortHistogram();
+        histogram[profilingCycle].sortHistogram();
+
+        int lastEntry = histogram[profilingCycle].lastEntry;
 
         Log.println("====HISTOGRAM====");
         for (int i = 1; i < lastEntry; i++) {
-            //if (histogram[i][0] > 0) {
             Log.print("[");
-            Log.print(histogram[i][0]);
+            Log.print(histogram[profilingCycle].mutatorHistogram[i][0]);
             Log.print("]\t\t");
-            Log.println(histogram[i][1]);
-            //}
+            Log.println(histogram[profilingCycle].mutatorHistogram[i][1]);
         }
         Log.print("Total histogram objects =");
-        Log.println(totalRecordedObjects);
+        Log.println(histogram[profilingCycle].totalRecordedObjects);
         Log.println("=======END=======");
 
-    }
-
-    /**
-     * Round a number with decimals.
-     * @param number
-     * @param decimals
-     * @return
-     */
-    @INLINE
-    public double roundDecimals(double number, int decimals) {
-        int factor = 1;
-
-        //calc the factor out of the requested decimals
-        for (int i = 0; i < decimals; i++) {
-            factor = factor * 10;
-        }
-
-        //extract the whole part using casting
-        int wholePart = (int) number;
-
-        //calculate the decimal part
-        double decimalPart = number - wholePart;
-        decimalPart = decimalPart * factor;
-        int intDecimalPart = (int) decimalPart;
-        decimalPart = (double) intDecimalPart;
-        decimalPart =  decimalPart / factor;
-
-        //add whole and decimal parts and return
-        return wholePart + decimalPart;
     }
 
     /**
@@ -223,7 +164,7 @@ public class Profiler {
     public void printStats() {
         final boolean lockDisabledSafepoints = lock();
         final float reportInMbs = (float) Heap.reportUsedSpace() / 1048576;
-        final float histogramInMbs = (float) totalObjectsize / 1048576;
+        final float histogramInMbs = (float) histogram[profilingCycle].totalObjectsize / 1048576;
 
         Log.print("Reported heap used space = ");
         Log.print(reportInMbs);
@@ -233,10 +174,10 @@ public class Profiler {
         Log.print(histogramInMbs);
         Log.println(" MB");
 
-        padding = reportInMbs - histogramInMbs;
-        Log.print("TLAB Padding = ");
-        Log.print(padding);
-        Log.println(" MB\n");
+        //padding = reportInMbs - histogramInMbs;
+        //Log.print("TLAB Padding = ");
+        //Log.print(padding);
+        //Log.println(" MB\n");
 
         if (PrintHistogram) {
             printHistogram();
@@ -246,40 +187,38 @@ public class Profiler {
     }
 
     /**
-     * Reset the histogram and post GC operations.
+     *  This method is called every time a GC has been completed.
+     *  At this point the profiler has completed a full profiling cycle.
+     *  We check if the Histogram needs more space for a potential next profiling cycle and we increase the cycle counter.
      */
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
-    public void resetHistogram() {
+    public void postGCActions() {
         final boolean lockDisabledSafepoints = lock();
+
+        // for validation purposes
         Log.print("Collected heap used space = ");
         Log.println(Heap.reportUsedSpace());
 
         Log.print("HistogramGC heap used space = ");
-        Log.println(totalObjectsizeGC);
-        //Log.print("Collected heap used space = ");
-        long survived = Heap.reportUsedSpace();
-        //Log.print(survived/1048576);
-        //Log.println(" MB");
-        //Log.println(" ");
-        for (int i = 0; i < lastEntry; i++) {
-            histogram[i][0] = 0;
-            histogram[i][1] = 0;
+        Log.println(histogram[profilingCycle].totalObjectsizeGC);
 
-            histogramGC[i][0] = 0;
-            histogramGC[i][1] = 0;
+        //if we need more space, grow histogram
+        if ((profilingCycle + 1) == currentSize) {
+            growHistogram(Heap.GCCallbackPhase.AFTER);
         }
-        lastEntry = 0;
-        totalObjectsize = (int) survived;
-        lastEntryGC = 0;
-        totalObjectsizeGC = 0;
 
-        ///
-        growHistogram(Heap.GCCallbackPhase.AFTER);
+        Log.print("Histogram Current Size = ");
+        Log.println(currentSize);
+
+        Log.print("Profiling cycle = ");
+        Log.println(profilingCycle);
+        Log.println("\n");
+
+        profilingCycle++;
 
         unlock(lockDisabledSafepoints);
     }
-
 
     private static VmThread lockOwner;
     private static int lockDepth;
