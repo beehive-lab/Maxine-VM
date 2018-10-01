@@ -33,7 +33,6 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
 
-import static com.sun.max.vm.MaxineVM.dynamicProfiler;
 import static com.sun.max.vm.MaxineVM.isHosted;
 
 public class Profiler {
@@ -46,21 +45,15 @@ public class Profiler {
 
     /**
      * Histogram: the data structure that stores the profiling outcome.
-     * The bins/buckets (the keys of the HashMap) contain Long type object sizes.
-     * The values of the HashMap contain the sum of the equal-sized objects have been profiled so far.
+     *
      */
-    public static int SIZE = 10000;
-    public static int SIZE2 = 2;
-    public static int[][] histogram = new int[SIZE][SIZE2];
-    public static int[][] histogramGC = new int[SIZE][SIZE2];
-    public static int totalObjectsize;
-    public static int totalRecordedObjects;
-    public static int totalObjectsizeGC;
-    public static int totalRecordedObjectsGC;
-    public static int lastEntry;
-    public static int lastEntryGC;
-    public static float padding;
-    public static int collectedObjectSize;
+    //histogram initialization
+    public static int initialSize = 50;
+    public static int currentSize = initialSize;
+    public static int growStep = 10;
+    public static HistogramCell[] histogram; // = new HistogramCell[initialSize];
+    public static int profilingCycle;
+
     private static boolean PrintHistogram;
 
     /**
@@ -71,20 +64,13 @@ public class Profiler {
     }
 
     public Profiler() {
-        for (int i = 0; i < SIZE; i++) {
-            histogram[i][0] = 0;
-            histogram[i][1] = 0;
-            histogramGC[i][0] = 0;
-            histogramGC[i][1] = 0;
+        histogram = new HistogramCell[initialSize];
+        //initial cell allocation for our histogram
+        for (int i = 0; i < initialSize; i++) {
+            histogram[i] = new HistogramCell();
         }
-        lastEntry = 0;
-        totalObjectsize = 0;
-        totalRecordedObjects = 0;
-        collectedObjectSize = 0;
+        profilingCycle = 0;
 
-        lastEntryGC = 0;
-        totalObjectsizeGC = 0;
-        totalRecordedObjectsGC = 0;
     }
 
     /**
