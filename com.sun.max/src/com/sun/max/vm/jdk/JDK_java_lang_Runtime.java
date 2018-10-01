@@ -82,8 +82,7 @@ public final class JDK_java_lang_Runtime {
             Log.println("== Explicit GC ==");
             MaxineVM.dynamicProfiler.printStats();
             Heap.collectGarbage();
-            MaxineVM.dynamicProfiler.resetHistogram();
-
+            MaxineVM.dynamicProfiler.postGCActions();
         }
     }
 
