@@ -62,7 +62,7 @@ pipeline {
             steps {
                 parallel 'test': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX test -image-configs=java -tests=c1x,graal,junit:test.com,output,jsr292'
+                        sh '$MX test -maxvm-configs=std,forceC1X,forceT1X -image-configs=java -tests=c1x,graal,junit:test.com,output,jsr292'
                         sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
                     }
                 }, 'crossisa': {

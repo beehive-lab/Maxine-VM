@@ -364,7 +364,8 @@ public class MaxineTesterConfiguration {
         maxvmConfig("GC", "-Xmx2g");
 
         // Configuration to test methodhandles implementation
-        maxvmConfig("jsr292", "-XX:RCT=0");
+        maxvmConfig("forceT1X", "-XX:RCT=0");
+        maxvmConfig("forceC1X", "-XX:RCT=1");
 
         imageConfig("baseline-c1x0", "--C1X:OptLevel=0");
         imageConfig("baseline-c1x1", "--C1X:OptLevel=1");

@@ -1344,7 +1344,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitDebugID(String methodName, String inlinedMethodName) {
-        assert C1XOptions.DebugInlinedMethods;
         debugMethodWriter.appendDebugMethod(inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position() + " (inlined)", methodID);
     }
 
