@@ -467,7 +467,7 @@ public final class Heap {
         }
         /** PROFILE **/
         if (!VmThread.current().gcRequest.explicit) {
-            MaxineVM.dynamicProfiler.resetHistogram();
+            MaxineVM.dynamicProfiler.postGCActions();
         }
         /***/
         return result;
