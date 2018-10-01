@@ -74,98 +74,35 @@ public class Profiler {
     }
 
     /**
-     * Grow the histogram array after GC
-     * @param when
+     * Grow the histogram array after GC.
+     *
      */
     public void growHistogram(Heap.GCCallbackPhase when) {
+        final boolean lockDisabledSafepoints = lock();
 
-        Log.println("post gc");
-        Object tmp = new Object();
+        final int newSize =  currentSize + growStep;
 
-    }
+        Log.print("currentSIze = ");
+        Log.println(currentSize);
+        Log.print("newSize = ");
+        Log.println(newSize);
 
-    /**
-     * Returns the found index if is existed, or -1 if is not.
-     * @param size
-     * @return found index
-     */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public int searchFor(int size) {
-        for (int i = 0; i < lastEntry; i++) {
-            if (histogram[i][0] == size) {
-                return i;
-            }
+        HistogramCell[] newHistogram = new HistogramCell[newSize];
+
+        //copy the contents of the old to the new histogram
+        for (int i = 0; i < currentSize - 1; i++) {
+            newHistogram[i] = histogram[i];
         }
-        return -1;
-    }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public int searchForGC(int size) {
-        for (int i = 0; i < lastEntryGC; i++) {
-            if (histogramGC[i][0] == size) {
-                return i;
-            }
+        //allocate new cells in the histogram
+        for (int i = currentSize - 1; i < newSize; i++) {
+            newHistogram[i] = new HistogramCell();
         }
-        return -1;
-    }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public void recordNewEntry(int size, int index) {
-        histogram[index][0] = size;
-        histogram[index][1] = 1;
-    }
+        currentSize = newSize;
+        histogram = newHistogram;
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public void recordNewEntryGC(int size, int index) {
-        histogramGC[index][0] = size;
-        histogramGC[index][1] = 1;
-    }
-
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public void increment(int index) {
-        histogram[index][1]++;
-    }
-
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    public void incrementGC(int index) {
-        histogramGC[index][1]++;
-    }
-
-    /**
-     * Updates the histogram with the size of the profiled object.
-     * If that size has never been met again, a new bin/bucket is inserted.
-     * Else, the value of the corresponding bin/bucket is incremented.
-     *
-     * @param size
-     */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    @NEVER_INLINE
-    public void record(int size) {
-        int entry = searchFor(size);
-
-        if (entry == -1) {
-            recordNewEntry(size, lastEntry);
-            lastEntry++;
-        } else {
-            increment(entry);
-        }
-        totalRecordedObjects++;
-        totalObjectsize = totalObjectsize + size;
-    }
-
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    @NEVER_INLINE
-    public void recordGC(int size) {
-        int entry = searchForGC(size);
-
-        if (entry == -1) {
-            recordNewEntryGC(size, lastEntryGC);
-            lastEntryGC++;
-        } else {
-            incrementGC(entry);
-        }
-        totalRecordedObjectsGC++;
-        totalObjectsizeGC = totalObjectsizeGC + size;
+        unlock(lockDisabledSafepoints);
     }
 
     /**
