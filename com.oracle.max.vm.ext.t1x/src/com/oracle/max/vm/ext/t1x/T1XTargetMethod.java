@@ -1086,7 +1086,7 @@ public class T1XTargetMethod extends TargetMethod {
 
     @Override
     public Pointer returnAddressPointer(StackFrameCursor frame) {
-        if (isAMD64() || isARM()) {
+        if (isAMD64() || isARM() || isAARCH64()) {
             int dispToRip = frameSize() - sizeOfNonParameterLocals();
             return frame.fp().plus(dispToRip);
         } else {
