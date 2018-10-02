@@ -185,10 +185,14 @@ public class CompactReferenceMapInterpreter extends ReferenceMapInterpreter {
     }
 
     private static boolean testBit(int map, int index) {
+        assert index >= 0 : index;
+        assert index < 32 : index;
         return (map & (1 << index)) != 0;
     }
 
     private static int updateBit(int map, int index, boolean set) {
+        assert index >= 0 : index;
+        assert index < 32 : index;
         if (set) {
             return map | (1 << index);
         }
