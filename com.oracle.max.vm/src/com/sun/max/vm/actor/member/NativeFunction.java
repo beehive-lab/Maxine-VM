@@ -75,7 +75,7 @@ public final class NativeFunction {
      * Sets the safepoint position associated with the call to this native function (from within its native stub).
      */
     public void setCallSite(TargetMethod stub, int safepointPos) {
-        assert this.stub == null : "cannot have more than one stub per native method";
+        assert this.stub == null : "cannot have more than one stub per native method (" + classMethodActor.qualifiedName() + ")";
         this.stub = stub;
         this.nativeCallSafepointPos = safepointPos;
     }
