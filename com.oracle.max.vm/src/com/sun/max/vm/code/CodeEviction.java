@@ -38,6 +38,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.aarch64.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.log.VMLog.Record;
@@ -97,6 +98,8 @@ public final class CodeEviction extends VmOperation {
                     directCallee = AMD64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
                 } else if (platform().isa == ISA.ARM) {
                     directCallee = ARMTargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
+                } else if (platform().isa == ISA.Aarch64) {
+                    directCallee = Aarch64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
                 } else {
                     directCallee = null;
                 }
@@ -291,7 +294,7 @@ public final class CodeEviction extends VmOperation {
      * Overwrites a machine code array with an illegal instruction pattern.
      */
     static boolean invalidateCode(byte[] code) {
-        if (Platform.platform().isa == ISA.AMD64) {
+        if (Platform.platform().isa == ISA.AMD64 || Platform.platform().isa == ISA.Aarch64) {
             byte int3 = (byte) 0xcc;
             Arrays.fill(code, int3);
         } else {
@@ -386,6 +389,8 @@ public final class CodeEviction extends VmOperation {
                     target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else if (platform().isa == ISA.ARM) {
                     target = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else if (platform().isa == ISA.Aarch64) {
+                    target = Aarch64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
                     throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.BaselineFixCalls.doTargetMethod");
                 }
@@ -441,6 +446,8 @@ public final class CodeEviction extends VmOperation {
                     target  = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else if (platform().isa == ISA.ARM) {
                     target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else if (platform().isa == ISA.Aarch64) {
+                    target  = Aarch64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
                     throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.OptFixCalls.doTargetMethod");
                 }
@@ -849,6 +856,8 @@ public final class CodeEviction extends VmOperation {
                 target = AMD64TargetMethodUtil.readCall32Target(tm, callPos);
             } else if (platform().isa == ISA.ARM) {
                 target = ARMTargetMethodUtil.readCall32Target(tm, callPos);
+            } else if (platform().isa == ISA.Aarch64) {
+                target = Aarch64TargetMethodUtil.readCall32Target(tm, callPos);
             } else {
                 throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.patchDirectCallsIn");
             }
@@ -1044,6 +1053,8 @@ public final class CodeEviction extends VmOperation {
                     target  = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else if (platform().isa == ISA.ARM) {
                     target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else if (platform().isa == ISA.Aarch64) {
+                    target  = Aarch64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
                     throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.DumpDirectCalls.doTargetMethod");
                 }
