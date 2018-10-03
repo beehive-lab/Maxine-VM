@@ -715,7 +715,8 @@ public class T1XTargetMethod extends TargetMethod {
         assert code[invokeBCI] == (byte) Bytecodes.INVOKEINTERFACE ||
             code[invokeBCI] == (byte) Bytecodes.INVOKESPECIAL ||
             code[invokeBCI] == (byte) Bytecodes.INVOKESTATIC ||
-            code[invokeBCI] == (byte) Bytecodes.INVOKEVIRTUAL
+            code[invokeBCI] == (byte) Bytecodes.INVOKEVIRTUAL ||
+            code[invokeBCI] == (byte) Bytecodes.INVOKEDYNAMIC
             : "expected invoke bytecode";
         return ((code[invokeBCI + 1] & 0xff) << 8) | (code[invokeBCI + 2] & 0xff);
     }
