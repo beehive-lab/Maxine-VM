@@ -58,7 +58,10 @@ codebuffer.c
 *_output
 
 # Libraries
-lib/checkstyle-6.11.2-all.jar
+/lib
+!/lib/asm-6.0-maxine.jar
+!/lib/asm-util-6.0-maxine.jar
+!/lib/okra-1.9.jar
 
 .metadata/*
 .recommenders/*
