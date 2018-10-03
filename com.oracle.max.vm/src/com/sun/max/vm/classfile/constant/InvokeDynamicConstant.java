@@ -31,11 +31,15 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.methodhandle.*;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.type.Descriptor;
+import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.type.TypeDescriptor;
 
 /**
  * #4.4.10.
  */
-public class InvokeDynamicConstant extends AbstractPoolConstant<InvokeDynamicConstant> implements PoolConstantKey<InvokeDynamicConstant> {
+public class InvokeDynamicConstant extends AbstractPoolConstant<InvokeDynamicConstant> implements PoolConstantKey<InvokeDynamicConstant>, MethodRefConstant<InvokeDynamicConstant> {
     final int bootstrapMethodAttrIndex;
     public final int nameAndTypeIndex;
     Object appendix;
@@ -74,6 +78,11 @@ public class InvokeDynamicConstant extends AbstractPoolConstant<InvokeDynamicCon
         return "bootstrapMethodAttrIndex=" + bootstrapMethodAttrIndex + ",nameAndTypeIndex=" + nameAndTypeIndex;
     }
 
+    @Override
+    public SignatureDescriptor signature(ConstantPool pool) {
+        return nameAndType(pool).signature();
+    }
+
     /**
      * Implementation ported from resolve_invokedynamic linkResolver.cpp.
      *
@@ -108,4 +117,18 @@ public class InvokeDynamicConstant extends AbstractPoolConstant<InvokeDynamicCon
         return appendix;
     }
 
+    @Override
+    public final TypeDescriptor holder(ConstantPool pool) {
+        throw FatalError.unimplemented();
+    }
+
+    @Override
+    public final Utf8Constant name(ConstantPool pool) {
+        return nameAndType(pool).name();
+    }
+
+    @Override
+    public final Descriptor descriptor(ConstantPool pool) {
+        return nameAndType(pool).descriptor();
+    }
 }

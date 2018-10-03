@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -413,10 +413,11 @@ public class Compilation {
     private void logAfterCompilation() {
         if (verboseOption.verboseCompilation) {
             String methodString = getLogMethodString();
+            final String compilerName = compiler.name(classMethodActor);
             boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
-            Log.print(compiler.name(classMethodActor));
+            Log.print(compilerName);
             Log.print(prevCompilations == Compilations.EMPTY ? ": Compiled " : ": Recompiled ");
             Log.print(methodString);
             Log.print(" @ ");

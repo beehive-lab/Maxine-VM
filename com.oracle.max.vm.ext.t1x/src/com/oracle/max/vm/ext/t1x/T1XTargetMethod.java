@@ -33,7 +33,6 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
-import com.oracle.max.asm.target.aarch64.Aarch64;
 import com.oracle.max.criutils.TTY;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
 import com.sun.cri.bytecode.*;
@@ -235,6 +234,7 @@ public class T1XTargetMethod extends TargetMethod {
             }
         }
 
+        assert referenceLiterals != null;
         assert referenceLiterals[protectionLiteralIndex] == PROTECTED : "expected protection literal, found " + referenceLiterals[protectionLiteralIndex];
 
         if (safepointsBuilder.safepoints.size() != 0) {
@@ -252,9 +252,7 @@ public class T1XTargetMethod extends TargetMethod {
                 if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64()) {
                     ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
                 }
-            } else {
-                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
-            }
+            }  // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
         }
 
         // if the VM is running, validate freshly generated code
@@ -634,7 +632,7 @@ public class T1XTargetMethod extends TargetMethod {
                 if (VmThread.current() == result) {
                     Log.print("Recursive attempt to finalize ref maps of ");
                     Log.printMethod(this, true);
-                    FatalError.unexpected("Recursive attempt to finalize ref maps of a T1X target method", false, null, Pointer.zero());
+                    throw FatalError.unexpected("Recursive attempt to finalize ref maps of a T1X target method", false, null, Pointer.zero());
                 }
                 // Spin while waiting for the other thread to complete finalization
                 while (refMapEditor.get() != null) {
@@ -713,11 +711,13 @@ public class T1XTargetMethod extends TargetMethod {
 
     private static int getInvokeCPI(byte[] code, int invokeBCI) {
         assert invokeBCI >= 0 : "illegal bytecode index";
+        assert invokeBCI + 2 < code.length : "illegal bytecode index";
         assert code[invokeBCI] == (byte) Bytecodes.INVOKEINTERFACE ||
             code[invokeBCI] == (byte) Bytecodes.INVOKESPECIAL ||
             code[invokeBCI] == (byte) Bytecodes.INVOKESTATIC ||
-            code[invokeBCI] == (byte) Bytecodes.INVOKEVIRTUAL
-            : "expected invoke bytecode at index " + invokeBCI + ", found " + String.format("0x%h", code[invokeBCI]);
+            code[invokeBCI] == (byte) Bytecodes.INVOKEVIRTUAL ||
+            code[invokeBCI] == (byte) Bytecodes.INVOKEDYNAMIC
+            : "expected invoke bytecode";
         return ((code[invokeBCI + 1] & 0xff) << 8) | (code[invokeBCI + 2] & 0xff);
     }
 
@@ -750,7 +750,6 @@ public class T1XTargetMethod extends TargetMethod {
         boolean isInvokestatic = (code[bci] & 0xFF) == Bytecodes.INVOKESTATIC;
         SignatureDescriptor sig = methodRef.signature(constantPool);
 
-        int slotSize = JVMSFrameLayout.JVMS_SLOT_SIZE;
         int numberOfSlots = sig.computeNumberOfSlots() + (isInvokestatic ? 0 : 1);
 
         if (numberOfSlots != 0) {
@@ -767,7 +766,7 @@ public class T1XTargetMethod extends TargetMethod {
                     preparer.visitReferenceMapBits(caller, slotPointer, 1, 1);
                 }
                 int parameterSlots = (!parameterKind.isCategory1) ? 2 : 1;
-                slotPointer = slotPointer.plus(slotSize * parameterSlots);
+                slotPointer = slotPointer.plus(JVMSFrameLayout.JVMS_SLOT_SIZE * parameterSlots);
             }
 
             // Finally deal with the receiver (if any)
@@ -821,9 +820,8 @@ public class T1XTargetMethod extends TargetMethod {
             assert csl != null;
             // the callee contains register state from this frame;
             // use register reference maps in this method to fill in the map for the callee
-            Pointer slotPointer = csa;
             int byteIndex = (safepointIndex * refMapSize) + frameRefMapSize;
-            preparer.logPrepareReferenceMap(this, safepointIndex, slotPointer, "registers");
+            preparer.logPrepareReferenceMap(this, safepointIndex, csa, "registers");
             // Need to translate from register numbers (as stored in the reg ref maps) to frame slots.
             for (int i = 0; i < regRefMapSize(); i++) {
                 int b = refMaps[byteIndex] & 0xff;
@@ -834,7 +832,7 @@ public class T1XTargetMethod extends TargetMethod {
                         if (logStackRootScanning()) {
                             StackReferenceMapPreparer.stackRootScanLogger.logRegisterState(csl.registers[reg]);
                         }
-                        preparer.visitReferenceMapBits(callee, slotPointer.plus(offset), 1, 1);
+                        preparer.visitReferenceMapBits(callee, csa.plus(offset), 1, 1);
                     }
                     reg++;
                     b = b >>> 1;
@@ -854,9 +852,8 @@ public class T1XTargetMethod extends TargetMethod {
         }
     }
 
-    private Pointer adjustSPForHandler(Pointer sp, Pointer fp) {
+    private Pointer adjustSPForHandler(Pointer fp) {
         if (isAMD64() || isARM() || isAARCH64()) {
-            Pointer localVariablesBase = fp;
             // The Java operand stack of the T1X method that handles the exception is cleared
             // when unwinding. The T1X generated handler is responsible for loading the
             // exception from VmThreadLocal.EXCEPTION_OBJECT to the operand stack.
@@ -865,7 +862,7 @@ public class T1XTargetMethod extends TargetMethod {
             //
             //    frame size - (space for locals + saved RBP + space of the first slot itself).
             //
-            Pointer catcherSP = localVariablesBase.minus(sizeOfNonParameterLocals());
+            Pointer catcherSP = fp.minus(sizeOfNonParameterLocals());
 
             // The ref maps for the handler address will expect a valid reference to
             // to in stack slot 0 so we store a null there.
@@ -932,7 +929,7 @@ public class T1XTargetMethod extends TargetMethod {
 
             if (isAMD64() || isARM() || isAARCH64()) {
                 Pointer localVariablesBase = current.fp();
-                Pointer catcherSP = adjustSPForHandler(current.sp(), current.fp());
+                Pointer catcherSP = adjustSPForHandler(current.fp());
 
                 // Done with the stack walker
                 sfw.reset();
@@ -1255,6 +1252,7 @@ public class T1XTargetMethod extends TargetMethod {
             // Find the instruction *following* the template call by searching backwards
             // from the template emitted for the instruction after the invoke
             byte[] bytecode = classMethodActor.code();
+            assert bytecode != null;
             int opcode = bytecode[bci] & 0xFF;
             assert opcode == INVOKEINTERFACE || opcode == INVOKESPECIAL || opcode == INVOKESTATIC || opcode == INVOKEVIRTUAL;
             final int invokeSize = Bytecodes.lengthOf(opcode);
