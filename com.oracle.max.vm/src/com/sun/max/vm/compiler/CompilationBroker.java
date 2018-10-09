@@ -28,11 +28,11 @@ import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
-import static com.sun.max.vm.compiler.CompilationThreadPool.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -866,7 +866,7 @@ public class CompilationBroker {
                     break;
                 }
                 case Aarch64: {
-                    Pointer callIP = ip.minus(Aarch64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+                    Pointer callIP = ip.minus(Aarch64MacroAssembler.RIP_CALL_INSTRUCTION_SIZE);
                     CodePointer callSite = CodePointer.from(callIP);
                     if (Aarch64TargetMethodUtil.isRIPCall(callIP)) {
                         CodePointer target = Aarch64TargetMethodUtil.readCall32Target(callSite);

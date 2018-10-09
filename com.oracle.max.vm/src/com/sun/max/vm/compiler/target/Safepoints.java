@@ -152,10 +152,10 @@ public final class Safepoints {
      * Mask for extracting position.
      */
 
-    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isARM() ? 23 : 25;
-    public static final int POS_MASK = (1 << CAUSE_OFFSET_SHIFT) - 1;
+    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isARM() || Platform.target().arch.isAarch64() ? 22 : 25;
+    private static final int POS_MASK = (1 << CAUSE_OFFSET_SHIFT) - 1;
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
-    private static final int MAX_CAUSE_OFFSET = Platform.target().arch.isARM() || Platform.target().arch.isAarch64() ? 31 : 7;
+    private static final int MAX_CAUSE_OFFSET = (1 << (28 - CAUSE_OFFSET_SHIFT)) - 1;
 
     /**
      * Mask for extracting attributes.
@@ -436,10 +436,7 @@ public final class Safepoints {
         assert pos(safepointPos) == safepointPos : "safepoint position out of range";
         assert (attrs & ATTRS_MASK) == attrs;
         int causeOffset = safepointPos - causePos;
-        // TODO (fz): Consider removing the if, since the assertion should hold for online compilation as well
-        if (vm().compilationBroker.isOffline()) {
-            assert causeOffset >= 0 && causeOffset <= MAX_CAUSE_OFFSET : "cause position out of range " + causeOffset;
-        }
+        assert causeOffset >= 0 && causeOffset <= MAX_CAUSE_OFFSET : "cause position out of range " + causeOffset;
         return safepointPos | (causeOffset << CAUSE_OFFSET_SHIFT) | attrs;
     }
 }

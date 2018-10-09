@@ -316,6 +316,8 @@ public class Aarch64Assembler extends AbstractAssembler {
         CLREX(0xd5033f5f),
         HINT(0xD503201F),
         DMB(0x000000A0),
+        DSB(0x00000080),
+        ISB(0x000000C0),
 
         BLR_NATIVE(0xc0000000),
 
@@ -2754,6 +2756,14 @@ public class Aarch64Assembler extends AbstractAssembler {
      */
     public void dmb(BarrierKind barrierKind) {
         barrierInstruction(barrierKind, Instruction.DMB);
+    }
+
+    public void dsb(BarrierKind barrierKind) {
+        barrierInstruction(barrierKind, Instruction.DSB);
+    }
+
+    public void isb() {
+        barrierInstruction(BarrierKind.SY, Instruction.ISB);
     }
 
     private void barrierInstruction(BarrierKind barrierKind, Instruction instr) {
