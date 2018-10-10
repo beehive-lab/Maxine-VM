@@ -112,16 +112,6 @@ suite = {
             "javaCompliance": "1.7+",
         },
 
-        "com.oracle.max.c1x": {
-            "sourceDirs": ["src"],
-            "dependencies": [
-                "com.oracle.max.asm",
-                "com.oracle.max.vm",
-            ],
-            "checkstyle": "com.sun.max",
-            "javaCompliance": "1.7+",
-        },
-
         "com.oracle.max.cri": {
             "sourceDirs": ["src"],
             "checkstyle": "com.sun.max",
@@ -242,7 +232,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "com.oracle.max.vm.ext.maxri",
-                "com.oracle.max.c1x",
+                "com.sun.c1x",
             ],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
@@ -331,6 +321,16 @@ suite = {
 
         "com.oracle.max.vmdi": {
             "sourceDirs": ["src"],
+            "checkstyle": "com.sun.max",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.sun.c1x": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.asm",
+                "com.oracle.max.vm",
+            ],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
