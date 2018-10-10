@@ -112,13 +112,6 @@ suite = {
             "javaCompliance": "1.7+",
         },
 
-        "com.oracle.max.asmdis": {
-            "sourceDirs": ["src", "test"],
-            "dependencies": ["com.oracle.max.base"],
-            "checkstyle": "com.oracle.max.base",
-            "javaCompliance": "1.7+",
-        },
-
         "com.oracle.max.base": {
             "sourceDirs": ["src", "test"],
             "dependencies": ["mx:JUNIT"],
@@ -158,7 +151,7 @@ suite = {
         "com.oracle.max.hcfdis": {
             "sourceDirs": ["src"],
             "dependencies": [
-                "com.oracle.max.asmdis",
+                "com.sun.max.asmdis",
                 "com.oracle.max.criutils",
             ],
             "checkstyle": "com.oracle.max.base",
@@ -345,6 +338,13 @@ suite = {
 
         "com.oracle.max.vmdi": {
             "sourceDirs": ["src"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.sun.max.asmdis": {
+            "sourceDirs": ["src", "test"],
+            "dependencies": ["com.oracle.max.base"],
             "checkstyle": "com.oracle.max.base",
             "javaCompliance": "1.7+",
         },
