@@ -108,14 +108,7 @@ suite = {
         "com.oracle.max.asm": {
             "sourceDirs": ["src", "test"],
             "dependencies": ["com.oracle.max.cri", "mx:JUNIT"],
-            "checkstyle": "com.oracle.max.base",
-            "javaCompliance": "1.7+",
-        },
-
-        "com.oracle.max.base": {
-            "sourceDirs": ["src", "test"],
-            "dependencies": ["mx:JUNIT"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -125,26 +118,26 @@ suite = {
                 "com.oracle.max.asm",
                 "com.oracle.max.vm",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.cri": {
             "sourceDirs": ["src"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.criutils": {
             "sourceDirs": ["src"],
             "dependencies": ["com.oracle.max.cri"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.elf": {
             "sourceDirs": ["src"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -154,14 +147,14 @@ suite = {
                 "com.sun.max.asmdis",
                 "com.oracle.max.criutils",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.jdwp": {
             "sourceDirs": ["src"],
             "dependencies": ["com.oracle.max.vmdi"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -172,7 +165,7 @@ suite = {
                 "JLF_ICONS",
                 "NB3_BUTTONS",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -182,7 +175,7 @@ suite = {
                 "com.oracle.max.jdwp",
                 "com.oracle.max.tele.vm",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -193,26 +186,26 @@ suite = {
                 "com.oracle.max.vmdi",
                 "com.oracle.max.elf",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.tests": {
             "sourceDirs": ["src"],
             "dependencies": [
-                "com.oracle.max.base",
+                "com.sun.max",
                 "TESTS_JASMIN_CLASSES",
                 "com.oracle.max.vm.ext.t1x",
                 "com.oracle.max.vm.ext.c1x",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.tests.jsr292": {
             "sourceDirs": ["src"],
             "dependencies": ["com.oracle.max.vm"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -220,9 +213,9 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "JDK_TOOLS",
-                "com.oracle.max.base",
+                "com.sun.max",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -230,18 +223,18 @@ suite = {
             "sourceDirs": ["src", "demo"],
             "dependencies": [
                 "com.oracle.max.asm",
-                "com.oracle.max.base",
+                "com.sun.max",
                 "com.oracle.max.criutils",
                 "JDK_TOOLS",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.vm.ext.bctrans": {
             "sourceDirs": ["src"],
             "dependencies": ["com.oracle.max.vm"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -251,7 +244,7 @@ suite = {
                 "com.oracle.max.vm.ext.maxri",
                 "com.oracle.max.c1x",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -261,7 +254,7 @@ suite = {
                 "com.oracle.max.vm.ext.c1x",
                 "com.oracle.max.vm.ext.graal",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -272,14 +265,14 @@ suite = {
                 "graal:GRAAL_MAXINE",
                 "com.oracle.max.vm",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.vm.ext.jvmti": {
             "sourceDirs": ["src", "demo"],
             "dependencies": ["com.oracle.max.vm.ext.t1x"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -289,14 +282,14 @@ suite = {
                 "com.oracle.max.vm",
                 "com.oracle.max.hcfdis",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.vm.ext.t1x": {
             "sourceDirs": ["src"],
             "dependencies": ["com.oracle.max.vm.ext.maxri"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -307,7 +300,7 @@ suite = {
                 "com.oracle.max.vm.ext.jvmti",
                 "com.oracle.max.vm.ext.graal",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
@@ -325,38 +318,45 @@ suite = {
                 "TESTS_JASMIN_CLASSES",
                 "uk.ac.manchester.tests.jdk8",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.8",
         },
 
         "com.oracle.max.vma.tools": {
             "sourceDirs": ["src"],
             "dependencies": ["com.oracle.max.vm.ext.vma"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.oracle.max.vmdi": {
             "sourceDirs": ["src"],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.sun.max": {
+            "sourceDirs": ["src", "test"],
+            "dependencies": ["mx:JUNIT"],
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "com.sun.max.asmdis": {
             "sourceDirs": ["src", "test"],
-            "dependencies": ["com.oracle.max.base"],
-            "checkstyle": "com.oracle.max.base",
+            "dependencies": ["com.sun.max"],
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
         "uk.ac.manchester.tests.jdk8": {
             "sourceDirs": ["src"],
             "dependencies": [
-                "com.oracle.max.base",
+                "com.sun.max",
                 "com.oracle.max.vm.ext.t1x",
                 "com.oracle.max.vm.ext.c1x",
             ],
-            "checkstyle": "com.oracle.max.base",
+            "checkstyle": "com.sun.max",
             "javaCompliance": "1.8",
         },
 

@@ -726,7 +726,7 @@ def wikidoc(args):
     # There is no virtue in running the doclet on dependent projects as there are
     # no generated links between Wiki pages
     toolsDir = mx.project('com.oracle.max.tools').output_dir()
-    baseDir = mx.project('com.oracle.max.base').output_dir()
+    baseDir = mx.project('com.sun.max').output_dir()
     dp = os.pathsep.join([toolsDir, baseDir])
     project_list = ','.join(p.name for p in mx.sorted_deps())
     for a in ['-docletpath', dp, '-doclet', 'com.oracle.max.tools.javadoc.wiki.WikiDoclet', '-projects', project_list]:
