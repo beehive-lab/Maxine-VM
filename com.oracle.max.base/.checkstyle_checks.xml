@@ -12,6 +12,7 @@
   <property name="severity" value="warning"/>
   <module name="TreeWalker">
     <property name="tabWidth" value="4"/>
+    <module name="FileContentsHolder"/>
     <module name="JavadocStyle">
       <property name="checkHtml" value="false"/>
     </module>
@@ -128,50 +129,6 @@
       <property name="message" value="temporary breakpoint hook should be removed or commented out"/>
       <property name="ignoreComments" value="true"/>
     </module>
-    <module name="SuppressionCommentFilter">
-      <property name="offCommentFormat" value="Checkstyle: stop method name check"/>
-      <property name="onCommentFormat" value="Checkstyle: resume method name check"/>
-      <property name="checkFormat" value="MethodName"/>
-      <property name="checkC" value="false"/>
-      <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable method name checks"/>
-    </module>
-    <module name="SuppressionCommentFilter">
-      <property name="offCommentFormat" value="Checkstyle: stop"/>
-      <property name="onCommentFormat" value="Checkstyle: resume"/>
-      <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks"/>
-    </module>
-    <module name="SuppressionCommentFilter">
-      <property name="offCommentFormat" value="// START GENERATED CODE"/>
-      <property name="onCommentFormat" value="// END GENERATED CODE"/>
-      <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks for generated code"/>
-    </module>
-    <module name="SuppressionCommentFilter">
-      <property name="offCommentFormat" value="// START GENERATED RAW ASSEMBLER METHODS"/>
-      <property name="onCommentFormat" value="// END GENERATED RAW ASSEMBLER METHODS"/>
-      <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks for generated raw assembler methods"/>
-    </module>
-    <module name="SuppressionCommentFilter">
-      <property name="offCommentFormat" value="// START GENERATED LABEL ASSEMBLER METHODS"/>
-      <property name="onCommentFormat" value="// END GENERATED LABEL ASSEMBLER METHODS"/>
-      <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks for generated label assembler methods"/>
-    </module>
-    <module name="SuppressionCommentFilter">
-      <property name="offCommentFormat" value="CheckStyle: stop inner assignment check"/>
-      <property name="onCommentFormat" value="CheckStyle: resume inner assignment check"/>
-      <property name="checkFormat" value="InnerAssignment"/>
-      <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable inner assignment checks"/>
-    </module>
-    <module name="SuppressionCommentFilter">
-      <property name="offCommentFormat" value="Checkstyle: stop field name check"/>
-      <property name="onCommentFormat" value="Checkstyle: resume field name check"/>
-      <property name="checkFormat" value="MemberName"/>
-      <property name="checkC" value="false"/>
-      <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable field name checks"/>
-    </module>
-    <module name="SuppressionCommentFilter">
-      <property name="offCommentFormat" value="Checkstyle: off"/>
-      <property name="onCommentFormat" value="Checkstyle: on"/>
-    </module>
   </module>
   <module name="RegexpHeader">
     <property name="headerFile" value="java.header"/>
@@ -184,6 +141,50 @@
     <property name="lineSeparator" value="lf"/>
   </module>
   <module name="Translation"/>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="Checkstyle: stop method name check"/>
+    <property name="onCommentFormat" value="Checkstyle: resume method name check"/>
+    <property name="checkFormat" value="MethodName"/>
+    <property name="checkC" value="false"/>
+    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable method name checks"/>
+  </module>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="Checkstyle: stop"/>
+    <property name="onCommentFormat" value="Checkstyle: resume"/>
+    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks"/>
+  </module>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="// START GENERATED CODE"/>
+    <property name="onCommentFormat" value="// END GENERATED CODE"/>
+    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks for generated code"/>
+  </module>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="// START GENERATED RAW ASSEMBLER METHODS"/>
+    <property name="onCommentFormat" value="// END GENERATED RAW ASSEMBLER METHODS"/>
+    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks for generated raw assembler methods"/>
+  </module>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="// START GENERATED LABEL ASSEMBLER METHODS"/>
+    <property name="onCommentFormat" value="// END GENERATED LABEL ASSEMBLER METHODS"/>
+    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks for generated label assembler methods"/>
+  </module>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="CheckStyle: stop inner assignment check"/>
+    <property name="onCommentFormat" value="CheckStyle: resume inner assignment check"/>
+    <property name="checkFormat" value="InnerAssignment"/>
+    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable inner assignment checks"/>
+  </module>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="Checkstyle: stop field name check"/>
+    <property name="onCommentFormat" value="Checkstyle: resume field name check"/>
+    <property name="checkFormat" value="MemberName"/>
+    <property name="checkC" value="false"/>
+    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable field name checks"/>
+  </module>
+  <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="Checkstyle: off"/>
+    <property name="onCommentFormat" value="Checkstyle: on"/>
+  </module>
   <module name="RegexpMultiline">
     <metadata name="net.sf.eclipsecs.core.comment" value="illegal Windows line ending"/>
     <property name="format" value="\r\n"/>
