@@ -86,7 +86,7 @@ suite = {
 
         "TESTS_JASMIN_CLASSES": {
             "sha1": "cd79f5f455158d6fcbcb066f5175fc96dac9cf71",
-            "path": "com.oracle.max.tests/jasmin_classes.jar",
+            "path": "test/jasmin_classes.jar",
         },
 
         "ASM": {
@@ -177,13 +177,6 @@ suite = {
                 "com.oracle.max.vmdi",
                 "com.oracle.max.elf",
             ],
-            "checkstyle": "com.sun.max",
-            "javaCompliance": "1.7+",
-        },
-
-        "com.oracle.max.tests": {
-            "sourceDirs": ["src"],
-            "dependencies": ["com.sun.max"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
@@ -298,7 +291,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "com.oracle.max.vm",
-                "com.oracle.max.tests",
+                "test",
                 "jtt",
                 "ASM",
                 "ASMUTIL",
@@ -366,6 +359,13 @@ suite = {
                 "com.oracle.max.vm.ext.t1x",
                 "com.oracle.max.vm.ext.c1x",
             ],
+            "checkstyle": "com.sun.max",
+            "javaCompliance": "1.7+",
+        },
+
+        "test": {
+            "sourceDirs": ["src"],
+            "dependencies": ["com.sun.max"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
