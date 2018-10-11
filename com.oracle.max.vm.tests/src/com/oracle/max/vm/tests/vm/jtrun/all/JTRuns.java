@@ -82,536 +82,536 @@ public class JTRuns {
 // GENERATED TEST RUNS
     public static boolean runTest(int num) {
         switch(num) {
-            case 0: jtt_exbytecode_EBC_movd2l_01(); break;
-            case 1: jtt_exbytecode_EBC_movd2l_02(); break;
-            case 2: jtt_exbytecode_EBC_movd2l_03(); break;
-            case 3: jtt_exbytecode_EBC_movd2l_04(); break;
-            case 4: jtt_exbytecode_EBC_movf2i_01(); break;
-            case 5: jtt_exbytecode_EBC_movf2i_02(); break;
-            case 6: jtt_exbytecode_EBC_movf2i_03(); break;
-            case 7: jtt_exbytecode_EBC_movf2i_04(); break;
-            case 8: jtt_exbytecode_EBC_movi2f_01(); break;
-            case 9: jtt_exbytecode_EBC_movi2f_02(); break;
-            case 10: jtt_exbytecode_EBC_movi2f_03(); break;
-            case 11: jtt_exbytecode_EBC_movi2f_04(); break;
-            case 12: jtt_exbytecode_EBC_movl2d_01(); break;
-            case 13: jtt_exbytecode_EBC_movl2d_02(); break;
-            case 14: jtt_exbytecode_EBC_movl2d_03(); break;
-            case 15: jtt_exbytecode_EBC_movl2d_04(); break;
-            case 16: jtt_exbytecode_EBC_ucmp_ae_01(); break;
-            case 17: jtt_exbytecode_EBC_ucmp_at_01(); break;
-            case 18: jtt_exbytecode_EBC_ucmp_be_01(); break;
-            case 19: jtt_exbytecode_EBC_ucmp_bt_01(); break;
-            case 20: jtt_exbytecode_EBC_uwgt_01(); break;
-            case 21: jtt_exbytecode_EBC_uwgteq_01(); break;
-            case 22: jtt_exbytecode_EBC_uwlt_01(); break;
-            case 23: jtt_exbytecode_EBC_uwlteq_01(); break;
-            case 24: jtt_max_CodePointer01(); break;
-            case 25: jtt_max_CodePointer02(); break;
-            case 26: jtt_max_Fold01(); break;
-            case 27: jtt_max_Fold02(); break;
-            case 28: jtt_max_Fold03(); break;
-            case 29: jtt_max_Hub_Subtype01(); break;
-            case 30: jtt_max_Hub_Subtype02(); break;
-            case 31: jtt_max_ImmortalHeap_allocation(); break;
-            case 32: jtt_max_ImmortalHeap_switching(); break;
-            case 33: jtt_max_Inline01(); break;
-            case 34: jtt_max_Invoke_except01(); break;
-            case 35: jtt_max_Prototyping01(); break;
-            case 36: jtt_max_Unsigned_idiv01(); break;
-            case 37: jtt_max_Unsigned_irem01(); break;
-            case 38: jtt_max_Unsigned_ldiv01(); break;
-            case 39: jtt_max_Unsigned_lrem01(); break;
-            case 40: jtt_bytecode_BC_aaload(); break;
-            case 41: jtt_bytecode_BC_aaload_1(); break;
-            case 42: jtt_bytecode_BC_aastore(); break;
-            case 43: jtt_bytecode_BC_aload_0(); break;
-            case 44: jtt_bytecode_BC_aload_1(); break;
-            case 45: jtt_bytecode_BC_aload_2(); break;
-            case 46: jtt_bytecode_BC_aload_3(); break;
-            case 47: jtt_bytecode_BC_anewarray(); break;
-            case 48: jtt_bytecode_BC_areturn(); break;
-            case 49: jtt_bytecode_BC_arraylength(); break;
-            case 50: jtt_bytecode_BC_athrow(); break;
-            case 51: jtt_bytecode_BC_baload(); break;
-            case 52: jtt_bytecode_BC_bastore(); break;
-            case 53: jtt_bytecode_BC_boolean_tests(); break;
-            case 54: jtt_bytecode_BC_caload(); break;
-            case 55: jtt_bytecode_BC_castore(); break;
-            case 56: jtt_bytecode_BC_checkcast01(); break;
-            case 57: jtt_bytecode_BC_checkcast02(); break;
-            case 58: jtt_bytecode_BC_d2f(); break;
-            case 59: jtt_bytecode_BC_d2i01(); break;
-            case 60: jtt_bytecode_BC_d2i02(); break;
-            case 61: jtt_bytecode_BC_d2l(); break;
-            case 62: jtt_bytecode_BC_d2l01(); break;
-            case 63: jtt_bytecode_BC_d2l02(); break;
-            case 64: jtt_bytecode_BC_dadd(); break;
-            case 65: jtt_bytecode_BC_daload(); break;
-            case 66: jtt_bytecode_BC_dastore(); break;
-            case 67: jtt_bytecode_BC_dcmp01(); break;
-            case 68: jtt_bytecode_BC_dcmp02(); break;
-            case 69: jtt_bytecode_BC_dcmp03(); break;
-            case 70: jtt_bytecode_BC_dcmp04(); break;
-            case 71: jtt_bytecode_BC_dcmp05(); break;
-            case 72: jtt_bytecode_BC_dcmp06(); break;
-            case 73: jtt_bytecode_BC_dcmp07(); break;
-            case 74: jtt_bytecode_BC_dcmp08(); break;
-            case 75: jtt_bytecode_BC_dcmp09(); break;
-            case 76: jtt_bytecode_BC_dcmp10(); break;
-            case 77: jtt_bytecode_BC_ddiv(); break;
-            case 78: jtt_bytecode_BC_dload(); break;
-            case 79: jtt_bytecode_BC_dmul(); break;
-            case 80: jtt_bytecode_BC_dneg(); break;
-            case 81: jtt_bytecode_BC_dneg2(); break;
-            case 82: jtt_bytecode_BC_drem(); break;
-            case 83: jtt_bytecode_BC_dreturn(); break;
-            case 84: jtt_bytecode_BC_dsub(); break;
-            case 85: jtt_bytecode_BC_dsub2(); break;
-            case 86: jtt_bytecode_BC_f2d(); break;
-            case 87: jtt_bytecode_BC_f2i01(); break;
-            case 88: jtt_bytecode_BC_f2i02(); break;
-            case 89: jtt_bytecode_BC_f2l(); break;
-            case 90: jtt_bytecode_BC_f2l01(); break;
-            case 91: jtt_bytecode_BC_f2l02(); break;
-            case 92: jtt_bytecode_BC_fadd(); break;
-            case 93: jtt_bytecode_BC_faload(); break;
-            case 94: jtt_bytecode_BC_fastore(); break;
-            case 95: jtt_bytecode_BC_fcmp01(); break;
-            case 96: jtt_bytecode_BC_fcmp02(); break;
-            case 97: jtt_bytecode_BC_fcmp03(); break;
-            case 98: jtt_bytecode_BC_fcmp04(); break;
-            case 99: jtt_bytecode_BC_fcmp05(); break;
-            case 100: jtt_bytecode_BC_fcmp06(); break;
-            case 101: jtt_bytecode_BC_fcmp07(); break;
-            case 102: jtt_bytecode_BC_fcmp08(); break;
-            case 103: jtt_bytecode_BC_fcmp09(); break;
-            case 104: jtt_bytecode_BC_fcmp10(); break;
-            case 105: jtt_bytecode_BC_fdiv(); break;
-            case 106: jtt_bytecode_BC_fload(); break;
-            case 107: jtt_bytecode_BC_fload_2(); break;
-            case 108: jtt_bytecode_BC_fmul(); break;
-            case 109: jtt_bytecode_BC_fneg(); break;
-            case 110: jtt_bytecode_BC_frem(); break;
-            case 111: jtt_bytecode_BC_freturn(); break;
-            case 112: jtt_bytecode_BC_fsub(); break;
-            case 113: jtt_bytecode_BC_getfield(); break;
-            case 114: jtt_bytecode_BC_getstatic_b(); break;
-            case 115: jtt_bytecode_BC_getstatic_c(); break;
-            case 116: jtt_bytecode_BC_getstatic_d(); break;
-            case 117: jtt_bytecode_BC_getstatic_f(); break;
-            case 118: jtt_bytecode_BC_getstatic_i(); break;
-            case 119: jtt_bytecode_BC_getstatic_l(); break;
-            case 120: jtt_bytecode_BC_getstatic_s(); break;
-            case 121: jtt_bytecode_BC_getstatic_z(); break;
-            case 122: jtt_bytecode_BC_i2b(); break;
-            case 123: jtt_bytecode_BC_i2c(); break;
-            case 124: jtt_bytecode_BC_i2d(); break;
-            case 125: jtt_bytecode_BC_i2f(); break;
-            case 126: jtt_bytecode_BC_i2l(); break;
-            case 127: jtt_bytecode_BC_i2s(); break;
-            case 128: jtt_bytecode_BC_iadd(); break;
-            case 129: jtt_bytecode_BC_iadd2(); break;
-            case 130: jtt_bytecode_BC_iadd3(); break;
-            case 131: jtt_bytecode_BC_iaload(); break;
-            case 132: jtt_bytecode_BC_iand(); break;
-            case 133: jtt_bytecode_BC_iastore(); break;
-            case 134: jtt_bytecode_BC_iconst(); break;
-            case 135: jtt_bytecode_BC_idiv(); break;
-            case 136: jtt_bytecode_BC_idiv2(); break;
-            case 137: jtt_bytecode_BC_ifeq(); break;
-            case 138: jtt_bytecode_BC_ifeq_2(); break;
-            case 139: jtt_bytecode_BC_ifeq_3(); break;
-            case 140: jtt_bytecode_BC_ifge(); break;
-            case 141: jtt_bytecode_BC_ifge_2(); break;
-            case 142: jtt_bytecode_BC_ifge_3(); break;
-            case 143: jtt_bytecode_BC_ifgt(); break;
-            case 144: jtt_bytecode_BC_ificmplt1(); break;
-            case 145: jtt_bytecode_BC_ificmplt2(); break;
-            case 146: jtt_bytecode_BC_ificmpne1(); break;
-            case 147: jtt_bytecode_BC_ificmpne2(); break;
-            case 148: jtt_bytecode_BC_ifle(); break;
-            case 149: jtt_bytecode_BC_iflt(); break;
-            case 150: jtt_bytecode_BC_ifne(); break;
-            case 151: jtt_bytecode_BC_ifnonnull(); break;
-            case 152: jtt_bytecode_BC_ifnonnull_2(); break;
-            case 153: jtt_bytecode_BC_ifnonnull_3(); break;
-            case 154: jtt_bytecode_BC_ifnull(); break;
-            case 155: jtt_bytecode_BC_ifnull_2(); break;
-            case 156: jtt_bytecode_BC_ifnull_3(); break;
-            case 157: jtt_bytecode_BC_iinc_1(); break;
-            case 158: jtt_bytecode_BC_iinc_2(); break;
-            case 159: jtt_bytecode_BC_iinc_3(); break;
-            case 160: jtt_bytecode_BC_iinc_4(); break;
-            case 161: jtt_bytecode_BC_iload_0(); break;
-            case 162: jtt_bytecode_BC_iload_0_1(); break;
-            case 163: jtt_bytecode_BC_iload_0_2(); break;
-            case 164: jtt_bytecode_BC_iload_1(); break;
-            case 165: jtt_bytecode_BC_iload_1_1(); break;
-            case 166: jtt_bytecode_BC_iload_1_2(); break;
-            case 167: jtt_bytecode_BC_iload_2(); break;
-            case 168: jtt_bytecode_BC_iload_3(); break;
-            case 169: jtt_bytecode_BC_imul(); break;
-            case 170: jtt_bytecode_BC_ineg(); break;
-            case 171: jtt_bytecode_BC_instanceof(); break;
-            case 172: jtt_bytecode_BC_invokeinterface(); break;
-            case 173: jtt_bytecode_BC_invokemany(); break;
-            case 174: jtt_bytecode_BC_invokespecial(); break;
-            case 175: jtt_bytecode_BC_invokespecial2(); break;
-            case 176: jtt_bytecode_BC_invokestatic(); break;
-            case 177: jtt_bytecode_BC_invokevirtual(); break;
-            case 178: jtt_bytecode_BC_ior(); break;
-            case 179: jtt_bytecode_BC_irem(); break;
-            case 180: jtt_bytecode_BC_irem2(); break;
-            case 181: jtt_bytecode_BC_irem3(); break;
-            case 182: jtt_bytecode_BC_ireturn(); break;
-            case 183: jtt_bytecode_BC_ishl(); break;
-            case 184: jtt_bytecode_BC_ishr(); break;
-            case 185: jtt_bytecode_BC_isub(); break;
-            case 186: jtt_bytecode_BC_iushr(); break;
-            case 187: jtt_bytecode_BC_ixor(); break;
-            case 188: jtt_bytecode_BC_l2d(); break;
-            case 189: jtt_bytecode_BC_l2f(); break;
-            case 190: jtt_bytecode_BC_l2i(); break;
-            case 191: jtt_bytecode_BC_l2i_2(); break;
-            case 192: jtt_bytecode_BC_ladd(); break;
-            case 193: jtt_bytecode_BC_ladd2(); break;
-            case 194: jtt_bytecode_BC_laload(); break;
-            case 195: jtt_bytecode_BC_land(); break;
-            case 196: jtt_bytecode_BC_lastore(); break;
-            case 197: jtt_bytecode_BC_lcmp(); break;
-            case 198: jtt_bytecode_BC_ldc_01(); break;
-            case 199: jtt_bytecode_BC_ldc_02(); break;
-            case 200: jtt_bytecode_BC_ldc_03(); break;
-            case 201: jtt_bytecode_BC_ldc_04(); break;
-            case 202: jtt_bytecode_BC_ldc_05(); break;
-            case 203: jtt_bytecode_BC_ldc_06(); break;
-            case 204: jtt_bytecode_BC_ldiv(); break;
-            case 205: jtt_bytecode_BC_ldiv2(); break;
-            case 206: jtt_bytecode_BC_lload_0(); break;
-            case 207: jtt_bytecode_BC_lload_01(); break;
-            case 208: jtt_bytecode_BC_lload_1(); break;
-            case 209: jtt_bytecode_BC_lload_2(); break;
-            case 210: jtt_bytecode_BC_lload_3(); break;
-            case 211: jtt_bytecode_BC_lmul(); break;
-            case 212: jtt_bytecode_BC_lneg(); break;
-            case 213: jtt_bytecode_BC_lookupswitch01(); break;
-            case 214: jtt_bytecode_BC_lookupswitch02(); break;
-            case 215: jtt_bytecode_BC_lookupswitch03(); break;
-            case 216: jtt_bytecode_BC_lookupswitch04(); break;
-            case 217: jtt_bytecode_BC_lookupswitch05(); break;
-            case 218: jtt_bytecode_BC_lor(); break;
-            case 219: jtt_bytecode_BC_lrem(); break;
-            case 220: jtt_bytecode_BC_lrem2(); break;
-            case 221: jtt_bytecode_BC_lreturn(); break;
-            case 222: jtt_bytecode_BC_lshl(); break;
-            case 223: jtt_bytecode_BC_lshr(); break;
-            case 224: jtt_bytecode_BC_lsub(); break;
-            case 225: jtt_bytecode_BC_lushr(); break;
-            case 226: jtt_bytecode_BC_lxor(); break;
-            case 227: jtt_bytecode_BC_monitorenter(); break;
-            case 228: jtt_bytecode_BC_monitorenter02(); break;
-            case 229: jtt_bytecode_BC_multianewarray01(); break;
-            case 230: jtt_bytecode_BC_multianewarray02(); break;
-            case 231: jtt_bytecode_BC_multianewarray03(); break;
-            case 232: jtt_bytecode_BC_multianewarray04(); break;
-            case 233: jtt_bytecode_BC_new(); break;
-            case 234: jtt_bytecode_BC_newarray(); break;
-            case 235: jtt_bytecode_BC_putfield(); break;
-            case 236: jtt_bytecode_BC_putstatic(); break;
-            case 237: jtt_bytecode_BC_saload(); break;
-            case 238: jtt_bytecode_BC_sastore(); break;
-            case 239: jtt_bytecode_BC_tableswitch(); break;
-            case 240: jtt_bytecode_BC_tableswitch2(); break;
-            case 241: jtt_bytecode_BC_tableswitch3(); break;
-            case 242: jtt_bytecode_BC_tableswitch4(); break;
-            case 243: jtt_bytecode_BC_wide01(); break;
-            case 244: jtt_bytecode_BC_wide02(); break;
-            case 245: jtt_except_BC_aaload0(); break;
-            case 246: jtt_except_BC_aaload1(); break;
-            case 247: jtt_except_BC_aaload2(); break;
-            case 248: jtt_except_BC_aastore0(); break;
-            case 249: jtt_except_BC_aastore1(); break;
-            case 250: jtt_except_BC_anewarray(); break;
-            case 251: jtt_except_BC_anewarray0(); break;
-            case 252: jtt_except_BC_arraylength(); break;
-            case 253: jtt_except_BC_athrow0(); break;
-            case 254: jtt_except_BC_athrow1(); break;
-            case 255: jtt_except_BC_athrow2(); break;
-            case 256: jtt_except_BC_athrow3(); break;
-            case 257: jtt_except_BC_baload(); break;
-            case 258: jtt_except_BC_bastore(); break;
-            case 259: jtt_except_BC_caload(); break;
-            case 260: jtt_except_BC_castore(); break;
-            case 261: jtt_except_BC_checkcast(); break;
-            case 262: jtt_except_BC_checkcast1(); break;
-            case 263: jtt_except_BC_checkcast2(); break;
-            case 264: jtt_except_BC_checkcast3(); break;
-            case 265: jtt_except_BC_checkcast4(); break;
-            case 266: jtt_except_BC_checkcast5(); break;
-            case 267: jtt_except_BC_checkcast6(); break;
-            case 268: jtt_except_BC_daload(); break;
-            case 269: jtt_except_BC_dastore(); break;
-            case 270: jtt_except_BC_faload(); break;
-            case 271: jtt_except_BC_fastore(); break;
-            case 272: jtt_except_BC_getfield(); break;
-            case 273: jtt_except_BC_iaload(); break;
-            case 274: jtt_except_BC_iastore(); break;
-            case 275: jtt_except_BC_idiv(); break;
-            case 276: jtt_except_BC_idiv2(); break;
-            case 277: jtt_except_BC_invokespecial01(); break;
-            case 278: jtt_except_BC_invokevirtual01(); break;
-            case 279: jtt_except_BC_invokevirtual02(); break;
-            case 280: jtt_except_BC_irem(); break;
-            case 281: jtt_except_BC_laload(); break;
-            case 282: jtt_except_BC_lastore(); break;
-            case 283: jtt_except_BC_ldiv(); break;
-            case 284: jtt_except_BC_ldiv2(); break;
-            case 285: jtt_except_BC_lrem(); break;
-            case 286: jtt_except_BC_monitorenter(); break;
-            case 287: jtt_except_BC_multianewarray(); break;
-            case 288: jtt_except_BC_multianewarray0(); break;
-            case 289: jtt_except_BC_newarray(); break;
-            case 290: jtt_except_BC_putfield(); break;
-            case 291: jtt_except_BC_saload(); break;
-            case 292: jtt_except_BC_sastore(); break;
-            case 293: jtt_except_Catch_Loop01(); break;
-            case 294: jtt_except_Catch_Loop02(); break;
-            case 295: jtt_except_Catch_Loop03(); break;
-            case 296: jtt_except_Catch_NASE_1(); break;
-            case 297: jtt_except_Catch_NASE_2(); break;
-            case 298: jtt_except_Catch_NPE_00(); break;
-            case 299: jtt_except_Catch_NPE_01(); break;
-            case 300: jtt_except_Catch_NPE_02(); break;
-            case 301: jtt_except_Catch_NPE_03(); break;
-            case 302: jtt_except_Catch_NPE_04(); break;
-            case 303: jtt_except_Catch_NPE_05(); break;
-            case 304: jtt_except_Catch_NPE_06(); break;
-            case 305: jtt_except_Catch_NPE_07(); break;
-            case 306: jtt_except_Catch_NPE_08(); break;
-            case 307: jtt_except_Catch_NPE_09(); break;
-            case 308: jtt_except_Catch_NPE_10(); break;
-            case 309: jtt_except_Catch_NPE_11(); break;
-            case 310: jtt_except_Catch_StackOverflowError_01(); break;
-            case 311: jtt_except_Catch_StackOverflowError_02(); break;
-            case 312: jtt_except_Catch_StackOverflowError_03(); break;
-            case 313: jtt_except_Catch_Two01(); break;
-            case 314: jtt_except_Catch_Two02(); break;
-            case 315: jtt_except_Catch_Two03(); break;
-            case 316: jtt_except_Catch_Unresolved(); break;
-            case 317: jtt_except_Catch_Unresolved01(); break;
-            case 318: jtt_except_Catch_Unresolved02(); break;
-            case 319: jtt_except_Catch_Unresolved03(); break;
-            case 320: jtt_except_Except_Locals(); break;
-            case 321: jtt_except_Except_Synchronized01(); break;
-            case 322: jtt_except_Except_Synchronized02(); break;
-            case 323: jtt_except_Except_Synchronized03(); break;
-            case 324: jtt_except_Except_Synchronized04(); break;
-            case 325: jtt_except_Except_Synchronized05(); break;
-            case 326: jtt_except_Finally01(); break;
-            case 327: jtt_except_Finally02(); break;
-            case 328: jtt_except_StackTrace_AIOOBE_00(); break;
-            case 329: jtt_except_StackTrace_CCE_00(); break;
-            case 330: jtt_except_StackTrace_NPE_00(); break;
-            case 331: jtt_except_StackTrace_NPE_01(); break;
-            case 332: jtt_except_StackTrace_NPE_02(); break;
-            case 333: jtt_except_StackTrace_NPE_03(); break;
-            case 334: jtt_except_Throw_InCatch01(); break;
-            case 335: jtt_except_Throw_InCatch02(); break;
-            case 336: jtt_except_Throw_InCatch03(); break;
-            case 337: jtt_except_Throw_InNested(); break;
-            case 338: jtt_except_Throw_NPE_01(); break;
-            case 339: jtt_except_Throw_Synchronized01(); break;
-            case 340: jtt_except_Throw_Synchronized02(); break;
-            case 341: jtt_except_Throw_Synchronized03(); break;
-            case 342: jtt_except_Throw_Synchronized04(); break;
-            case 343: jtt_except_Throw_Synchronized05(); break;
-            case 344: jtt_hotpath_HP_allocate01(); break;
-            case 345: jtt_hotpath_HP_allocate02(); break;
-            case 346: jtt_hotpath_HP_allocate03(); break;
-            case 347: jtt_hotpath_HP_allocate04(); break;
-            case 348: jtt_hotpath_HP_array01(); break;
-            case 349: jtt_hotpath_HP_array02(); break;
-            case 350: jtt_hotpath_HP_array03(); break;
-            case 351: jtt_hotpath_HP_array04(); break;
-            case 352: jtt_hotpath_HP_control01(); break;
-            case 353: jtt_hotpath_HP_control02(); break;
-            case 354: jtt_hotpath_HP_convert01(); break;
-            case 355: jtt_hotpath_HP_count(); break;
-            case 356: jtt_hotpath_HP_dead01(); break;
-            case 357: jtt_hotpath_HP_demo01(); break;
-            case 358: jtt_hotpath_HP_field01(); break;
-            case 359: jtt_hotpath_HP_field02(); break;
-            case 360: jtt_hotpath_HP_field03(); break;
-            case 361: jtt_hotpath_HP_field04(); break;
-            case 362: jtt_hotpath_HP_idea(); break;
-            case 363: jtt_hotpath_HP_inline01(); break;
-            case 364: jtt_hotpath_HP_inline02(); break;
-            case 365: jtt_hotpath_HP_invoke01(); break;
-            case 366: jtt_hotpath_HP_life(); break;
-            case 367: jtt_hotpath_HP_nest01(); break;
-            case 368: jtt_hotpath_HP_nest02(); break;
-            case 369: jtt_hotpath_HP_scope01(); break;
-            case 370: jtt_hotpath_HP_scope02(); break;
-            case 371: jtt_hotpath_HP_series(); break;
-            case 372: jtt_hotpath_HP_trees01(); break;
-            case 373: jtt_jasm_BC_dcmpg(); break;
-            case 374: jtt_jasm_BC_dcmpg2(); break;
-            case 375: jtt_jasm_BC_dcmpl(); break;
-            case 376: jtt_jasm_BC_dcmpl2(); break;
-            case 377: jtt_jasm_BC_fcmpg(); break;
-            case 378: jtt_jasm_BC_fcmpg2(); break;
-            case 379: jtt_jasm_BC_fcmpl(); break;
-            case 380: jtt_jasm_BC_fcmpl2(); break;
-            case 381: jtt_jasm_BC_lcmp(); break;
-            case 382: jtt_jasm_Invokevirtual_private00(); break;
-            case 383: jtt_jasm_Invokevirtual_private01(); break;
-            case 384: jtt_jasm_Loop00(); break;
-            case 385: jtt_jdk_AtomicIntegerFieldUpdater01(); break;
-            case 386: jtt_jdk_Class_getName(); break;
-            case 387: jtt_jdk_EnumMap01(); break;
-            case 388: jtt_jdk_EnumMap02(); break;
-            case 389: jtt_jdk_System_currentTimeMillis01(); break;
-            case 390: jtt_jdk_System_currentTimeMillis02(); break;
-            case 391: jtt_jdk_System_nanoTime01(); break;
-            case 392: jtt_jdk_System_nanoTime02(); break;
-            case 393: jtt_jdk_System_setOut(); break;
-            case 394: jtt_jdk_Thread_setName(); break;
-            case 395: jtt_jdk_UnsafeAccess01(); break;
-            case 396: jtt_jni_JNI_FieldBoolean(); break;
-            case 397: jtt_jni_JNI_IdentityBoolean(); break;
-            case 398: jtt_jni_JNI_IdentityByte(); break;
-            case 399: jtt_jni_JNI_IdentityChar(); break;
-            case 400: jtt_jni_JNI_IdentityFloat(); break;
-            case 401: jtt_jni_JNI_IdentityInt(); break;
-            case 402: jtt_jni_JNI_IdentityLong(); break;
-            case 403: jtt_jni_JNI_IdentityObject(); break;
-            case 404: jtt_jni_JNI_IdentityShort(); break;
-            case 405: jtt_jni_JNI_ManyObjectParameters(); break;
-            case 406: jtt_jni_JNI_ManyParameters(); break;
-            case 407: jtt_jni_JNI_Nop(); break;
-            case 408: jtt_jni_JNI_OverflowArguments(); break;
-            case 409: jtt_jvmni_JVM_ArrayCopy01(); break;
-            case 410: jtt_jvmni_JVM_GetClassContext01(); break;
-            case 411: jtt_jvmni_JVM_GetClassContext02(); break;
-            case 412: jtt_jvmni_JVM_GetFreeMemory01(); break;
-            case 413: jtt_jvmni_JVM_GetMaxMemory01(); break;
-            case 414: jtt_jvmni_JVM_GetTotalMemory01(); break;
-            case 415: jtt_jvmni_JVM_IsNaN01(); break;
-            case 416: jtt_lang_Boxed_TYPE_01(); break;
-            case 417: jtt_lang_Bridge_method01(); break;
-            case 418: jtt_lang_ClassLoader_loadClass01(); break;
-            case 419: jtt_lang_Class_Literal01(); break;
-            case 420: jtt_lang_Class_asSubclass01(); break;
-            case 421: jtt_lang_Class_cast01(); break;
-            case 422: jtt_lang_Class_cast02(); break;
-            case 423: jtt_lang_Class_forName01(); break;
-            case 424: jtt_lang_Class_forName02(); break;
-            case 425: jtt_lang_Class_forName03(); break;
-            case 426: jtt_lang_Class_forName04(); break;
-            case 427: jtt_lang_Class_forName05(); break;
-            case 428: jtt_lang_Class_getAnnotation01(); break;
-            case 429: jtt_lang_Class_getComponentType01(); break;
-            case 430: jtt_lang_Class_getInterfaces01(); break;
-            case 431: jtt_lang_Class_getName01(); break;
-            case 432: jtt_lang_Class_getName02(); break;
-            case 433: jtt_lang_Class_getSimpleName01(); break;
-            case 434: jtt_lang_Class_getSimpleName02(); break;
-            case 435: jtt_lang_Class_getSuperClass01(); break;
-            case 436: jtt_lang_Class_isArray01(); break;
-            case 437: jtt_lang_Class_isAssignableFrom01(); break;
-            case 438: jtt_lang_Class_isAssignableFrom02(); break;
-            case 439: jtt_lang_Class_isAssignableFrom03(); break;
-            case 440: jtt_lang_Class_isInstance01(); break;
-            case 441: jtt_lang_Class_isInstance02(); break;
-            case 442: jtt_lang_Class_isInstance03(); break;
-            case 443: jtt_lang_Class_isInstance04(); break;
-            case 444: jtt_lang_Class_isInstance05(); break;
-            case 445: jtt_lang_Class_isInstance06(); break;
-            case 446: jtt_lang_Class_isInterface01(); break;
-            case 447: jtt_lang_Class_isPrimitive01(); break;
-            case 448: jtt_lang_Double_01(); break;
-            case 449: jtt_lang_Double_toString(); break;
-            case 450: jtt_lang_Float_01(); break;
-            case 451: jtt_lang_Float_02(); break;
-            case 452: jtt_lang_Float_03(); break;
-            case 453: jtt_lang_Int_greater01(); break;
-            case 454: jtt_lang_Int_greater02(); break;
-            case 455: jtt_lang_Int_greater03(); break;
-            case 456: jtt_lang_Int_greaterEqual01(); break;
-            case 457: jtt_lang_Int_greaterEqual02(); break;
-            case 458: jtt_lang_Int_greaterEqual03(); break;
-            case 459: jtt_lang_Int_less01(); break;
-            case 460: jtt_lang_Int_less02(); break;
-            case 461: jtt_lang_Int_less03(); break;
-            case 462: jtt_lang_Int_lessEqual01(); break;
-            case 463: jtt_lang_Int_lessEqual02(); break;
-            case 464: jtt_lang_Int_lessEqual03(); break;
-            case 465: jtt_lang_JDK_ClassLoaders01(); break;
-            case 466: jtt_lang_JDK_ClassLoaders02(); break;
-            case 467: jtt_lang_Long_greater01(); break;
-            case 468: jtt_lang_Long_greater02(); break;
-            case 469: jtt_lang_Long_greater03(); break;
-            case 470: jtt_lang_Long_greaterEqual01(); break;
-            case 471: jtt_lang_Long_greaterEqual02(); break;
-            case 472: jtt_lang_Long_greaterEqual03(); break;
-            case 473: jtt_lang_Long_less01(); break;
-            case 474: jtt_lang_Long_less02(); break;
-            case 475: jtt_lang_Long_less03(); break;
-            case 476: jtt_lang_Long_lessEqual01(); break;
-            case 477: jtt_lang_Long_lessEqual02(); break;
-            case 478: jtt_lang_Long_lessEqual03(); break;
-            case 479: jtt_lang_Long_reverseBytes01(); break;
-            case 480: jtt_lang_Long_reverseBytes02(); break;
-            case 481: jtt_lang_Math_abs(); break;
-            case 482: jtt_lang_Math_cos(); break;
-            case 483: jtt_lang_Math_log(); break;
-            case 484: jtt_lang_Math_log10(); break;
-            case 485: jtt_lang_Math_pow(); break;
-            case 486: jtt_lang_Math_sin(); break;
-            case 487: jtt_lang_Math_sqrt(); break;
-            case 488: jtt_lang_Math_tan(); break;
-            case 489: jtt_lang_Miranda_method01(); break;
-            case 490: jtt_lang_Object_clone01(); break;
-            case 491: jtt_lang_Object_clone02(); break;
-            case 492: jtt_lang_Object_equals01(); break;
-            case 493: jtt_lang_Object_getClass01(); break;
-            case 494: jtt_lang_Object_hashCode01(); break;
-            case 495: jtt_lang_Object_notify01(); break;
-            case 496: jtt_lang_Object_notify02(); break;
-            case 497: jtt_lang_Object_notifyAll01(); break;
-            case 498: jtt_lang_Object_notifyAll02(); break;
-            case 499: jtt_lang_Object_toString01(); break;
-            case 500: jtt_lang_Object_toString02(); break;
-            case 501: jtt_lang_Object_wait01(); break;
-            case 502: jtt_lang_Object_wait02(); break;
-            case 503: jtt_lang_Object_wait03(); break;
-            case 504: jtt_lang_ProcessEnvironment_init(); break;
-            case 505: jtt_lang_Runtime_exec01(); break;
-            case 506: jtt_lang_StringCoding_Scale(); break;
-            case 507: jtt_lang_String_intern01(); break;
-            case 508: jtt_lang_String_intern02(); break;
-            case 509: jtt_lang_String_intern03(); break;
-            case 510: jtt_lang_String_valueOf01(); break;
-            case 511: jtt_lang_System_identityHashCode01(); break;
-            case 512: jtt_loop_DegeneratedLoop(); break;
-            case 513: jtt_loop_Loop01(); break;
-            case 514: jtt_loop_Loop02(); break;
-            case 515: jtt_loop_Loop03(); break;
-            case 516: jtt_loop_Loop04(); break;
-            case 517: jtt_loop_Loop05(); break;
-            case 518: jtt_loop_Loop06(); break;
-            case 519: jtt_loop_Loop07(); break;
-            case 520: jtt_loop_Loop08(); break;
-            case 521: jtt_loop_Loop09(); break;
-            case 522: jtt_loop_Loop11(); break;
-            case 523: jtt_loop_Loop12(); break;
-            case 524: jtt_loop_Loop13(); break;
-            case 525: jtt_loop_Loop14(); break;
-            case 526: jtt_loop_LoopInline(); break;
-            case 527: jtt_loop_LoopNewInstance(); break;
-            case 528: jtt_loop_LoopPhi(); break;
-            case 529: jtt_loop_LoopSwitch01(); break;
+            case 0: jtt_bytecode_BC_aaload(); break;
+            case 1: jtt_bytecode_BC_aaload_1(); break;
+            case 2: jtt_bytecode_BC_aastore(); break;
+            case 3: jtt_bytecode_BC_aload_0(); break;
+            case 4: jtt_bytecode_BC_aload_1(); break;
+            case 5: jtt_bytecode_BC_aload_2(); break;
+            case 6: jtt_bytecode_BC_aload_3(); break;
+            case 7: jtt_bytecode_BC_anewarray(); break;
+            case 8: jtt_bytecode_BC_areturn(); break;
+            case 9: jtt_bytecode_BC_arraylength(); break;
+            case 10: jtt_bytecode_BC_athrow(); break;
+            case 11: jtt_bytecode_BC_baload(); break;
+            case 12: jtt_bytecode_BC_bastore(); break;
+            case 13: jtt_bytecode_BC_boolean_tests(); break;
+            case 14: jtt_bytecode_BC_caload(); break;
+            case 15: jtt_bytecode_BC_castore(); break;
+            case 16: jtt_bytecode_BC_checkcast01(); break;
+            case 17: jtt_bytecode_BC_checkcast02(); break;
+            case 18: jtt_bytecode_BC_d2f(); break;
+            case 19: jtt_bytecode_BC_d2i01(); break;
+            case 20: jtt_bytecode_BC_d2i02(); break;
+            case 21: jtt_bytecode_BC_d2l(); break;
+            case 22: jtt_bytecode_BC_d2l01(); break;
+            case 23: jtt_bytecode_BC_d2l02(); break;
+            case 24: jtt_bytecode_BC_dadd(); break;
+            case 25: jtt_bytecode_BC_daload(); break;
+            case 26: jtt_bytecode_BC_dastore(); break;
+            case 27: jtt_bytecode_BC_dcmp01(); break;
+            case 28: jtt_bytecode_BC_dcmp02(); break;
+            case 29: jtt_bytecode_BC_dcmp03(); break;
+            case 30: jtt_bytecode_BC_dcmp04(); break;
+            case 31: jtt_bytecode_BC_dcmp05(); break;
+            case 32: jtt_bytecode_BC_dcmp06(); break;
+            case 33: jtt_bytecode_BC_dcmp07(); break;
+            case 34: jtt_bytecode_BC_dcmp08(); break;
+            case 35: jtt_bytecode_BC_dcmp09(); break;
+            case 36: jtt_bytecode_BC_dcmp10(); break;
+            case 37: jtt_bytecode_BC_ddiv(); break;
+            case 38: jtt_bytecode_BC_dload(); break;
+            case 39: jtt_bytecode_BC_dmul(); break;
+            case 40: jtt_bytecode_BC_dneg(); break;
+            case 41: jtt_bytecode_BC_dneg2(); break;
+            case 42: jtt_bytecode_BC_drem(); break;
+            case 43: jtt_bytecode_BC_dreturn(); break;
+            case 44: jtt_bytecode_BC_dsub(); break;
+            case 45: jtt_bytecode_BC_dsub2(); break;
+            case 46: jtt_bytecode_BC_f2d(); break;
+            case 47: jtt_bytecode_BC_f2i01(); break;
+            case 48: jtt_bytecode_BC_f2i02(); break;
+            case 49: jtt_bytecode_BC_f2l(); break;
+            case 50: jtt_bytecode_BC_f2l01(); break;
+            case 51: jtt_bytecode_BC_f2l02(); break;
+            case 52: jtt_bytecode_BC_fadd(); break;
+            case 53: jtt_bytecode_BC_faload(); break;
+            case 54: jtt_bytecode_BC_fastore(); break;
+            case 55: jtt_bytecode_BC_fcmp01(); break;
+            case 56: jtt_bytecode_BC_fcmp02(); break;
+            case 57: jtt_bytecode_BC_fcmp03(); break;
+            case 58: jtt_bytecode_BC_fcmp04(); break;
+            case 59: jtt_bytecode_BC_fcmp05(); break;
+            case 60: jtt_bytecode_BC_fcmp06(); break;
+            case 61: jtt_bytecode_BC_fcmp07(); break;
+            case 62: jtt_bytecode_BC_fcmp08(); break;
+            case 63: jtt_bytecode_BC_fcmp09(); break;
+            case 64: jtt_bytecode_BC_fcmp10(); break;
+            case 65: jtt_bytecode_BC_fdiv(); break;
+            case 66: jtt_bytecode_BC_fload(); break;
+            case 67: jtt_bytecode_BC_fload_2(); break;
+            case 68: jtt_bytecode_BC_fmul(); break;
+            case 69: jtt_bytecode_BC_fneg(); break;
+            case 70: jtt_bytecode_BC_frem(); break;
+            case 71: jtt_bytecode_BC_freturn(); break;
+            case 72: jtt_bytecode_BC_fsub(); break;
+            case 73: jtt_bytecode_BC_getfield(); break;
+            case 74: jtt_bytecode_BC_getstatic_b(); break;
+            case 75: jtt_bytecode_BC_getstatic_c(); break;
+            case 76: jtt_bytecode_BC_getstatic_d(); break;
+            case 77: jtt_bytecode_BC_getstatic_f(); break;
+            case 78: jtt_bytecode_BC_getstatic_i(); break;
+            case 79: jtt_bytecode_BC_getstatic_l(); break;
+            case 80: jtt_bytecode_BC_getstatic_s(); break;
+            case 81: jtt_bytecode_BC_getstatic_z(); break;
+            case 82: jtt_bytecode_BC_i2b(); break;
+            case 83: jtt_bytecode_BC_i2c(); break;
+            case 84: jtt_bytecode_BC_i2d(); break;
+            case 85: jtt_bytecode_BC_i2f(); break;
+            case 86: jtt_bytecode_BC_i2l(); break;
+            case 87: jtt_bytecode_BC_i2s(); break;
+            case 88: jtt_bytecode_BC_iadd(); break;
+            case 89: jtt_bytecode_BC_iadd2(); break;
+            case 90: jtt_bytecode_BC_iadd3(); break;
+            case 91: jtt_bytecode_BC_iaload(); break;
+            case 92: jtt_bytecode_BC_iand(); break;
+            case 93: jtt_bytecode_BC_iastore(); break;
+            case 94: jtt_bytecode_BC_iconst(); break;
+            case 95: jtt_bytecode_BC_idiv(); break;
+            case 96: jtt_bytecode_BC_idiv2(); break;
+            case 97: jtt_bytecode_BC_ifeq(); break;
+            case 98: jtt_bytecode_BC_ifeq_2(); break;
+            case 99: jtt_bytecode_BC_ifeq_3(); break;
+            case 100: jtt_bytecode_BC_ifge(); break;
+            case 101: jtt_bytecode_BC_ifge_2(); break;
+            case 102: jtt_bytecode_BC_ifge_3(); break;
+            case 103: jtt_bytecode_BC_ifgt(); break;
+            case 104: jtt_bytecode_BC_ificmplt1(); break;
+            case 105: jtt_bytecode_BC_ificmplt2(); break;
+            case 106: jtt_bytecode_BC_ificmpne1(); break;
+            case 107: jtt_bytecode_BC_ificmpne2(); break;
+            case 108: jtt_bytecode_BC_ifle(); break;
+            case 109: jtt_bytecode_BC_iflt(); break;
+            case 110: jtt_bytecode_BC_ifne(); break;
+            case 111: jtt_bytecode_BC_ifnonnull(); break;
+            case 112: jtt_bytecode_BC_ifnonnull_2(); break;
+            case 113: jtt_bytecode_BC_ifnonnull_3(); break;
+            case 114: jtt_bytecode_BC_ifnull(); break;
+            case 115: jtt_bytecode_BC_ifnull_2(); break;
+            case 116: jtt_bytecode_BC_ifnull_3(); break;
+            case 117: jtt_bytecode_BC_iinc_1(); break;
+            case 118: jtt_bytecode_BC_iinc_2(); break;
+            case 119: jtt_bytecode_BC_iinc_3(); break;
+            case 120: jtt_bytecode_BC_iinc_4(); break;
+            case 121: jtt_bytecode_BC_iload_0(); break;
+            case 122: jtt_bytecode_BC_iload_0_1(); break;
+            case 123: jtt_bytecode_BC_iload_0_2(); break;
+            case 124: jtt_bytecode_BC_iload_1(); break;
+            case 125: jtt_bytecode_BC_iload_1_1(); break;
+            case 126: jtt_bytecode_BC_iload_1_2(); break;
+            case 127: jtt_bytecode_BC_iload_2(); break;
+            case 128: jtt_bytecode_BC_iload_3(); break;
+            case 129: jtt_bytecode_BC_imul(); break;
+            case 130: jtt_bytecode_BC_ineg(); break;
+            case 131: jtt_bytecode_BC_instanceof(); break;
+            case 132: jtt_bytecode_BC_invokeinterface(); break;
+            case 133: jtt_bytecode_BC_invokemany(); break;
+            case 134: jtt_bytecode_BC_invokespecial(); break;
+            case 135: jtt_bytecode_BC_invokespecial2(); break;
+            case 136: jtt_bytecode_BC_invokestatic(); break;
+            case 137: jtt_bytecode_BC_invokevirtual(); break;
+            case 138: jtt_bytecode_BC_ior(); break;
+            case 139: jtt_bytecode_BC_irem(); break;
+            case 140: jtt_bytecode_BC_irem2(); break;
+            case 141: jtt_bytecode_BC_irem3(); break;
+            case 142: jtt_bytecode_BC_ireturn(); break;
+            case 143: jtt_bytecode_BC_ishl(); break;
+            case 144: jtt_bytecode_BC_ishr(); break;
+            case 145: jtt_bytecode_BC_isub(); break;
+            case 146: jtt_bytecode_BC_iushr(); break;
+            case 147: jtt_bytecode_BC_ixor(); break;
+            case 148: jtt_bytecode_BC_l2d(); break;
+            case 149: jtt_bytecode_BC_l2f(); break;
+            case 150: jtt_bytecode_BC_l2i(); break;
+            case 151: jtt_bytecode_BC_l2i_2(); break;
+            case 152: jtt_bytecode_BC_ladd(); break;
+            case 153: jtt_bytecode_BC_ladd2(); break;
+            case 154: jtt_bytecode_BC_laload(); break;
+            case 155: jtt_bytecode_BC_land(); break;
+            case 156: jtt_bytecode_BC_lastore(); break;
+            case 157: jtt_bytecode_BC_lcmp(); break;
+            case 158: jtt_bytecode_BC_ldc_01(); break;
+            case 159: jtt_bytecode_BC_ldc_02(); break;
+            case 160: jtt_bytecode_BC_ldc_03(); break;
+            case 161: jtt_bytecode_BC_ldc_04(); break;
+            case 162: jtt_bytecode_BC_ldc_05(); break;
+            case 163: jtt_bytecode_BC_ldc_06(); break;
+            case 164: jtt_bytecode_BC_ldiv(); break;
+            case 165: jtt_bytecode_BC_ldiv2(); break;
+            case 166: jtt_bytecode_BC_lload_0(); break;
+            case 167: jtt_bytecode_BC_lload_01(); break;
+            case 168: jtt_bytecode_BC_lload_1(); break;
+            case 169: jtt_bytecode_BC_lload_2(); break;
+            case 170: jtt_bytecode_BC_lload_3(); break;
+            case 171: jtt_bytecode_BC_lmul(); break;
+            case 172: jtt_bytecode_BC_lneg(); break;
+            case 173: jtt_bytecode_BC_lookupswitch01(); break;
+            case 174: jtt_bytecode_BC_lookupswitch02(); break;
+            case 175: jtt_bytecode_BC_lookupswitch03(); break;
+            case 176: jtt_bytecode_BC_lookupswitch04(); break;
+            case 177: jtt_bytecode_BC_lookupswitch05(); break;
+            case 178: jtt_bytecode_BC_lor(); break;
+            case 179: jtt_bytecode_BC_lrem(); break;
+            case 180: jtt_bytecode_BC_lrem2(); break;
+            case 181: jtt_bytecode_BC_lreturn(); break;
+            case 182: jtt_bytecode_BC_lshl(); break;
+            case 183: jtt_bytecode_BC_lshr(); break;
+            case 184: jtt_bytecode_BC_lsub(); break;
+            case 185: jtt_bytecode_BC_lushr(); break;
+            case 186: jtt_bytecode_BC_lxor(); break;
+            case 187: jtt_bytecode_BC_monitorenter(); break;
+            case 188: jtt_bytecode_BC_monitorenter02(); break;
+            case 189: jtt_bytecode_BC_multianewarray01(); break;
+            case 190: jtt_bytecode_BC_multianewarray02(); break;
+            case 191: jtt_bytecode_BC_multianewarray03(); break;
+            case 192: jtt_bytecode_BC_multianewarray04(); break;
+            case 193: jtt_bytecode_BC_new(); break;
+            case 194: jtt_bytecode_BC_newarray(); break;
+            case 195: jtt_bytecode_BC_putfield(); break;
+            case 196: jtt_bytecode_BC_putstatic(); break;
+            case 197: jtt_bytecode_BC_saload(); break;
+            case 198: jtt_bytecode_BC_sastore(); break;
+            case 199: jtt_bytecode_BC_tableswitch(); break;
+            case 200: jtt_bytecode_BC_tableswitch2(); break;
+            case 201: jtt_bytecode_BC_tableswitch3(); break;
+            case 202: jtt_bytecode_BC_tableswitch4(); break;
+            case 203: jtt_bytecode_BC_wide01(); break;
+            case 204: jtt_bytecode_BC_wide02(); break;
+            case 205: jtt_exbytecode_EBC_movd2l_01(); break;
+            case 206: jtt_exbytecode_EBC_movd2l_02(); break;
+            case 207: jtt_exbytecode_EBC_movd2l_03(); break;
+            case 208: jtt_exbytecode_EBC_movd2l_04(); break;
+            case 209: jtt_exbytecode_EBC_movf2i_01(); break;
+            case 210: jtt_exbytecode_EBC_movf2i_02(); break;
+            case 211: jtt_exbytecode_EBC_movf2i_03(); break;
+            case 212: jtt_exbytecode_EBC_movf2i_04(); break;
+            case 213: jtt_exbytecode_EBC_movi2f_01(); break;
+            case 214: jtt_exbytecode_EBC_movi2f_02(); break;
+            case 215: jtt_exbytecode_EBC_movi2f_03(); break;
+            case 216: jtt_exbytecode_EBC_movi2f_04(); break;
+            case 217: jtt_exbytecode_EBC_movl2d_01(); break;
+            case 218: jtt_exbytecode_EBC_movl2d_02(); break;
+            case 219: jtt_exbytecode_EBC_movl2d_03(); break;
+            case 220: jtt_exbytecode_EBC_movl2d_04(); break;
+            case 221: jtt_exbytecode_EBC_ucmp_ae_01(); break;
+            case 222: jtt_exbytecode_EBC_ucmp_at_01(); break;
+            case 223: jtt_exbytecode_EBC_ucmp_be_01(); break;
+            case 224: jtt_exbytecode_EBC_ucmp_bt_01(); break;
+            case 225: jtt_exbytecode_EBC_uwgt_01(); break;
+            case 226: jtt_exbytecode_EBC_uwgteq_01(); break;
+            case 227: jtt_exbytecode_EBC_uwlt_01(); break;
+            case 228: jtt_exbytecode_EBC_uwlteq_01(); break;
+            case 229: jtt_except_BC_aaload0(); break;
+            case 230: jtt_except_BC_aaload1(); break;
+            case 231: jtt_except_BC_aaload2(); break;
+            case 232: jtt_except_BC_aastore0(); break;
+            case 233: jtt_except_BC_aastore1(); break;
+            case 234: jtt_except_BC_anewarray(); break;
+            case 235: jtt_except_BC_anewarray0(); break;
+            case 236: jtt_except_BC_arraylength(); break;
+            case 237: jtt_except_BC_athrow0(); break;
+            case 238: jtt_except_BC_athrow1(); break;
+            case 239: jtt_except_BC_athrow2(); break;
+            case 240: jtt_except_BC_athrow3(); break;
+            case 241: jtt_except_BC_baload(); break;
+            case 242: jtt_except_BC_bastore(); break;
+            case 243: jtt_except_BC_caload(); break;
+            case 244: jtt_except_BC_castore(); break;
+            case 245: jtt_except_BC_checkcast(); break;
+            case 246: jtt_except_BC_checkcast1(); break;
+            case 247: jtt_except_BC_checkcast2(); break;
+            case 248: jtt_except_BC_checkcast3(); break;
+            case 249: jtt_except_BC_checkcast4(); break;
+            case 250: jtt_except_BC_checkcast5(); break;
+            case 251: jtt_except_BC_checkcast6(); break;
+            case 252: jtt_except_BC_daload(); break;
+            case 253: jtt_except_BC_dastore(); break;
+            case 254: jtt_except_BC_faload(); break;
+            case 255: jtt_except_BC_fastore(); break;
+            case 256: jtt_except_BC_getfield(); break;
+            case 257: jtt_except_BC_iaload(); break;
+            case 258: jtt_except_BC_iastore(); break;
+            case 259: jtt_except_BC_idiv(); break;
+            case 260: jtt_except_BC_idiv2(); break;
+            case 261: jtt_except_BC_invokespecial01(); break;
+            case 262: jtt_except_BC_invokevirtual01(); break;
+            case 263: jtt_except_BC_invokevirtual02(); break;
+            case 264: jtt_except_BC_irem(); break;
+            case 265: jtt_except_BC_laload(); break;
+            case 266: jtt_except_BC_lastore(); break;
+            case 267: jtt_except_BC_ldiv(); break;
+            case 268: jtt_except_BC_ldiv2(); break;
+            case 269: jtt_except_BC_lrem(); break;
+            case 270: jtt_except_BC_monitorenter(); break;
+            case 271: jtt_except_BC_multianewarray(); break;
+            case 272: jtt_except_BC_multianewarray0(); break;
+            case 273: jtt_except_BC_newarray(); break;
+            case 274: jtt_except_BC_putfield(); break;
+            case 275: jtt_except_BC_saload(); break;
+            case 276: jtt_except_BC_sastore(); break;
+            case 277: jtt_except_Catch_Loop01(); break;
+            case 278: jtt_except_Catch_Loop02(); break;
+            case 279: jtt_except_Catch_Loop03(); break;
+            case 280: jtt_except_Catch_NASE_1(); break;
+            case 281: jtt_except_Catch_NASE_2(); break;
+            case 282: jtt_except_Catch_NPE_00(); break;
+            case 283: jtt_except_Catch_NPE_01(); break;
+            case 284: jtt_except_Catch_NPE_02(); break;
+            case 285: jtt_except_Catch_NPE_03(); break;
+            case 286: jtt_except_Catch_NPE_04(); break;
+            case 287: jtt_except_Catch_NPE_05(); break;
+            case 288: jtt_except_Catch_NPE_06(); break;
+            case 289: jtt_except_Catch_NPE_07(); break;
+            case 290: jtt_except_Catch_NPE_08(); break;
+            case 291: jtt_except_Catch_NPE_09(); break;
+            case 292: jtt_except_Catch_NPE_10(); break;
+            case 293: jtt_except_Catch_NPE_11(); break;
+            case 294: jtt_except_Catch_StackOverflowError_01(); break;
+            case 295: jtt_except_Catch_StackOverflowError_02(); break;
+            case 296: jtt_except_Catch_StackOverflowError_03(); break;
+            case 297: jtt_except_Catch_Two01(); break;
+            case 298: jtt_except_Catch_Two02(); break;
+            case 299: jtt_except_Catch_Two03(); break;
+            case 300: jtt_except_Catch_Unresolved(); break;
+            case 301: jtt_except_Catch_Unresolved01(); break;
+            case 302: jtt_except_Catch_Unresolved02(); break;
+            case 303: jtt_except_Catch_Unresolved03(); break;
+            case 304: jtt_except_Except_Locals(); break;
+            case 305: jtt_except_Except_Synchronized01(); break;
+            case 306: jtt_except_Except_Synchronized02(); break;
+            case 307: jtt_except_Except_Synchronized03(); break;
+            case 308: jtt_except_Except_Synchronized04(); break;
+            case 309: jtt_except_Except_Synchronized05(); break;
+            case 310: jtt_except_Finally01(); break;
+            case 311: jtt_except_Finally02(); break;
+            case 312: jtt_except_StackTrace_AIOOBE_00(); break;
+            case 313: jtt_except_StackTrace_CCE_00(); break;
+            case 314: jtt_except_StackTrace_NPE_00(); break;
+            case 315: jtt_except_StackTrace_NPE_01(); break;
+            case 316: jtt_except_StackTrace_NPE_02(); break;
+            case 317: jtt_except_StackTrace_NPE_03(); break;
+            case 318: jtt_except_Throw_InCatch01(); break;
+            case 319: jtt_except_Throw_InCatch02(); break;
+            case 320: jtt_except_Throw_InCatch03(); break;
+            case 321: jtt_except_Throw_InNested(); break;
+            case 322: jtt_except_Throw_NPE_01(); break;
+            case 323: jtt_except_Throw_Synchronized01(); break;
+            case 324: jtt_except_Throw_Synchronized02(); break;
+            case 325: jtt_except_Throw_Synchronized03(); break;
+            case 326: jtt_except_Throw_Synchronized04(); break;
+            case 327: jtt_except_Throw_Synchronized05(); break;
+            case 328: jtt_hotpath_HP_allocate01(); break;
+            case 329: jtt_hotpath_HP_allocate02(); break;
+            case 330: jtt_hotpath_HP_allocate03(); break;
+            case 331: jtt_hotpath_HP_allocate04(); break;
+            case 332: jtt_hotpath_HP_array01(); break;
+            case 333: jtt_hotpath_HP_array02(); break;
+            case 334: jtt_hotpath_HP_array03(); break;
+            case 335: jtt_hotpath_HP_array04(); break;
+            case 336: jtt_hotpath_HP_control01(); break;
+            case 337: jtt_hotpath_HP_control02(); break;
+            case 338: jtt_hotpath_HP_convert01(); break;
+            case 339: jtt_hotpath_HP_count(); break;
+            case 340: jtt_hotpath_HP_dead01(); break;
+            case 341: jtt_hotpath_HP_demo01(); break;
+            case 342: jtt_hotpath_HP_field01(); break;
+            case 343: jtt_hotpath_HP_field02(); break;
+            case 344: jtt_hotpath_HP_field03(); break;
+            case 345: jtt_hotpath_HP_field04(); break;
+            case 346: jtt_hotpath_HP_idea(); break;
+            case 347: jtt_hotpath_HP_inline01(); break;
+            case 348: jtt_hotpath_HP_inline02(); break;
+            case 349: jtt_hotpath_HP_invoke01(); break;
+            case 350: jtt_hotpath_HP_life(); break;
+            case 351: jtt_hotpath_HP_nest01(); break;
+            case 352: jtt_hotpath_HP_nest02(); break;
+            case 353: jtt_hotpath_HP_scope01(); break;
+            case 354: jtt_hotpath_HP_scope02(); break;
+            case 355: jtt_hotpath_HP_series(); break;
+            case 356: jtt_hotpath_HP_trees01(); break;
+            case 357: jtt_jasm_BC_dcmpg(); break;
+            case 358: jtt_jasm_BC_dcmpg2(); break;
+            case 359: jtt_jasm_BC_dcmpl(); break;
+            case 360: jtt_jasm_BC_dcmpl2(); break;
+            case 361: jtt_jasm_BC_fcmpg(); break;
+            case 362: jtt_jasm_BC_fcmpg2(); break;
+            case 363: jtt_jasm_BC_fcmpl(); break;
+            case 364: jtt_jasm_BC_fcmpl2(); break;
+            case 365: jtt_jasm_BC_lcmp(); break;
+            case 366: jtt_jasm_Invokevirtual_private00(); break;
+            case 367: jtt_jasm_Invokevirtual_private01(); break;
+            case 368: jtt_jasm_Loop00(); break;
+            case 369: jtt_jdk_AtomicIntegerFieldUpdater01(); break;
+            case 370: jtt_jdk_Class_getName(); break;
+            case 371: jtt_jdk_EnumMap01(); break;
+            case 372: jtt_jdk_EnumMap02(); break;
+            case 373: jtt_jdk_System_currentTimeMillis01(); break;
+            case 374: jtt_jdk_System_currentTimeMillis02(); break;
+            case 375: jtt_jdk_System_nanoTime01(); break;
+            case 376: jtt_jdk_System_nanoTime02(); break;
+            case 377: jtt_jdk_System_setOut(); break;
+            case 378: jtt_jdk_Thread_setName(); break;
+            case 379: jtt_jdk_UnsafeAccess01(); break;
+            case 380: jtt_jni_JNI_FieldBoolean(); break;
+            case 381: jtt_jni_JNI_IdentityBoolean(); break;
+            case 382: jtt_jni_JNI_IdentityByte(); break;
+            case 383: jtt_jni_JNI_IdentityChar(); break;
+            case 384: jtt_jni_JNI_IdentityFloat(); break;
+            case 385: jtt_jni_JNI_IdentityInt(); break;
+            case 386: jtt_jni_JNI_IdentityLong(); break;
+            case 387: jtt_jni_JNI_IdentityObject(); break;
+            case 388: jtt_jni_JNI_IdentityShort(); break;
+            case 389: jtt_jni_JNI_ManyObjectParameters(); break;
+            case 390: jtt_jni_JNI_ManyParameters(); break;
+            case 391: jtt_jni_JNI_Nop(); break;
+            case 392: jtt_jni_JNI_OverflowArguments(); break;
+            case 393: jtt_jvmni_JVM_ArrayCopy01(); break;
+            case 394: jtt_jvmni_JVM_GetClassContext01(); break;
+            case 395: jtt_jvmni_JVM_GetClassContext02(); break;
+            case 396: jtt_jvmni_JVM_GetFreeMemory01(); break;
+            case 397: jtt_jvmni_JVM_GetMaxMemory01(); break;
+            case 398: jtt_jvmni_JVM_GetTotalMemory01(); break;
+            case 399: jtt_jvmni_JVM_IsNaN01(); break;
+            case 400: jtt_lang_Boxed_TYPE_01(); break;
+            case 401: jtt_lang_Bridge_method01(); break;
+            case 402: jtt_lang_ClassLoader_loadClass01(); break;
+            case 403: jtt_lang_Class_Literal01(); break;
+            case 404: jtt_lang_Class_asSubclass01(); break;
+            case 405: jtt_lang_Class_cast01(); break;
+            case 406: jtt_lang_Class_cast02(); break;
+            case 407: jtt_lang_Class_forName01(); break;
+            case 408: jtt_lang_Class_forName02(); break;
+            case 409: jtt_lang_Class_forName03(); break;
+            case 410: jtt_lang_Class_forName04(); break;
+            case 411: jtt_lang_Class_forName05(); break;
+            case 412: jtt_lang_Class_getAnnotation01(); break;
+            case 413: jtt_lang_Class_getComponentType01(); break;
+            case 414: jtt_lang_Class_getInterfaces01(); break;
+            case 415: jtt_lang_Class_getName01(); break;
+            case 416: jtt_lang_Class_getName02(); break;
+            case 417: jtt_lang_Class_getSimpleName01(); break;
+            case 418: jtt_lang_Class_getSimpleName02(); break;
+            case 419: jtt_lang_Class_getSuperClass01(); break;
+            case 420: jtt_lang_Class_isArray01(); break;
+            case 421: jtt_lang_Class_isAssignableFrom01(); break;
+            case 422: jtt_lang_Class_isAssignableFrom02(); break;
+            case 423: jtt_lang_Class_isAssignableFrom03(); break;
+            case 424: jtt_lang_Class_isInstance01(); break;
+            case 425: jtt_lang_Class_isInstance02(); break;
+            case 426: jtt_lang_Class_isInstance03(); break;
+            case 427: jtt_lang_Class_isInstance04(); break;
+            case 428: jtt_lang_Class_isInstance05(); break;
+            case 429: jtt_lang_Class_isInstance06(); break;
+            case 430: jtt_lang_Class_isInterface01(); break;
+            case 431: jtt_lang_Class_isPrimitive01(); break;
+            case 432: jtt_lang_Double_01(); break;
+            case 433: jtt_lang_Double_toString(); break;
+            case 434: jtt_lang_Float_01(); break;
+            case 435: jtt_lang_Float_02(); break;
+            case 436: jtt_lang_Float_03(); break;
+            case 437: jtt_lang_Int_greater01(); break;
+            case 438: jtt_lang_Int_greater02(); break;
+            case 439: jtt_lang_Int_greater03(); break;
+            case 440: jtt_lang_Int_greaterEqual01(); break;
+            case 441: jtt_lang_Int_greaterEqual02(); break;
+            case 442: jtt_lang_Int_greaterEqual03(); break;
+            case 443: jtt_lang_Int_less01(); break;
+            case 444: jtt_lang_Int_less02(); break;
+            case 445: jtt_lang_Int_less03(); break;
+            case 446: jtt_lang_Int_lessEqual01(); break;
+            case 447: jtt_lang_Int_lessEqual02(); break;
+            case 448: jtt_lang_Int_lessEqual03(); break;
+            case 449: jtt_lang_JDK_ClassLoaders01(); break;
+            case 450: jtt_lang_JDK_ClassLoaders02(); break;
+            case 451: jtt_lang_Long_greater01(); break;
+            case 452: jtt_lang_Long_greater02(); break;
+            case 453: jtt_lang_Long_greater03(); break;
+            case 454: jtt_lang_Long_greaterEqual01(); break;
+            case 455: jtt_lang_Long_greaterEqual02(); break;
+            case 456: jtt_lang_Long_greaterEqual03(); break;
+            case 457: jtt_lang_Long_less01(); break;
+            case 458: jtt_lang_Long_less02(); break;
+            case 459: jtt_lang_Long_less03(); break;
+            case 460: jtt_lang_Long_lessEqual01(); break;
+            case 461: jtt_lang_Long_lessEqual02(); break;
+            case 462: jtt_lang_Long_lessEqual03(); break;
+            case 463: jtt_lang_Long_reverseBytes01(); break;
+            case 464: jtt_lang_Long_reverseBytes02(); break;
+            case 465: jtt_lang_Math_abs(); break;
+            case 466: jtt_lang_Math_cos(); break;
+            case 467: jtt_lang_Math_log(); break;
+            case 468: jtt_lang_Math_log10(); break;
+            case 469: jtt_lang_Math_pow(); break;
+            case 470: jtt_lang_Math_sin(); break;
+            case 471: jtt_lang_Math_sqrt(); break;
+            case 472: jtt_lang_Math_tan(); break;
+            case 473: jtt_lang_Miranda_method01(); break;
+            case 474: jtt_lang_Object_clone01(); break;
+            case 475: jtt_lang_Object_clone02(); break;
+            case 476: jtt_lang_Object_equals01(); break;
+            case 477: jtt_lang_Object_getClass01(); break;
+            case 478: jtt_lang_Object_hashCode01(); break;
+            case 479: jtt_lang_Object_notify01(); break;
+            case 480: jtt_lang_Object_notify02(); break;
+            case 481: jtt_lang_Object_notifyAll01(); break;
+            case 482: jtt_lang_Object_notifyAll02(); break;
+            case 483: jtt_lang_Object_toString01(); break;
+            case 484: jtt_lang_Object_toString02(); break;
+            case 485: jtt_lang_Object_wait01(); break;
+            case 486: jtt_lang_Object_wait02(); break;
+            case 487: jtt_lang_Object_wait03(); break;
+            case 488: jtt_lang_ProcessEnvironment_init(); break;
+            case 489: jtt_lang_Runtime_exec01(); break;
+            case 490: jtt_lang_StringCoding_Scale(); break;
+            case 491: jtt_lang_String_intern01(); break;
+            case 492: jtt_lang_String_intern02(); break;
+            case 493: jtt_lang_String_intern03(); break;
+            case 494: jtt_lang_String_valueOf01(); break;
+            case 495: jtt_lang_System_identityHashCode01(); break;
+            case 496: jtt_loop_DegeneratedLoop(); break;
+            case 497: jtt_loop_Loop01(); break;
+            case 498: jtt_loop_Loop02(); break;
+            case 499: jtt_loop_Loop03(); break;
+            case 500: jtt_loop_Loop04(); break;
+            case 501: jtt_loop_Loop05(); break;
+            case 502: jtt_loop_Loop06(); break;
+            case 503: jtt_loop_Loop07(); break;
+            case 504: jtt_loop_Loop08(); break;
+            case 505: jtt_loop_Loop09(); break;
+            case 506: jtt_loop_Loop11(); break;
+            case 507: jtt_loop_Loop12(); break;
+            case 508: jtt_loop_Loop13(); break;
+            case 509: jtt_loop_Loop14(); break;
+            case 510: jtt_loop_LoopInline(); break;
+            case 511: jtt_loop_LoopNewInstance(); break;
+            case 512: jtt_loop_LoopPhi(); break;
+            case 513: jtt_loop_LoopSwitch01(); break;
+            case 514: jtt_max_CodePointer01(); break;
+            case 515: jtt_max_CodePointer02(); break;
+            case 516: jtt_max_Fold01(); break;
+            case 517: jtt_max_Fold02(); break;
+            case 518: jtt_max_Fold03(); break;
+            case 519: jtt_max_Hub_Subtype01(); break;
+            case 520: jtt_max_Hub_Subtype02(); break;
+            case 521: jtt_max_ImmortalHeap_allocation(); break;
+            case 522: jtt_max_ImmortalHeap_switching(); break;
+            case 523: jtt_max_Inline01(); break;
+            case 524: jtt_max_Invoke_except01(); break;
+            case 525: jtt_max_Prototyping01(); break;
+            case 526: jtt_max_Unsigned_idiv01(); break;
+            case 527: jtt_max_Unsigned_irem01(); break;
+            case 528: jtt_max_Unsigned_ldiv01(); break;
+            case 529: jtt_max_Unsigned_lrem01(); break;
             case 530: jtt_micro_ArrayCompare01(); break;
             case 531: jtt_micro_ArrayCompare02(); break;
             case 532: jtt_micro_BC_invokevirtual2(); break;
@@ -838,1264 +838,6 @@ public class JTRuns {
         }
         return true;
     }
-        static void jtt_exbytecode_EBC_movd2l_01() {
-            begin("jtt.exbytecode.EBC_movd2l_01");
-            String runString = null;
-            try {
-            // (java.lang.Double.NaN) == 9221120237041090560
-                runString = "(java.lang.Double.NaN)";
-                if (9221120237041090560L != jtt.exbytecode.EBC_movd2l_01.test(java.lang.Double.NaN)) {
-                    fail(runString);
-                    return;
-                }
-            // (1.0) == 4607182418800017408
-                runString = "(1.0)";
-                if (4607182418800017408L != jtt.exbytecode.EBC_movd2l_01.test(1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1.0) == -4616189618054758400
-                runString = "(-1.0)";
-                if (-4616189618054758400L != jtt.exbytecode.EBC_movd2l_01.test(-1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (473729.5945321) == 4691882224927966680
-                runString = "(473729.5945321)";
-                if (4691882224927966680L != jtt.exbytecode.EBC_movd2l_01.test(473729.5945321)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movd2l_02() {
-            begin("jtt.exbytecode.EBC_movd2l_02");
-            String runString = null;
-            try {
-            // (java.lang.Double.NaN) == 9221120237041090560
-                runString = "(java.lang.Double.NaN)";
-                if (9221120237041090560L != jtt.exbytecode.EBC_movd2l_02.test(java.lang.Double.NaN)) {
-                    fail(runString);
-                    return;
-                }
-            // (1.0) == 4607182418800017408
-                runString = "(1.0)";
-                if (4607182418800017408L != jtt.exbytecode.EBC_movd2l_02.test(1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1.0) == -4616189618054758400
-                runString = "(-1.0)";
-                if (-4616189618054758400L != jtt.exbytecode.EBC_movd2l_02.test(-1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (473729.5945321) == 4691882224927966680
-                runString = "(473729.5945321)";
-                if (4691882224927966680L != jtt.exbytecode.EBC_movd2l_02.test(473729.5945321)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movd2l_03() {
-            begin("jtt.exbytecode.EBC_movd2l_03");
-            String runString = null;
-            try {
-            // (java.lang.Double.NaN) == 9221120237041090560
-                runString = "(java.lang.Double.NaN)";
-                if (9221120237041090560L != jtt.exbytecode.EBC_movd2l_03.test(java.lang.Double.NaN)) {
-                    fail(runString);
-                    return;
-                }
-            // (1.0) == 4607182418800017408
-                runString = "(1.0)";
-                if (4607182418800017408L != jtt.exbytecode.EBC_movd2l_03.test(1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1.0) == -4616189618054758400
-                runString = "(-1.0)";
-                if (-4616189618054758400L != jtt.exbytecode.EBC_movd2l_03.test(-1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (473729.5945321) == 4691882224927966680
-                runString = "(473729.5945321)";
-                if (4691882224927966680L != jtt.exbytecode.EBC_movd2l_03.test(473729.5945321)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movd2l_04() {
-            begin("jtt.exbytecode.EBC_movd2l_04");
-            String runString = null;
-            try {
-            // (java.lang.Double.NaN) == 9221120237041090560
-                runString = "(java.lang.Double.NaN)";
-                if (9221120237041090560L != jtt.exbytecode.EBC_movd2l_04.test(java.lang.Double.NaN)) {
-                    fail(runString);
-                    return;
-                }
-            // (1.0) == 4607182418800017408
-                runString = "(1.0)";
-                if (4607182418800017408L != jtt.exbytecode.EBC_movd2l_04.test(1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1.0) == -4616189618054758400
-                runString = "(-1.0)";
-                if (-4616189618054758400L != jtt.exbytecode.EBC_movd2l_04.test(-1.0)) {
-                    fail(runString);
-                    return;
-                }
-            // (473729.5945321) == 4691882224927966680
-                runString = "(473729.5945321)";
-                if (4691882224927966680L != jtt.exbytecode.EBC_movd2l_04.test(473729.5945321)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movf2i_01() {
-            begin("jtt.exbytecode.EBC_movf2i_01");
-            String runString = null;
-            try {
-            // (java.lang.Float.NaN) == 2143289344
-                runString = "(java.lang.Float.NaN)";
-                if (2143289344 != jtt.exbytecode.EBC_movf2i_01.test(java.lang.Float.NaN)) {
-                    fail(runString);
-                    return;
-                }
-            // (1.0) == 1065353216
-                runString = "(1.0)";
-                if (1065353216 != jtt.exbytecode.EBC_movf2i_01.test(1.0f)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1.0) == -1082130432
-                runString = "(-1.0)";
-                if (-1082130432 != jtt.exbytecode.EBC_movf2i_01.test(-1.0f)) {
-                    fail(runString);
-                    return;
-                }
-            // (473000.0) == 1223095552
-                runString = "(473000.0)";
-                if (1223095552 != jtt.exbytecode.EBC_movf2i_01.test(473000.0f)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movf2i_02() {
-            begin("jtt.exbytecode.EBC_movf2i_02");
-            String runString = null;
-            try {
-            // (java.lang.Float.NaN) == 2143289344
-                runString = "(java.lang.Float.NaN)";
-                if (2143289344 != jtt.exbytecode.EBC_movf2i_02.test(java.lang.Float.NaN)) {
-                    fail(runString);
-                    return;
-                }
-            // (1.0) == 1065353216
-                runString = "(1.0)";
-                if (1065353216 != jtt.exbytecode.EBC_movf2i_02.test(1.0f)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1.0) == -1082130432
-                runString = "(-1.0)";
-                if (-1082130432 != jtt.exbytecode.EBC_movf2i_02.test(-1.0f)) {
-                    fail(runString);
-                    return;
-                }
-            // (473000.0) == 1223095552
-                runString = "(473000.0)";
-                if (1223095552 != jtt.exbytecode.EBC_movf2i_02.test(473000.0f)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movf2i_03() {
-            begin("jtt.exbytecode.EBC_movf2i_03");
-            String runString = null;
-            try {
-            // (java.lang.Float.NaN) == 2143289344
-                runString = "(java.lang.Float.NaN)";
-                if (2143289344 != jtt.exbytecode.EBC_movf2i_03.test(java.lang.Float.NaN)) {
-                    fail(runString);
-                    return;
-                }
-            // (1.0) == 1065353216
-                runString = "(1.0)";
-                if (1065353216 != jtt.exbytecode.EBC_movf2i_03.test(1.0f)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1.0) == -1082130432
-                runString = "(-1.0)";
-                if (-1082130432 != jtt.exbytecode.EBC_movf2i_03.test(-1.0f)) {
-                    fail(runString);
-                    return;
-                }
-            // (473000.0) == 1223095552
-                runString = "(473000.0)";
-                if (1223095552 != jtt.exbytecode.EBC_movf2i_03.test(473000.0f)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movf2i_04() {
-            begin("jtt.exbytecode.EBC_movf2i_04");
-            String runString = null;
-            try {
-            // (java.lang.Float.NaN) == 2143289344
-                runString = "(java.lang.Float.NaN)";
-                if (2143289344 != jtt.exbytecode.EBC_movf2i_04.test(java.lang.Float.NaN)) {
-                    fail(runString);
-                    return;
-                }
-            // (1.0) == 1065353216
-                runString = "(1.0)";
-                if (1065353216 != jtt.exbytecode.EBC_movf2i_04.test(1.0f)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1.0) == -1082130432
-                runString = "(-1.0)";
-                if (-1082130432 != jtt.exbytecode.EBC_movf2i_04.test(-1.0f)) {
-                    fail(runString);
-                    return;
-                }
-            // (473000.0) == 1223095552
-                runString = "(473000.0)";
-                if (1223095552 != jtt.exbytecode.EBC_movf2i_04.test(473000.0f)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movi2f_01() {
-            begin("jtt.exbytecode.EBC_movi2f_01");
-            String runString = null;
-            try {
-            // (2143289344) == java.lang.Float.isNaN
-                runString = "(2143289344)";
-                if (!java.lang.Float.isNaN(jtt.exbytecode.EBC_movi2f_01.test(2143289344))) {
-                    fail(runString);
-                    return;
-                }
-            // (1065353216) == 1.0
-                runString = "(1065353216)";
-                if (1.0f != jtt.exbytecode.EBC_movi2f_01.test(1065353216)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1082130432) == -1.0
-                runString = "(-1082130432)";
-                if (-1.0f != jtt.exbytecode.EBC_movi2f_01.test(-1082130432)) {
-                    fail(runString);
-                    return;
-                }
-            // (1223095552) == 473000.0
-                runString = "(1223095552)";
-                if (473000.0f != jtt.exbytecode.EBC_movi2f_01.test(1223095552)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movi2f_02() {
-            begin("jtt.exbytecode.EBC_movi2f_02");
-            String runString = null;
-            try {
-            // (2143289344) == java.lang.Float.isNaN
-                runString = "(2143289344)";
-                if (!java.lang.Float.isNaN(jtt.exbytecode.EBC_movi2f_02.test(2143289344))) {
-                    fail(runString);
-                    return;
-                }
-            // (1065353216) == 1.0
-                runString = "(1065353216)";
-                if (1.0f != jtt.exbytecode.EBC_movi2f_02.test(1065353216)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1082130432) == -1.0
-                runString = "(-1082130432)";
-                if (-1.0f != jtt.exbytecode.EBC_movi2f_02.test(-1082130432)) {
-                    fail(runString);
-                    return;
-                }
-            // (1223095552) == 473000.0
-                runString = "(1223095552)";
-                if (473000.0f != jtt.exbytecode.EBC_movi2f_02.test(1223095552)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movi2f_03() {
-            begin("jtt.exbytecode.EBC_movi2f_03");
-            String runString = null;
-            try {
-            // (2143289344) == java.lang.Float.isNaN
-                runString = "(2143289344)";
-                if (!java.lang.Float.isNaN(jtt.exbytecode.EBC_movi2f_03.test(2143289344))) {
-                    fail(runString);
-                    return;
-                }
-            // (1065353216) == 1.0
-                runString = "(1065353216)";
-                if (1.0f != jtt.exbytecode.EBC_movi2f_03.test(1065353216)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1082130432) == -1.0
-                runString = "(-1082130432)";
-                if (-1.0f != jtt.exbytecode.EBC_movi2f_03.test(-1082130432)) {
-                    fail(runString);
-                    return;
-                }
-            // (1223095552) == 473000.0
-                runString = "(1223095552)";
-                if (473000.0f != jtt.exbytecode.EBC_movi2f_03.test(1223095552)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movi2f_04() {
-            begin("jtt.exbytecode.EBC_movi2f_04");
-            String runString = null;
-            try {
-            // (2143289344) == java.lang.Float.isNaN
-                runString = "(2143289344)";
-                if (!java.lang.Float.isNaN(jtt.exbytecode.EBC_movi2f_04.test(2143289344))) {
-                    fail(runString);
-                    return;
-                }
-            // (1065353216) == 1.0
-                runString = "(1065353216)";
-                if (1.0f != jtt.exbytecode.EBC_movi2f_04.test(1065353216)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1082130432) == -1.0
-                runString = "(-1082130432)";
-                if (-1.0f != jtt.exbytecode.EBC_movi2f_04.test(-1082130432)) {
-                    fail(runString);
-                    return;
-                }
-            // (1223095552) == 473000.0
-                runString = "(1223095552)";
-                if (473000.0f != jtt.exbytecode.EBC_movi2f_04.test(1223095552)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movl2d_01() {
-            begin("jtt.exbytecode.EBC_movl2d_01");
-            String runString = null;
-            try {
-            // (9221120237041090560) == java.lang.Double.isNaN
-                runString = "(9221120237041090560)";
-                if (!java.lang.Double.isNaN(jtt.exbytecode.EBC_movl2d_01.test(9221120237041090560L))) {
-                    fail(runString);
-                    return;
-                }
-            // (4607182418800017408) == 1.0
-                runString = "(4607182418800017408)";
-                if (1.0 != jtt.exbytecode.EBC_movl2d_01.test(4607182418800017408L)) {
-                    fail(runString);
-                    return;
-                }
-            // (-4616189618054758400) == -1.0
-                runString = "(-4616189618054758400)";
-                if (-1.0 != jtt.exbytecode.EBC_movl2d_01.test(-4616189618054758400L)) {
-                    fail(runString);
-                    return;
-                }
-            // (4691882224927966680) == 473729.5945321
-                runString = "(4691882224927966680)";
-                if (473729.5945321 != jtt.exbytecode.EBC_movl2d_01.test(4691882224927966680L)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movl2d_02() {
-            begin("jtt.exbytecode.EBC_movl2d_02");
-            String runString = null;
-            try {
-            // (9221120237041090560) == java.lang.Double.isNaN
-                runString = "(9221120237041090560)";
-                if (!java.lang.Double.isNaN(jtt.exbytecode.EBC_movl2d_02.test(9221120237041090560L))) {
-                    fail(runString);
-                    return;
-                }
-            // (4607182418800017408) == 1.0
-                runString = "(4607182418800017408)";
-                if (1.0 != jtt.exbytecode.EBC_movl2d_02.test(4607182418800017408L)) {
-                    fail(runString);
-                    return;
-                }
-            // (-4616189618054758400) == -1.0
-                runString = "(-4616189618054758400)";
-                if (-1.0 != jtt.exbytecode.EBC_movl2d_02.test(-4616189618054758400L)) {
-                    fail(runString);
-                    return;
-                }
-            // (4691882224927966680) == 473729.5945321
-                runString = "(4691882224927966680)";
-                if (473729.5945321 != jtt.exbytecode.EBC_movl2d_02.test(4691882224927966680L)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movl2d_03() {
-            begin("jtt.exbytecode.EBC_movl2d_03");
-            String runString = null;
-            try {
-            // (9221120237041090560) == java.lang.Double.isNaN
-                runString = "(9221120237041090560)";
-                if (!java.lang.Double.isNaN(jtt.exbytecode.EBC_movl2d_03.test(9221120237041090560L))) {
-                    fail(runString);
-                    return;
-                }
-            // (4607182418800017408) == 1.0
-                runString = "(4607182418800017408)";
-                if (1.0 != jtt.exbytecode.EBC_movl2d_03.test(4607182418800017408L)) {
-                    fail(runString);
-                    return;
-                }
-            // (-4616189618054758400) == -1.0
-                runString = "(-4616189618054758400)";
-                if (-1.0 != jtt.exbytecode.EBC_movl2d_03.test(-4616189618054758400L)) {
-                    fail(runString);
-                    return;
-                }
-            // (4691882224927966680) == 473729.5945321
-                runString = "(4691882224927966680)";
-                if (473729.5945321 != jtt.exbytecode.EBC_movl2d_03.test(4691882224927966680L)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_movl2d_04() {
-            begin("jtt.exbytecode.EBC_movl2d_04");
-            String runString = null;
-            try {
-            // (9221120237041090560) == java.lang.Double.isNaN
-                runString = "(9221120237041090560)";
-                if (!java.lang.Double.isNaN(jtt.exbytecode.EBC_movl2d_04.test(9221120237041090560L))) {
-                    fail(runString);
-                    return;
-                }
-            // (4607182418800017408) == 1.0
-                runString = "(4607182418800017408)";
-                if (1.0 != jtt.exbytecode.EBC_movl2d_04.test(4607182418800017408L)) {
-                    fail(runString);
-                    return;
-                }
-            // (-4616189618054758400) == -1.0
-                runString = "(-4616189618054758400)";
-                if (-1.0 != jtt.exbytecode.EBC_movl2d_04.test(-4616189618054758400L)) {
-                    fail(runString);
-                    return;
-                }
-            // (4691882224927966680) == 473729.5945321
-                runString = "(4691882224927966680)";
-                if (473729.5945321 != jtt.exbytecode.EBC_movl2d_04.test(4691882224927966680L)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_ucmp_ae_01() {
-            begin("jtt.exbytecode.EBC_ucmp_ae_01");
-            String runString = null;
-            try {
-            // (64,47) == true
-                runString = "(64,47)";
-                if (true != jtt.exbytecode.EBC_ucmp_ae_01.test(64, 47)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,1) == true
-                runString = "(-2,1)";
-                if (true != jtt.exbytecode.EBC_ucmp_ae_01.test(-2, 1)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,-2) == true
-                runString = "(-2,-2)";
-                if (true != jtt.exbytecode.EBC_ucmp_ae_01.test(-2, -2)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_ucmp_at_01() {
-            begin("jtt.exbytecode.EBC_ucmp_at_01");
-            String runString = null;
-            try {
-            // (64,47) == true
-                runString = "(64,47)";
-                if (true != jtt.exbytecode.EBC_ucmp_at_01.test(64, 47)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,1) == true
-                runString = "(-2,1)";
-                if (true != jtt.exbytecode.EBC_ucmp_at_01.test(-2, 1)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,-2) == false
-                runString = "(-2,-2)";
-                if (false != jtt.exbytecode.EBC_ucmp_at_01.test(-2, -2)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_ucmp_be_01() {
-            begin("jtt.exbytecode.EBC_ucmp_be_01");
-            String runString = null;
-            try {
-            // (48,67) == true
-                runString = "(48,67)";
-                if (true != jtt.exbytecode.EBC_ucmp_be_01.test(48, 67)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,1) == false
-                runString = "(-2,1)";
-                if (false != jtt.exbytecode.EBC_ucmp_be_01.test(-2, 1)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,-2) == true
-                runString = "(-2,-2)";
-                if (true != jtt.exbytecode.EBC_ucmp_be_01.test(-2, -2)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_ucmp_bt_01() {
-            begin("jtt.exbytecode.EBC_ucmp_bt_01");
-            String runString = null;
-            try {
-            // (48,67) == true
-                runString = "(48,67)";
-                if (true != jtt.exbytecode.EBC_ucmp_bt_01.test(48, 67)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,1) == false
-                runString = "(-2,1)";
-                if (false != jtt.exbytecode.EBC_ucmp_bt_01.test(-2, 1)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,-2) == false
-                runString = "(-2,-2)";
-                if (false != jtt.exbytecode.EBC_ucmp_bt_01.test(-2, -2)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_uwgt_01() {
-            begin("jtt.exbytecode.EBC_uwgt_01");
-            String runString = null;
-            try {
-            // (64,47) == true
-                runString = "(64,47)";
-                if (true != jtt.exbytecode.EBC_uwgt_01.test(64, 47)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,1) == true
-                runString = "(-2,1)";
-                if (true != jtt.exbytecode.EBC_uwgt_01.test(-2, 1)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_uwgteq_01() {
-            begin("jtt.exbytecode.EBC_uwgteq_01");
-            String runString = null;
-            try {
-            // (64,47) == true
-                runString = "(64,47)";
-                if (true != jtt.exbytecode.EBC_uwgteq_01.test(64, 47)) {
-                    fail(runString);
-                    return;
-                }
-            // (64,64) == true
-                runString = "(64,64)";
-                if (true != jtt.exbytecode.EBC_uwgteq_01.test(64, 64)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,1) == true
-                runString = "(-2,1)";
-                if (true != jtt.exbytecode.EBC_uwgteq_01.test(-2, 1)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,-2) == true
-                runString = "(-2,-2)";
-                if (true != jtt.exbytecode.EBC_uwgteq_01.test(-2, -2)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_uwlt_01() {
-            begin("jtt.exbytecode.EBC_uwlt_01");
-            String runString = null;
-            try {
-            // (47,64) == true
-                runString = "(47,64)";
-                if (true != jtt.exbytecode.EBC_uwlt_01.test(47, 64)) {
-                    fail(runString);
-                    return;
-                }
-            // (1,-2) == true
-                runString = "(1,-2)";
-                if (true != jtt.exbytecode.EBC_uwlt_01.test(1, -2)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_exbytecode_EBC_uwlteq_01() {
-            begin("jtt.exbytecode.EBC_uwlteq_01");
-            String runString = null;
-            try {
-            // (47,64) == true
-                runString = "(47,64)";
-                if (true != jtt.exbytecode.EBC_uwlteq_01.test(47, 64)) {
-                    fail(runString);
-                    return;
-                }
-            // (47,47) == true
-                runString = "(47,47)";
-                if (true != jtt.exbytecode.EBC_uwlteq_01.test(47, 47)) {
-                    fail(runString);
-                    return;
-                }
-            // (1,-2) == true
-                runString = "(1,-2)";
-                if (true != jtt.exbytecode.EBC_uwlteq_01.test(1, -2)) {
-                    fail(runString);
-                    return;
-                }
-            // (-2,-2) == true
-                runString = "(-2,-2)";
-                if (true != jtt.exbytecode.EBC_uwlteq_01.test(-2, -2)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_CodePointer01() {
-            begin("jtt.max.CodePointer01");
-            String runString = null;
-            try {
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.max.CodePointer01.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            // (1) == true
-                runString = "(1)";
-                if (true != jtt.max.CodePointer01.test(1)) {
-                    fail(runString);
-                    return;
-                }
-            // (2) == true
-                runString = "(2)";
-                if (true != jtt.max.CodePointer01.test(2)) {
-                    fail(runString);
-                    return;
-                }
-            // (3) == false
-                runString = "(3)";
-                if (false != jtt.max.CodePointer01.test(3)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_CodePointer02() {
-            begin("jtt.max.CodePointer02");
-            String runString = null;
-            try {
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.max.CodePointer02.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            // (1) == true
-                runString = "(1)";
-                if (true != jtt.max.CodePointer02.test(1)) {
-                    fail(runString);
-                    return;
-                }
-            // (2) == true
-                runString = "(2)";
-                if (true != jtt.max.CodePointer02.test(2)) {
-                    fail(runString);
-                    return;
-                }
-            // (3) == false
-                runString = "(3)";
-                if (false != jtt.max.CodePointer02.test(3)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Fold01() {
-            begin("jtt.max.Fold01");
-            String runString = null;
-            try {
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.max.Fold01.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Fold02() {
-            begin("jtt.max.Fold02");
-            String runString = null;
-            try {
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.max.Fold02.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Fold03() {
-            begin("jtt.max.Fold03");
-            String runString = null;
-            try {
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.max.Fold03.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Hub_Subtype01() {
-            begin("jtt.max.Hub_Subtype01");
-            String runString = null;
-            try {
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.max.Hub_Subtype01.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            // (1) == true
-                runString = "(1)";
-                if (true != jtt.max.Hub_Subtype01.test(1)) {
-                    fail(runString);
-                    return;
-                }
-            // (2) == true
-                runString = "(2)";
-                if (true != jtt.max.Hub_Subtype01.test(2)) {
-                    fail(runString);
-                    return;
-                }
-            // (3) == true
-                runString = "(3)";
-                if (true != jtt.max.Hub_Subtype01.test(3)) {
-                    fail(runString);
-                    return;
-                }
-            // (4) == true
-                runString = "(4)";
-                if (true != jtt.max.Hub_Subtype01.test(4)) {
-                    fail(runString);
-                    return;
-                }
-            // (5) == false
-                runString = "(5)";
-                if (false != jtt.max.Hub_Subtype01.test(5)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Hub_Subtype02() {
-            begin("jtt.max.Hub_Subtype02");
-            String runString = null;
-            try {
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.max.Hub_Subtype02.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            // (1) == true
-                runString = "(1)";
-                if (true != jtt.max.Hub_Subtype02.test(1)) {
-                    fail(runString);
-                    return;
-                }
-            // (2) == true
-                runString = "(2)";
-                if (true != jtt.max.Hub_Subtype02.test(2)) {
-                    fail(runString);
-                    return;
-                }
-            // (3) == true
-                runString = "(3)";
-                if (true != jtt.max.Hub_Subtype02.test(3)) {
-                    fail(runString);
-                    return;
-                }
-            // (4) == true
-                runString = "(4)";
-                if (true != jtt.max.Hub_Subtype02.test(4)) {
-                    fail(runString);
-                    return;
-                }
-            // (5) == false
-                runString = "(5)";
-                if (false != jtt.max.Hub_Subtype02.test(5)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_ImmortalHeap_allocation() {
-            begin("jtt.max.ImmortalHeap_allocation");
-            String runString = null;
-            try {
-            // (4) == true
-                runString = "(4)";
-                if (true != jtt.max.ImmortalHeap_allocation.test(4)) {
-                    fail(runString);
-                    return;
-                }
-            // (8) == true
-                runString = "(8)";
-                if (true != jtt.max.ImmortalHeap_allocation.test(8)) {
-                    fail(runString);
-                    return;
-                }
-            // (10) == true
-                runString = "(10)";
-                if (true != jtt.max.ImmortalHeap_allocation.test(10)) {
-                    fail(runString);
-                    return;
-                }
-            // (100) == true
-                runString = "(100)";
-                if (true != jtt.max.ImmortalHeap_allocation.test(100)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_ImmortalHeap_switching() {
-            begin("jtt.max.ImmortalHeap_switching");
-            String runString = null;
-            try {
-            // (10) == true
-                runString = "(10)";
-                if (true != jtt.max.ImmortalHeap_switching.test(10)) {
-                    fail(runString);
-                    return;
-                }
-            // (20) == true
-                runString = "(20)";
-                if (true != jtt.max.ImmortalHeap_switching.test(20)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Inline01() {
-            begin("jtt.max.Inline01");
-            String runString = null;
-            try {
-            // (0) == true
-                runString = "(0)";
-                if (true != jtt.max.Inline01.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            // (1) == true
-                runString = "(1)";
-                if (true != jtt.max.Inline01.test(1)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Invoke_except01() {
-            begin("jtt.max.Invoke_except01");
-            String runString = null;
-            try {
-            // (0) == 0
-                runString = "(0)";
-                if (0 != jtt.max.Invoke_except01.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            // (1) == 3
-                runString = "(1)";
-                if (3 != jtt.max.Invoke_except01.test(1)) {
-                    fail(runString);
-                    return;
-                }
-            // (2) == !java.lang.reflect.InvocationTargetException
-                try {
-                    runString = "(2)";
-                    jtt.max.Invoke_except01.test(2);
-                    fail(runString);
-                    return;
-                } catch (Throwable e) {
-                    if (e.getClass() != java.lang.reflect.InvocationTargetException.class) {
-                        fail(runString, e);
-                        return;
-                    }
-                }
-            // (3) == !java.lang.IllegalArgumentException
-                try {
-                    runString = "(3)";
-                    jtt.max.Invoke_except01.test(3);
-                    fail(runString);
-                    return;
-                } catch (Throwable e) {
-                    if (e.getClass() != java.lang.IllegalArgumentException.class) {
-                        fail(runString, e);
-                        return;
-                    }
-                }
-            // (4) == !java.lang.IllegalArgumentException
-                try {
-                    runString = "(4)";
-                    jtt.max.Invoke_except01.test(4);
-                    fail(runString);
-                    return;
-                } catch (Throwable e) {
-                    if (e.getClass() != java.lang.IllegalArgumentException.class) {
-                        fail(runString, e);
-                        return;
-                    }
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Prototyping01() {
-            begin("jtt.max.Prototyping01");
-            String runString = null;
-            try {
-            // (0) == 1
-                runString = "(0)";
-                if (1 != jtt.max.Prototyping01.test(0)) {
-                    fail(runString);
-                    return;
-                }
-            // (1) == 2
-                runString = "(1)";
-                if (2 != jtt.max.Prototyping01.test(1)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Unsigned_idiv01() {
-            begin("jtt.max.Unsigned_idiv01");
-            String runString = null;
-            try {
-            // (-1,4) == 1073741823
-                runString = "(-1,4)";
-                if (1073741823 != jtt.max.Unsigned_idiv01.test(-1, 4)) {
-                    fail(runString);
-                    return;
-                }
-            // (6,3) == 2
-                runString = "(6,3)";
-                if (2 != jtt.max.Unsigned_idiv01.test(6, 3)) {
-                    fail(runString);
-                    return;
-                }
-            // (65535,16) == 4095
-                runString = "(65535,16)";
-                if (4095 != jtt.max.Unsigned_idiv01.test(65535, 16)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Unsigned_irem01() {
-            begin("jtt.max.Unsigned_irem01");
-            String runString = null;
-            try {
-            // (-1,8) == 7
-                runString = "(-1,8)";
-                if (7 != jtt.max.Unsigned_irem01.test(-1, 8)) {
-                    fail(runString);
-                    return;
-                }
-            // (6,3) == 0
-                runString = "(6,3)";
-                if (0 != jtt.max.Unsigned_irem01.test(6, 3)) {
-                    fail(runString);
-                    return;
-                }
-            // (65535,16) == 15
-                runString = "(65535,16)";
-                if (15 != jtt.max.Unsigned_irem01.test(65535, 16)) {
-                    fail(runString);
-                    return;
-                }
-            // (16,0) == !java.lang.ArithmeticException
-                try {
-                    runString = "(16,0)";
-                    jtt.max.Unsigned_irem01.test(16, 0);
-                    fail(runString);
-                    return;
-                } catch (Throwable e) {
-                    if (e.getClass() != java.lang.ArithmeticException.class) {
-                        fail(runString, e);
-                        return;
-                    }
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Unsigned_ldiv01() {
-            begin("jtt.max.Unsigned_ldiv01");
-            String runString = null;
-            try {
-            // (-1,4) == 4611686018427387903
-                runString = "(-1,4)";
-                if (4611686018427387903L != jtt.max.Unsigned_ldiv01.test(-1L, 4L)) {
-                    fail(runString);
-                    return;
-                }
-            // (6,3) == 2
-                runString = "(6,3)";
-                if (2L != jtt.max.Unsigned_ldiv01.test(6L, 3L)) {
-                    fail(runString);
-                    return;
-                }
-            // (65535,16) == 4095
-                runString = "(65535,16)";
-                if (4095L != jtt.max.Unsigned_ldiv01.test(65535L, 16L)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_Unsigned_lrem01() {
-            begin("jtt.max.Unsigned_lrem01");
-            String runString = null;
-            try {
-            // (-1,8) == 7
-                runString = "(-1,8)";
-                if (7L != jtt.max.Unsigned_lrem01.test(-1L, 8L)) {
-                    fail(runString);
-                    return;
-                }
-            // (6,3) == 0
-                runString = "(6,3)";
-                if (0L != jtt.max.Unsigned_lrem01.test(6L, 3L)) {
-                    fail(runString);
-                    return;
-                }
-            // (65535,16) == 15
-                runString = "(65535,16)";
-                if (15L != jtt.max.Unsigned_lrem01.test(65535L, 16L)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
         static void jtt_bytecode_BC_aaload() {
             begin("jtt.bytecode.BC_aaload");
             String runString = null;
@@ -9033,6 +7775,774 @@ public class JTRuns {
             // (1) == 12
                 runString = "(1)";
                 if (12 != jtt.bytecode.BC_wide02.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movd2l_01() {
+            begin("jtt.exbytecode.EBC_movd2l_01");
+            String runString = null;
+            try {
+            // (java.lang.Double.NaN) == 9221120237041090560
+                runString = "(java.lang.Double.NaN)";
+                if (9221120237041090560L != jtt.exbytecode.EBC_movd2l_01.test(java.lang.Double.NaN)) {
+                    fail(runString);
+                    return;
+                }
+            // (1.0) == 4607182418800017408
+                runString = "(1.0)";
+                if (4607182418800017408L != jtt.exbytecode.EBC_movd2l_01.test(1.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1.0) == -4616189618054758400
+                runString = "(-1.0)";
+                if (-4616189618054758400L != jtt.exbytecode.EBC_movd2l_01.test(-1.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (473729.5945321) == 4691882224927966680
+                runString = "(473729.5945321)";
+                if (4691882224927966680L != jtt.exbytecode.EBC_movd2l_01.test(473729.5945321)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movd2l_02() {
+            begin("jtt.exbytecode.EBC_movd2l_02");
+            String runString = null;
+            try {
+            // (java.lang.Double.NaN) == 9221120237041090560
+                runString = "(java.lang.Double.NaN)";
+                if (9221120237041090560L != jtt.exbytecode.EBC_movd2l_02.test(java.lang.Double.NaN)) {
+                    fail(runString);
+                    return;
+                }
+            // (1.0) == 4607182418800017408
+                runString = "(1.0)";
+                if (4607182418800017408L != jtt.exbytecode.EBC_movd2l_02.test(1.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1.0) == -4616189618054758400
+                runString = "(-1.0)";
+                if (-4616189618054758400L != jtt.exbytecode.EBC_movd2l_02.test(-1.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (473729.5945321) == 4691882224927966680
+                runString = "(473729.5945321)";
+                if (4691882224927966680L != jtt.exbytecode.EBC_movd2l_02.test(473729.5945321)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movd2l_03() {
+            begin("jtt.exbytecode.EBC_movd2l_03");
+            String runString = null;
+            try {
+            // (java.lang.Double.NaN) == 9221120237041090560
+                runString = "(java.lang.Double.NaN)";
+                if (9221120237041090560L != jtt.exbytecode.EBC_movd2l_03.test(java.lang.Double.NaN)) {
+                    fail(runString);
+                    return;
+                }
+            // (1.0) == 4607182418800017408
+                runString = "(1.0)";
+                if (4607182418800017408L != jtt.exbytecode.EBC_movd2l_03.test(1.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1.0) == -4616189618054758400
+                runString = "(-1.0)";
+                if (-4616189618054758400L != jtt.exbytecode.EBC_movd2l_03.test(-1.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (473729.5945321) == 4691882224927966680
+                runString = "(473729.5945321)";
+                if (4691882224927966680L != jtt.exbytecode.EBC_movd2l_03.test(473729.5945321)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movd2l_04() {
+            begin("jtt.exbytecode.EBC_movd2l_04");
+            String runString = null;
+            try {
+            // (java.lang.Double.NaN) == 9221120237041090560
+                runString = "(java.lang.Double.NaN)";
+                if (9221120237041090560L != jtt.exbytecode.EBC_movd2l_04.test(java.lang.Double.NaN)) {
+                    fail(runString);
+                    return;
+                }
+            // (1.0) == 4607182418800017408
+                runString = "(1.0)";
+                if (4607182418800017408L != jtt.exbytecode.EBC_movd2l_04.test(1.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1.0) == -4616189618054758400
+                runString = "(-1.0)";
+                if (-4616189618054758400L != jtt.exbytecode.EBC_movd2l_04.test(-1.0)) {
+                    fail(runString);
+                    return;
+                }
+            // (473729.5945321) == 4691882224927966680
+                runString = "(473729.5945321)";
+                if (4691882224927966680L != jtt.exbytecode.EBC_movd2l_04.test(473729.5945321)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movf2i_01() {
+            begin("jtt.exbytecode.EBC_movf2i_01");
+            String runString = null;
+            try {
+            // (java.lang.Float.NaN) == 2143289344
+                runString = "(java.lang.Float.NaN)";
+                if (2143289344 != jtt.exbytecode.EBC_movf2i_01.test(java.lang.Float.NaN)) {
+                    fail(runString);
+                    return;
+                }
+            // (1.0) == 1065353216
+                runString = "(1.0)";
+                if (1065353216 != jtt.exbytecode.EBC_movf2i_01.test(1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1.0) == -1082130432
+                runString = "(-1.0)";
+                if (-1082130432 != jtt.exbytecode.EBC_movf2i_01.test(-1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (473000.0) == 1223095552
+                runString = "(473000.0)";
+                if (1223095552 != jtt.exbytecode.EBC_movf2i_01.test(473000.0f)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movf2i_02() {
+            begin("jtt.exbytecode.EBC_movf2i_02");
+            String runString = null;
+            try {
+            // (java.lang.Float.NaN) == 2143289344
+                runString = "(java.lang.Float.NaN)";
+                if (2143289344 != jtt.exbytecode.EBC_movf2i_02.test(java.lang.Float.NaN)) {
+                    fail(runString);
+                    return;
+                }
+            // (1.0) == 1065353216
+                runString = "(1.0)";
+                if (1065353216 != jtt.exbytecode.EBC_movf2i_02.test(1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1.0) == -1082130432
+                runString = "(-1.0)";
+                if (-1082130432 != jtt.exbytecode.EBC_movf2i_02.test(-1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (473000.0) == 1223095552
+                runString = "(473000.0)";
+                if (1223095552 != jtt.exbytecode.EBC_movf2i_02.test(473000.0f)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movf2i_03() {
+            begin("jtt.exbytecode.EBC_movf2i_03");
+            String runString = null;
+            try {
+            // (java.lang.Float.NaN) == 2143289344
+                runString = "(java.lang.Float.NaN)";
+                if (2143289344 != jtt.exbytecode.EBC_movf2i_03.test(java.lang.Float.NaN)) {
+                    fail(runString);
+                    return;
+                }
+            // (1.0) == 1065353216
+                runString = "(1.0)";
+                if (1065353216 != jtt.exbytecode.EBC_movf2i_03.test(1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1.0) == -1082130432
+                runString = "(-1.0)";
+                if (-1082130432 != jtt.exbytecode.EBC_movf2i_03.test(-1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (473000.0) == 1223095552
+                runString = "(473000.0)";
+                if (1223095552 != jtt.exbytecode.EBC_movf2i_03.test(473000.0f)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movf2i_04() {
+            begin("jtt.exbytecode.EBC_movf2i_04");
+            String runString = null;
+            try {
+            // (java.lang.Float.NaN) == 2143289344
+                runString = "(java.lang.Float.NaN)";
+                if (2143289344 != jtt.exbytecode.EBC_movf2i_04.test(java.lang.Float.NaN)) {
+                    fail(runString);
+                    return;
+                }
+            // (1.0) == 1065353216
+                runString = "(1.0)";
+                if (1065353216 != jtt.exbytecode.EBC_movf2i_04.test(1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1.0) == -1082130432
+                runString = "(-1.0)";
+                if (-1082130432 != jtt.exbytecode.EBC_movf2i_04.test(-1.0f)) {
+                    fail(runString);
+                    return;
+                }
+            // (473000.0) == 1223095552
+                runString = "(473000.0)";
+                if (1223095552 != jtt.exbytecode.EBC_movf2i_04.test(473000.0f)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movi2f_01() {
+            begin("jtt.exbytecode.EBC_movi2f_01");
+            String runString = null;
+            try {
+            // (2143289344) == java.lang.Float.isNaN
+                runString = "(2143289344)";
+                if (!java.lang.Float.isNaN(jtt.exbytecode.EBC_movi2f_01.test(2143289344))) {
+                    fail(runString);
+                    return;
+                }
+            // (1065353216) == 1.0
+                runString = "(1065353216)";
+                if (1.0f != jtt.exbytecode.EBC_movi2f_01.test(1065353216)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1082130432) == -1.0
+                runString = "(-1082130432)";
+                if (-1.0f != jtt.exbytecode.EBC_movi2f_01.test(-1082130432)) {
+                    fail(runString);
+                    return;
+                }
+            // (1223095552) == 473000.0
+                runString = "(1223095552)";
+                if (473000.0f != jtt.exbytecode.EBC_movi2f_01.test(1223095552)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movi2f_02() {
+            begin("jtt.exbytecode.EBC_movi2f_02");
+            String runString = null;
+            try {
+            // (2143289344) == java.lang.Float.isNaN
+                runString = "(2143289344)";
+                if (!java.lang.Float.isNaN(jtt.exbytecode.EBC_movi2f_02.test(2143289344))) {
+                    fail(runString);
+                    return;
+                }
+            // (1065353216) == 1.0
+                runString = "(1065353216)";
+                if (1.0f != jtt.exbytecode.EBC_movi2f_02.test(1065353216)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1082130432) == -1.0
+                runString = "(-1082130432)";
+                if (-1.0f != jtt.exbytecode.EBC_movi2f_02.test(-1082130432)) {
+                    fail(runString);
+                    return;
+                }
+            // (1223095552) == 473000.0
+                runString = "(1223095552)";
+                if (473000.0f != jtt.exbytecode.EBC_movi2f_02.test(1223095552)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movi2f_03() {
+            begin("jtt.exbytecode.EBC_movi2f_03");
+            String runString = null;
+            try {
+            // (2143289344) == java.lang.Float.isNaN
+                runString = "(2143289344)";
+                if (!java.lang.Float.isNaN(jtt.exbytecode.EBC_movi2f_03.test(2143289344))) {
+                    fail(runString);
+                    return;
+                }
+            // (1065353216) == 1.0
+                runString = "(1065353216)";
+                if (1.0f != jtt.exbytecode.EBC_movi2f_03.test(1065353216)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1082130432) == -1.0
+                runString = "(-1082130432)";
+                if (-1.0f != jtt.exbytecode.EBC_movi2f_03.test(-1082130432)) {
+                    fail(runString);
+                    return;
+                }
+            // (1223095552) == 473000.0
+                runString = "(1223095552)";
+                if (473000.0f != jtt.exbytecode.EBC_movi2f_03.test(1223095552)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movi2f_04() {
+            begin("jtt.exbytecode.EBC_movi2f_04");
+            String runString = null;
+            try {
+            // (2143289344) == java.lang.Float.isNaN
+                runString = "(2143289344)";
+                if (!java.lang.Float.isNaN(jtt.exbytecode.EBC_movi2f_04.test(2143289344))) {
+                    fail(runString);
+                    return;
+                }
+            // (1065353216) == 1.0
+                runString = "(1065353216)";
+                if (1.0f != jtt.exbytecode.EBC_movi2f_04.test(1065353216)) {
+                    fail(runString);
+                    return;
+                }
+            // (-1082130432) == -1.0
+                runString = "(-1082130432)";
+                if (-1.0f != jtt.exbytecode.EBC_movi2f_04.test(-1082130432)) {
+                    fail(runString);
+                    return;
+                }
+            // (1223095552) == 473000.0
+                runString = "(1223095552)";
+                if (473000.0f != jtt.exbytecode.EBC_movi2f_04.test(1223095552)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movl2d_01() {
+            begin("jtt.exbytecode.EBC_movl2d_01");
+            String runString = null;
+            try {
+            // (9221120237041090560) == java.lang.Double.isNaN
+                runString = "(9221120237041090560)";
+                if (!java.lang.Double.isNaN(jtt.exbytecode.EBC_movl2d_01.test(9221120237041090560L))) {
+                    fail(runString);
+                    return;
+                }
+            // (4607182418800017408) == 1.0
+                runString = "(4607182418800017408)";
+                if (1.0 != jtt.exbytecode.EBC_movl2d_01.test(4607182418800017408L)) {
+                    fail(runString);
+                    return;
+                }
+            // (-4616189618054758400) == -1.0
+                runString = "(-4616189618054758400)";
+                if (-1.0 != jtt.exbytecode.EBC_movl2d_01.test(-4616189618054758400L)) {
+                    fail(runString);
+                    return;
+                }
+            // (4691882224927966680) == 473729.5945321
+                runString = "(4691882224927966680)";
+                if (473729.5945321 != jtt.exbytecode.EBC_movl2d_01.test(4691882224927966680L)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movl2d_02() {
+            begin("jtt.exbytecode.EBC_movl2d_02");
+            String runString = null;
+            try {
+            // (9221120237041090560) == java.lang.Double.isNaN
+                runString = "(9221120237041090560)";
+                if (!java.lang.Double.isNaN(jtt.exbytecode.EBC_movl2d_02.test(9221120237041090560L))) {
+                    fail(runString);
+                    return;
+                }
+            // (4607182418800017408) == 1.0
+                runString = "(4607182418800017408)";
+                if (1.0 != jtt.exbytecode.EBC_movl2d_02.test(4607182418800017408L)) {
+                    fail(runString);
+                    return;
+                }
+            // (-4616189618054758400) == -1.0
+                runString = "(-4616189618054758400)";
+                if (-1.0 != jtt.exbytecode.EBC_movl2d_02.test(-4616189618054758400L)) {
+                    fail(runString);
+                    return;
+                }
+            // (4691882224927966680) == 473729.5945321
+                runString = "(4691882224927966680)";
+                if (473729.5945321 != jtt.exbytecode.EBC_movl2d_02.test(4691882224927966680L)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movl2d_03() {
+            begin("jtt.exbytecode.EBC_movl2d_03");
+            String runString = null;
+            try {
+            // (9221120237041090560) == java.lang.Double.isNaN
+                runString = "(9221120237041090560)";
+                if (!java.lang.Double.isNaN(jtt.exbytecode.EBC_movl2d_03.test(9221120237041090560L))) {
+                    fail(runString);
+                    return;
+                }
+            // (4607182418800017408) == 1.0
+                runString = "(4607182418800017408)";
+                if (1.0 != jtt.exbytecode.EBC_movl2d_03.test(4607182418800017408L)) {
+                    fail(runString);
+                    return;
+                }
+            // (-4616189618054758400) == -1.0
+                runString = "(-4616189618054758400)";
+                if (-1.0 != jtt.exbytecode.EBC_movl2d_03.test(-4616189618054758400L)) {
+                    fail(runString);
+                    return;
+                }
+            // (4691882224927966680) == 473729.5945321
+                runString = "(4691882224927966680)";
+                if (473729.5945321 != jtt.exbytecode.EBC_movl2d_03.test(4691882224927966680L)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_movl2d_04() {
+            begin("jtt.exbytecode.EBC_movl2d_04");
+            String runString = null;
+            try {
+            // (9221120237041090560) == java.lang.Double.isNaN
+                runString = "(9221120237041090560)";
+                if (!java.lang.Double.isNaN(jtt.exbytecode.EBC_movl2d_04.test(9221120237041090560L))) {
+                    fail(runString);
+                    return;
+                }
+            // (4607182418800017408) == 1.0
+                runString = "(4607182418800017408)";
+                if (1.0 != jtt.exbytecode.EBC_movl2d_04.test(4607182418800017408L)) {
+                    fail(runString);
+                    return;
+                }
+            // (-4616189618054758400) == -1.0
+                runString = "(-4616189618054758400)";
+                if (-1.0 != jtt.exbytecode.EBC_movl2d_04.test(-4616189618054758400L)) {
+                    fail(runString);
+                    return;
+                }
+            // (4691882224927966680) == 473729.5945321
+                runString = "(4691882224927966680)";
+                if (473729.5945321 != jtt.exbytecode.EBC_movl2d_04.test(4691882224927966680L)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_ucmp_ae_01() {
+            begin("jtt.exbytecode.EBC_ucmp_ae_01");
+            String runString = null;
+            try {
+            // (64,47) == true
+                runString = "(64,47)";
+                if (true != jtt.exbytecode.EBC_ucmp_ae_01.test(64, 47)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,1) == true
+                runString = "(-2,1)";
+                if (true != jtt.exbytecode.EBC_ucmp_ae_01.test(-2, 1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,-2) == true
+                runString = "(-2,-2)";
+                if (true != jtt.exbytecode.EBC_ucmp_ae_01.test(-2, -2)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_ucmp_at_01() {
+            begin("jtt.exbytecode.EBC_ucmp_at_01");
+            String runString = null;
+            try {
+            // (64,47) == true
+                runString = "(64,47)";
+                if (true != jtt.exbytecode.EBC_ucmp_at_01.test(64, 47)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,1) == true
+                runString = "(-2,1)";
+                if (true != jtt.exbytecode.EBC_ucmp_at_01.test(-2, 1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,-2) == false
+                runString = "(-2,-2)";
+                if (false != jtt.exbytecode.EBC_ucmp_at_01.test(-2, -2)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_ucmp_be_01() {
+            begin("jtt.exbytecode.EBC_ucmp_be_01");
+            String runString = null;
+            try {
+            // (48,67) == true
+                runString = "(48,67)";
+                if (true != jtt.exbytecode.EBC_ucmp_be_01.test(48, 67)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,1) == false
+                runString = "(-2,1)";
+                if (false != jtt.exbytecode.EBC_ucmp_be_01.test(-2, 1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,-2) == true
+                runString = "(-2,-2)";
+                if (true != jtt.exbytecode.EBC_ucmp_be_01.test(-2, -2)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_ucmp_bt_01() {
+            begin("jtt.exbytecode.EBC_ucmp_bt_01");
+            String runString = null;
+            try {
+            // (48,67) == true
+                runString = "(48,67)";
+                if (true != jtt.exbytecode.EBC_ucmp_bt_01.test(48, 67)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,1) == false
+                runString = "(-2,1)";
+                if (false != jtt.exbytecode.EBC_ucmp_bt_01.test(-2, 1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,-2) == false
+                runString = "(-2,-2)";
+                if (false != jtt.exbytecode.EBC_ucmp_bt_01.test(-2, -2)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_uwgt_01() {
+            begin("jtt.exbytecode.EBC_uwgt_01");
+            String runString = null;
+            try {
+            // (64,47) == true
+                runString = "(64,47)";
+                if (true != jtt.exbytecode.EBC_uwgt_01.test(64, 47)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,1) == true
+                runString = "(-2,1)";
+                if (true != jtt.exbytecode.EBC_uwgt_01.test(-2, 1)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_uwgteq_01() {
+            begin("jtt.exbytecode.EBC_uwgteq_01");
+            String runString = null;
+            try {
+            // (64,47) == true
+                runString = "(64,47)";
+                if (true != jtt.exbytecode.EBC_uwgteq_01.test(64, 47)) {
+                    fail(runString);
+                    return;
+                }
+            // (64,64) == true
+                runString = "(64,64)";
+                if (true != jtt.exbytecode.EBC_uwgteq_01.test(64, 64)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,1) == true
+                runString = "(-2,1)";
+                if (true != jtt.exbytecode.EBC_uwgteq_01.test(-2, 1)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,-2) == true
+                runString = "(-2,-2)";
+                if (true != jtt.exbytecode.EBC_uwgteq_01.test(-2, -2)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_uwlt_01() {
+            begin("jtt.exbytecode.EBC_uwlt_01");
+            String runString = null;
+            try {
+            // (47,64) == true
+                runString = "(47,64)";
+                if (true != jtt.exbytecode.EBC_uwlt_01.test(47, 64)) {
+                    fail(runString);
+                    return;
+                }
+            // (1,-2) == true
+                runString = "(1,-2)";
+                if (true != jtt.exbytecode.EBC_uwlt_01.test(1, -2)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_exbytecode_EBC_uwlteq_01() {
+            begin("jtt.exbytecode.EBC_uwlteq_01");
+            String runString = null;
+            try {
+            // (47,64) == true
+                runString = "(47,64)";
+                if (true != jtt.exbytecode.EBC_uwlteq_01.test(47, 64)) {
+                    fail(runString);
+                    return;
+                }
+            // (47,47) == true
+                runString = "(47,47)";
+                if (true != jtt.exbytecode.EBC_uwlteq_01.test(47, 47)) {
+                    fail(runString);
+                    return;
+                }
+            // (1,-2) == true
+                runString = "(1,-2)";
+                if (true != jtt.exbytecode.EBC_uwlteq_01.test(1, -2)) {
+                    fail(runString);
+                    return;
+                }
+            // (-2,-2) == true
+                runString = "(-2,-2)";
+                if (true != jtt.exbytecode.EBC_uwlteq_01.test(-2, -2)) {
                     fail(runString);
                     return;
                 }
@@ -19101,6 +18611,496 @@ public class JTRuns {
             // (25) == "ok0"
                 runString = "(25)";
                 if (!"ok0".equals(jtt.loop.LoopSwitch01.test(25))) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_CodePointer01() {
+            begin("jtt.max.CodePointer01");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.max.CodePointer01.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.max.CodePointer01.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == true
+                runString = "(2)";
+                if (true != jtt.max.CodePointer01.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == false
+                runString = "(3)";
+                if (false != jtt.max.CodePointer01.test(3)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_CodePointer02() {
+            begin("jtt.max.CodePointer02");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.max.CodePointer02.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.max.CodePointer02.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == true
+                runString = "(2)";
+                if (true != jtt.max.CodePointer02.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == false
+                runString = "(3)";
+                if (false != jtt.max.CodePointer02.test(3)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Fold01() {
+            begin("jtt.max.Fold01");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.max.Fold01.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Fold02() {
+            begin("jtt.max.Fold02");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.max.Fold02.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Fold03() {
+            begin("jtt.max.Fold03");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.max.Fold03.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Hub_Subtype01() {
+            begin("jtt.max.Hub_Subtype01");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.max.Hub_Subtype01.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.max.Hub_Subtype01.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == true
+                runString = "(2)";
+                if (true != jtt.max.Hub_Subtype01.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == true
+                runString = "(3)";
+                if (true != jtt.max.Hub_Subtype01.test(3)) {
+                    fail(runString);
+                    return;
+                }
+            // (4) == true
+                runString = "(4)";
+                if (true != jtt.max.Hub_Subtype01.test(4)) {
+                    fail(runString);
+                    return;
+                }
+            // (5) == false
+                runString = "(5)";
+                if (false != jtt.max.Hub_Subtype01.test(5)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Hub_Subtype02() {
+            begin("jtt.max.Hub_Subtype02");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.max.Hub_Subtype02.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.max.Hub_Subtype02.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == true
+                runString = "(2)";
+                if (true != jtt.max.Hub_Subtype02.test(2)) {
+                    fail(runString);
+                    return;
+                }
+            // (3) == true
+                runString = "(3)";
+                if (true != jtt.max.Hub_Subtype02.test(3)) {
+                    fail(runString);
+                    return;
+                }
+            // (4) == true
+                runString = "(4)";
+                if (true != jtt.max.Hub_Subtype02.test(4)) {
+                    fail(runString);
+                    return;
+                }
+            // (5) == false
+                runString = "(5)";
+                if (false != jtt.max.Hub_Subtype02.test(5)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_ImmortalHeap_allocation() {
+            begin("jtt.max.ImmortalHeap_allocation");
+            String runString = null;
+            try {
+            // (4) == true
+                runString = "(4)";
+                if (true != jtt.max.ImmortalHeap_allocation.test(4)) {
+                    fail(runString);
+                    return;
+                }
+            // (8) == true
+                runString = "(8)";
+                if (true != jtt.max.ImmortalHeap_allocation.test(8)) {
+                    fail(runString);
+                    return;
+                }
+            // (10) == true
+                runString = "(10)";
+                if (true != jtt.max.ImmortalHeap_allocation.test(10)) {
+                    fail(runString);
+                    return;
+                }
+            // (100) == true
+                runString = "(100)";
+                if (true != jtt.max.ImmortalHeap_allocation.test(100)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_ImmortalHeap_switching() {
+            begin("jtt.max.ImmortalHeap_switching");
+            String runString = null;
+            try {
+            // (10) == true
+                runString = "(10)";
+                if (true != jtt.max.ImmortalHeap_switching.test(10)) {
+                    fail(runString);
+                    return;
+                }
+            // (20) == true
+                runString = "(20)";
+                if (true != jtt.max.ImmortalHeap_switching.test(20)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Inline01() {
+            begin("jtt.max.Inline01");
+            String runString = null;
+            try {
+            // (0) == true
+                runString = "(0)";
+                if (true != jtt.max.Inline01.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == true
+                runString = "(1)";
+                if (true != jtt.max.Inline01.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Invoke_except01() {
+            begin("jtt.max.Invoke_except01");
+            String runString = null;
+            try {
+            // (0) == 0
+                runString = "(0)";
+                if (0 != jtt.max.Invoke_except01.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 3
+                runString = "(1)";
+                if (3 != jtt.max.Invoke_except01.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            // (2) == !java.lang.reflect.InvocationTargetException
+                try {
+                    runString = "(2)";
+                    jtt.max.Invoke_except01.test(2);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.reflect.InvocationTargetException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
+            // (3) == !java.lang.IllegalArgumentException
+                try {
+                    runString = "(3)";
+                    jtt.max.Invoke_except01.test(3);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.IllegalArgumentException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
+            // (4) == !java.lang.IllegalArgumentException
+                try {
+                    runString = "(4)";
+                    jtt.max.Invoke_except01.test(4);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.IllegalArgumentException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Prototyping01() {
+            begin("jtt.max.Prototyping01");
+            String runString = null;
+            try {
+            // (0) == 1
+                runString = "(0)";
+                if (1 != jtt.max.Prototyping01.test(0)) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == 2
+                runString = "(1)";
+                if (2 != jtt.max.Prototyping01.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Unsigned_idiv01() {
+            begin("jtt.max.Unsigned_idiv01");
+            String runString = null;
+            try {
+            // (-1,4) == 1073741823
+                runString = "(-1,4)";
+                if (1073741823 != jtt.max.Unsigned_idiv01.test(-1, 4)) {
+                    fail(runString);
+                    return;
+                }
+            // (6,3) == 2
+                runString = "(6,3)";
+                if (2 != jtt.max.Unsigned_idiv01.test(6, 3)) {
+                    fail(runString);
+                    return;
+                }
+            // (65535,16) == 4095
+                runString = "(65535,16)";
+                if (4095 != jtt.max.Unsigned_idiv01.test(65535, 16)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Unsigned_irem01() {
+            begin("jtt.max.Unsigned_irem01");
+            String runString = null;
+            try {
+            // (-1,8) == 7
+                runString = "(-1,8)";
+                if (7 != jtt.max.Unsigned_irem01.test(-1, 8)) {
+                    fail(runString);
+                    return;
+                }
+            // (6,3) == 0
+                runString = "(6,3)";
+                if (0 != jtt.max.Unsigned_irem01.test(6, 3)) {
+                    fail(runString);
+                    return;
+                }
+            // (65535,16) == 15
+                runString = "(65535,16)";
+                if (15 != jtt.max.Unsigned_irem01.test(65535, 16)) {
+                    fail(runString);
+                    return;
+                }
+            // (16,0) == !java.lang.ArithmeticException
+                try {
+                    runString = "(16,0)";
+                    jtt.max.Unsigned_irem01.test(16, 0);
+                    fail(runString);
+                    return;
+                } catch (Throwable e) {
+                    if (e.getClass() != java.lang.ArithmeticException.class) {
+                        fail(runString, e);
+                        return;
+                    }
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Unsigned_ldiv01() {
+            begin("jtt.max.Unsigned_ldiv01");
+            String runString = null;
+            try {
+            // (-1,4) == 4611686018427387903
+                runString = "(-1,4)";
+                if (4611686018427387903L != jtt.max.Unsigned_ldiv01.test(-1L, 4L)) {
+                    fail(runString);
+                    return;
+                }
+            // (6,3) == 2
+                runString = "(6,3)";
+                if (2L != jtt.max.Unsigned_ldiv01.test(6L, 3L)) {
+                    fail(runString);
+                    return;
+                }
+            // (65535,16) == 4095
+                runString = "(65535,16)";
+                if (4095L != jtt.max.Unsigned_ldiv01.test(65535L, 16L)) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_max_Unsigned_lrem01() {
+            begin("jtt.max.Unsigned_lrem01");
+            String runString = null;
+            try {
+            // (-1,8) == 7
+                runString = "(-1,8)";
+                if (7L != jtt.max.Unsigned_lrem01.test(-1L, 8L)) {
+                    fail(runString);
+                    return;
+                }
+            // (6,3) == 0
+                runString = "(6,3)";
+                if (0L != jtt.max.Unsigned_lrem01.test(6L, 3L)) {
+                    fail(runString);
+                    return;
+                }
+            // (65535,16) == 15
+                runString = "(65535,16)";
+                if (15L != jtt.max.Unsigned_lrem01.test(65535L, 16L)) {
                     fail(runString);
                     return;
                 }
