@@ -181,13 +181,6 @@ suite = {
             "javaCompliance": "1.7+",
         },
 
-        "com.oracle.max.tests.jsr292": {
-            "sourceDirs": ["src"],
-            "dependencies": ["com.oracle.max.vm"],
-            "checkstyle": "com.sun.max",
-            "javaCompliance": "1.7+",
-        },
-
         "com.oracle.max.tools": {
             "sourceDirs": ["src"],
             "dependencies": [
@@ -366,6 +359,13 @@ suite = {
         "test": {
             "sourceDirs": ["src"],
             "dependencies": ["com.sun.max"],
+            "checkstyle": "com.sun.max",
+            "javaCompliance": "1.7+",
+        },
+
+        "test.jsr292": {
+            "sourceDirs": ["src"],
+            "dependencies": ["com.oracle.max.vm"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
