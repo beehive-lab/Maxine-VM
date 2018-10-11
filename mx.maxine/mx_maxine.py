@@ -284,7 +284,7 @@ def sanitized_classpath():
     sanitized_list = []
     for entry in cp_list:
         include = True
-        if entry.find("com.oracle.graal") >= 0 or entry.find("com.oracle.truffle") >= 0:
+        if entry.find("com.oracle.graal") >= 0 or entry.find("com.oracle.truffle") >= 0 or entry.find("graal/dists") >= 0:
             include = False
         if include:
             sanitized_list.append(entry)
