@@ -160,7 +160,7 @@ suite = {
             "javaCompliance": "1.7+",
         },
 
-        "com.oracle.max.tele.jdwp": {
+        "com.sun.max.jdwp.maxine": {
             "sourceDirs": ["src"],
             "dependencies": [
                 "com.sun.max.jdwp",
