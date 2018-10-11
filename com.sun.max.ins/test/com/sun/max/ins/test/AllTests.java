@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.com.sun.max.ins;
+package com.sun.max.ins.test;
 
 import junit.framework.*;
 

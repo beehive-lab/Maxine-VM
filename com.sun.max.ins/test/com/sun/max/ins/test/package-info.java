@@ -22,4 +22,4 @@
  */
 /**
  */
-package test.com.sun.max.ins;
+package com.sun.max.ins.test;
