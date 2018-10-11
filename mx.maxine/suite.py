@@ -144,7 +144,7 @@ suite = {
 
         "com.sun.max.jdwp": {
             "sourceDirs": ["src"],
-            "dependencies": ["com.oracle.max.vmdi"],
+            "dependencies": ["com.sun.max.jdwp.vm"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
@@ -174,7 +174,7 @@ suite = {
             "sourceDirs": ["src", "test"],
             "dependencies": [
                 "com.oracle.max.vm.ext.jvmti",
-                "com.oracle.max.vmdi",
+                "com.sun.max.jdwp.vm",
                 "com.oracle.max.elf",
                 "com.sun.max.asmdis",
                 "com.oracle.max.hcfdis",
@@ -300,12 +300,6 @@ suite = {
             "javaCompliance": "1.7+",
         },
 
-        "com.oracle.max.vmdi": {
-            "sourceDirs": ["src"],
-            "checkstyle": "com.sun.max",
-            "javaCompliance": "1.7+",
-        },
-
         "com.sun.c1x": {
             "sourceDirs": ["src"],
             "dependencies": [
@@ -344,6 +338,12 @@ suite = {
         "com.sun.max.asmdis": {
             "sourceDirs": ["src", "test"],
             "dependencies": ["com.sun.max"],
+            "checkstyle": "com.sun.max",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.sun.max.jdwp.vm": {
+            "sourceDirs": ["src"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
