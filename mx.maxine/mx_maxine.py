@@ -440,7 +440,7 @@ def jttgen(args):
     files in the com.sun.max.vm.jtrun.all package."""
 
 
-    testDirs = [join(mx.project('com.oracle.max.vm.tests').dir, 'src'), join(mx.project('com.oracle.max.tests').dir, 'src')]
+    testDirs = [join(mx.project('com.oracle.max.vm.tests').dir, 'src'), join(mx.project('jtt').dir, 'src')]
     tests = []
     for testDir in testDirs:
         for name in os.listdir(join(testDir, 'jtt')):

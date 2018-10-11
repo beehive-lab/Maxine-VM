@@ -183,12 +183,7 @@ suite = {
 
         "com.oracle.max.tests": {
             "sourceDirs": ["src"],
-            "dependencies": [
-                "com.sun.max",
-                "TESTS_JASMIN_CLASSES",
-                "com.oracle.max.vm.ext.t1x",
-                "com.oracle.max.vm.ext.c1x",
-            ],
+            "dependencies": ["com.sun.max"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
@@ -304,6 +299,7 @@ suite = {
             "dependencies": [
                 "com.oracle.max.vm",
                 "com.oracle.max.tests",
+                "jtt",
                 "ASM",
                 "ASMUTIL",
                 "TESTS_JASMIN_CLASSES",
@@ -358,6 +354,18 @@ suite = {
         "com.sun.max.asmdis": {
             "sourceDirs": ["src", "test"],
             "dependencies": ["com.sun.max"],
+            "checkstyle": "com.sun.max",
+            "javaCompliance": "1.7+",
+        },
+
+        "jtt": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "TESTS_JASMIN_CLASSES",
+                "com.oracle.max.vm",
+                "com.oracle.max.vm.ext.t1x",
+                "com.oracle.max.vm.ext.c1x",
+            ],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
