@@ -18,7 +18,7 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 suite = {
-    "mxversion": "5.177.0",
+    "mxversion": "5.190.3",
     "name": "maxine",
     "sourceinprojectwhitelist": [],
     "url": "https://github.com/beehive-lab/Maxine-VM",

@@ -28,11 +28,7 @@ pipeline {
                     checkout([$class: 'GitSCM', branches: [[name: 'newmx']], extensions: [[$class: 'CloneOption', noTags: true, shallow: true]], userRemoteConfigs: [[credentialsId: 'orion_github', url: 'https://github.com/beehive-lab/Maxine-Graal.git']]])
                 }
                 dir(env.MX_HOME) {
-                    checkout([$class: 'GitSCM', branches: [[name: '5.177.0']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/beehive-lab/mx.git']]])
-                }
-                // Trigger fetch of dependencies
-                dir(env.MAXINE_HOME) {
-                    sh '$MX help'
+                    checkout([$class: 'GitSCM', branches: [[name: '5.190.3']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/beehive-lab/mx.git']]])
                 }
             }
         }
@@ -66,18 +62,18 @@ pipeline {
                 }
             }
         }
-        stage('test-n-crossisa') {
+        stage('testme-n-crossisa') {
             steps {
-                parallel 'test': {
+                parallel 'testme': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX test -maxvm-configs=std,forceC1X,forceT1X -image-configs=java -tests=c1x,graal,junit:test.com,output,jsr292'
-                        sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
+                        sh '$MX testme -maxvm-configs=std,forceC1X,forceT1X -image-configs=java -tests=c1x,graal,junit:test.com,output,jsr292'
+                        sh '$MX testme -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
                     }
                 }, 'crossisa': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX --J @"-Dmax.platform=linux-aarch64 -Dtest.crossisa.qemu=1 -ea" test -s=t -junit-test-timeout=1800 -tests=junit:aarch64.asm+Aarch64T1XTest+Aarch64T1XpTest+Aarch64JTT'
-                        sh '$MX --J @"-Dmax.platform=linux-arm -Dtest.crossisa.qemu=1 -ea" test -s=t -junit-test-timeout=1800 -tests=junit:armv7.asm+ARMV7T1XTest+ARMV7JTT'
-                        sh '$MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" test -s=t -tests=junit:riscv64.asm+max.asm.target.riscv'
+                        sh '$MX --J @"-Dmax.platform=linux-aarch64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:aarch64.asm+Aarch64T1XTest+Aarch64T1XpTest+Aarch64JTT'
+                        sh '$MX --J @"-Dmax.platform=linux-arm -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:armv7.asm+ARMV7T1XTest+ARMV7JTT'
+                        sh '$MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -tests=junit:riscv64.asm+max.asm.target.riscv'
                     }
                 }
             }
@@ -85,7 +81,7 @@ pipeline {
         stage('javatester') {
             steps {
                 dir(env.MAXINE_HOME) {
-                    sh '$MX test -image-configs=java -tests=javatester'
+                    sh '$MX testme -image-configs=java -tests=javatester'
                 }
             }
         }

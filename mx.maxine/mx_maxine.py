@@ -154,8 +154,8 @@ def gate(args):
 
     mx.log('Running MaxineTester...')
 
-    test(['-image-configs=java', '-fail-fast'] + testArgs)
-    test(['-image-configs=ss', '-tests=output:Hello+Catch+GC+WeakRef+Final', '-fail-fast'] + testArgs)
+    testme(['-image-configs=java', '-fail-fast'] + testArgs)
+    testme(['-image-configs=ss', '-tests=output:Hello+Catch+GC+WeakRef+Final', '-fail-fast'] + testArgs)
 
 def gitinit(args):
     """
@@ -591,7 +591,7 @@ def t1xgen(args):
 
     return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.t1x'), 'com.oracle.max.vm.ext.t1x.T1XTemplateGenerator'])
 
-def test(args):
+def testme(args):
     """run some or all of the Maxine tests
 
 
@@ -765,7 +765,7 @@ def mx_init(suite):
         'site' : [site, '[options]'],
         't1x': [t1x, '[options] patterns...'],
         't1xgen': [t1xgen, ''],
-        'test': [test, '[options]'],
+        'testme': [testme, '[options]'],
         'verify': [verify, '[options] patterns...', _patternHelp],
         'view': [view, '[options]'],
         'vm': [vm, '[options] [class | -jar jarfile]  [args...]'],
