@@ -396,7 +396,7 @@ public class MaxineTesterConfiguration {
         imageConfig("gmsed", opt_c1x, "-run=java", "-heap=gcx.gen.mse", "-build=DEBUG");
 
         // VMA configurations
-        final String vmaT1X = "com.oracle.max.vm.ext.t1x.vma.VMAT1X";
+        final String vmaT1X = "com.oracle.max.vm.ext.vma.t1x.VMAT1X";
         final String vmaBaseline = "-baseline=" + vmaT1X;
         final String vmaRun = "-run=com.oracle.max.vm.ext.vma.run.java";
         final String vmaLayout = "-layout=xohm";

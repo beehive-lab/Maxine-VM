@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.t1x.vma;
+package com.oracle.max.vm.ext.vma.t1x;
 
 import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 import static com.sun.max.vm.MaxineVM.*;

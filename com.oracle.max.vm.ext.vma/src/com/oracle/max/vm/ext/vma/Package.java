@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.vma;
+package com.oracle.max.vm.ext.vma;
 
 import com.sun.max.config.BootImagePackage;
 import com.sun.max.vm.*;
@@ -33,7 +33,6 @@ public class Package extends BootImagePackage {
     public Package() {
         super(
             "com.oracle.max.vm.ext.vma.**",
-            "com.oracle.max.vm.ext.t1x.vma.*",
             "com.oracle.max.vm.ext.vma.graal.*"
         );
     }

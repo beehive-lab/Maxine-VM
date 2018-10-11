@@ -21,7 +21,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.t1x.vma;
+package com.oracle.max.vm.ext.vma.t1x;
 
 import static com.oracle.max.vm.ext.t1x.T1XRuntime.*;
 import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
@@ -46,9 +46,9 @@ import com.sun.max.vm.thread.*;
 import com.oracle.max.vm.ext.t1x.*;
 
 /**
- * Template source for before and after advice (where available).
+ * Template source for before advice (where available).
  */
-public class VMAdviceBeforeAfterTemplateSource {
+public class VMAdviceBeforeTemplateSource {
 
 // START GENERATED CODE
     @T1X_TEMPLATE(GETFIELD$boolean$resolved)
@@ -2095,9 +2095,6 @@ public class VMAdviceBeforeAfterTemplateSource {
             VMAStaticBytecodeAdvice.adviseBeforeArrayLoad(bci, array, index);
         }
         Object result = ArrayAccess.getObject(array, index);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterArrayLoad(bci, array, index, result);
-        }
         return Reference.fromJava(result);
     }
 
@@ -2590,81 +2587,6 @@ public class VMAdviceBeforeAfterTemplateSource {
         return result;
     }
 
-    @T1X_TEMPLATE(NEW)
-    public static Object new_(ResolutionGuard guard, int bci) {
-        Object object = resolveClassForNewAndCreate(guard);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNew(bci, object);
-        }
-        return object;
-    }
-
-    @T1X_TEMPLATE(NEW$init)
-    public static Object new_(DynamicHub hub, int bci) {
-        Object object = Heap.createTuple(hub);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNew(bci, object);
-        }
-        return object;
-    }
-
-    @T1X_TEMPLATE(NEW_HYBRID)
-    public static Object new_hybrid(DynamicHub hub, int bci) {
-        Object object = Heap.createHybrid(hub);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNew(bci, object);
-        }
-        return object;
-    }
-
-    @T1X_TEMPLATE(NEWARRAY)
-    public static Object newarray(ClassActor arrayClass, @Slot(0) int length, int bci) {
-        Object array = Snippets.createArray(arrayClass, length);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNewArray(bci, array, length);
-        }
-        return array;
-    }
-
-    @T1X_TEMPLATE(ANEWARRAY)
-    public static Object anewarray(ResolutionGuard arrayType, @Slot(0) int length, int bci) {
-        ArrayClassActor<?> arrayClassActor = UnsafeCast.asArrayClassActor(Snippets.resolveArrayClass(arrayType));
-        Object array = Snippets.createArray(arrayClassActor, length);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNewArray(bci, array, length);
-        }
-        return array;
-    }
-
-    @T1X_TEMPLATE(ANEWARRAY$resolved)
-    public static Object anewarray(ArrayClassActor<?> arrayType, @Slot(0) int length, int bci) {
-        ArrayClassActor<?> arrayClassActor = arrayType;
-        Object array = Snippets.createArray(arrayClassActor, length);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterNewArray(bci, array, length);
-        }
-        return array;
-    }
-
-    @T1X_TEMPLATE(MULTIANEWARRAY)
-    public static Reference multianewarray(ResolutionGuard guard, int[] lengths, int bci) {
-        ClassActor arrayClassActor = Snippets.resolveClass(guard);
-        Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(bci, array, lengths);
-        }
-        return Reference.fromJava(array);
-    }
-
-    @T1X_TEMPLATE(MULTIANEWARRAY$resolved)
-    public static Reference multianewarray(ArrayClassActor<?> arrayClassActor, int[] lengths, int bci) {
-        Object array = Snippets.createMultiReferenceArray(arrayClassActor, lengths);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterMultiNewArray(bci, array, lengths);
-        }
-        return Reference.fromJava(array);
-    }
-
     @T1X_TEMPLATE(CHECKCAST)
     public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object, int bci) {
         resolveAndCheckcast(guard, object, bci);
@@ -2697,15 +2619,6 @@ public class VMAdviceBeforeAfterTemplateSource {
             VMAStaticBytecodeAdvice.adviseBeforeCheckCast(bci, object, classActor);
         }
         Snippets.checkCast(classActor, object);
-    }
-
-    @T1X_TEMPLATE(ARRAYLENGTH)
-    public static int arraylength(@Slot(0) Object array, int bci) {
-        int length = ArrayAccess.readArrayLength(array);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterArrayLength(bci, array, length);
-        }
-        return length;
     }
 
     @T1X_TEMPLATE(ATHROW)
@@ -2792,13 +2705,6 @@ public class VMAdviceBeforeAfterTemplateSource {
             VMAStaticBytecodeAdvice.adviseBeforeMonitorExit(bci, object);
         }
         Monitor.exit(object);
-    }
-
-    @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
-    public static void traceMethodEntry(MethodActor methodActor, Object receiver, int bci) {
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterMethodEntry(bci, receiver, methodActor);
-        }
     }
 
     @T1X_TEMPLATE(LOAD_EXCEPTION)
@@ -2984,9 +2890,6 @@ public class VMAdviceBeforeAfterTemplateSource {
             VMAStaticBytecodeAdvice.adviseBeforeLoad(bci, index);
         }
         Reference value = VMRegister.getAbiFramePointer().readReference(localOffset);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterLoad(bci, index, value);
-        }
         return value;
     }
 
