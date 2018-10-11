@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.config.c1xgraal;
+package com.oracle.max.vm.ext.c1xgraal;
 
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
