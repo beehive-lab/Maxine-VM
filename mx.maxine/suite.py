@@ -152,7 +152,7 @@ suite = {
         "com.sun.max.ins": {
             "sourceDirs": ["src", "test"],
             "dependencies": [
-                "com.oracle.max.tele.vm",
+                "com.sun.max.tele",
                 "JLF_ICONS",
                 "NB3_BUTTONS",
             ],
@@ -164,13 +164,13 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "com.sun.max.jdwp",
-                "com.oracle.max.tele.vm",
+                "com.sun.max.tele",
             ],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
 
-        "com.oracle.max.tele.vm": {
+        "com.sun.max.tele": {
             "sourceDirs": ["src", "test"],
             "dependencies": [
                 "com.oracle.max.vm.ext.jvmti",
