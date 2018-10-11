@@ -81,7 +81,7 @@ suite = {
 
         "NB3_BUTTONS": {
             "sha1": "40108ac637c3813fe154eb2d15ba8736fb5805f7",
-            "path": "com.oracle.max.tele.ins/NB3B.jar",
+            "path": "com.sun.max.ins/NB3B.jar",
         },
 
         "TESTS_JASMIN_CLASSES": {
@@ -149,7 +149,7 @@ suite = {
             "javaCompliance": "1.7+",
         },
 
-        "com.oracle.max.tele.ins": {
+        "com.sun.max.ins": {
             "sourceDirs": ["src", "test"],
             "dependencies": [
                 "com.oracle.max.tele.vm",
