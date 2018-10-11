@@ -22,7 +22,6 @@ package com.sun.cri.ci;
 
 import java.util.*;
 
-import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
 
 
