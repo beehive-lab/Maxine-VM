@@ -134,10 +134,7 @@ suite = {
 
         "com.oracle.max.hcfdis": {
             "sourceDirs": ["src"],
-            "dependencies": [
-                "com.sun.max.asm",
-                "com.oracle.max.criutils",
-            ],
+            "dependencies": ["com.sun.max.asm",],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
@@ -176,7 +173,6 @@ suite = {
                 "com.oracle.max.vm.ext.jvmti",
                 "com.sun.max.jdwp.vm",
                 "com.oracle.max.elf",
-                "com.sun.max.asm",
                 "com.oracle.max.hcfdis",
             ],
             "checkstyle": "com.sun.max",
@@ -225,7 +221,6 @@ suite = {
             "dependencies": [
                 "com.oracle.max.vm.ext.maxri",
                 "graal:GRAAL_MAXINE",
-                "com.sun.max",
             ],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
@@ -264,8 +259,6 @@ suite = {
         "com.oracle.max.vm.ext.vma": {
             "sourceDirs": ["src", "test"],
             "dependencies": [
-                "com.sun.max",
-                "com.oracle.max.vm.ext.jvmti",
                 "com.oracle.max.vm.ext.jjvmti",
                 "com.oracle.max.vm.ext.graal",
             ],
@@ -280,12 +273,13 @@ suite = {
         "com.oracle.max.vm.tests": {
             "sourceDirs": ["src"],
             "dependencies": [
-                "com.sun.max",
+                "com.oracle.max.vm.ext.t1x",
+                "com.oracle.max.vm.ext.c1x",
+                "uk.ac.manchester.tests.jdk8",
                 "test",
                 "jtt",
                 "ASM",
                 "ASMUTIL",
-                "TESTS_JASMIN_CLASSES",
             ],
             "generatedDependencies": ["uk.ac.manchester.tests.jdk8"],
             "checkstyle": "com.sun.max",
@@ -302,10 +296,7 @@ suite = {
 
         "com.sun.c1x": {
             "sourceDirs": ["src"],
-            "dependencies": [
-                "com.oracle.max.asm",
-                "com.sun.max",
-            ],
+            "dependencies": ["com.sun.max"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
@@ -319,8 +310,6 @@ suite = {
         "com.sun.max": {
             "sourceDirs": ["src", "test"],
             "dependencies": [
-                "mx:JUNIT",
-                "com.sun.max.annotate",
                 "com.oracle.max.asm",
                 "com.oracle.max.criutils",
                 "JDK_TOOLS",
@@ -353,8 +342,6 @@ suite = {
             "dependencies": [
                 "TESTS_JASMIN_CLASSES",
                 "com.sun.max",
-                "com.oracle.max.vm.ext.t1x",
-                "com.oracle.max.vm.ext.c1x",
             ],
             "checkstyle": "com.sun.max",
             "TestProject": True,
@@ -371,7 +358,6 @@ suite = {
 
         "test.jsr292": {
             "sourceDirs": ["src"],
-            "dependencies": ["com.sun.max"],
             "checkstyle": "com.sun.max",
             "TestProject": True,
             "javaCompliance": "1.7+",
@@ -381,8 +367,6 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "com.sun.max",
-                "com.oracle.max.vm.ext.t1x",
-                "com.oracle.max.vm.ext.c1x",
             ],
             "checkstyle": "com.sun.max",
             "TestProject": True,
