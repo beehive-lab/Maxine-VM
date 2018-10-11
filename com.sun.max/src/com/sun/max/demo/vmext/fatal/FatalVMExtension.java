@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo.vmext.fatal;
+package com.sun.max.demo.vmext.fatal;
 
 import java.util.*;
 

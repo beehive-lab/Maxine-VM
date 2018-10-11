@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo;
+package com.sun.max.demo;
 
 import sun.misc.*;
 
@@ -34,7 +34,7 @@ import com.sun.max.vm.runtime.*;
  * program toggles the format of the thread dump performed.
  *
  * Like all VmOperations, this class must be in the boot image.
- * This is achieved by adding 'demo.PrintThreadsDemo' to the end
+ * This is achieved by adding 'PrintThreadsDemo' to the end
  * of a 'max image' command.
  */
 public class PrintThreadsDemo {

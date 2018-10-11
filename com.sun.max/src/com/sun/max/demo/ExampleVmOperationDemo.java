@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo;
+package com.sun.max.demo;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;

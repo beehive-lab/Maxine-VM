@@ -20,14 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo;
+package com.sun.max.demo;
 
 import java.util.*;
 
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
-
-import demo.VmOperationDemoHelper.DemoRunnable;
 
 /**
  * A demo (test) for thread suspend and resume {@link VmOperation}s.
@@ -57,7 +55,7 @@ public class SuspendResumeVmOperationDemo {
     private static int resumeDelay = 5;
     private static boolean verbose;
 
-    public static class Spinner extends DemoRunnable {
+    public static class Spinner extends VmOperationDemoHelper.DemoRunnable {
         static int i = 0;
         volatile boolean done;
         @Override
@@ -81,7 +79,7 @@ public class SuspendResumeVmOperationDemo {
         }
     }
 
-    static class NativeBlocker extends DemoRunnable {
+    static class NativeBlocker extends VmOperationDemoHelper.DemoRunnable {
         Thread thread;
         public void run() {
             runEntered();
@@ -118,7 +116,7 @@ public class SuspendResumeVmOperationDemo {
 
         // create a bunch of compute spinners.
         demoHelper = new VmOperationDemoHelper(new Spinner());
-        Map<Thread, DemoRunnable> spinners = new HashMap<Thread, DemoRunnable>(demoHelper.threads);
+        Map<Thread, VmOperationDemoHelper.DemoRunnable> spinners = new HashMap<Thread, VmOperationDemoHelper.DemoRunnable>(demoHelper.threads);
 
         // now create a thread that will be for sure blocked in native code when
         // suspend request is made.
@@ -131,7 +129,7 @@ public class SuspendResumeVmOperationDemo {
         try {
             System.out.println("Suspending");
             suspendOperation.submit();
-            for (Map.Entry<Thread, DemoRunnable> entry : demoHelper.threads.entrySet()) {
+            for (Map.Entry<Thread, VmOperationDemoHelper.DemoRunnable> entry : demoHelper.threads.entrySet()) {
                 Thread thread = entry.getKey();
                 System.out.printf("Thread %s state is %s%n", thread.getName(), thread.getState());
             }
@@ -143,18 +141,18 @@ public class SuspendResumeVmOperationDemo {
 
             System.out.println("Resuming");
             resumeOperation.submit();
-            for (Map.Entry<Thread, DemoRunnable> entry : demoHelper.threads.entrySet()) {
+            for (Map.Entry<Thread, VmOperationDemoHelper.DemoRunnable> entry : demoHelper.threads.entrySet()) {
                 Thread thread = entry.getKey();
                 System.out.printf("Thread %s state is %s%n", thread.getName(), thread.getState());
             }
             // ask spinners to quit
-            for (Map.Entry<Thread, DemoRunnable> entry : spinners.entrySet()) {
+            for (Map.Entry<Thread, VmOperationDemoHelper.DemoRunnable> entry : spinners.entrySet()) {
                 Spinner spinner = (Spinner) entry.getValue();
                 spinner.done = true;
             }
             System.out.println("Waiting for Spinners");
             // wait for spinners to finish
-            for (Map.Entry<Thread, DemoRunnable> entry : spinners.entrySet()) {
+            for (Map.Entry<Thread, VmOperationDemoHelper.DemoRunnable> entry : spinners.entrySet()) {
                 Thread thread = entry.getKey();
                 while (thread.isAlive()) {
                     Thread.yield();

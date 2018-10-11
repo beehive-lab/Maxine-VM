@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo;
+package com.sun.max.demo;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import com.sun.max.annotate.*;
@@ -77,6 +77,7 @@ public class ExampleLoggerOwner {
         public enum Operation {
             Bar, Foo;
 
+            @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
@@ -117,10 +118,15 @@ public class ExampleLoggerOwner {
             }
         }
         static SomeClass toSomeClass(Record r, int argNum) {
-            return asSomeClass(toObject(r, argNum));
+            if (MaxineVM.isHosted()) {
+                return (SomeClass) ObjectArg.getArg(r, argNum);
+            } else {
+                return asSomeClass(toObject(r, argNum));
+            }
         }
         @INTRINSIC(UNSAFE_CAST)
         private static native SomeClass asSomeClass(Object arg);
+
     }
 
 // END GENERATED CODE

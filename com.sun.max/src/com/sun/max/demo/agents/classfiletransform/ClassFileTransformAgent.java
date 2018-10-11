@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo.agents.classfiletransform;
+package com.sun.max.demo.agents.classfiletransform;
 
 import java.lang.instrument.*;
 import java.security.*;

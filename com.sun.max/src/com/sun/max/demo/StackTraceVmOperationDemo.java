@@ -20,15 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo;
+package com.sun.max.demo;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
-
-import demo.VmOperationDemoHelper.DemoRunnable;
 
 /**
  * Demonstrates usage of the {@link VmOperation} mechanism.
@@ -72,7 +70,7 @@ public class StackTraceVmOperationDemo extends VmOperation {
 
     static volatile boolean done;
 
-    static class Allocator extends DemoRunnable {
+    static class Allocator extends VmOperationDemoHelper.DemoRunnable {
         static int i = 0;
         @Override
         public void run() {

@@ -200,7 +200,7 @@
  * appropriate {@code trace} method.
  * <p>
  * The developer then defines the concrete implementation class that inherits from the automatically generated class
- * and, if required implements the trace methods, e.g, from the {@link demo.ExampleLoggerOwner} class:
+ * and, if required implements the trace methods, e.g, from the {@link com.sun.max.demo.ExampleLoggerOwner} class:
  * <pre>
  * public static final class ExampleLogger extends ExampleLoggerAuto {
  *      ExampleLogger() {

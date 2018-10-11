@@ -317,7 +317,7 @@ suite = {
         },
 
         "com.sun.max": {
-            "sourceDirs": ["src", "test", "demo"],
+            "sourceDirs": ["src", "test"],
             "dependencies": [
                 "mx:JUNIT",
                 "com.sun.max.annotate",
