@@ -286,9 +286,10 @@ suite = {
                 "ASM",
                 "ASMUTIL",
                 "TESTS_JASMIN_CLASSES",
-                "uk.ac.manchester.tests.jdk8",
             ],
+            "generatedDependencies": ["uk.ac.manchester.tests.jdk8"],
             "checkstyle": "com.sun.max",
+            "TestProject": True,
             "javaCompliance": "1.8",
         },
 
@@ -356,6 +357,7 @@ suite = {
                 "com.oracle.max.vm.ext.c1x",
             ],
             "checkstyle": "com.sun.max",
+            "TestProject": True,
             "javaCompliance": "1.7+",
         },
 
@@ -363,6 +365,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": ["com.sun.max"],
             "checkstyle": "com.sun.max",
+            "TestProject": True,
             "javaCompliance": "1.7+",
         },
 
@@ -370,6 +373,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": ["com.sun.max"],
             "checkstyle": "com.sun.max",
+            "TestProject": True,
             "javaCompliance": "1.7+",
         },
 
@@ -381,6 +385,7 @@ suite = {
                 "com.oracle.max.vm.ext.c1x",
             ],
             "checkstyle": "com.sun.max",
+            "TestProject": True,
             "javaCompliance": "1.8",
         },
 
