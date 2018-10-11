@@ -176,6 +176,8 @@ suite = {
                 "com.oracle.max.vm.ext.jvmti",
                 "com.oracle.max.vmdi",
                 "com.oracle.max.elf",
+                "com.sun.max.asmdis",
+                "com.oracle.max.hcfdis",
             ],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
@@ -247,7 +249,6 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "com.sun.max",
-                "com.oracle.max.hcfdis",
             ],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
