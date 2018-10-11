@@ -63,7 +63,7 @@ import com.sun.max.vm.type.*;
  *
  * Two different mechanisms can be generated for testing whether the advice methods should be invoked.
  * All ultimately test bit zero of the {@klink VMAJavaRunScheme#VM_ADVISING} thread local.
- * The first mechanism is to include the body of {@link VMAJavaRunScheme#isAdvising} which is an
+ * The first mechanism is to include the body of {@link VMAJavaRunScheme#isVMAdvising} which is an
  * {@code INLINE} method that tests the bit using standard Java. The reason we don't just rely on the
  * inlining mechanism is that the generated code is less efficient than the manually inlined version
  * owing to a C1X limitation.
@@ -1226,7 +1226,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
     public static final EnumSet<T1XTemplateTag> SHORT_CONST_TEMPLATES = EnumSet.of(ACONST_NULL);
 
     /**
-     * Generate all the {@link SHORT_CONST_TEMPLATES}.
+     * Generate all the {@link #SHORT_CONST_TEMPLATES}.
      */
     public void generateShortConstTemplates() {
         for (T1XTemplateTag tag : SHORT_CONST_TEMPLATES) {
