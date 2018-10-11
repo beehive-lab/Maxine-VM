@@ -61,7 +61,7 @@ pipeline {
                 }, 'test-init': {
                     dir(env.MAXINE_HOME) {
                         sh '$MX jttgen'
-                        sh '$MX canonicalizeprojects'
+                        sh '$MX --suite maxine canonicalizeprojects'
                     }
                 }
             }
