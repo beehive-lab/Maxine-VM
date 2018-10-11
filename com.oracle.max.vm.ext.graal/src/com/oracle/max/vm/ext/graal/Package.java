@@ -21,7 +21,7 @@
  * questions.
  */
 
-package com.sun.max.config.graal;
+package com.oracle.max.vm.ext.graal;
 
 import com.sun.max.config.*;
 import com.sun.max.vm.*;
