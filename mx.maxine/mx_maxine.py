@@ -63,7 +63,7 @@ def _configs():
             (k, v) = line.split('#')
             self.configs[k] = v.rstrip()
     c = Configs()
-    mx.run([mx.get_jdk().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath(resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
+    mx.run([mx.get_jdk().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath(resolve=False), 'com.oracle.max.vm.tests.vm.MaxineTesterConfiguration'], out=c.eat)
     return c.configs
 
 def configs(arg):
@@ -446,7 +446,7 @@ def jttgen(args):
         for name in os.listdir(join(testDir, 'jtt')):
             if name != 'hotspot' and name != 'fail':
                 tests.append(join(testDir, 'jtt', name))
-    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.tests'), 'test.com.sun.max.vm.compiler.JavaTester',
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.tests'), 'com.oracle.max.vm.tests.vm.compiler.JavaTester',
                          '-scenario=target', '-run-scheme-package=all', '-native-tests'] + tests)
 
 def loggen(args):
@@ -620,7 +620,7 @@ def test(args):
     with open(console, 'w', 0) as f:
         tee = Tee(f)
         jdk = mx.get_jdk()
-        mx.run_java(['-cp', sanitized_classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
+        mx.run_java(['-cp', sanitized_classpath(), 'com.oracle.max.vm.tests.vm.MaxineTester', '-output-dir=maxine-tester',
                       '-graal-jar=' + mx.distribution('GRAAL').path,
                       '-refvm=' + jdk.java, '-refvm-args=' + ' '.join(jdk.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
 
@@ -638,7 +638,7 @@ def verify(args):
     --- Patterns ---
     {0}"""
 
-    mx.run_java(['-cp', mx.classpath(), 'test.com.sun.max.vm.verifier.CommandLineVerifier'] + args)
+    mx.run_java(['-cp', mx.classpath(), 'com.oracle.max.vm.tests.vm.verifier.CommandLineVerifier'] + args)
 
 def view(args):
     """browse the boot image under the Inspector
