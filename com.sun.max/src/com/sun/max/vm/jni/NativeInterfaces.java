@@ -302,7 +302,7 @@ public final class NativeInterfaces {
 
     @HOSTED_ONLY
     public static void checkGenerateSourcesInSync(Class source, Class target, Customizer customizer) {
-        checkGenerateSourcesInSync("com.oracle.max.vm", source, target, customizer);
+        checkGenerateSourcesInSync("com.sun.max", source, target, customizer);
     }
 
     @HOSTED_ONLY

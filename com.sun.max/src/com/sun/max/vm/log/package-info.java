@@ -295,7 +295,7 @@
  * <li>exit: flush the log on normal VM exit</li>
  * <li>full: flush the log whenever it becomes full (i.e., is about to overwrite old records)</li>
  * <li>raw: output the log records as uninterpreted, raw, bits.</li>
- * <li>trace: output the log records using the {@link com.oracle.max.vm.log.VMLogger#trace} method</li>
+ * <li>trace: output the log records using the {@link com.sun.max.vm.log.VMLogger#trace} method</li>
  * </ul>
  * The default output mode is raw, which is robust, but requires off-line interpretation. Trace mode
  * may be unstable after a VM crash as it may provoke a recursive crash.
@@ -304,7 +304,7 @@
  * the associated trace options, <i>except</i> that the data might be "stale" by delaying the
  * interpretation until the log is flushed.
  * <p>
- * The Maxine Inspector can interpret a file of {@link VMLog} records using {@code mx view -vmlog=file}.
+ * The Maxine Inspector can interpret a file of {@link com.sun.max.vm.log.VMLog} records using {@code mx view -vmlog=file}.
  * The simplest way to create the file is to redirect the log output to a file by setting
  * {@code export MAXINE_LOG_FILE=maxine.log} before running the VM, and then copying the file.
  * The last step is important because the Inspector will overwrite the log file when it executes (meta-circularity!).

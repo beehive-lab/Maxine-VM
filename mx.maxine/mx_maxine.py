@@ -456,7 +456,7 @@ def loggen(args):
 
     The exit code is non-zero if a Java source file was modified."""
 
-    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'com.sun.max.vm.log.hosted.VMLoggerGenerator'])
+    return mx.run_java(['-cp', mx.classpath('com.sun.max'), 'com.sun.max.vm.log.hosted.VMLoggerGenerator'])
 
 def makejdk(args):
     """create a JDK directory based on the Maxine VM
