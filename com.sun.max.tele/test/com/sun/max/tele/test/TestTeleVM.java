@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.com.sun.max.tele;
+package com.sun.max.tele.test;
 
 import java.io.*;
 import java.util.*;
@@ -55,7 +55,7 @@ public class TestTeleVM {
             "-verbose:class " +
             "-classpath " +
             workspaceDirectory.toString() + "Tele/bin " +
-            "test.com.sun.max.tele.HelloWorld";
+            ".com.sun.max.tele.test.HelloWorld";
 
         options.sourcepathOption.setValue(Arrays.asList(JavaProject.getSourcePath(TestTeleVM.class, true).toStringArray()));
         options.vmArguments.setValue(vmArguments);

@@ -20,10 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.com.sun.max.tele;
-
-public class HelloWorld {
-    public static void main(String[] args) throws InterruptedException {
-        System.out.println("Hello World!");
-    }
-}
+/**
+ */
+package com.sun.max.tele.test;

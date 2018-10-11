@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.com.sun.max.tele;
+package com.sun.max.tele.test;
 
 /**
  * The empty program.
