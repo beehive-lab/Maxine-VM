@@ -32,8 +32,8 @@ suite = {
     "imports": {
         "suites": [
             {
-                "name": "graal",
-                "version": "96dde1fccc535fd74aa88dc3364cc2d78dfeb759",
+                "name": "Maxine-Graal",
+                "version": "newmx",
                 "urls": [
                     {"url": "https://github.com/beehive-lab/Maxine-Graal.git", "kind": "git"},
                 ]
@@ -134,7 +134,7 @@ suite = {
 
         "com.oracle.max.hcfdis": {
             "sourceDirs": ["src"],
-            "dependencies": ["com.sun.max.asm",],
+            "dependencies": ["com.sun.max.asm"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
@@ -220,7 +220,7 @@ suite = {
             "sourceDirs": ["src"],
             "dependencies": [
                 "com.oracle.max.vm.ext.maxri",
-                "graal:GRAAL_MAXINE",
+                "Maxine-Graal:GRAAL_MAXINE",
             ],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
