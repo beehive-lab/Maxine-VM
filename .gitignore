@@ -14,6 +14,7 @@ workingsets.xml
 # intellij generated
 *.iml
 .idea
+*.pydevproject
 
 # Python bytecode
 *.pyc
