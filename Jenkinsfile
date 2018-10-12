@@ -62,12 +62,11 @@ pipeline {
                 }
             }
         }
-        stage('testme-n-crossisa') {
+        stage('gate-n-crossisa') {
             steps {
-                parallel 'testme': {
+                parallel 'gate': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX testme -maxvm-configs=std,forceC1X,forceT1X -image-configs=java -tests=c1x,graal,junit:test.com,output,jsr292'
-                        sh '$MX testme -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
+                        sh '$MX gate'
                     }
                 }, 'crossisa': {
                     dir(env.MAXINE_HOME) {
@@ -75,13 +74,6 @@ pipeline {
                         sh '$MX --J @"-Dmax.platform=linux-arm -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:armv7.asm+ARMV7T1XTest+ARMV7JTT'
                         sh '$MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -tests=junit:riscv64.asm+max.asm.target.riscv'
                     }
-                }
-            }
-        }
-        stage('javatester') {
-            steps {
-                dir(env.MAXINE_HOME) {
-                    sh '$MX testme -image-configs=java -tests=javatester'
                 }
             }
         }

@@ -125,8 +125,8 @@ def gate(args):
             testArgs += [arg]
         i += 1
 
+    mx._opts.specific_suites = ["maxine"]
     if check:
-        mx._opts.specific_suites = ["maxine"]
         if mx.checkstyle([]):
             mx.abort('Checkstyle warnings were found')
 
@@ -154,7 +154,9 @@ def gate(args):
 
     mx.log('Running MaxineTester...')
 
-    testme(['-image-configs=java', '-fail-fast'] + testArgs)
+    testme(['-image-configs=java',
+            '-maxvm-configs=std,forceC1X,forceT1X',
+            '-tests=c1x,graal,junit:uk.ac+tests.unsafe+tests.vm+max.l+max.c+max.u+max.i+max.M+max.p,jsr292,output,javatester'] + testArgs)
     testme(['-image-configs=ss', '-tests=output:Hello+Catch+GC+WeakRef+Final', '-fail-fast'] + testArgs)
 
 def gitinit(args):
