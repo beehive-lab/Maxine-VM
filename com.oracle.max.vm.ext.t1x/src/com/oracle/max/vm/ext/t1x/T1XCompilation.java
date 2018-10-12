@@ -2822,8 +2822,8 @@ public abstract class T1XCompilation {
                 break;
             }
             default: {
-                assert false : "ldc for unexpected constant tag: " + constant.tag();
-                break;
+                assert false : "ldc for unexpected constant tag: " + constant.tag() + " constant: " + constant;
+                throw new CiBailout("ldc for unexpected constant tag: " + constant.tag() + " constant: " + constant);
             }
         }
     }

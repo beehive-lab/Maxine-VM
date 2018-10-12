@@ -76,5 +76,4 @@ The first two have trivial implementations.
 The visit method must step over the specific dependency data and, if the ``dependencyProcessorVisitor`` is not null, invoke the associated method, with the encoded data transformed into the appropriate argument types.
 Evidently, if the visitor is null, processing related to transforming the encoded data should be avoided.
 
---------------
 Automatically generated from ``com.sun.max.vm.compiler.deps.package-info``
