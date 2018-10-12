@@ -22,10 +22,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma;
+package com.sun.max.config.vm.ext.vma;
 
 import com.sun.max.config.BootImagePackage;
-import com.sun.max.vm.*;
 
 /**
  * Includes the Virtual Machine Advising extension in the boot image.
@@ -34,12 +33,7 @@ import com.sun.max.vm.*;
 public class Package extends BootImagePackage {
     public Package() {
         super(
-            "com.oracle.max.vm.ext.vma.graal.*"
+            "com.oracle.max.vm.ext.vma.**"
         );
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.getClass() == com.oracle.max.vm.ext.vma.run.java.Package.class;
     }
 }

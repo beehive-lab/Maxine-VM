@@ -1,7 +1,5 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
- * The University of Manchester. All rights reserved.
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,24 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma;
+package com.sun.max.config.vm.tests;
 
-import com.sun.max.config.BootImagePackage;
-import com.sun.max.vm.*;
+import com.sun.max.config.*;
 
 /**
- * Includes the Virtual Machine Advising extension in the boot image.
- *
+ * Redirect to include {@link com.oracle.max.vm.tests.vm.jtrun} and
+ * {@link com.oracle.max.vm.tests.vm.output} classes in the boot image when testing.
  */
+
 public class Package extends BootImagePackage {
     public Package() {
-        super(
-            "com.oracle.max.vm.ext.vma.graal.*"
-        );
-    }
-
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.getClass() == com.oracle.max.vm.ext.vma.run.java.Package.class;
+        super("com.oracle.max.vm.tests.vm.jtrun.**", "com.oracle.max.vm.tests.vm.output.**");
     }
 }

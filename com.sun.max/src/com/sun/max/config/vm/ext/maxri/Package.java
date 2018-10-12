@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
+ * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +22,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.tests;
+package com.sun.max.config.vm.ext.maxri;
 
-import com.oracle.max.vm.tests.vm.jtrun.all.JTRunScheme;
-import com.sun.max.config.*;
-
-/**
- * Redirect to include {@link JTRunScheme} classes in the boot image when testing.
- */
+import com.sun.max.config.BootImagePackage;
 
 public class Package extends BootImagePackage {
     public Package() {
-        super("com.oracle.max.vm.tests.vm.jtrun.**", "com.oracle.max.vm.tests.vm.output.**");
+        super("com.sun.cri.**",
+              "com.oracle.max.cri.**",
+              "com.oracle.max.criutils.**",
+              "com.oracle.max.vm.ext.maxri.**");
     }
 }

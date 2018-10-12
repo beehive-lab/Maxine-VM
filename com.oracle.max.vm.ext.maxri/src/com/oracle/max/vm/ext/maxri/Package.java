@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,10 +32,7 @@ import com.sun.max.vm.hosted.*;
 
 public class Package extends BootImagePackage {
     public Package() {
-        super("com.sun.cri.**",
-              "com.oracle.max.cri.**",
-              "com.oracle.max.criutils.**",
-              "com.oracle.max.vm.ext.maxri.**");
+        super();
         JavaPrototype.addObjectIdentityMapContributor(new MaxRiObjectMapContributor());
     }
 

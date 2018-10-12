@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -17,29 +17,22 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
-package com.oracle.max.vm.ext.vma;
+package com.sun.max.config.vm.ext.c1x;
 
-import com.sun.max.config.BootImagePackage;
+import com.sun.max.config.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
-/**
- * Includes the Virtual Machine Advising extension in the boot image.
- *
- */
 public class Package extends BootImagePackage {
+
     public Package() {
-        super(
-            "com.oracle.max.vm.ext.vma.graal.*"
-        );
+        super("com.sun.c1x.**",
+              "com.oracle.max.vm.ext.c1x.**");
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.getClass() == com.oracle.max.vm.ext.vma.run.java.Package.class;
+        return CompilationBroker.optName().contains("C1X");
     }
 }

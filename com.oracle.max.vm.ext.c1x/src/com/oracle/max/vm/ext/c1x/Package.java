@@ -32,8 +32,7 @@ import com.sun.max.vm.hosted.*;
 public class Package extends BootImagePackage {
 
     public Package() {
-        super("com.sun.c1x.**",
-              "com.oracle.max.vm.ext.c1x.**");
+        super();
         JavaPrototype.addObjectIdentityMapContributor(new C1XObjectMapContributor());
     }
 
