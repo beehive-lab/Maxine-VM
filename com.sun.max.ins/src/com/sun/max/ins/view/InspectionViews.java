@@ -70,6 +70,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
      * The kinds of VM inspection views that can be activated (made visible).
      *
      */
+    @SuppressWarnings("unchecked")
     public enum ViewKind {
         ALLOCATIONS(true, false, "Regions of memory allocated by the VM") {
 
