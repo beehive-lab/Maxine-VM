@@ -28,7 +28,7 @@ suite = {
         "write": "git@github.com:beehive-lab/Maxine-VM.git",
     },
     "outputRoot": "./",
-    "javac.lint.overrides": "-rawtypes,-serial,-fallthrough,-unchecked,-overrides",
+    "javac.lint.overrides": "-rawtypes,-serial,-fallthrough,-unchecked",
 
     "imports": {
         "suites": [
@@ -286,7 +286,7 @@ suite = {
             "checkstyle": "com.sun.max",
             "TestProject": True,
             "javaCompliance": "1.8",
-            "javac.lint.overrides": "-rawtypes,-serial,-fallthrough,-unchecked,-overrides,-finally",
+            "javac.lint.overrides": "-rawtypes,-serial,-fallthrough,-unchecked,-finally",
         },
 
         "com.oracle.max.vma.tools": {

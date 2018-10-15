@@ -400,6 +400,11 @@ public class BreakpointCondition extends AbstractVmHolder implements VMTriggerEv
             }
             return false;
         }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
     }
 
     class NumberExpression extends Expression {
@@ -461,6 +466,11 @@ public class BreakpointCondition extends AbstractVmHolder implements VMTriggerEv
                 return otherNumber.value >= value;
             }
             return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) value;
         }
     }
 

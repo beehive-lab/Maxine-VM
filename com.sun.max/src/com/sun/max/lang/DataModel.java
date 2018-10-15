@@ -49,6 +49,11 @@ public class DataModel {
         return wordWidth.equals(dataModel.wordWidth) && endianness.equals(dataModel.endianness) && cacheAlignment == dataModel.cacheAlignment;
     }
 
+    @Override
+    public int hashCode() {
+        return wordWidth.hashCode() + endianness.hashCode() + cacheAlignment;
+    }
+
     public byte[] toBytes(byte value) {
         return endianness.toBytes(value);
     }
