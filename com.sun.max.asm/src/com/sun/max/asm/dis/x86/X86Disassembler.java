@@ -169,6 +169,7 @@ public abstract class X86Disassembler extends Disassembler {
         return justSkip ? null : header;
     }
 
+    @SuppressWarnings("fallthrough")
     private List<Argument> scanArguments(BufferedInputStream stream, X86Template template, X86InstructionHeader header, byte modRMByte, byte sibByte) throws IOException {
         final List<Argument> arguments = new ArrayList<Argument>();
         final byte rexByte = (header.rexPrefix != null) ? header.rexPrefix.byteValue() : 0;

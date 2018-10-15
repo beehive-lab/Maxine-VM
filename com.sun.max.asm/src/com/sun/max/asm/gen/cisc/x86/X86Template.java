@@ -273,6 +273,7 @@ public abstract class X86Template extends Template implements X86InstructionDesc
         }
     }
 
+    @SuppressWarnings("fallthrough")
     private String getOperandTypeSuffix(OperandTypeCode operandTypeCode) throws TemplateNotNeededException {
         switch (operandTypeCode) {
             case b:
@@ -281,9 +282,9 @@ public abstract class X86Template extends Template implements X86InstructionDesc
                 if (operandSizeAttribute() != addressSizeAttribute()) {
                     throw TemplateNotNeededException.raise();
                 }
-            // Checkstyle: stop
+            // fall through
             case d_q:
-            // Checkstyle: resume
+            // fall through
             case v:
                 switch (operandSizeAttribute()) {
                     case BITS_16:

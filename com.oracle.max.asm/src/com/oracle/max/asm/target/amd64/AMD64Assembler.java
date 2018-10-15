@@ -1276,6 +1276,7 @@ public class AMD64Assembler extends AbstractAssembler {
         nop(1);
     }
 
+    @SuppressWarnings("fallthrough")
     public void nop(int i) {
         if (AsmOptions.UseNormalNop) {
             assert i > 0 : " ";

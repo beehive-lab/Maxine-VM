@@ -130,6 +130,7 @@ public class X86TemplateAssembler {
         return X86Field.BASE.extract(s) == 5;
     }
 
+    @SuppressWarnings("fallthrough")
     public byte[] assemble(List<Argument> arguments) {
         int rexByte = 0;
         final boolean unconditionalRexBit = template.operandSizeAttribute() == WordWidth.BITS_64 && template.instructionDescription().defaultOperandSize() != WordWidth.BITS_64;

@@ -356,6 +356,7 @@ public final class BlockMap {
         return storesInLoops;
     }
 
+    @SuppressWarnings("fallthrough")
     void iterateOverBytecodes() {
         // iterate over the bytecodes top to bottom.
         // mark the entrypoints of basic blocks and build lists of successors for
