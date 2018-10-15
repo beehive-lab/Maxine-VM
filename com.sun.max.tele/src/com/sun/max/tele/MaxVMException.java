@@ -27,6 +27,8 @@ package com.sun.max.tele;
  */
 public class MaxVMException extends Exception {
 
+    private static final long serialVersionUID = -9112600250329514258L;
+
     public MaxVMException(String message) {
         super(message);
     }

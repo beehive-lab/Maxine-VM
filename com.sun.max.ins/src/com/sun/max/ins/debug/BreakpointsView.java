@@ -141,6 +141,8 @@ public final class BreakpointsView extends AbstractView<BreakpointsView> impleme
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 1163666090582118431L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BreakpointsColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);

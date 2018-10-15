@@ -124,6 +124,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
             actionLookup.put(name, action);
         }
         copyAction = new AbstractAction("Copy (Ctrl-c)") {
+            private static final long serialVersionUID = 8891875798659897609L;
             final Action action = actionLookup.get(DefaultEditorKit.copyAction);
 
             @Override
@@ -132,6 +133,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
             }
         };
         cutAction = new AbstractAction("Cut (Ctrl-x)") {
+            private static final long serialVersionUID = 801715871035360494L;
             final Action action = actionLookup.get(DefaultEditorKit.cutAction);
 
             @Override
@@ -140,6 +142,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
             }
         };
         pasteAction = new AbstractAction("Paste (Ctrl-v)") {
+            private static final long serialVersionUID = 8536502626965612420L;
             final Action action = actionLookup.get(DefaultEditorKit.pasteAction);
 
             @Override
@@ -358,6 +361,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
      */
     private final class InspectSelectedAddressMemoryAction extends InspectorAction {
 
+        private static final long serialVersionUID = -7862318320051416286L;
         private Address address;
 
         InspectSelectedAddressMemoryAction(Inspection inspection) {
@@ -384,6 +388,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
      */
     private final class InspectSelectedAddressRegionAction extends InspectorAction {
 
+        private static final long serialVersionUID = 2841777737859473309L;
         private Address address;
         private MaxMemoryRegion memoryRegion;
 
@@ -411,6 +416,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
      */
     private final class InspectSelectedAddressObjectAction extends InspectorAction {
 
+        private static final long serialVersionUID = -1908310158566423039L;
         private Address address;
         private MaxObject object;
 
@@ -441,6 +447,8 @@ public final class NotepadView extends AbstractView<NotepadView> {
      */
     private final class NotepadSelectAllAction extends InspectorAction {
 
+        private static final long serialVersionUID = -3639959328572796066L;
+
         NotepadSelectAllAction(Inspection inspection) {
             super(inspection, "Select all");
         }
@@ -457,6 +465,8 @@ public final class NotepadView extends AbstractView<NotepadView> {
      */
     private final class NotepadClearAction extends InspectorAction {
 
+        private static final long serialVersionUID = 1965920453574382844L;
+
         NotepadClearAction(Inspection inspection) {
             super(inspection, "Clear all");
         }
@@ -472,6 +482,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
     final class InsertFromFileAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Insert text from a file...";
+        private static final long serialVersionUID = 1965719203776576755L;
 
         InsertFromFileAction(Inspection inspection) {
             super(inspection, DEFAULT_TITLE);
@@ -512,6 +523,7 @@ public final class NotepadView extends AbstractView<NotepadView> {
     final class WriteToFileAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Write contents to a file...";
+        private static final long serialVersionUID = 6668818417883760501L;
 
         WriteToFileAction(Inspection inspection) {
             super(inspection, DEFAULT_TITLE);
@@ -545,6 +557,8 @@ public final class NotepadView extends AbstractView<NotepadView> {
      * the notepad.
      */
     private final class NotepadPrintAction extends InspectorAction {
+
+        private static final long serialVersionUID = 4876693115175789801L;
 
         NotepadPrintAction(Inspection inspection) {
             super(inspection, "Print notepad contents");

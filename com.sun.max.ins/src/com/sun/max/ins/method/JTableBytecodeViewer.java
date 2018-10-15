@@ -152,6 +152,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
         addActiveRowsButton();
 
         final JButton viewOptionsButton = new InspectorButton(inspection, new AbstractAction("View...") {
+            private static final long serialVersionUID = 5167643023937626916L;
+
             public void actionPerformed(ActionEvent actionEvent) {
                 final BytecodeViewPreferences globalPreferences = BytecodeViewPreferences.globalPreferences(inspection());
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BytecodeColumnKind>(inspection(), "Bytecodes View Options", instanceViewPreferences, globalPreferences);
@@ -332,6 +334,8 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private final class BytecodeTableColumnModel extends InspectorTableColumnModel<BytecodeColumnKind> {
 
+        private static final long serialVersionUID = -8240146607845752817L;
+
         BytecodeTableColumnModel(BytecodeViewPreferences instanceViewPreferences) {
             super(inspection(), BytecodeColumnKind.values().length, instanceViewPreferences);
             addColumnIfSupported(BytecodeColumnKind.TAG, new TagRenderer(inspection), null);
@@ -347,6 +351,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private final class BytecodeTableModel extends InspectorTableModel {
 
+        private static final long serialVersionUID = 5241749657369657006L;
         private List<BytecodeInstruction> bytecodeInstructions;
 
         BytecodeTableModel(Inspection inspection, List<BytecodeInstruction> bytecodeInstructions) {

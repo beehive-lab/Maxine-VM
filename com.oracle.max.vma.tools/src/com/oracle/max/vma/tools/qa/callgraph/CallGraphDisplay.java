@@ -50,6 +50,7 @@ import java.text.DecimalFormat;
 // Checkstyle: off
 
 public class CallGraphDisplay extends JPanel {
+    private static final long serialVersionUID = -3458437485052820877L;
 
     private static boolean DEBUG = false;
     private static int debugLine = -1;
@@ -227,6 +228,7 @@ public class CallGraphDisplay extends JPanel {
     }
 
     class ToolTipRenderer extends DefaultTreeCellRenderer {
+        private static final long serialVersionUID = -5156872687092480905L;
 
         @Override
         public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -314,6 +316,7 @@ public class CallGraphDisplay extends JPanel {
 
         class PropertiesAction extends AbstractAction {
 
+            private static final long serialVersionUID = -8639602862849453755L;
             JPanel propsPanel;
             Map<String, JTextField> propsMap = new HashMap<String, JTextField>();
 
@@ -383,6 +386,8 @@ public class CallGraphDisplay extends JPanel {
 
         class ExpandAction extends AbstractAction {
 
+            private static final long serialVersionUID = 1365208637264640051L;
+
             public ExpandAction(String name) {
                 super(name, null);
                 // putValue(SHORT_DESCRIPTION, desc);
@@ -420,6 +425,8 @@ public class CallGraphDisplay extends JPanel {
 
         class ExpandAllAction extends ExpandAction {
 
+            private static final long serialVersionUID = -8598766796758915632L;
+
             public ExpandAllAction(String name) {
                 super(name);
                 // putValue(SHORT_DESCRIPTION, desc);
@@ -453,6 +460,7 @@ public class CallGraphDisplay extends JPanel {
 
         class FindAction extends AbstractAction {
 
+            private static final long serialVersionUID = 5424925125389363398L;
             FindType type;
             FindWhat findWhat;
             FindHelper actionFindHelper;
@@ -508,6 +516,7 @@ public class CallGraphDisplay extends JPanel {
 
             class MyTreePath extends TreePath {
 
+                private static final long serialVersionUID = 8730912382330318501L;
                 TreePath tp;
 
                 MyTreePath(TreePath tp) {
@@ -622,6 +631,8 @@ public class CallGraphDisplay extends JPanel {
 
         class MyTimeAction extends AbstractAction {
 
+            private static final long serialVersionUID = 1722533445049044952L;
+
             public MyTimeAction(String name) {
                 super(name, null);
             }
@@ -646,6 +657,7 @@ public class CallGraphDisplay extends JPanel {
 
         class TimeSortAction extends AbstractAction {
 
+            private static final long serialVersionUID = 2900891096664898950L;
             String sortBy;
             Comparator nameAndTimeInfoComparator;
             TimeInfo.Adder timeInfoAdder;
@@ -1854,6 +1866,8 @@ public class CallGraphDisplay extends JPanel {
 
     class OpenAction extends AbstractAction {
 
+        private static final long serialVersionUID = 1756771973922883416L;
+
         public OpenAction() {
             super("Open", null);
         }
@@ -1871,6 +1885,8 @@ public class CallGraphDisplay extends JPanel {
 
     class PropsAction extends AbstractAction {
 
+        private static final long serialVersionUID = -9141617125458509342L;
+
         public PropsAction() {
             super("Properties", null);
         }
@@ -1882,6 +1898,8 @@ public class CallGraphDisplay extends JPanel {
     }
 
     static class ExitAction extends AbstractAction {
+
+        private static final long serialVersionUID = -3826131617994729727L;
 
         public ExitAction() {
             super("Exit", null);
@@ -1897,6 +1915,7 @@ public class CallGraphDisplay extends JPanel {
 
     static class CloseAction extends AbstractAction {
 
+        private static final long serialVersionUID = -5784754111406786208L;
         JFrame frame;
 
         public CloseAction(JFrame frame) {
@@ -1914,6 +1933,7 @@ public class CallGraphDisplay extends JPanel {
 
     class TimeAction extends AbstractAction {
 
+        private static final long serialVersionUID = -7973305531084676980L;
         TimeFormat tf;
 
         public TimeAction(TimeFormat tf) {
@@ -1930,6 +1950,8 @@ public class CallGraphDisplay extends JPanel {
 
     class FindAction extends AbstractAction {
 
+        private static final long serialVersionUID = 689604521315670416L;
+
         public FindAction() {
             super("Find");
         }
@@ -1941,6 +1963,8 @@ public class CallGraphDisplay extends JPanel {
 
     class SnapShotAction extends AbstractAction {
 
+        private static final long serialVersionUID = -287553817602083431L;
+
         public SnapShotAction() {
             super("Snapshot");
         }
@@ -1951,6 +1975,8 @@ public class CallGraphDisplay extends JPanel {
     }
 
     class AbsElapsedTimeAction extends AbstractAction {
+
+        private static final long serialVersionUID = -118575362857055230L;
 
         public AbsElapsedTimeAction() {
             super("Wall Clock Absolute");
@@ -1965,6 +1991,8 @@ public class CallGraphDisplay extends JPanel {
 
     class ElapsedTimeAction extends AbstractAction {
 
+        private static final long serialVersionUID = -4426370270867273472L;
+
         public ElapsedTimeAction() {
             super("Wall Clock Relative");
         }
@@ -1978,6 +2006,8 @@ public class CallGraphDisplay extends JPanel {
 
     class DurationTimeAction extends AbstractAction {
 
+        private static final long serialVersionUID = 2059023158629965657L;
+
         public DurationTimeAction() {
             super("Duration");
         }
@@ -1990,6 +2020,8 @@ public class CallGraphDisplay extends JPanel {
     }
 
     class ScrollSelAction extends AbstractAction {
+
+        private static final long serialVersionUID = 7893896522595384556L;
 
         public ScrollSelAction() {
             super("Selection");
@@ -2018,6 +2050,7 @@ public class CallGraphDisplay extends JPanel {
 
     static class SaveAction extends AbstractAction {
 
+        private static final long serialVersionUID = -1880795078732318812L;
         JFrame frame;
         SaveActionBody body;
 

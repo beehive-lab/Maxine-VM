@@ -36,12 +36,15 @@ import com.sun.max.program.*;
 public abstract class InspectorAction extends AbstractAction implements Prober {
 
     private static final int TRACE_VALUE = 1;
+    private static final long serialVersionUID = -4648579862918433915L;
 
     /**
      * Creates a disabled, impotent action.
      */
     public static InspectorAction dummyAction(Inspection inspection, String title) {
         final InspectorAction action = new InspectorAction(inspection, title) {
+
+            private static final long serialVersionUID = 8808998188326468577L;
 
             @Override
             protected void procedure() {

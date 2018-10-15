@@ -55,6 +55,8 @@ public abstract class MemoryRegionInputDialog extends InspectorDialog {
      * Action that attempts to close the dialog; fails if input value not valid.
      */
     private final class EnterAction extends InspectorAction {
+        private static final long serialVersionUID = -6160067530646612290L;
+
         private EnterAction() {
             super(inspection(), actionButtonTitle);
         }
@@ -158,6 +160,8 @@ public abstract class MemoryRegionInputDialog extends InspectorDialog {
 
         final JPanel buttonPanel = new InspectorPanel(inspection);
         buttonPanel.add(new JButton(new AbstractAction("Cancel") {
+            private static final long serialVersionUID = 3993849540430052362L;
+
             public void actionPerformed(ActionEvent event) {
                 dispose();
             }

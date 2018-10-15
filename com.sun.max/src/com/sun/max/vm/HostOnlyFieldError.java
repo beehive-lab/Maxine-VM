@@ -33,6 +33,8 @@ import com.sun.max.vm.classfile.constant.*;
  */
 public class HostOnlyFieldError extends NoSuchMethodError {
 
+    private static final long serialVersionUID = 3693859178749586702L;
+
     public HostOnlyFieldError(String s) {
         super(s);
     }

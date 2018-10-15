@@ -29,6 +29,7 @@ package com.sun.cri.ci;
  */
 public final class CiStackSlot extends CiValue {
 
+    private static final long serialVersionUID = 1722408913873639066L;
     /**
      * @see CiStackSlot#index()
      */

@@ -39,6 +39,8 @@ public abstract class AddressInputDialog extends InspectorDialog {
      * Action that attempts to close the dialog; fails if input value not valid.
      */
     private final class EnterAction extends InspectorAction {
+        private static final long serialVersionUID = 6704166742917805371L;
+
         private EnterAction() {
             super(inspection(), actionButtonTitle);
         }
@@ -130,6 +132,8 @@ public abstract class AddressInputDialog extends InspectorDialog {
 
         final JPanel buttonPanel = new InspectorPanel(inspection);
         buttonPanel.add(new JButton(new AbstractAction("Cancel") {
+            private static final long serialVersionUID = -250466860853534555L;
+
             public void actionPerformed(ActionEvent event) {
                 dispose();
             }

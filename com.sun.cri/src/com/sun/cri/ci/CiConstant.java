@@ -30,6 +30,8 @@ package com.sun.cri.ci;
 public final class CiConstant extends CiValue {
 
     private static final CiConstant[] INT_CONSTANT_CACHE = new CiConstant[100];
+    private static final long serialVersionUID = -7327536352154582876L;
+
     static {
         for (int i = 0; i < INT_CONSTANT_CACHE.length; ++i) {
             INT_CONSTANT_CACHE[i] = new CiConstant(CiKind.Int, i);

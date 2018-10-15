@@ -70,6 +70,8 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
             Trace.begin(TRACE_VALUE, tracePrefix() + "creating");
             interactiveMakeViewAction = new InspectorAction(inspection(), "View memory bytes at address...") {
 
+                private static final long serialVersionUID = 7815507825672724095L;
+
                 @Override
                 protected void procedure() {
                     new AddressInputDialog(inspection, inspection.vm().bootImageStart(), "View memory bytes at address...", "View") {
@@ -107,6 +109,8 @@ public final class MemoryBytesView extends AbstractView<MemoryBytesView> {
 
         public InspectorAction makeViewAction(final Address address, String actionTitle) {
             return new InspectorAction(inspection(), actionTitle == null ? "View memory as bytes" : actionTitle) {
+
+                private static final long serialVersionUID = 270032447439694368L;
 
                 @Override
                 protected void procedure() {

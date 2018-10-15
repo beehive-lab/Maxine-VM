@@ -30,6 +30,7 @@ import java.io.*;
  */
 public class CiDebugInfo implements Serializable {
 
+    private static final long serialVersionUID = -4951588269496758494L;
     /**
      * The code position (including all inlined methods) of this debug info.
      * If this is a {@link CiFrame} instance, then it is also the deoptimization information for each inlined frame.

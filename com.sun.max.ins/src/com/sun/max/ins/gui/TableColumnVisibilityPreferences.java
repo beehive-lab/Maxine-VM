@@ -345,6 +345,8 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
 
             final JPanel buttonsPanel = new InspectorPanel(inspection);
             buttonsPanel.add(new JButton(new InspectorAction(inspection, "Close") {
+                private static final long serialVersionUID = -8705544849120963686L;
+
                 @Override
                 protected void procedure() {
                     dispose();
@@ -378,6 +380,8 @@ public abstract class TableColumnVisibilityPreferences<ColumnKind_Type extends C
 
             final JPanel buttonsPanel = new InspectorPanel(inspection);
             buttonsPanel.add(new JButton(new InspectorAction(inspection, "Close") {
+                private static final long serialVersionUID = -4793202303234905056L;
+
                 @Override
                 protected void procedure() {
                     dispose();

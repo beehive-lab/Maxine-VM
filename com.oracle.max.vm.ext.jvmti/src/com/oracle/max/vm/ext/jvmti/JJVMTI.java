@@ -60,6 +60,7 @@ public interface JJVMTI {
      * code as argument. Since errors are rare this is a {@link RuntimeException}.
      */
     class JJVMTIException extends RuntimeException {
+        private static final long serialVersionUID = 5061663608820117797L;
         public final int error;
 
         public JJVMTIException(int error) {

@@ -31,6 +31,7 @@ public final class InspectorError extends Error {
     private static final String ERROR_DISPLAY_PROPERTY = "maxine.ins.errordisplay";
     private static final String dialogDisplayProperty = System.getProperty(ERROR_DISPLAY_PROPERTY);
     private static final boolean dialogDisplay = dialogDisplayProperty == null || dialogDisplayProperty.equals("dialog");
+    private static final long serialVersionUID = 7215255856949806744L;
 
     private InspectorError(String message, Throwable cause) {
         super(message, cause);

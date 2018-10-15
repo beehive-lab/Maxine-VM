@@ -29,7 +29,10 @@ import java.io.*;
  */
 public abstract class CiValue implements Serializable, Cloneable {
 
+    private static final long serialVersionUID = 7823540141870427042L;
     public static CiValue IllegalValue = new CiValue(CiKind.Illegal) {
+        private static final long serialVersionUID = -3107892669944428135L;
+
         @Override
         public String name() {
             return "<illegal>";

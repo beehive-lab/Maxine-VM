@@ -32,7 +32,9 @@ package jtt.lang;
  */
 public class Math_tan {
 
-    public static class NaN extends Throwable { }
+    public static class NaN extends Throwable {
+        private static final long serialVersionUID = -1475868952626015001L;
+    }
 
     public static double test(double arg) throws NaN {
         double v = Math.tan(arg);

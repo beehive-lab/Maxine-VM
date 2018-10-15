@@ -34,7 +34,9 @@ package jtt.lang;
  */
 public class Math_sqrt {
 
-    public static class NaN extends Throwable { }
+    public static class NaN extends Throwable {
+        private static final long serialVersionUID = -3463116895397988820L;
+    }
 
     public static double test(double arg) throws NaN {
         double v = Math.sqrt(arg);

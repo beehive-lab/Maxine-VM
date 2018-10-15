@@ -44,6 +44,7 @@ public final class Watchpoints {
 
     public abstract static class ToggleWatchpointRowAction extends InspectorAction {
 
+        private static final long serialVersionUID = -8749176800543672174L;
         final Inspection inspection;
         final InspectorMemoryTableModel tableModel;
         final int row;

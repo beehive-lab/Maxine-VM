@@ -35,6 +35,7 @@ public final class CiBitMap implements Serializable {
     private static final int BIT_INDEX_MASK = BITS_PER_WORD - 1;
 
     public static final int DEFAULT_LENGTH = BITS_PER_WORD;
+    private static final long serialVersionUID = -6999756670892357416L;
 
     public static int roundUpLength(int length) {
         return ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;

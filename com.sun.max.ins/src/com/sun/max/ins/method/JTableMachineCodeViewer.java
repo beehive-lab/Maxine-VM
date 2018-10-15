@@ -158,6 +158,8 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
         addSearchButton();
 
         final JButton viewOptionsButton = new InspectorButton(inspection(), new AbstractAction("View...") {
+            private static final long serialVersionUID = -6595117479543999034L;
+
             public void actionPerformed(ActionEvent actionEvent) {
                 final MachineCodeViewPreferences globalPreferences = MachineCodeViewPreferences.globalPreferences(inspection());
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MachineCodeColumnKind>(inspection(), "Machine Code View Options", instanceViewPreferences, globalPreferences);
@@ -327,6 +329,8 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     private final class MachineCodeTableColumnModel extends InspectorTableColumnModel<MachineCodeColumnKind> {
 
+        private static final long serialVersionUID = -6652008634826076706L;
+
         private MachineCodeTableColumnModel(MachineCodeViewPreferences viewPreferences) {
             super(inspection(), MachineCodeColumnKind.values().length, viewPreferences);
             final Address startAddress = tableModel.machineCode.getMachineCodeInfo().length() == 0 ? Address.zero() : tableModel.rowToInstruction(0).address;
@@ -347,6 +351,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
      */
     private final class MachineCodeTableModel extends InspectorTableModel {
 
+        private static final long serialVersionUID = 2558746742097999328L;
         final MaxMachineCodeRoutine machineCode;
 
         MachineCodeTableModel(Inspection inspection, MaxMachineCodeRoutine machineCode) {
@@ -748,6 +753,8 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
                                     if (vm().findJavaSourceFile(((ClassMethodActor) location.method).codeAttribute().cp.holder()) != null) {
                                         final CiCodePos codePosCopy = location;
                                         menu.add(new AbstractAction("Open " + fileName + " at line " + lineNumber) {
+                                            private static final long serialVersionUID = -4220759517426101054L;
+
                                             public void actionPerformed(ActionEvent e) {
                                                 inspection().viewSourceExternally(codePosCopy);
                                             }

@@ -29,6 +29,8 @@ import com.sun.max.vm.hosted.*;
  * class via the {@link HostedBootClassLoader}.
  */
 public class HostOnlyClassError extends NoClassDefFoundError {
+    private static final long serialVersionUID = -1697730342592646389L;
+
     public HostOnlyClassError(String className) {
         super(className);
     }

@@ -331,6 +331,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
         inspection.settings().addSaveSettingsListener(saveSettingsListener);
         resetViewsToDefaultAction = new InspectorAction(inspection, "Reset to standard view set") {
 
+            private static final long serialVersionUID = 2538685174768534907L;
+
             @Override
             protected void procedure() {
                 // The standard view set has no multi view instances; dispose all
@@ -350,6 +352,8 @@ public final class InspectionViews extends AbstractInspectionHolder {
             }
         };
         deactivateAllAction = new InspectorAction(inspection, "Close all unpinned views") {
+
+            private static final long serialVersionUID = -8055945544658558972L;
 
             @Override
             protected void procedure() {

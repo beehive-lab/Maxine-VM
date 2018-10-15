@@ -30,6 +30,8 @@ package com.sun.max.tele.debug;
  */
 public class TerminatedProcessIOException extends RuntimeException {
 
+    private static final long serialVersionUID = -4665623331871010378L;
+
     public TerminatedProcessIOException(String message) {
         super(message);
     }

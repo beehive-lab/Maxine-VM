@@ -27,6 +27,8 @@ package com.sun.max.tele.debug;
  */
 public class InvalidVMRequestException extends Exception {
 
+    private static final long serialVersionUID = -2436866667531758705L;
+
     public InvalidVMRequestException(String message) {
         super(message);
     }

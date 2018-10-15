@@ -33,6 +33,7 @@ import com.sun.max.tele.*;
  */
 public abstract class InspectorTableModel extends AbstractTableModel implements InspectionHolder {
 
+    private static final long serialVersionUID = 6678097656211295716L;
     private final Inspection inspection;
     private final String tracePrefix;
 

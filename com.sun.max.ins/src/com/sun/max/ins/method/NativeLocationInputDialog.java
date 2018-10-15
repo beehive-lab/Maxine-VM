@@ -178,6 +178,8 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
 
         final JPanel buttonPanel = new InspectorPanel(inspection());
         buttonPanel.add(new JButton(new AbstractAction("Cancel") {
+            private static final long serialVersionUID = 2054738351895984894L;
+
             public void actionPerformed(ActionEvent event) {
                 dispose();
             }
@@ -205,6 +207,8 @@ public abstract class NativeLocationInputDialog extends InspectorDialog {
     }
 
     private final class EnterAction extends InspectorAction {
+        private static final long serialVersionUID = -3311514776170125851L;
+
         private EnterAction() {
             super(inspection(), "OK");
         }

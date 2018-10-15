@@ -28,6 +28,7 @@ import com.sun.cri.ri.*;
  */
 public final class CiVirtualObject extends CiValue {
 
+    private static final long serialVersionUID = 5986709597783833868L;
     private final RiType type;
     private CiValue[] values;
     private final int id;

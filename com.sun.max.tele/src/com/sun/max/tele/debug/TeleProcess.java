@@ -76,6 +76,8 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
      */
     private final class ProcessDied extends Exception {
 
+        private static final long serialVersionUID = -4935911409367310615L;
+
         ProcessDied(String message) {
             super(message);
         }

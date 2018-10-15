@@ -39,6 +39,7 @@ import com.sun.max.program.option.*;
  * A dialog used to present the {@linkplain Option options} defined by a {@link OptionSet}.
  */
 public class OptionsDialog extends JDialog {
+    private static final long serialVersionUID = 1731893344652281270L;
 
     public static final int TEXT_FIELD_COLUMNS = 40;
 
@@ -313,6 +314,8 @@ public class OptionsDialog extends JDialog {
             final JPanel inputPanel = new JPanel();
             input = inputPanel;
             fileChooserButton = new JButton(new AbstractAction("Select") {
+                private static final long serialVersionUID = 4745378217460811529L;
+
                 public void actionPerformed(ActionEvent e) {
                     if (fileChooser == null) {
                         fileChooser = new JFileChooser(new File("."));
@@ -478,6 +481,8 @@ public class OptionsDialog extends JDialog {
 
         // Configure buttons
         final JButton ok = new JButton(new AbstractAction("OK") {
+            private static final long serialVersionUID = -4556461814967454292L;
+
             public void actionPerformed(ActionEvent e) {
                 for (GUIOption guiOption : guiOptions) {
                     try {
@@ -492,6 +497,8 @@ public class OptionsDialog extends JDialog {
         });
 
         final JButton cancel = new JButton(new AbstractAction("Use Defaults") {
+            private static final long serialVersionUID = 5997244396089237749L;
+
             public void actionPerformed(ActionEvent e) {
                 OptionsDialog.this.setVisible(false);
                 OptionsDialog.this.cancelled = true;
@@ -499,6 +506,8 @@ public class OptionsDialog extends JDialog {
         });
 
         final JButton exit = new JButton(new AbstractAction("Cancel") {
+            private static final long serialVersionUID = 1053529844333842323L;
+
             public void actionPerformed(ActionEvent e) {
                 System.exit(1);
             }
@@ -521,6 +530,8 @@ public class OptionsDialog extends JDialog {
     }
 
     private class ErrorDialog extends JDialog {
+        private static final long serialVersionUID = -5642418850891154206L;
+
         ErrorDialog(JDialog owner, GUIOption guiOption, Option.Error error) {
             super(owner, "Option Error", true);
             final JPanel errorPanel = new JPanel();
@@ -532,6 +543,8 @@ public class OptionsDialog extends JDialog {
 
             // Configure buttons
             final JButton ok = new JButton(new AbstractAction("OK") {
+                private static final long serialVersionUID = 967242477465456667L;
+
                 public void actionPerformed(ActionEvent e) {
                     errorPanel.setVisible(false);
                 }

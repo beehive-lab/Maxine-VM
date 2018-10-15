@@ -228,6 +228,8 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
 
     private final class DeactivateAllAction extends InspectorAction {
 
+        private static final long serialVersionUID = 6309229248929269985L;
+
         DeactivateAllAction(String title) {
             super(inspection(), "Close unpinned " + title + " views");
         }
@@ -245,6 +247,7 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
 
     private final class DeactivateAllExceptAction extends InspectorAction {
 
+        private static final long serialVersionUID = -6860121441657289137L;
         private final InspectorView exceptInspector;
 
         DeactivateAllExceptAction(String title, InspectorView exceptInspector) {

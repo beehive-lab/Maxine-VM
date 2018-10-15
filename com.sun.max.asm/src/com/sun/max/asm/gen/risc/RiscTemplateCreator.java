@@ -68,6 +68,8 @@ public class RiscTemplateCreator {
 
     private int serial;
     private HashMap<String, List<RiscTemplate>> nameToTemplates = new HashMap<String, List<RiscTemplate>>() {
+        private static final long serialVersionUID = -7249335190715607951L;
+
         @Override
         public List<RiscTemplate> get(Object key) {
             List<RiscTemplate> list = super.get(key);

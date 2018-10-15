@@ -456,6 +456,8 @@ public final class StackView extends AbstractView<StackView> {
         final InspectorPopupMenu menu = new InspectorPopupMenu("Stack Frame");
 
         menu.add(new InspectorAction(inspection(), "Select frame (Left-Button)") {
+            private static final long serialVersionUID = 6723259942097335655L;
+
             @Override
             protected void procedure() {
                 inspection().focus().setStackFrame(stackFrame, false);
@@ -466,6 +468,8 @@ public final class StackView extends AbstractView<StackView> {
             final String frameName = javaStackFrameName(javaStackFrame);
             menu.add(actions().viewtackFrameMemory(javaStackFrame, "View memory for frame" + frameName));
             menu.add(new InspectorAction(inspection(), "View frame " + frameName) {
+                private static final long serialVersionUID = 8854783067620995204L;
+
                 @Override
                 protected void procedure() {
                     inspection().focus().setStackFrame(stackFrame, false);
@@ -478,6 +482,8 @@ public final class StackView extends AbstractView<StackView> {
             final MaxNativeFunction externalCode = vm().machineCode().findNativeFunction(instructionPointer);
             if (externalCode == null) {
                 menu.add(new InspectorAction(inspection(), "Open external code dialog...") {
+                    private static final long serialVersionUID = 4841381663364129609L;
+
                     @Override
                     protected void procedure() {
                         MaxCodeLocation codeLocation = stackFrame.codeLocation();
@@ -494,6 +500,8 @@ public final class StackView extends AbstractView<StackView> {
     }
 
     private final class CopyStackToClipboardAction extends InspectorAction {
+
+        private static final long serialVersionUID = -5779989077014541045L;
 
         private CopyStackToClipboardAction() {
             super(inspection(), "Copy stack list to clipboard");

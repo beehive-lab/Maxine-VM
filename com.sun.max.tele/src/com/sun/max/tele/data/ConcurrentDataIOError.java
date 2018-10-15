@@ -33,6 +33,8 @@ import com.sun.max.unsafe.*;
  */
 public class ConcurrentDataIOError extends DataIOError {
 
+    private static final long serialVersionUID = -7923721651581793156L;
+
     public ConcurrentDataIOError(String message) {
         super(Address.zero(), message);
     }

@@ -28,6 +28,8 @@ package com.sun.max.ide;
  */
 public class JavaProjectNotFoundException extends RuntimeException {
 
+    private static final long serialVersionUID = -8627657736740078653L;
+
     public JavaProjectNotFoundException() {
     }
 

@@ -76,6 +76,8 @@ public final class StackFrameView extends AbstractView<StackFrameView> implement
 
     private final class CopyStackFrameToClipboardAction extends InspectorAction {
 
+        private static final long serialVersionUID = 8236381088047064081L;
+
         private CopyStackFrameToClipboardAction() {
             super(inspection(), "Copy stack frame to clipboard");
         }
@@ -232,6 +234,8 @@ public final class StackFrameView extends AbstractView<StackFrameView> implement
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 1274027107869114019L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<CompiledStackFrameColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);

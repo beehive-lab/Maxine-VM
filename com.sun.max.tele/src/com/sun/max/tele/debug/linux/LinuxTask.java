@@ -133,6 +133,8 @@ public final class LinuxTask {
     }
 
     private static class Monitor extends ReentrantLock {
+        private static final long serialVersionUID = 2450448668916806885L;
+
         @Override
         public void lock() {
             boolean isDispatchThread = EventQueue.isDispatchThread();

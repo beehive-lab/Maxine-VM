@@ -27,6 +27,8 @@ package com.sun.max.tele.debug;
  */
 public class OSExecutionRequestException extends ProcessException {
 
+    private static final long serialVersionUID = -2706141683938137647L;
+
     public OSExecutionRequestException(String message) {
         super(message);
     }

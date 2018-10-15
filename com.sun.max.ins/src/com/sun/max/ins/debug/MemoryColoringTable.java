@@ -94,6 +94,8 @@ public final class MemoryColoringTable extends InspectorTable {
             final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
 
+                private static final long serialVersionUID = -7456182604327583413L;
+
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setRegionWatchpoint(tableModel.getMemoryRegion(row), null, null).perform();
@@ -256,6 +258,8 @@ public final class MemoryColoringTable extends InspectorTable {
 
     private final class MemoryColoringColumnModel extends InspectorTableColumnModel<MarkBitmapColumnKind> {
 
+        private static final long serialVersionUID = -3354131420448237383L;
+
         private MemoryColoringColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, TableColumnVisibilityPreferences<MarkBitmapColumnKind> instanceViewPreferences) {
             super(inspection(),  MarkBitmapColumnKind.values().length, instanceViewPreferences);
             addColumnIfSupported(MarkBitmapColumnKind.MAP_BIT_INDEX, new MapBitIndexRenderer(inspection()), null);
@@ -275,6 +279,7 @@ public final class MemoryColoringTable extends InspectorTable {
      */
     private final class MarkBitmapTableModel extends InspectorMemoryTableModel {
 
+        private static final long serialVersionUID = -7039594938867836519L;
         private MemoryWordRegion memoryWordRegion;
 
         // Number of words offset from origin to beginning of region; may be negative.

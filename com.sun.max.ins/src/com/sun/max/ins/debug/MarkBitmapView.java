@@ -178,6 +178,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         });
 
         previousButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = 6720684769488428960L;
+
             public void actionPerformed(ActionEvent e) {
                 moveBack();
             }
@@ -186,6 +188,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         previousButton.setIcon(style.navigationBackIcon());
 
         nextButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = 2350791425520874326L;
+
             public void actionPerformed(ActionEvent e) {
                 moveForward();
             }
@@ -193,6 +197,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
         nextButton.setIcon(style.navigationForwardIcon());
 
         prefsButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = 8153418612687383983L;
+
             public void actionPerformed(ActionEvent e) {
                 new SimpleDialog(inspection(), viewPreferences.getPanel(), "View Preferences", true);
             }
@@ -443,6 +449,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 142256500610094933L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<MarkBitmapColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
@@ -468,6 +476,8 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
 
     private final class ScrollToFocusAction extends InspectorAction {
 
+        private static final long serialVersionUID = 8660129684328212478L;
+
         ScrollToFocusAction(Inspection inspection) {
             super(inspection(), "Scroll to selected (covered) memory location");
             refresh(true);
@@ -488,6 +498,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     private final class ViewBitmapDataAction extends InspectorAction {
 
         private static final String TITLE = "View Bitmap Data as Array";
+        private static final long serialVersionUID = 3658357125837190937L;
 
         ViewBitmapDataAction(Inspection inspection) {
             super(inspection, TITLE);
@@ -510,6 +521,7 @@ public class MarkBitmapView extends AbstractView<MarkBitmapView> implements Tabl
     private final class ViewBitmapMemoryAction extends InspectorAction {
 
         private static final String TITLE = "View Bitmap Memory";
+        private static final long serialVersionUID = 2754497211088158776L;
 
         ViewBitmapMemoryAction(Inspection inspection) {
             super(inspection, TITLE);

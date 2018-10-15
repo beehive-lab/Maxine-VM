@@ -35,6 +35,7 @@ import com.sun.max.ins.gui.*;
  */
 public abstract class InspectorTableColumnModel<ColumnKind_Type extends  ColumnKind> extends DefaultTableColumnModel implements Prober {
 
+    private static final long serialVersionUID = -7400700163827546240L;
     private final Inspection inspection;
 
     /**

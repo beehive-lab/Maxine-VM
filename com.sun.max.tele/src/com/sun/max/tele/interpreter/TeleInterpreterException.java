@@ -34,6 +34,7 @@ import com.sun.max.vm.value.*;
  */
 public class TeleInterpreterException extends InvocationTargetException {
 
+    private static final long serialVersionUID = 4835371374501005405L;
     private final ReferenceValue throwableReference;
 
     public TeleInterpreterException(Throwable throwable, Machine machine) {

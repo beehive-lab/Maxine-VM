@@ -61,6 +61,8 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
             makeViewActions = new ArrayList<InspectorAction>(1);
 
             interactiveViewRegionInfoByAddressAction = new InspectorAction(inspection(),  "View RegionInfo for address...") {
+                private static final long serialVersionUID = -316821654117332603L;
+
                 @Override
                 protected void procedure() {
                     new AddressInputDialog(inspection(), Address.zero(), "View RegionInfo for address...", "View") {
@@ -79,6 +81,8 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
                 }
             };
             interactiveViewRegionInfoByRegionIDAction = new InspectorAction(inspection(),  "View RegionInfo for region ID ...") {
+                private static final long serialVersionUID = 9165635324179650699L;
+
                 @Override
                 protected void procedure() {
                     final String input = gui().inputDialog("View RegionInfo for region ID...", "0");
@@ -110,6 +114,8 @@ public final class HeapRegionInfoView  extends ObjectView<HeapRegionInfoView> {
 
         public InspectorAction makeViewAction(final MaxObject object, String actionTitle) {
             return new InspectorAction(inspection(), actionTitle == null ? "View Heap Region Info" : actionTitle) {
+                private static final long serialVersionUID = -1465554546534220802L;
+
                 @Override
                 protected void procedure() {
                     TeleHeapRegionInfo teleHeapRegionInfo = (TeleHeapRegionInfo) vm().heap().getMemoryManagementInfo(object.origin()).tele();

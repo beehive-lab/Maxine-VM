@@ -38,6 +38,8 @@ public final class HostMonitor {
     private static final Map<Object, Monitor> monitorMap = new IdentityHashMap<Object, Monitor>();
 
     private static class Monitor extends ReentrantLock {
+        private static final long serialVersionUID = 5639860838632304748L;
+
         @Override
         public boolean isHeldByCurrentThread() {
             // Thank you java.util.concurrent; we override this method just to get access!

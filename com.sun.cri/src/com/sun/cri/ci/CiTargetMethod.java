@@ -35,10 +35,13 @@ import com.sun.cri.ri.*;
  */
 public class CiTargetMethod implements Serializable {
 
+    private static final long serialVersionUID = -859623223476668082L;
+
     /**
      * Represents a code position with associated additional information.
      */
     public abstract static class Site implements Serializable {
+        private static final long serialVersionUID = 5027860303614739173L;
         /**
          * The position (or offset) of this site with respect to the start of the target method.
          */
@@ -53,6 +56,7 @@ public class CiTargetMethod implements Serializable {
      * Represents a safepoint with associated debug info.
      */
     public static class Safepoint extends Site implements Comparable<Safepoint> {
+        private static final long serialVersionUID = -8078729701628321100L;
         public final CiDebugInfo debugInfo;
 
         public Safepoint(int pcOffset, CiDebugInfo debugInfo) {
@@ -96,6 +100,7 @@ public class CiTargetMethod implements Serializable {
      * Represents a call in the code.
      */
     public static final class Call extends Safepoint {
+        private static final long serialVersionUID = 7565455588356013774L;
         /**
          * The target of the call.
          */
@@ -145,6 +150,7 @@ public class CiTargetMethod implements Serializable {
      * Represents a reference to data from the code. The associated data can be any constant.
      */
     public static final class DataPatch extends Site {
+        private static final long serialVersionUID = -2938444043452628858L;
         public final CiConstant constant;
         public final int alignment;
 
@@ -165,6 +171,7 @@ public class CiTargetMethod implements Serializable {
      * This is optional information that can be used to enhance a disassembly of the code.
      */
     public abstract static class CodeAnnotation implements Serializable {
+        private static final long serialVersionUID = 928798596620568715L;
         public final int position;
 
         public CodeAnnotation(int position) {
@@ -176,6 +183,7 @@ public class CiTargetMethod implements Serializable {
      * A string comment about one or more instructions at a specific position in the code.
      */
     public static final class CodeComment extends CodeAnnotation {
+        private static final long serialVersionUID = -8453608635171718182L;
         public final String value;
         public CodeComment(int position, String comment) {
             super(position);
@@ -192,6 +200,7 @@ public class CiTargetMethod implements Serializable {
      * Labels some inline data in the code.
      */
     public static final class InlineData extends CodeAnnotation {
+        private static final long serialVersionUID = -6903557376134014040L;
         public final int size;
         public InlineData(int position, int size) {
             super(position);
@@ -212,6 +221,7 @@ public class CiTargetMethod implements Serializable {
      * The table is indexed by the contiguous range of integers from {@link #low} to {@link #high} inclusive.
      */
     public static final class JumpTable extends CodeAnnotation {
+        private static final long serialVersionUID = -6520017513070589383L;
         /**
          * The low value in the key range (inclusive).
          */
@@ -246,6 +256,7 @@ public class CiTargetMethod implements Serializable {
      * based on a key value from a sparse value set (e.g. the {@code lookupswitch} JVM instruction).
      */
     public static final class LookupTable extends CodeAnnotation {
+        private static final long serialVersionUID = 6797908737446993328L;
         /**
          * The number of entries in the table.
          */
@@ -279,6 +290,7 @@ public class CiTargetMethod implements Serializable {
      * well as the caught exception type.
      */
     public static final class ExceptionHandler extends Site {
+        private static final long serialVersionUID = -178325204071337726L;
         public final int bci;
         public final int scopeLevel;
         public final int handlerPos;
@@ -301,6 +313,7 @@ public class CiTargetMethod implements Serializable {
     }
 
     public static final class Mark extends Site {
+        private static final long serialVersionUID = 8991309638525793557L;
         public final Object id;
         public final Mark[] references;
 

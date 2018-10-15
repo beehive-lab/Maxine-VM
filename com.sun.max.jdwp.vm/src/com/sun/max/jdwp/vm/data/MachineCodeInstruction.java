@@ -28,6 +28,7 @@ package com.sun.max.jdwp.vm.data;
  */
 public class MachineCodeInstruction extends AbstractSerializableObject {
 
+    private static final long serialVersionUID = -808767081846519545L;
     private final String mnemonic;
     private final int position;
     private final long address;

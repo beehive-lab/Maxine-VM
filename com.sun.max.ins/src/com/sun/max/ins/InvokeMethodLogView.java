@@ -132,6 +132,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
             actionLookup.put(name, action);
         }
         copyAction = new AbstractAction("Copy (Ctrl-c)") {
+            private static final long serialVersionUID = 3051066171611994844L;
             final Action action = actionLookup.get(DefaultEditorKit.copyAction);
 
             @Override
@@ -140,6 +141,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
             }
         };
         cutAction = new AbstractAction("Cut (Ctrl-x)") {
+            private static final long serialVersionUID = -6667860711619086508L;
             final Action action = actionLookup.get(DefaultEditorKit.cutAction);
 
             @Override
@@ -148,6 +150,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
             }
         };
         pasteAction = new AbstractAction("Paste (Ctrl-v)") {
+            private static final long serialVersionUID = -944658269808362417L;
             final Action action = actionLookup.get(DefaultEditorKit.pasteAction);
 
             @Override
@@ -366,6 +369,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
      */
     private final class InspectSelectedAddressMemoryAction extends InspectorAction {
 
+        private static final long serialVersionUID = 7381083501643985086L;
         private Address address;
 
         InspectSelectedAddressMemoryAction(Inspection inspection) {
@@ -392,6 +396,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
      */
     private final class InspectSelectedAddressRegionAction extends InspectorAction {
 
+        private static final long serialVersionUID = 350730610483870046L;
         private Address address;
         private MaxMemoryRegion memoryRegion;
 
@@ -419,6 +424,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
      */
     private final class InspectSelectedAddressObjectAction extends InspectorAction {
 
+        private static final long serialVersionUID = -6496112938154670747L;
         private Address address;
         private MaxObject object;
 
@@ -449,6 +455,8 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
      */
     private final class InvokeMethodLogSelectAllAction extends InspectorAction {
 
+        private static final long serialVersionUID = 3853966787857175791L;
+
         InvokeMethodLogSelectAllAction(Inspection inspection) {
             super(inspection, "Select all");
         }
@@ -465,6 +473,8 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
      */
     private final class InvokeMethodLogClearAction extends InspectorAction {
 
+        private static final long serialVersionUID = -2893033183272484963L;
+
         InvokeMethodLogClearAction(Inspection inspection) {
             super(inspection, "Clear all");
         }
@@ -480,6 +490,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
     final class WriteToFileAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Write contents to a file...";
+        private static final long serialVersionUID = 8282189472622624740L;
 
         WriteToFileAction(Inspection inspection) {
             super(inspection, DEFAULT_TITLE);
@@ -513,6 +524,8 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
      * the notepad.
      */
     private final class InvokeMethodLogPrintAction extends InspectorAction {
+
+        private static final long serialVersionUID = -4039313419501216646L;
 
         InvokeMethodLogPrintAction(Inspection inspection) {
             super(inspection, "Print notepad contents");

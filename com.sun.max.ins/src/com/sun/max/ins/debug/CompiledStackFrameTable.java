@@ -76,6 +76,8 @@ public class CompiledStackFrameTable extends InspectorTable {
         if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
+                private static final long serialVersionUID = -88275355335561843L;
+
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
@@ -100,6 +102,8 @@ public class CompiledStackFrameTable extends InspectorTable {
             final Slot slot = (Slot) tableModel.getValueAt(row, col);
             final String regionDescription =  "Stack slot : " + slot.name;
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
+
+                private static final long serialVersionUID = -8279303942334495596L;
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
@@ -165,6 +169,8 @@ public class CompiledStackFrameTable extends InspectorTable {
      */
     private final class CompiledStackFrameTableColumnModel extends InspectorTableColumnModel<CompiledStackFrameColumnKind> {
 
+        private static final long serialVersionUID = 775217354300299611L;
+
         CompiledStackFrameTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, CompiledStackFrameViewPreferences viewPreferences) {
             super(inspection(), CompiledStackFrameColumnKind.values().length, viewPreferences);
             addColumnIfSupported(CompiledStackFrameColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
@@ -187,6 +193,7 @@ public class CompiledStackFrameTable extends InspectorTable {
      */
     private final class CompiledStackFrameTableModel extends InspectorMemoryTableModel {
 
+        private static final long serialVersionUID = 3119457780201702781L;
         private final MaxStackFrame.Compiled javaStackFrame;
         private final int frameSize;
         private final Slots slots;

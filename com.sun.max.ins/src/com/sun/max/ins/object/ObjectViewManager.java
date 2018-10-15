@@ -304,6 +304,8 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
     private final class InteractiveViewObjectByAddressAction extends InspectorAction {
 
+        private static final long serialVersionUID = -2641765176975465550L;
+
         InteractiveViewObjectByAddressAction() {
             super(inspection(), "View object at address...");
         }
@@ -330,6 +332,8 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     }
 
     private final class InteractiveViewObjectByIDAction extends InspectorAction {
+
+        private static final long serialVersionUID = 3995378237650587594L;
 
         InteractiveViewObjectByIDAction() {
             super(inspection(), "View object by ID...");
@@ -358,6 +362,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
 
     private final class CloseViewsByStatusAction extends InspectorAction {
 
+        private static final long serialVersionUID = 396316498762132751L;
         final ObjectStatus status;
 
         CloseViewsByStatusAction(ObjectStatus status) {
@@ -394,6 +399,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
     private final class ViewSpecifiedObjectAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View object";
+        private static final long serialVersionUID = -3645967606640176529L;
         final MaxObject object;
 
         ViewSpecifiedObjectAction(MaxObject object, String actionTitle) {

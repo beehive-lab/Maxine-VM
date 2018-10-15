@@ -288,6 +288,8 @@ public class BreakpointCondition extends AbstractVmHolder implements VMTriggerEv
     }
 
     public static class ExpressionException extends Exception {
+        private static final long serialVersionUID = -2184500130619158129L;
+
         ExpressionException(String s) {
             super(s);
         }

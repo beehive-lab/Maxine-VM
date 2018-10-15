@@ -552,6 +552,7 @@ public final class BootImageObjectTree {
      * GUI class.
      */
     static class ObjectTreeView extends JPanel {
+        private static final long serialVersionUID = -6039663110370658040L;
 
         JTextArea info;
         JPanel navigation;
@@ -606,6 +607,8 @@ public final class BootImageObjectTree {
             });
             navigation.add(addressField);
             navigation.add(new JButton(new AbstractAction("navigate to object") {
+                private static final long serialVersionUID = 8942331651631434041L;
+
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     jumpToNode();
@@ -614,6 +617,8 @@ public final class BootImageObjectTree {
             // control for jumping to a node's parent
             navigation.add(new JSeparator(SwingConstants.VERTICAL));
             navigation.add(new JButton(new AbstractAction("jump to parent") {
+                private static final long serialVersionUID = -537044511641564822L;
+
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (tree.getSelectionPath() == null) {
@@ -629,6 +634,8 @@ public final class BootImageObjectTree {
             // control for resetting tree (back to start view)
             navigation.add(new JSeparator(SwingConstants.VERTICAL));
             navigation.add(new JButton(new AbstractAction("reset tree view") {
+                private static final long serialVersionUID = 3324897163738363542L;
+
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     for (int i = tree.getRowCount() - 1; i >= 0; i--) {
@@ -692,6 +699,7 @@ public final class BootImageObjectTree {
      */
     static class ObjectTreeNode extends DefaultMutableTreeNode {
 
+        private static final long serialVersionUID = -5855262484119040281L;
         Node node;
         String treeStringRep;
         String detailStringRep;

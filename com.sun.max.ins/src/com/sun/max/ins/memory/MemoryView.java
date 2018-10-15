@@ -71,6 +71,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
         private final List<InspectorAction> makeViewActions;
 
         private final class InteractiveViewRegionInfoByAddressAction extends InspectorAction {
+            private static final long serialVersionUID = 280146940489136495L;
+
             InteractiveViewRegionInfoByAddressAction() {
                 super(inspection(),  "View RegionInfo for address...");
             }
@@ -97,6 +99,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
             super(inspection, VIEW_KIND, SHORT_NAME, LONG_NAME);
             Trace.begin(1, tracePrefix() + "initializing");
             interactiveMakeViewAction = new InspectorAction(inspection(), "View memory at address...") {
+
+                private static final long serialVersionUID = -2417617938374809822L;
 
                 @Override
                 protected void procedure() {
@@ -156,6 +160,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
         public InspectorAction makeViewAction(final MaxMemoryRegion memoryRegion, final String regionName, String actionTitle) {
             final InspectorAction inspectorAction = new InspectorAction(inspection(), actionTitle == null ? "View memory for \"" + regionName + "\"" : actionTitle) {
 
+                private static final long serialVersionUID = 5016396463683869092L;
+
                 @Override
                 protected void procedure() {
                     makeView(memoryRegion, regionName);
@@ -168,6 +174,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
         public InspectorAction makeViewAction(final MaxObject object, String actionTitle) {
             return new InspectorAction(inspection(), actionTitle == null ? "View memory" : actionTitle) {
 
+                private static final long serialVersionUID = -4633540838288407861L;
+
                 @Override
                 protected void procedure() {
                     makeView(object);
@@ -177,6 +185,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
 
         public InspectorAction makeViewAction(final Address address, String actionTitle) {
             return new InspectorAction(inspection(), actionTitle == null ? "View memory" : actionTitle) {
+
+                private static final long serialVersionUID = -5354107676356579355L;
 
                 @Override
                 protected void procedure() {
@@ -431,6 +441,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
         });
 
         previousButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = -2488664465218694860L;
+
             public void actionPerformed(ActionEvent e) {
                 moveBack();
             }
@@ -439,6 +451,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
         previousButton.setIcon(style.navigationBackIcon());
 
         nextButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = 5327526437685685292L;
+
             public void actionPerformed(ActionEvent e) {
                 moveForward();
             }
@@ -446,6 +460,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
         nextButton.setIcon(style.navigationForwardIcon());
 
         prefsButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = 5225439268693185944L;
+
             public void actionPerformed(ActionEvent e) {
                 new SimpleDialog(inspection(), MemoryView.this.instanceViewPreferences.getPanel(), "View Preferences", true);
             }
@@ -455,6 +471,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
         prefsButton.setIcon(style.generalPreferencesIcon());
 
         findButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = 9215337353730378139L;
+
             public void actionPerformed(ActionEvent e) {
                 gui().informationMessage("memory \"Find\" is unimplemented");
             }
@@ -464,6 +482,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
         findButton.setEnabled(false);
 
         homeButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = 6268274888412293455L;
+
             public void actionPerformed(ActionEvent e) {
                 resetToOriginal();
             }
@@ -919,6 +939,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 2666635124386915202L;
+
             @Override
             public void procedure() {
                 final MemoryViewPreferences globalPreferences = globalPreferences(inspection());
@@ -964,6 +986,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
     private InspectorAction cloneAction = new InspectorAction(inspection(), "Clone") {
+        private static final long serialVersionUID = -179871695051345769L;
+
         @Override
         protected void procedure() {
             final InspectorView view = new MemoryView(inspection(), memoryWordRegion, regionName, origin, viewMode(), instanceViewPreferences);
@@ -972,6 +996,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
     };
 
     private InspectorAction setOriginToSelectionAction = new InspectorAction(inspection(), "Set Origin to selected location") {
+        private static final long serialVersionUID = -5534062672196252064L;
+
         @Override
         protected void procedure() {
             setOrigin(focus().address());
@@ -985,6 +1011,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
     };
 
     private InspectorAction scrollToFocusAction = new InspectorAction(inspection(), "Scroll to selected memory location") {
+        private static final long serialVersionUID = 7936104079425928826L;
+
         @Override
         protected void procedure() {
             scrollToRowCentered(table.findRow(focus().address()));
@@ -998,6 +1026,8 @@ public final class MemoryView extends AbstractView<MemoryView> {
     };
 
     private InspectorAction inspectBytesAction = new InspectorAction(inspection(), "View memory at Origin as bytes") {
+        private static final long serialVersionUID = 6340234798973488492L;
+
         @Override
         protected void procedure() {
             views().memoryBytes().makeView(origin);

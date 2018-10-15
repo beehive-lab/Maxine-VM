@@ -29,6 +29,7 @@ package com.sun.max.jdwp.vm.data;
  */
 public class Registers extends AbstractSerializableObject {
 
+    private static final long serialVersionUID = -240935659966721115L;
     private String name;
     private String[] names;
     private long[] values;

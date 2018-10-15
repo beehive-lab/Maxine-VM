@@ -31,6 +31,7 @@ public class CiAddress extends CiValue {
      * A sentinel value used as a place holder in an instruction stream for an address that will be patched.
      */
     public static final CiAddress Placeholder = new CiAddress(CiKind.Illegal, CiRegister.None.asValue());
+    private static final long serialVersionUID = -559669954913914661L;
 
     /**
      * Base register that defines the start of the address computation; always present.

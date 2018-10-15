@@ -44,5 +44,6 @@ public class DegeneratedLoop {
 
     public static class Unresolved extends RuntimeException {
 
+        private static final long serialVersionUID = 1212537648790115522L;
     }
 }

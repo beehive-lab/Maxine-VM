@@ -29,6 +29,8 @@ import com.sun.max.vm.hosted.*;
  * class via the {@link HostedBootClassLoader}.
  */
 public class OmittedClassError extends NoClassDefFoundError {
+    private static final long serialVersionUID = -2534877800300666387L;
+
     public OmittedClassError(String className) {
         super(className);
     }

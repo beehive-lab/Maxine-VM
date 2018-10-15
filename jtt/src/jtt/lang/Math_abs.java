@@ -32,7 +32,9 @@ package jtt.lang;
  */
 public class Math_abs {
 
-    public static class NaN extends Throwable { }
+    public static class NaN extends Throwable {
+        private static final long serialVersionUID = -5511213444570671005L;
+    }
 
     public static double test(double arg) throws NaN {
 

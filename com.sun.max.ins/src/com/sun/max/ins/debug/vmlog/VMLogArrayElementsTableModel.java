@@ -36,6 +36,7 @@ import com.sun.max.vm.log.java.fix.*;
  */
 class VMLogArrayElementsTableModel extends VMLogElementsTableModel {
 
+    private static final long serialVersionUID = 6263635639654786533L;
     private final TeleVMLogArray teleVMLogArray;
 
     protected VMLogArrayElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {

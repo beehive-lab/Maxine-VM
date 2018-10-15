@@ -26,6 +26,8 @@ package com.sun.max.tele.util;
  */
 public final class TeleError extends Error {
 
+    private static final long serialVersionUID = -1387863583329761542L;
+
     private TeleError(String message, Throwable cause) {
         super(message, cause);
     }

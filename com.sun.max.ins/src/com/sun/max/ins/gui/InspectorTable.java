@@ -81,6 +81,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
      * Only supports outbound copy, i.e. Drag but not Drop.
      */
     private final class InspectorTableTransferHandler extends TransferHandler {
+        private static final long serialVersionUID = -3015975809722966791L;
         private MouseEvent mouseEvent = null;
 
         @Override
@@ -529,6 +530,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
 
     private final class ShowFirstRowAction extends InspectorAction {
 
+        private static final long serialVersionUID = -3716162137549950130L;
+
         ShowFirstRowAction(Inspection inspection) {
             super(inspection, "Show first row");
         }
@@ -540,6 +543,8 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
     }
 
     private final class ShowLastRowAction extends InspectorAction {
+
+        private static final long serialVersionUID = 7956461230814289173L;
 
         ShowLastRowAction(Inspection inspection) {
             super(inspection, "Show last row");

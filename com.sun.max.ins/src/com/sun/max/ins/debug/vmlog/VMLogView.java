@@ -251,6 +251,8 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 1414255742233572083L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<VMLogColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
@@ -305,6 +307,8 @@ public class VMLogView extends AbstractView<VMLogView> implements TableColumnVie
     }
 
     private static class VMLogColumnModel extends InspectorTableColumnModel<VMLogColumnKind>  {
+        private static final long serialVersionUID = -8476284557070426439L;
+
         private VMLogColumnModel(Inspection inspection, VMLogView vmLogView) {
             super(inspection, VMLogColumnKind.values().length, vmLogView.viewPreferences);
             addColumnIfSupported(VMLogColumnKind.ID, new IdCellRenderer(inspection, vmLogView), null);

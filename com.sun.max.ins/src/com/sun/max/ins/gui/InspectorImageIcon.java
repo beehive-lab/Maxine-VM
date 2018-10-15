@@ -29,6 +29,8 @@ import javax.swing.*;
 
 public abstract class InspectorImageIcon extends ImageIcon {
 
+    private static final long serialVersionUID = 9049477077874161930L;
+
     protected abstract void draw(Graphics2D g);
 
     private final int width;
@@ -54,6 +56,8 @@ public abstract class InspectorImageIcon extends ImageIcon {
     }
 
     private static final class BlankIcon extends InspectorImageIcon {
+        private static final long serialVersionUID = -148534291699436655L;
+
         private BlankIcon(int width, int height) {
             super(width, height);
         }
@@ -75,6 +79,8 @@ public abstract class InspectorImageIcon extends ImageIcon {
     private static final int MARGIN = 2;
 
     private static final class DownTriangleIcon extends InspectorImageIcon {
+        private static final long serialVersionUID = 6193657041708472830L;
+
         DownTriangleIcon(int width, int height) {
             super(width, height);
         }

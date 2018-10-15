@@ -116,6 +116,8 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
          ///protected abstract T convertSelectedItem(Object listItem);
 
     private final class SelectAction extends InspectorAction {
+        private static final long serialVersionUID = 3267617295529269943L;
+
         private SelectAction() {
             super(inspection(), actionName);
         }
@@ -136,6 +138,8 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
     }
 
     private final class CancelAction extends InspectorAction {
+        private static final long serialVersionUID = 5575104047570902593L;
+
         private CancelAction() {
             super(inspection(), "Cancel");
         }
@@ -195,6 +199,8 @@ public abstract class FilteredListDialog<T> extends InspectorDialog {
         }
 
         this.emptyListModel = new AbstractListModel() {
+            private static final long serialVersionUID = 4306793221815674487L;
+
             public int getSize() {
                 return 0;
             }

@@ -106,6 +106,8 @@ public final class ThreadsTable extends InspectorTable {
 
     private final class ThreadsColumnModel extends InspectorTableColumnModel<ThreadsColumnKind> {
 
+        private static final long serialVersionUID = -460334273602833584L;
+
         private ThreadsColumnModel(ThreadsViewPreferences viewPreferences) {
             super(inspection(), ThreadsColumnKind.values().length, viewPreferences);
             addColumnIfSupported(ThreadsColumnKind.ID, new IDCellRenderer(inspection()), null);
@@ -122,6 +124,8 @@ public final class ThreadsTable extends InspectorTable {
      * current state of the VM. The list goes empty with the process dies.
      */
     private final class ThreadsTableModel extends InspectorTableModel {
+
+        private static final long serialVersionUID = -5872053492540224476L;
 
         ThreadsTableModel(Inspection inspection) {
             super(inspection);

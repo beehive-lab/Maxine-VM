@@ -29,6 +29,7 @@ package com.sun.max.tele.reference;
  */
 public class InvalidReferenceException extends RuntimeException {
 
+    private static final long serialVersionUID = 9122320977996162454L;
     private final RemoteReference reference;
 
     public InvalidReferenceException(RemoteReference reference) {

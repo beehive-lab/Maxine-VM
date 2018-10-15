@@ -64,6 +64,8 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
+                private static final long serialVersionUID = 3122952961871859587L;
+
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setThreadLocalWatchpoint(tableModel.getValueAt(row, 0), null).perform();
@@ -83,6 +85,8 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         if (vm().watchpointManager() != null && col == ThreadLocalVariablesColumnKind.TAG.ordinal()) {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
+
+                private static final long serialVersionUID = -102853548398678212L;
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
@@ -147,6 +151,8 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
      */
     private final class ThreadLocalsAreaTableColumnModel extends InspectorTableColumnModel<ThreadLocalVariablesColumnKind> {
 
+        private static final long serialVersionUID = -2036090103037112443L;
+
         ThreadLocalsAreaTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, ThreadLocalsViewPreferences viewPreferences) {
             super(inspection(), ThreadLocalVariablesColumnKind.values().length, viewPreferences);
             addColumnIfSupported(ThreadLocalVariablesColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
@@ -164,6 +170,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
      */
     private final class ThreadLocalsAreaTableModel extends InspectorMemoryTableModel {
 
+        private static final long serialVersionUID = -5050107488227839011L;
         private final MaxThreadLocalsArea tla;
         private final String[] threadLocalDescriptions;
 

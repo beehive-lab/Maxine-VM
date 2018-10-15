@@ -30,6 +30,7 @@ import com.sun.max.jdwp.constants.Error;
  */
 public class JDWPException extends Exception {
 
+    private static final long serialVersionUID = 4836977635470049125L;
     private final short errorCode;
     private final String message;
 

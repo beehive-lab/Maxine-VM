@@ -36,7 +36,9 @@ package jtt.lang;
  */
 public class Math_log10 {
 
-    public static class NaN extends Throwable { }
+    public static class NaN extends Throwable {
+        private static final long serialVersionUID = 5431609461018024817L;
+    }
 
     public static double test(double arg) throws NaN {
         double v = Math.log10(arg);

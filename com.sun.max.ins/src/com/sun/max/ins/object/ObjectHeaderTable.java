@@ -55,6 +55,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     private final class ToggleObjectHeaderWatchpointAction extends InspectorAction {
 
+        private static final long serialVersionUID = -6578877575354036244L;
         private final int row;
 
         ToggleObjectHeaderWatchpointAction(Inspection inspection, String name, int row) {
@@ -167,6 +168,8 @@ public final class ObjectHeaderTable extends InspectorTable {
      */
     private final class ObjectHeaderColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
+        private static final long serialVersionUID = -2973232893391646280L;
+
         ObjectHeaderColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, ObjectViewPreferences viewPreferences) {
             super(inspection(), ObjectColumnKind.values().length, viewPreferences);
             addColumnIfSupported(ObjectColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
@@ -187,6 +190,7 @@ public final class ObjectHeaderTable extends InspectorTable {
      */
     private final class ObjectHeaderTableModel extends InspectorMemoryTableModel {
 
+        private static final long serialVersionUID = -1084330837763330149L;
         private TeleHub teleHub;
 
         ObjectHeaderTableModel(Inspection inspection, Address origin) {

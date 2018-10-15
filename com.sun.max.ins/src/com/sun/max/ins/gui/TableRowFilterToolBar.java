@@ -100,6 +100,8 @@ public class TableRowFilterToolBar extends InspectorToolBar {
         add(statusLabel);
 
         final JButton closeButton = new JButton(new AbstractAction() {
+            private static final long serialVersionUID = 3229061766109062551L;
+
             public void actionPerformed(ActionEvent actionEvent) {
                 TableRowFilterToolBar.this.parent.closeRequested();
             }

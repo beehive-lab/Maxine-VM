@@ -28,6 +28,8 @@ import com.sun.max.unsafe.*;
 
 
 class VMLogNativeThreadVariableStdElementsTableModel extends VMLogNativeThreadElementsTableModel {
+    private static final long serialVersionUID = -1780345808939142040L;
+
     VMLogNativeThreadVariableStdElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
         super(inspection, teleVMLog);
     }

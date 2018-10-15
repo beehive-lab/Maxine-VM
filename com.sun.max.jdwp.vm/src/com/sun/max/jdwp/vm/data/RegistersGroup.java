@@ -29,6 +29,7 @@ package com.sun.max.jdwp.vm.data;
  */
 public class RegistersGroup extends AbstractSerializableObject {
 
+    private static final long serialVersionUID = -6622456038423246753L;
     private Registers[] registers;
 
     public RegistersGroup(Registers[] arr) {

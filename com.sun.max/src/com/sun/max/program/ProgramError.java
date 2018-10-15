@@ -28,6 +28,8 @@ package com.sun.max.program;
 
 public final class ProgramError extends Error {
 
+    private static final long serialVersionUID = -4457023777191065175L;
+
     /**
      * Implemented by a client that can {@linkplain ProgramError#setHandler(Handler) register}
      * itself to handle program errors instead of having them result in a {@link ProgramError}

@@ -41,6 +41,8 @@ public interface MaxWatchpointManager {
      */
     final class MaxTooManyWatchpointsException extends MaxException {
 
+        private static final long serialVersionUID = 5815448959022842346L;
+
         public MaxTooManyWatchpointsException(String message) {
             super(message);
         }
@@ -51,6 +53,8 @@ public interface MaxWatchpointManager {
      * in the VM that overlaps with an existing watchpoint.
      */
     final class MaxDuplicateWatchpointException extends MaxException {
+
+        private static final long serialVersionUID = -1794364534868923893L;
 
         public MaxDuplicateWatchpointException(String message) {
             super(message);

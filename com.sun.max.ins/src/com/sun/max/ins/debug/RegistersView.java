@@ -141,6 +141,8 @@ public final class RegistersView extends AbstractView<RegistersView> implements 
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = -1034018292653248022L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<RegistersColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);

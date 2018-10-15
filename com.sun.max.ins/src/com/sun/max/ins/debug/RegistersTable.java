@@ -60,6 +60,8 @@ public final class RegistersTable extends InspectorTable {
 
     private final class RegistersColumnModel extends InspectorTableColumnModel<RegistersColumnKind> {
 
+        private static final long serialVersionUID = -8343879682070005040L;
+
         private RegistersColumnModel(RegistersViewPreferences viewPreferences) {
             super(inspection(), RegistersColumnKind.values().length, viewPreferences);
             addColumnIfSupported(RegistersColumnKind.NAME, new NameCellRenderer(inspection()), null);
@@ -80,6 +82,7 @@ public final class RegistersTable extends InspectorTable {
     private final class RegistersTableModel extends InspectorTableModel {
 
         private static final int HISTORY_GENERATIONS = 6;
+        private static final long serialVersionUID = -712215359307663284L;
 
         private final MaxThread thread;
 

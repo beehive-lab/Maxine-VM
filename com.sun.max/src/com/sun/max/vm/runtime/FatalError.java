@@ -44,6 +44,7 @@ import com.sun.max.vm.thread.*;
  */
 public final class FatalError extends Error {
 
+    private static final long serialVersionUID = -2100503750905634067L;
     private static boolean CoreOnError;
     private static boolean TrapOnError;
 

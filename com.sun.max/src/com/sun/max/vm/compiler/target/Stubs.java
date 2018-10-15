@@ -66,6 +66,7 @@ import com.sun.max.vm.thread.*;
 public class Stubs {
 
     final private class TrampolineList extends ArrayList<Stub> {
+        private static final long serialVersionUID = 2119150483440944666L;
         final boolean isInterface;
         final char stubNamePrefix;
 
