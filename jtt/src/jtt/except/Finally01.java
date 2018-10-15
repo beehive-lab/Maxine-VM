@@ -27,7 +27,7 @@ package jtt.except;
  * @Runs: 0=-1; 1=-1
  */
 public class Finally01 {
-    @SuppressWarnings("all")
+    @SuppressWarnings({"finally", "ReturnInsideFinallyBlock"})
     public static int test(int arg) {
         try {
             return 0;
