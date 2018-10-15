@@ -507,8 +507,8 @@ public class AMD64T1XCompilation extends T1XCompilation {
             }
         } else {
             int switchProfileIndex = MethodProfile.UNDEFINED_INDEX;
-            int leaPosProf = methodProfileBuilder.UNDEFINED_POS;
-            int afterLeaProf = methodProfileBuilder.UNDEFINED_POS;
+            int leaPosProf = MethodProfile.Builder.UNDEFINED_POS;
+            int afterLeaProf = MethodProfile.Builder.UNDEFINED_POS;
 
             // Pop key from stack into rcx
             asm.movl(rcx, new CiAddress(CiKind.Int, rsp.asValue()));

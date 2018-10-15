@@ -28,7 +28,7 @@ suite = {
         "write": "git@github.com:beehive-lab/Maxine-VM.git",
     },
     "outputRoot": "./",
-    "javac.lint.overrides": "-rawtypes,-serial,-fallthrough,-unchecked,-overrides,-finally,-static",
+    "javac.lint.overrides": "-rawtypes,-serial,-fallthrough,-unchecked,-overrides,-finally",
 
     "imports": {
         "suites": [
