@@ -22,43 +22,60 @@
  */
 package com.sun.max.ins;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.math.*;
-import java.util.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-
-import com.sun.cri.ci.*;
-import com.sun.max.*;
-import com.sun.max.ins.debug.*;
+import com.sun.cri.ci.CiCodePos;
+import com.sun.max.Utils;
+import com.sun.max.ins.debug.WatchpointsViewPreferences;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
+import com.sun.max.ins.memory.FixedMemoryRegion;
+import com.sun.max.ins.memory.MemoryWordRegion;
 import com.sun.max.ins.method.*;
-import com.sun.max.ins.object.*;
-import com.sun.max.ins.type.*;
-import com.sun.max.ins.util.*;
+import com.sun.max.ins.object.HeapRegionInfoView;
+import com.sun.max.ins.type.ClassActorSearchDialog;
+import com.sun.max.ins.type.TypeSearchDialog;
+import com.sun.max.ins.util.InspectorError;
+import com.sun.max.ins.util.InspectorWarning;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
-import com.sun.max.lang.*;
-import com.sun.max.program.*;
+import com.sun.max.lang.Classes;
+import com.sun.max.program.Trace;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
-import com.sun.max.tele.interpreter.*;
-import com.sun.max.tele.method.*;
+import com.sun.max.tele.interpreter.TeleInterpreter;
+import com.sun.max.tele.method.InvalidCodeAddressException;
+import com.sun.max.tele.method.MaxCodeHoldingRegion;
 import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.util.Predicate;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.DynamicHub;
+import com.sun.max.vm.actor.holder.StaticHub;
+import com.sun.max.vm.actor.holder.StaticTuple;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.classfile.constant.SymbolTable;
 import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.vm.runtime.SafepointPoll;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.type.ClassRegistry;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.type.TypeDescriptor;
+import com.sun.max.vm.value.ReferenceValue;
+import com.sun.max.vm.value.Value;
+
+import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Provider of {@link InspectorAction}s that are of general use.
@@ -1971,15 +1988,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewNativeFunctionByNameAction;
     }
 
-   /**
+    /**
      * Action:  displays the compiled code for an interactively specified method.
      */
     final class ViewMethodMachineCodeAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View compiled code...";
-       private static final long serialVersionUID = -2869372759700500996L;
+        private static final long serialVersionUID = -2869372759700500996L;
 
-       ViewMethodMachineCodeAction(String actionTitle) {
+        ViewMethodMachineCodeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -2195,15 +2212,15 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-   /**
+    /**
      * Action:  removes the currently selected breakpoint from the VM.
      */
     final class RemoveSelectedBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove selected breakpoint";
-       private static final long serialVersionUID = 3398144637211834032L;
+        private static final long serialVersionUID = 3398144637211834032L;
 
-       RemoveSelectedBreakpointAction(String actionTitle) {
+        RemoveSelectedBreakpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             focus().addListener(new InspectionFocusAdapter() {
                 @Override
@@ -2221,7 +2238,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 try {
                     selectedBreakpoint.remove();
                     focus().setBreakpoint(null);
-                }  catch (MaxVMBusyException maxVMBusyException) {
+                } catch (MaxVMBusyException maxVMBusyException) {
                     inspection().announceVMBusyFailure(name());
                 }
             } else {
@@ -2539,9 +2556,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ToggleMachineCodeBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Toggle machine code breakpoint";
-         private static final long serialVersionUID = -2553423927939109613L;
+        private static final long serialVersionUID = -2553423927939109613L;
 
-         private final MaxCodeLocation codeLocation;
+        private final MaxCodeLocation codeLocation;
 
         ToggleMachineCodeBreakpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2750,8 +2767,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeBreakpointAtEntryAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set machine code breakpoint at code entry";
-         private static final long serialVersionUID = -5856156887692864320L;
-         private final MaxCompilation compilation;
+        private static final long serialVersionUID = -5856156887692864320L;
+        private final MaxCompilation compilation;
         SetMachineCodeBreakpointAtEntryAction(MaxCompilation compilation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.compilation = compilation;
@@ -3056,9 +3073,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetBytecodeBreakpointAtMethodEntryByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Method on classpath, by name...";
-         private static final long serialVersionUID = -8601745790648036112L;
+        private static final long serialVersionUID = -8601745790648036112L;
 
-         SetBytecodeBreakpointAtMethodEntryByNameAction(String actionTitle) {
+        SetBytecodeBreakpointAtMethodEntryByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
         }
@@ -3135,14 +3152,14 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return setBytecodeBreakpointAtMethodEntryByKeyAction;
     }
 
-   /**
+    /**
      * Action: create a memory word watchpoint, interactive if no location specified.
      */
     final class SetWordWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch memory word";
-       private static final long serialVersionUID = -5653221920340412599L;
-       private final MaxMemoryRegion memoryRegion;
+        private static final long serialVersionUID = -5653221920340412599L;
+        private final MaxMemoryRegion memoryRegion;
 
         SetWordWatchpointAction() {
             super(inspection(), "Watch memory word at address...");
@@ -3305,8 +3322,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetObjectWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch object memory";
-         private static final long serialVersionUID = -1909245964624295488L;
-         private final MaxObject object;
+        private static final long serialVersionUID = -1909245964624295488L;
+        private final MaxObject object;
         private final MaxMemoryRegion memoryRegion;
 
         SetObjectWatchpointAction(MaxObject object, String actionTitle) {
@@ -3490,8 +3507,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetHeaderWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch object header field";
-         private static final long serialVersionUID = 1565957512034560869L;
-         private final MaxObject object;
+        private static final long serialVersionUID = 1565957512034560869L;
+        private final MaxObject object;
         private final HeaderField headerField;
         private final MaxMemoryRegion memoryRegion;
 
@@ -3741,9 +3758,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveAllWatchpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove all watchpoints";
-         private static final long serialVersionUID = 8839904800812582083L;
+        private static final long serialVersionUID = 8839904800812582083L;
 
-         RemoveAllWatchpointsAction(String actionTitle) {
+        RemoveAllWatchpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
             inspection().addInspectionListener(new InspectionListenerAdapter() {
@@ -3832,9 +3849,9 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugPauseAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Pause process";
-         private static final long serialVersionUID = 236783297933301055L;
+        private static final long serialVersionUID = 236783297933301055L;
 
-         DebugPauseAction(String actionTitle) {
+        DebugPauseAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
         }
