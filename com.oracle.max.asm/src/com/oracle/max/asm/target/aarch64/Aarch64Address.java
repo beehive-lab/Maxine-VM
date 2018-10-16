@@ -43,6 +43,7 @@ import com.sun.cri.ci.*;
 public final class Aarch64Address extends CiAddress {
     // Placeholder for addresses that get patched later.
     public static final Aarch64Address Placeholder = new Aarch64Address(CiKind.Illegal, Aarch64.zr.asValue(), Aarch64.zr.asValue(), 0, false, null, AddressingMode.PC_LITERAL);
+    private static final long serialVersionUID = -6489231419881663165L;
 
     public enum AddressingMode {
         /**

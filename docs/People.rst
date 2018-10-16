@@ -3,14 +3,20 @@ The Maxine Project: Contributors
 
 This page lists the people who have been associated with the Maxine
 project.
+For code contribution statistics see `github contributions <https://github.com/beehive-lab/Maxine-VM/graphs/contributors>`__.
 
 The University of Manchester
 ----------------------------
 
 -  `Andrey Rodchenko <https://github.com/arodchen>`__
--  Andy Nisbet
+-  `Andy Nisbet <https://github.com/drandynisbet>`__
+-  Mikel Lujan
 -  `Christos Kotselidis <https://github.com/kotselidis>`__
 -  `Foivos Zakkak <https://github.com/zakkak>`__
+-  `Tim Hartley <https://github.com/timhartley>`__
+-  `Iain Apreotesei <https://github.com/ibriq>`__
+-  `Andreas Andronikakis <https://github.com/aandronikakis>`__
+-  `Costas Lebesis <https://github.com/lebco>`__
 
 Oracle Labs
 -----------
@@ -37,250 +43,59 @@ Interns
 Maxine would not be where it is today without the valuable input of
 these interns:
 
-+-------+--------------+-------+--------+
-| Name  | Affiliation  | When  | Topic  |
-+=======+==============+=======+========+
-| Chris | Johannes     | winte | Profil |
-| tian  | Kepler U.    | r     | e      |
-| Häubl | Linz         | 2012  | feedba |
-|       |              |       | ck     |
-|       |              |       | for    |
-|       |              |       | Graal  |
-+-------+--------------+-------+--------+
-| Arian | HPI Potsdam  | summe | object |
-| Treff |              | r     | models |
-| er    |              | 2011  | for    |
-|       |              |       | dynami |
-|       |              |       | c      |
-|       |              |       | langua |
-|       |              |       | ges    |
-+-------+--------------+-------+--------+
-| Tobia | HPI Potsdam  | summe | execut |
-| s     |              | r     | ion    |
-| Pape  |              | 2011  | models |
-|       |              |       | for    |
-|       |              |       | dynami |
-|       |              |       | c      |
-|       |              |       | langua |
-|       |              |       | ges    |
-+-------+--------------+-------+--------+
-| `Gill | Johannes     | summe | Graal  |
-| es    | Kepler U.    | r     |        |
-| Dubos | Linz         | 2011  |        |
-| cq <h |              |       |        |
-| ttps: |              |       |        |
-| //git |              |       |        |
-| hub.c |              |       |        |
-| om/gi |              |       |        |
-| lles- |              |       |        |
-| dubos |              |       |        |
-| cq>`_ |              |       |        |
-| _     |              |       |        |
-+-------+--------------+-------+--------+
-| Samee | U. Delaware  | summe | machin |
-| r     |              | r     | e      |
-| Kulka |              | 2011  | learni |
-| rni   |              |       | ng     |
-|       |              |       | for    |
-|       |              |       | code   |
-|       |              |       | optimi |
-|       |              |       | zation |
-+-------+--------------+-------+--------+
-| Du Li | U. Nebraska  | fall  | VM     |
-|       | Lincoln      | 2010  | suppor |
-|       |              |       | t      |
-|       |              |       | for    |
-|       |              |       | analys |
-|       |              |       | is     |
-+-------+--------------+-------+--------+
-| `Luka | Johannes     | summe | C1X    |
-| s     | Kepler U.    | r     | Hotspo |
-| Stadl | Linz         | 2010  | t      |
-| er <h |              |       | integr |
-| ttps: |              |       | ation  |
-| //git |              |       |        |
-| hub.c |              |       |        |
-| om/lu |              |       |        |
-| kasst |              |       |        |
-| adler |              |       |        |
-| >`__  |              |       |        |
-+-------+--------------+-------+--------+
-| Micha | ETH Zürich   | summe | De-opt |
-| el    |              | r     |        |
-| Dulle |              | 2010  |        |
-| r     |              |       |        |
-+-------+--------------+-------+--------+
-| Punee | UC Santa     | summe | Maxine |
-| t     | Barbara      | r     | Virrtu |
-| Lakhi |              | 2010  | al     |
-| na    |              |       | Editio |
-|       |              |       | n      |
-+-------+--------------+-------+--------+
-| Thom  | Johannes     | summe | C1X    |
-| as    | Kepler U.    | r     | and    |
-| Würth | Linz         | 2009  | XIR    |
-| inger |              |       |        |
-+-------+--------------+-------+--------+
-| Marce | UC Irvine    | summe | interp |
-| lo    |              | r     | reter  |
-| Cintr |              | 2009  | and    |
-| a     |              |       | verifi |
-|       |              |       | er     |
-|       |              |       | for IR |
-|       |              |       | of C1X |
-+-------+--------------+-------+--------+
-| Hanne | U. Salzburg  | summe | safepo |
-| s     |              | r     | int    |
-| Payer |              | 2009  | synchr |
-|       |              |       | onizat |
-|       |              |       | ion,   |
-|       |              |       | reloca |
-|       |              |       | table  |
-|       |              |       | watchp |
-|       |              |       | oints  |
-|       |              |       | and GC |
-|       |              |       | suppor |
-|       |              |       | t      |
-|       |              |       | in the |
-|       |              |       | The    |
-|       |              |       | Maxine |
-|       |              |       | Inspec |
-|       |              |       | tor,   |
-|       |              |       | immort |
-|       |              |       | al     |
-|       |              |       | memory |
-|       |              |       | ,      |
-|       |              |       | TLABs  |
-+-------+--------------+-------+--------+
-| Micha | UC Irvine    | summe | trace  |
-| el    |              | r     | compil |
-| Beben |              | 2008  | ation  |
-| ita   |              |       |        |
-+-------+--------------+-------+--------+
-| Abdul | Indiana U.   | summe | perfor |
-| aziz  | Bloomington  | r     | mance  |
-| Ghulo |              | 2008  | analys |
-| um    |              |       | is,    |
-|       |              |       | compil |
-|       |              |       | er     |
-|       |              |       | optimi |
-|       |              |       | zation |
-|       |              |       | s      |
-+-------+--------------+-------+--------+
-| Yi    | Rice         | summe | perfor |
-| Guo   |              | r     | mance  |
-|       |              | 2008  | analys |
-|       |              |       | is,    |
-|       |              |       | compil |
-|       |              |       | er     |
-|       |              |       | optimi |
-|       |              |       | zation |
-|       |              |       | s      |
-+-------+--------------+-------+--------+
-| Chri  | U.           | summe | genera |
-| stos  | Manchester   | r     | tional |
-| Kotse |              | 2008  | garbag |
-| lidis |              |       | e      |
-|       |              |       | collec |
-|       |              |       | tion   |
-|       |              |       | (Beltw |
-|       |              |       | ay)    |
-+-------+--------------+-------+--------+
-| Karth | UC Irvine    | summe | genera |
-| ik    |              | r     | tional |
-| Maniv |              | 2008  | garbag |
-| annan |              |       | e      |
-|       |              |       | collec |
-|       |              |       | tion   |
-|       |              |       | (Beltw |
-|       |              |       | ay)    |
-+-------+--------------+-------+--------+
-| Thom  | Johannes     | summe | IR     |
-| as    | Kepler U.    | r     | visual |
-| Würth | Linz         | 2008  | izatio |
-| inger |              |       | n,     |
-|       |              |       | Inspec |
-|       |              |       | tor    |
-|       |              |       | GUI    |
-+-------+--------------+-------+--------+
-| Aritr | Colorado     | summe | IR     |
-| a     | State U.     | r     | visual |
-| Bandy |              | 2008  | izatio |
-| opadh |              |       | n,     |
-| yay   |              |       | Inspec |
-|       |              |       | tor    |
-|       |              |       | GUI,   |
-|       |              |       | array  |
-|       |              |       | bounds |
-|       |              |       | checki |
-|       |              |       | ng     |
-+-------+--------------+-------+--------+
-| Simon | U.           | sprin | multip |
-| Wilki | Manchester   | g     | le     |
-| nson  |              | 2008  | modal  |
-|       |              |       | object |
-|       |              |       | monito |
-|       |              |       | r      |
-|       |              |       | implem |
-|       |              |       | entati |
-|       |              |       | ons    |
-|       |              |       | for    |
-|       |              |       | thread |
-|       |              |       | synchr |
-|       |              |       | onizat |
-|       |              |       | ion,   |
-|       |              |       | includ |
-|       |              |       | ing    |
-|       |              |       | biased |
-|       |              |       | -locki |
-|       |              |       | ng     |
-+-------+--------------+-------+--------+
-| Sunil | UC Santa     | winte | safepo |
-| Soman | Barbara      | r     | int    |
-|       |              | 2007/ | mechan |
-|       |              | 2008  | ism    |
-|       |              |       | debugg |
-|       |              |       | ing,   |
-|       |              |       | semisp |
-|       |              |       | ace    |
-|       |              |       | GC     |
-+-------+--------------+-------+--------+
-| Athul | Purdue       | summe | remote |
-| Achar |              | r     | interp |
-| ya    |              | 2007  | retor  |
-|       |              |       | for    |
-|       |              |       | the    |
-|       |              |       | The    |
-|       |              |       | Maxine |
-|       |              |       | Inspec |
-|       |              |       | tor    |
-+-------+--------------+-------+--------+
-| Sumee | U. Florida   | summe | CIR    |
-| t     |              | r     | visual |
-| Panch |              | 2007  | izatio |
-| al    |              |       | n,     |
-|       |              |       | ARM    |
-|       |              |       | assemb |
-|       |              |       | ler    |
-+-------+--------------+-------+--------+
-| David | U.           | sprin | code   |
-| Liu   | Queensland   | g     | genera |
-|       |              | 2007  | tion   |
-|       |              |       | for    |
-|       |              |       | switch |
-|       |              |       | statem |
-|       |              |       | ents,  |
-|       |              |       | byteco |
-|       |              |       | de     |
-|       |              |       | verifi |
-|       |              |       | er     |
-+-------+--------------+-------+--------+
-| Hiros | Purdue       | summe | initia |
-| hi    |              | r     | l      |
-| Yamau |              | 2005  | compil |
-| chi   |              |       | er     |
-|       |              |       | backen |
-|       |              |       | d      |
-|       |              |       | for    |
-|       |              |       | AMD64  |
-+-------+--------------+-------+--------+
+
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Name                                                   | Affiliation                       | When               | Topic                                                          |
++========================================================+===================================+====================+================================================================+
+| Christian Häubl                                        | Johannes Kepler U. Linz           | winter 2012        | Profile feedback for Graal                                     |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Arian Treffer                                          | HPI Potsdam                       | summer 2011        | object models for dynamic languages                            |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Tobias Pape                                            | HPI Potsdam                       | summer 2011        | execution models for dynamic languages                         |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| `Gilles Duboscq <https://github.com/gilles-duboscq>`__ | Johannes Kepler U. Linz           | summer 2011        | Graal                                                          |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Sameer Kulkarni                                        | U. Delaware                       | summer 2011        | machine learning for code optimization                         |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Du Li                                                  | U. Nebraska Lincoln               | fall 2010          | VM support for analysis                                        |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| `Lukas Stadler <https://github.com/lukasstadler>`__    | Johannes Kepler U. Linz           | summer 2010        | C1X Hotspot integration                                        |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Michael Duller                                         | ETH Zürich                        | summer 2010        | De-opt                                                         |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Puneet Lakhina                                         | UC Santa Barbara                  | summer 2010        | Maxine Virtual Edition                                         |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Thomas Würthinger                                      | Johannes Kepler U. Linz           | summer 2009        | C1X and XIR                                                    |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Marcelo Cintra                                         | UC Irvine                         | summer 2009        | interpreter and verifier for IR of C1X                         |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Hannes Payer                                           | U. Salzburg                       | summer 2009        | safepoint synchronization, relocatable watchpoints and GC      |
+|                                                        |                                   |                    | support in the The Maxine Inspector, immortal memory, TLABs    |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Michael Bebenita                                       | UC Irvine                         | summer 2008        | trace compilation                                              |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Abdulaziz Ghuloum                                      | Indiana U. Bloomington            | summer 2008        | performance analysis, compiler optimizations                   |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Yi Guo                                                 | Rice                              | summer 2008        | performance analysis, compiler optimizations                   |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Christos Kotselidis                                    | U. Manchester                     | summer 2008        | generational garbage collection (Beltway)                      |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Karthik Manivannan                                     | UC Irvine                         | summer 2008        | generational garbage collection (Beltway)                      |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Thomas Würthinger                                      | Johannes Kepler U. Linz           | summer 2008        | IR visualization, Inspector GUI                                |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Aritra Bandyopadhyay                                   | Colorado State U.                 | summer 2008        | IR visualization, Inspector GUI, array bounds checking         |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Simon Wilkinson                                        | U. Manchester                     | spring 2008        | multiple modal object monitor implementations for thread       |
+|                                                        |                                   |                    | synchronization, including biased-locking                      |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Sunil Soman                                            | UC Santa Barbara                  | winter 2007/2008   | safepoint mechanism debugging, semispace GC                    |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Athul Acharya                                          | Purdue                            | summer 2007        | remote interpretor for the The Maxine Inspector                |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Sumeet Panchal                                         | U. Florida                        | summer 2007        | CIR visualization, ARM assembler                               |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| David Liu                                              | U. Queensland                     | spring 2007        | code generation for switch statements, bytecode verifier       |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+
+| Hiroshi Yamauchi                                       | Purdue                            | summer 2005        | initial compiler backend for AMD64                             |
++--------------------------------------------------------+-----------------------------------+--------------------+----------------------------------------------------------------+

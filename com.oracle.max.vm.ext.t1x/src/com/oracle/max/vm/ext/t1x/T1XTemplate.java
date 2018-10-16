@@ -262,7 +262,7 @@ public class T1XTemplate {
          * @param safepoint
          * @param directCallee
          */
-        public void addSafepoint(int bci, int safepoint, ClassMethodActor directCallee) {
+        public void addSafepoint(int bci, int safepoint, MethodActor directCallee) {
             T1XSafepoint dst = safepointsArray.makeNext();
             dst.bci = bci;
             dst.safepoint = safepoint;

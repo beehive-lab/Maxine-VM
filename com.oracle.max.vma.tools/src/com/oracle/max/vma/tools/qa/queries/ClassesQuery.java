@@ -95,5 +95,10 @@ public class ClassesQuery extends QueryBase {
         public boolean equals(Object obj) {
             return (obj instanceof ClassAndCount) && ((ClassAndCount) obj).count == count;
         }
+
+        @Override
+        public int hashCode() {
+            return count;
+        }
     }
 }

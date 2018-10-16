@@ -37,6 +37,11 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 5;
     public static final int INSTRUCTION_SIZE = 4;
+    public static final int CALL_TRAMPOLINE_INSTRUCTIONS = 5;
+    public static final int RIP_CALL_INSTRUCTION_SIZE = ((2 * CALL_TRAMPOLINE_INSTRUCTIONS) + 1) * INSTRUCTION_SIZE;
+    public static final int CALL_TRAMPOLINE1_OFFSET = INSTRUCTION_SIZE;
+    public static final int CALL_TRAMPOLINE2_OFFSET = INSTRUCTION_SIZE * (CALL_TRAMPOLINE_INSTRUCTIONS + 1);
+    public static final int CALL_BRANCH_OFFSET = RIP_CALL_INSTRUCTION_SIZE - INSTRUCTION_SIZE;
 
     public Aarch64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
@@ -307,7 +312,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         Label notEqualTocmpValue = new Label();
 
         bind(atomicFail);
-        membar(-1);
         ldxr(size, scratchRegister, address); // scratch has the current Value
         cmp(size, cmpValue, scratchRegister); // compare scratch with cmpValue
         branchConditionally(ConditionFlag.NE, notEqualTocmpValue); // value was not equal to the cmpValue
@@ -318,7 +322,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         cbnz(64, scratchRegister, atomicFail);
         mov(64, scratchRegister, cmpValue); // stxr succeeded, set scratch register to the cmp value to indicate success
         bind(notEqualTocmpValue);
-        dmb(BarrierKind.SY);
+        dmb(BarrierKind.ANY_ANY);
     }
 
     /**
@@ -1423,9 +1427,38 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         nop();
     }
 
+    /**
+     * Reserves space for direct calls. The nops are placed for calls to methods that cannot be reached through a branch
+     * immediate.  We reserve space for two trampolines that will perform the actual call to methods that cannot be
+     * reached through a branch immediate.  We need two trampolines to avoid data races between invokers and the
+     * compilation thread.  Whenever a trampoline is being used we use the other one for patching.  Detecting which
+     * trampoline is currently in use can be found by inspecting the offset of the branch immediate preceding the
+     * trampolines.
+     *
+     * Note: We use adr +-  offset to get the target instead of directly placing it in the register. This allows us to
+     * use $x17 as a link register when debugging non-linked branches.
+     */
     public final void call() {
-        nop(4);
+        int before = codeBuffer.position();
+        b(INSTRUCTION_SIZE); // Jump to Trampoline 1
+        // Trampoline 1
+        adr(r17, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE1_OFFSET);
+        movz(64, scratchRegister, 0, 0);
+        movk(64, scratchRegister, 0, 0);
+        add(64, scratchRegister, r17, scratchRegister);
+        Label branchLabel = new Label();
+        b(branchLabel);      // Jump to last branch
+        // Trampoline 2
+        adr(r17, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE2_OFFSET);
+        movz(64, scratchRegister, 0, 0);
+        movk(64, scratchRegister, 0, 0);
+        add(64, scratchRegister, r17, scratchRegister);
+        int after = codeBuffer.position();
+        assert CALL_BRANCH_OFFSET == after - before : after - before;
+        bind(branchLabel);
         bl(0);
+        after = codeBuffer.position();
+        assert RIP_CALL_INSTRUCTION_SIZE == after - before : after - before;
     }
 
     public final void call(CiRegister src) {

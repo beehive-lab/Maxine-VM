@@ -29,9 +29,9 @@ import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.oracle.max.vm.ext.t1x.vma.*;
 import com.oracle.max.vm.ext.vma.*;
 import com.oracle.max.vm.ext.vma.handlers.store.vmlog.h.*;
+import com.oracle.max.vm.ext.vma.t1x.VMAT1XTargetMethod;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -50,7 +50,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.ext.jvmti.*;
+import com.oracle.max.vm.ext.jvmti.*;
 
 /**
  * Variant of {@link JavaRunScheme} that supports the VMA framework.

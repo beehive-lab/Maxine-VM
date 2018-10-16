@@ -29,7 +29,7 @@ import com.oracle.max.vm.ext.jjvmti.agents.util.*;
 import com.oracle.max.vm.ext.vma.handlers.nul.h.*;
 import com.oracle.max.vm.ext.vma.run.java.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.ext.jvmti.*;
+import com.oracle.max.vm.ext.jvmti.*;
 
 /**
  * A simple test of the VMA variant of method entry/exit events.

@@ -94,4 +94,27 @@ public class Aarch64AssemblerTest {
         }
     }
 
+    @Test
+    public void dsb() {
+        for (Aarch64Assembler.BarrierKind bkind : Aarch64Assembler.BarrierKind.values()) {
+            asm.codeBuffer.reset();
+            asm.dsb(bkind);
+            assertEquals(assemble("dsb " + bkind.optionName), asm.codeBuffer.getInt(0));
+        }
+    }
+
+    @Test
+    public void isb() {
+        asm.isb();
+        assertEquals(assemble("isb"), asm.codeBuffer.getInt(0));
+    }
+
+    @Test
+    public void dmb() {
+        for (Aarch64Assembler.BarrierKind bkind : Aarch64Assembler.BarrierKind.values()) {
+            asm.codeBuffer.reset();
+            asm.dmb(bkind);
+            assertEquals(assemble("dmb " + bkind.optionName), asm.codeBuffer.getInt(0));
+        }
+    }
 }

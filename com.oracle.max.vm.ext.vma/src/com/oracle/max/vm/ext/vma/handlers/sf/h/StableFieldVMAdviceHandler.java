@@ -39,7 +39,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
-import com.sun.max.vm.ext.jvmti.*;
+import com.oracle.max.vm.ext.jvmti.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.object.*;

@@ -14,6 +14,7 @@ workingsets.xml
 # intellij generated
 *.iml
 .idea
+*.pydevproject
 
 # Python bytecode
 *.pyc
@@ -50,6 +51,7 @@ mx/
 *.elf
 # Don't ignore directories matching the pattern
 !*.elf/
+compilations-*.cfg
 
 # Debugging related
 codebuffer.c
@@ -57,7 +59,10 @@ codebuffer.c
 *_output
 
 # Libraries
-lib/checkstyle-6.11.2-all.jar
+/lib
+!/lib/asm-6.0-maxine.jar
+!/lib/asm-util-6.0-maxine.jar
+!/lib/okra-1.9.jar
 
 .metadata/*
 .recommenders/*
@@ -65,5 +70,5 @@ lib/checkstyle-6.11.2-all.jar
 maxine-tester/junit-tests/FileReader.input
 maxine-tester/junit-tests/GetResource.input
 maxine-tester/junit-tests/ZipFileReader.input
-        
+
 /docs/_build/

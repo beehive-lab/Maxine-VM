@@ -2150,7 +2150,7 @@ public abstract class T1XCompilation {
         branch(opcode, targetBCI, bci);
     }
 
-    protected void finishCall(T1XTemplateTag tag, Kind returnKind, int safepoint, ClassMethodActor directCallee) {
+    protected void finishCall(T1XTemplateTag tag, Kind returnKind, int safepoint, MethodActor directCallee) {
         safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, directCallee);
 
         if (returnKind != Kind.VOID) {
@@ -2206,12 +2206,12 @@ public abstract class T1XCompilation {
         assignInvokeTemplatesProfileInstrumentationParameters();
     }
 
-    protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+    protected void do_invokespecial_resolved(T1XTemplateTag tag, MethodActor methodActor, int receiverStackIndex) {
         peekObject(scratch, receiverStackIndex);
         nullCheck(scratch);
     }
 
-    protected void do_invokestatic_resolved(T1XTemplateTag tag, StaticMethodActor staticMethodActor) {
+    protected void do_invokestatic_resolved(T1XTemplateTag tag, MethodActor methodActor) {
     }
 
     private void do_invokehandle(int index, ClassMethodRefConstant classMethodRef, SignatureDescriptor signature, MethodActor methodActor) {
@@ -2305,52 +2305,47 @@ public abstract class T1XCompilation {
             assignInt(scratch, index | (0xbeaf << 16));
         }
         try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                try {
-                    // MethodHandle static adapter method ?
-                    MethodActor methodActor = classMethodRef.resolve(cp, index);
+            // MethodHandle static adapter method ?
+            MethodActor methodActor = classMethodRef.resolve(cp, index);
 
-                    if (methodActor.isStatic()) {
-                        Trace.line(1, "IS Static: " + methodActor);
-                        do_invokehandle(index, classMethodRef, signature, methodActor);
-                        return;
-                    }
-                    VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-                    if (processIntrinsic(virtualMethodActor, index)) {
-                        return;
-                    }
-                    if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
-                        // this is an invokevirtual to a private or final method, treat it like invokespecial
-                        do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
-
-                        int safepoint = callDirect(receiverStackIndex);
-                        finishCall(tag, kind, safepoint, virtualMethodActor);
-                        return;
-                    }
-                    // emit a virtual dispatch
-                    start(methodProfileBuilder == null ? tag.resolved : tag.instrumented);
-                    CiRegister target = template.sig.scratch.reg;
-                    assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
-                    finish();
-
-                    int safepoint = callIndirect(target, receiverStackIndex);
-                    finishCall(tag, kind, safepoint, null);
-                    return;
-                } catch (LinkageError e) {
-                    // fall through
-                }
+            if (methodActor.isStatic()) {
+                Trace.line(1, "IS Static: " + methodActor);
+                do_invokehandle(index, classMethodRef, signature, methodActor);
+                return;
             }
+            if (processIntrinsic(methodActor, index)) {
+                return;
+            }
+            if (methodActor.isPrivate() || methodActor.isFinal() || methodActor.holder().isFinal()) {
+                // this is an invokevirtual to a private or final method, treat it like invokespecial
+                do_invokespecial_resolved(tag, methodActor, receiverStackIndex);
+
+                int safepoint = callDirect(receiverStackIndex);
+                finishCall(tag, kind, safepoint, methodActor);
+                return;
+            }
+
+            // emit a virtual dispatch
+            start(methodProfileBuilder == null ? tag.resolved : tag.instrumented);
+            CiRegister target = template.sig.scratch.reg;
+            assert methodActor instanceof VirtualMethodActor;
+            VirtualMethodActor virtualMethodActor = (VirtualMethodActor) methodActor;
+            assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
+            finish();
+
+            int safepoint = callIndirect(target, receiverStackIndex);
+            finishCall(tag, kind, safepoint, null);
         } catch (LinkageError error) {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
-        }
-        start(tag);
-        CiRegister target = template.sig.scratch.reg;
-        assignObject(0, "guard", cp.makeResolutionGuard(index));
-        peekObject(1, "receiver", receiverStackIndex);
-        finish();
+            start(tag);
+            CiRegister target = template.sig.scratch.reg;
+            assignObject(0, "guard", cp.makeResolutionGuard(index));
+            peekObject(1, "receiver", receiverStackIndex);
+            finish();
 
-        int safepoint = callIndirect(target, receiverStackIndex);
-        finishCall(tag, kind, safepoint, null);
+            int safepoint = callIndirect(target, receiverStackIndex);
+            finishCall(tag, kind, safepoint, null);
+        }
     }
 
     protected void do_invokeinterface(int index) {
@@ -2400,22 +2395,22 @@ public abstract class T1XCompilation {
     }
 
     protected void do_invokespecial(int index) {
-        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        Kind kind = invokeKind(classMethodRef.signature(cp));
-        SignatureDescriptor signature = classMethodRef.signature(cp);
+        MethodRefConstant methodRef = cp.methodAt(index);
+        Kind kind = invokeKind(methodRef.signature(cp));
+        SignatureDescriptor signature = methodRef.signature(cp);
         T1XTemplateTag tag = INVOKESPECIALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
         do_profileExceptionSeen();
         try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-                if (processIntrinsic(virtualMethodActor, index)) {
+            if (methodRef.isResolvableWithoutClassLoading(cp)) {
+                MethodActor methodActor = methodRef.resolve(cp, index);
+                if (processIntrinsic(methodActor, index)) {
                     return;
                 }
-                do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
+                do_invokespecial_resolved(tag, methodActor, receiverStackIndex);
 
                 int safepoint = callDirect();
-                finishCall(tag, kind, safepoint, virtualMethodActor);
+                finishCall(tag, kind, safepoint, methodActor);
                 return;
             }
         } catch (LinkageError error) {
@@ -2494,21 +2489,21 @@ public abstract class T1XCompilation {
     }
 
     protected void do_invokestatic(int index) {
-        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        Kind kind = invokeKind(classMethodRef.signature(cp));
+        MethodRefConstant methodRef = cp.methodAt(index);
+        Kind kind = invokeKind(methodRef.signature(cp));
         T1XTemplateTag tag = INVOKESTATICS.get(kind.asEnum);
         do_profileExceptionSeen();
         try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(cp, index);
-                if (processIntrinsic(staticMethodActor, index)) {
+            if (methodRef.isResolvableWithoutClassLoading(cp)) {
+                MethodActor methodActor = methodRef.resolve(cp, index);
+                if (processIntrinsic(methodActor, index)) {
                     return;
                 }
-                if (staticMethodActor.holder().isInitialized()) {
-                    do_invokestatic_resolved(tag, staticMethodActor);
+                if (methodActor.holder().isInitialized()) {
+                    do_invokestatic_resolved(tag, methodActor);
 
                     int safepoint = callDirect();
-                    finishCall(tag, kind, safepoint, staticMethodActor);
+                    finishCall(tag, kind, safepoint, methodActor);
                     return;
                 }
             }
@@ -2827,8 +2822,8 @@ public abstract class T1XCompilation {
                 break;
             }
             default: {
-                assert false : "ldc for unexpected constant tag: " + constant.tag();
-                break;
+                assert false : "ldc for unexpected constant tag: " + constant.tag() + " constant: " + constant;
+                throw new CiBailout("ldc for unexpected constant tag: " + constant.tag() + " constant: " + constant);
             }
         }
     }

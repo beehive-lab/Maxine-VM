@@ -149,6 +149,7 @@ public class Aarch64LogicalImmediateTable {
         }
     }
 
+    @SuppressWarnings("fallthrough")
     private static Immediate[] buildImmediateTable() {
         final int nrImmediates = 5334;
         final Immediate[] table = new Immediate[nrImmediates];

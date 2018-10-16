@@ -65,6 +65,11 @@ public class SortUtil {
         public boolean equals(Object o) {
             throw new RuntimeException("LifeTimeComparator.equals not implemented");
         }
+
+        @Override
+        public int hashCode() {
+            throw new RuntimeException("LifeTimeComparator.hashCode not implemented");
+        }
     }
     public static class ModifyLifeTimeComparator implements Comparator<ObjectRecord> {
         public int compare(ObjectRecord od1, ObjectRecord od2) {
@@ -82,6 +87,11 @@ public class SortUtil {
         @Override
         public boolean equals(Object o) {
             throw new RuntimeException("LifeTimeComparator.equals not implemented");
+        }
+
+        @Override
+        public int hashCode() {
+            throw new RuntimeException("LifeTimeComparator.hashCode not implemented");
         }
     }
 }

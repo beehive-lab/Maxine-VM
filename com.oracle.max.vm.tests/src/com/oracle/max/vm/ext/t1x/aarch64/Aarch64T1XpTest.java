@@ -27,6 +27,7 @@ import java.util.*;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.t1x.*;
+import com.oracle.max.vm.tests.crossisa.aarch64.asm.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
@@ -38,8 +39,6 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
-
-import test.crossisa.aarch64.asm.*;
 
 /**
  * These JUnit tests are for testing protected members of Aarch64T1XCompilation which
@@ -146,7 +145,6 @@ public class Aarch64T1XpTest extends MaxTestCase {
         MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
-        r.assembleStartup();
         r.compile();
         r.link();
         r.runSimulation();

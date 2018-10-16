@@ -800,6 +800,7 @@ public class ProcessLog {
         }
     }
 
+    @SuppressWarnings("fallthrough")
     private void processTraceRecord() throws TraceException {
         String arg1 = arg(1);
         String arg2 = arg(2);

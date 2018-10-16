@@ -153,23 +153,25 @@ public class ELFProgramHeaderTable {
     }
 
     public class Entry32 extends Entry {
-    	// Checkstyle: stop field name check
+        // Checkstyle: stop field name check
         public int p_offset;
         public int p_vaddr;
         public int p_paddr;
         public int p_filesz;
         public int p_memsz;
         public int p_align;
-    	// Checkstyle: start field name check
+        // Checkstyle: start field name check
     }
 
     public class Entry64 extends Entry {
+        // Checkstyle: stop field name check
         public long p_offset;
         public long p_vaddr;
         public long p_paddr;
         public long p_filesz;
         public long p_memsz;
         public long p_align;
+        // Checkstyle: start field name check
     }
 
     public final ELFHeader header;

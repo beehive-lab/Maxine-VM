@@ -34,6 +34,8 @@ import com.sun.max.vm.compiler.deopt.*;
  */
 public class MaxCiTargetMethod extends com.sun.cri.ci.CiTargetMethod {
 
+    private static final long serialVersionUID = -3766346990849578623L;
+
     static MaxCiTargetMethod create(CompilationResult graalCompilation) {
         MaxCiTargetMethod result = new MaxCiTargetMethod(graalCompilation);
         return result;
