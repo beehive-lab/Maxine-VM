@@ -64,6 +64,7 @@ suite = {
     "jdklibraries": {
         "JDK_TOOLS": {
             "path": 'lib/tools.jar',
+            "sourcePath": "src.zip",
             "jdkStandardizedSince": "999",
         },
     },
