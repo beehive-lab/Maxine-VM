@@ -11,7 +11,7 @@ Contributors should adopt the following process once they think their changes ar
 
 1. Merge the latest changes from the Maxine master branch.
 2. Test their code.
-3. Make sure the code complies to the coding style of Maxine VM using `mx checkstyle`.
+3. Make sure the code complies to the coding style of Maxine VM using `mx checkstyle` and passes `mx gate`.
 4. Commit their code changed following the [git commit template](git/commit-template)
 5. Open a new pull request where they explain their contribution and how it works in case of complex implementations.
 
