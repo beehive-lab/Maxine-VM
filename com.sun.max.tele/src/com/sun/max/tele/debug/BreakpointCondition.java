@@ -288,6 +288,8 @@ public class BreakpointCondition extends AbstractVmHolder implements VMTriggerEv
     }
 
     public static class ExpressionException extends Exception {
+        private static final long serialVersionUID = -2184500130619158129L;
+
         ExpressionException(String s) {
             super(s);
         }
@@ -400,6 +402,11 @@ public class BreakpointCondition extends AbstractVmHolder implements VMTriggerEv
             }
             return false;
         }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
     }
 
     class NumberExpression extends Expression {
@@ -461,6 +468,11 @@ public class BreakpointCondition extends AbstractVmHolder implements VMTriggerEv
                 return otherNumber.value >= value;
             }
             return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return (int) value;
         }
     }
 

@@ -27,6 +27,8 @@ package com.sun.max.vm.hosted;
  */
 public class BootImageException extends Exception {
 
+    private static final long serialVersionUID = 8693170389650376696L;
+
     public BootImageException() {
         super();
     }

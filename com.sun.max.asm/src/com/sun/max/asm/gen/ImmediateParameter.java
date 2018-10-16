@@ -32,9 +32,11 @@ public interface ImmediateParameter extends Parameter {
         private Static() {
         }
 
+        @SafeVarargs
         public static <Element_Type extends ImmediateArgument, Argument_Type> List<Element_Type> createSequence(Class<Element_Type> elementType,
-                        final Class<Argument_Type> argumentType, @SuppressWarnings("unchecked") Argument_Type... values) throws NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
-            final List<Element_Type> result = new ArrayList<Element_Type>();
+                                                                                                                final Class<Argument_Type> argumentType,
+                                                                                                                Argument_Type... values) throws NoSuchMethodException, IllegalAccessException, InstantiationException, InvocationTargetException {
+            final List<Element_Type> result = new ArrayList<>();
             final Constructor<Element_Type> elementConstructor = elementType.getConstructor(argumentType);
             for (Argument_Type value : values) {
                 result.add(elementConstructor.newInstance(value));

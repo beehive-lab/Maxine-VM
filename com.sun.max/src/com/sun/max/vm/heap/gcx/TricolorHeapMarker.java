@@ -139,6 +139,8 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
     static final int bitIndexInWordMask = LAST_BIT_INDEX_IN_WORD;
 
     static class MarkingError extends Error {
+        private static final long serialVersionUID = -6361050892297311404L;
+
         private MarkingError(String message) {
             super(message);
         }

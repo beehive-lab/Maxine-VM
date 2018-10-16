@@ -596,6 +596,7 @@ public abstract class Actor {
      * @return the result of formatting this method according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
+    @SuppressWarnings("fallthrough")
     public final String format(boolean strict, String format, Object... args) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;

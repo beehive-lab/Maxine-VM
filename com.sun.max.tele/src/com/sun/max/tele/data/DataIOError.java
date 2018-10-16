@@ -29,6 +29,7 @@ import com.sun.max.unsafe.*;
  */
 public class DataIOError extends Error {
 
+    private static final long serialVersionUID = -539562256515902342L;
     public final Address faultAddress;
 
     public DataIOError(Address address, String message) {

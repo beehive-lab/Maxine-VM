@@ -240,6 +240,8 @@ public final class MemoryMarkBitsTableCellRenderer extends InspectorTableCellRen
                 sb.append(markColor);
                 return new InspectorAction(inspection(), sb.toString()) {
 
+                    private static final long serialVersionUID = -3331456060914018471L;
+
                     @Override
                     protected void procedure() {
                         focus().setMarkBitIndex(bitIndex);

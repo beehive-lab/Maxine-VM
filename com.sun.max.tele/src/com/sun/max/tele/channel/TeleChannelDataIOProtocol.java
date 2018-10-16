@@ -114,6 +114,7 @@ public interface TeleChannelDataIOProtocol {
      * It is manually serialized and passed as a byte array.
      */
     class GatherThreadData implements Serializable {
+        private static final long serialVersionUID = 1668945625108121602L;
         public int id;
         public long localHandle;
         public long handle;

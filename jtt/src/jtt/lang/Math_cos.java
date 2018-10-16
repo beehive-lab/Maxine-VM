@@ -30,7 +30,9 @@ package jtt.lang;
  */
 public class Math_cos {
 
-    public static class NaN extends Throwable { }
+    public static class NaN extends Throwable {
+        private static final long serialVersionUID = 57341496277522569L;
+    }
 
     public static double test(double arg) throws NaN {
         double v = Math.cos(arg);

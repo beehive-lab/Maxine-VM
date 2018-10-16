@@ -407,14 +407,19 @@ public class Deoptimization extends VmOperation {
             switch (info.returnValue.kind.stackKind()) {
                 case Int:
                     Stubs.unwindInt(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asInt());
+                    break;
                 case Float:
                     Stubs.unwindFloat(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asFloat());
+                    break;
                 case Long:
                     Stubs.unwindLong(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asLong());
+                    break;
                 case Double:
                     Stubs.unwindDouble(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asDouble());
+                    break;
                 case Object:
                     Stubs.unwindObject(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asObject());
+                    break;
                 default:
                     FatalError.unexpected("unexpected return kind: " + info.returnValue.kind.stackKind());
             }

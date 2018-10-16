@@ -312,6 +312,7 @@ public final class BootImageMethodTree {
      * GUI class.
      */
     static class MethodTreeView extends JPanel {
+        private static final long serialVersionUID = 6080370490035610380L;
 
         JLabel info;
         JPanel navigation;
@@ -385,6 +386,8 @@ public final class BootImageMethodTree {
             navigation = new JPanel();
             navigation.setLayout(new BoxLayout(navigation, BoxLayout.X_AXIS));
             hitPos = new JLabel("0 of 0") {
+                private static final long serialVersionUID = 5679826683596367261L;
+
                 @Override
                 public void setText(String text) {
                     while (text.length() < 25) {
@@ -408,6 +411,8 @@ public final class BootImageMethodTree {
             navigation.add(searchField);
 
             prevHit = new JButton(new AbstractAction("^") {
+                private static final long serialVersionUID = -1416097119188620759L;
+
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     int hits = searchHits.size();
@@ -420,6 +425,8 @@ public final class BootImageMethodTree {
                 }
             });
             nextHit = new JButton(new AbstractAction("v") {
+                private static final long serialVersionUID = 4323932852509808673L;
+
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     int hits = searchHits.size();
@@ -447,6 +454,8 @@ public final class BootImageMethodTree {
             // control for jumping to a node's parent
             navigation.add(new JSeparator(SwingConstants.VERTICAL));
             navigation.add(new JButton(new AbstractAction("jump to parent") {
+                private static final long serialVersionUID = 8793144664701743943L;
+
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (tree.getSelectionPath() == null) {
@@ -462,6 +471,8 @@ public final class BootImageMethodTree {
             // control for resetting tree (back to start view)
             navigation.add(new JSeparator(SwingConstants.VERTICAL));
             navigation.add(new JButton(new AbstractAction("reset tree view") {
+                private static final long serialVersionUID = -6251792247714810632L;
+
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     for (int i = tree.getRowCount() - 1; i >= 0; i--) {
@@ -506,6 +517,7 @@ public final class BootImageMethodTree {
      */
     static class MethodTreeNode extends DefaultMutableTreeNode {
 
+        private static final long serialVersionUID = 5432605084930177797L;
         Node node;
         String treeStringRep;
         String detailStringRep;

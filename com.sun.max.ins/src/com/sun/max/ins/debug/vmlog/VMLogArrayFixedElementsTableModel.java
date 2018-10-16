@@ -28,6 +28,8 @@ import com.sun.max.tele.object.*;
 
 class VMLogArrayFixedElementsTableModel extends VMLogArrayElementsTableModel {
 
+    private static final long serialVersionUID = 9124827580575450137L;
+
     VMLogArrayFixedElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {
         super(inspection, teleVMLog);
     }

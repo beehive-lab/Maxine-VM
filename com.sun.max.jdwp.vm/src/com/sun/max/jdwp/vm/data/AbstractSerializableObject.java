@@ -35,6 +35,7 @@ import com.sun.max.jdwp.vm.core.*;
 class AbstractSerializableObject implements SerializableObject {
 
     private static final Logger LOGGER = Logger.getLogger(AbstractSerializableObject.class.getName());
+    private static final long serialVersionUID = 6166782528838307798L;
 
     public byte[] getSerializedData() {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();

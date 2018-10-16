@@ -235,6 +235,8 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 1602003763008868211L;
+
             @Override
             public void procedure() {
                 final ObjectViewPreferences globalPreferences = ObjectViewPreferences.globalPreferences(inspection());
@@ -407,6 +409,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private final class VisitForwardedToAction extends InspectorAction {
 
+        private static final long serialVersionUID = 6044004145039741595L;
         private MaxObject forwardedToObject;
 
         VisitForwardedToAction(Inspection inspection) {
@@ -437,6 +440,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
     private final class VisitForwardedFromAction extends InspectorAction {
 
+        private static final long serialVersionUID = 4833733180303820166L;
         private MaxObject forwardedFromObject;
 
         VisitForwardedFromAction(Inspection inspection) {
@@ -470,6 +474,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
      */
     private final class VisitOverwritingObjectAction extends InspectorAction {
 
+        private static final long serialVersionUID = -1070121671043079711L;
         private MaxObject forwardedFromObject;
 
         VisitOverwritingObjectAction(Inspection inspection) {

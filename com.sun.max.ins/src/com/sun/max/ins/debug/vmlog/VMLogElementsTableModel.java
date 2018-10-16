@@ -39,6 +39,8 @@ import com.sun.max.vm.log.hosted.VMLogHosted.HostedLogRecord;
 
 abstract class VMLogElementsTableModel extends InspectorTableModel {
 
+    private static final long serialVersionUID = 1607180668459436051L;
+
     private class ColumnRenderers {
         Component[] renderers = new Component[VMLogColumnKind.values().length];
     }

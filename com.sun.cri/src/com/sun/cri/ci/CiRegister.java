@@ -40,6 +40,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
     public static final CiRegister Frame = new CiRegister(-2, -2, 0, "framereg", RegisterFlag.CPU);
 
     public static final CiRegister CallerFrame = new CiRegister(-3, -3, 0, "callerframereg", RegisterFlag.CPU);
+    private static final long serialVersionUID = -5279480322955200195L;
 
     /**
      * The identifier for this register that is unique across all the registers in a {@link CiArchitecture}.

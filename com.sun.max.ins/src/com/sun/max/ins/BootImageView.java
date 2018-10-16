@@ -110,6 +110,8 @@ public final class BootImageView extends AbstractView<BootImageView>  implements
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 858392128141224016L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<BootImageColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);

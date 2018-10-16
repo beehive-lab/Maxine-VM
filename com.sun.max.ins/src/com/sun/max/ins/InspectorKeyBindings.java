@@ -79,6 +79,7 @@ public class InspectorKeyBindings {
          * A map of all the defined key bindings, indexed by their unique names.
          */
         public static final Map<String, KeyBindingMap> ALL = Collections.unmodifiableMap(ALL_MODIFIABLE);
+        private static final long serialVersionUID = -4255839461953756945L;
 
         private final String name;
 

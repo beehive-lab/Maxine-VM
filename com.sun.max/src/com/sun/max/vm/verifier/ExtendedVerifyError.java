@@ -33,6 +33,7 @@ import com.sun.max.vm.classfile.*;
  */
 public class ExtendedVerifyError extends VerifyError {
 
+    private static final long serialVersionUID = -5200351768271808187L;
     public final ClassMethodActor classMethodActor;
     public final CodeAttribute codeAttribute;
     public final int bci;

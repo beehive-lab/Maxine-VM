@@ -24,6 +24,8 @@ package com.oracle.max.vm.ext.jvmti.demo;
 
 
 class TestException extends Exception {
+    private static final long serialVersionUID = -3083759852937718659L;
+
     TestException(String msg) {
         super(msg);
     }

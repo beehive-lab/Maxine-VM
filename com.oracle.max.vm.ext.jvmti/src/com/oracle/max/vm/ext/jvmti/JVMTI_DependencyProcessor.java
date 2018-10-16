@@ -39,6 +39,7 @@ import com.sun.max.vm.compiler.target.*;
 public class JVMTI_DependencyProcessor extends DependencyProcessor {
 
     private static class JVMTI_Assumption extends CiAssumptions.ContextAssumption {
+        private static final long serialVersionUID = 1778124991912261861L;
         private long eventSettings;
         private long[] breakpoints;
 

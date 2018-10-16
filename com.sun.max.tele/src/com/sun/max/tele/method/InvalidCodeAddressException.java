@@ -31,6 +31,7 @@ import com.sun.max.unsafe.*;
  */
 public class InvalidCodeAddressException extends Exception {
 
+    private static final long serialVersionUID = -5403683289134385689L;
     private final Address address;
 
     public InvalidCodeAddressException(Address address, String message) {

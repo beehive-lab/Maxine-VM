@@ -526,6 +526,7 @@ public final class Inspection implements InspectionHolder {
     /**
      * Saves any persistent state, then shuts down VM process if needed and inspection.
      */
+    @SuppressWarnings("finally")
     public void quit() {
         for (InspectionListener listener : inspectionListeners) {
             Trace.line(TRACE_VALUE, tracePrefix() + "inspection quitting: " + listener);

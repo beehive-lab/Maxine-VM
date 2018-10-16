@@ -22,43 +22,60 @@
  */
 package com.sun.max.ins;
 
-import java.io.*;
-import java.lang.reflect.*;
-import java.math.*;
-import java.util.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-
-import com.sun.cri.ci.*;
-import com.sun.max.*;
-import com.sun.max.ins.debug.*;
+import com.sun.cri.ci.CiCodePos;
+import com.sun.max.Utils;
+import com.sun.max.ins.debug.WatchpointsViewPreferences;
 import com.sun.max.ins.gui.*;
-import com.sun.max.ins.memory.*;
+import com.sun.max.ins.memory.FixedMemoryRegion;
+import com.sun.max.ins.memory.MemoryWordRegion;
 import com.sun.max.ins.method.*;
-import com.sun.max.ins.object.*;
-import com.sun.max.ins.type.*;
-import com.sun.max.ins.util.*;
+import com.sun.max.ins.object.HeapRegionInfoView;
+import com.sun.max.ins.type.ClassActorSearchDialog;
+import com.sun.max.ins.type.TypeSearchDialog;
+import com.sun.max.ins.util.InspectorError;
+import com.sun.max.ins.util.InspectorWarning;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
-import com.sun.max.lang.*;
-import com.sun.max.program.*;
+import com.sun.max.lang.Classes;
+import com.sun.max.program.Trace;
 import com.sun.max.tele.*;
 import com.sun.max.tele.MaxWatchpointManager.MaxDuplicateWatchpointException;
 import com.sun.max.tele.MaxWatchpointManager.MaxTooManyWatchpointsException;
-import com.sun.max.tele.interpreter.*;
-import com.sun.max.tele.method.*;
+import com.sun.max.tele.interpreter.TeleInterpreter;
+import com.sun.max.tele.method.InvalidCodeAddressException;
+import com.sun.max.tele.method.MaxCodeHoldingRegion;
 import com.sun.max.tele.object.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.util.Predicate;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.DynamicHub;
+import com.sun.max.vm.actor.holder.StaticHub;
+import com.sun.max.vm.actor.holder.StaticTuple;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.classfile.constant.SymbolTable;
 import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.vm.runtime.SafepointPoll;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.type.ClassRegistry;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.type.TypeDescriptor;
+import com.sun.max.vm.value.ReferenceValue;
+import com.sun.max.vm.value.Value;
+
+import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Provider of {@link InspectorAction}s that are of general use.
@@ -151,6 +168,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class AboutSessionAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "About this session";
+        private static final long serialVersionUID = -7507239260494243798L;
 
         AboutSessionAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -175,6 +193,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     public final InspectorAction inertAction(String actionTitle) {
         final InspectorAction action = new InspectorAction(inspection(), actionTitle) {
 
+            private static final long serialVersionUID = -7409829472754693772L;
+
             @Override
             protected void procedure() {
 
@@ -190,6 +210,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class AboutMaxineAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "About Maxine";
+        private static final long serialVersionUID = -358158339530598443L;
 
         AboutMaxineAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -214,6 +235,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class PreferencesAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Preferences";
+        private static final long serialVersionUID = 4027568202856143631L;
 
         PreferencesAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -240,6 +262,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RefreshAllAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Refresh all views";
+        private static final long serialVersionUID = -1277964125892854913L;
 
         RefreshAllAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -266,6 +289,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class QuitAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Quit Inspector";
+        private static final long serialVersionUID = -1634790612809914854L;
 
         QuitAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -292,6 +316,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RelocateBootImageAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Relocate Boot Image";
+        private static final long serialVersionUID = 2523966142241506083L;
 
         RelocateBootImageAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -323,6 +348,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetInspectorTraceLevelAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set Inspector trace level...";
+        private static final long serialVersionUID = 2209762626368405069L;
 
         SetInspectorTraceLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -364,6 +390,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ChangeInterpreterUseLevelAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Change Interpreter use level...";
+        private static final long serialVersionUID = -8913417152132098747L;
 
         ChangeInterpreterUseLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -412,6 +439,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetTransportDebugLevelAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set transport debug level...";
+        private static final long serialVersionUID = 7771316660187302662L;
 
         SetTransportDebugLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -457,6 +485,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class RunFileCommandsAction extends InspectorAction {
 
+        private static final long serialVersionUID = 5676232567811944039L;
+
         RunFileCommandsAction() {
             super(inspection(), "Execute commands from file...");
         }
@@ -487,6 +517,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class UpdateClasspathTypesAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Rescan class path for types";
+        private static final long serialVersionUID = 271195703720484189L;
 
         UpdateClasspathTypesAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -514,6 +545,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetVMTraceLevelAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set VM trace level";
+        private static final long serialVersionUID = -3849844809515499061L;
 
         SetVMTraceLevelAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -560,6 +592,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetVMTraceThresholdAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set VM trace threshold";
+        private static final long serialVersionUID = -4129486497196218984L;
 
         SetVMTraceThresholdAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -606,6 +639,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class CopyWordAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Copy word to clipboard";
+        private static final long serialVersionUID = 8287238985408409402L;
         private final Word word;
 
         private CopyWordAction(Word word, String actionTitle) {
@@ -634,6 +668,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class CopyValueAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Copy value to clipboard";
+        private static final long serialVersionUID = 5254136094264244582L;
         private final Value value;
 
         private CopyValueAction(Value value, String actionTitle) {
@@ -668,6 +703,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class CopyObjectOriginAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Copy object origin to clipboard";
+        private static final long serialVersionUID = -7412837476712793096L;
         private final MaxObject object;
 
         private CopyObjectOriginAction(MaxObject object, String actionTitle) {
@@ -700,6 +736,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class CopyObjectDescriptionAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Copy object origin to clipboard";
+        private static final long serialVersionUID = 4764555024680509617L;
         private final MaxObject object;
 
         private CopyObjectDescriptionAction(MaxObject object, String actionTitle) {
@@ -776,6 +813,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Action: view the HeapRegionInfo for the currently selected WordValueLabel when this one is in a mode denoting a heap address.
      */
     final class ViewSelectedAddressHeapRegionInfo extends InspectorAction {
+        private static final long serialVersionUID = -7882929278056869468L;
+
         ViewSelectedAddressHeapRegionInfo(String actionTitle) {
             super(inspection(), actionTitle == null ? "View heap region info for selected address" : actionTitle);
         }
@@ -803,6 +842,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      *Action:  view the memory allocated to the currently selected thread's stack.
      */
     final class ViewSelectedThreadStackMemoryAction extends InspectorAction {
+
+        private static final long serialVersionUID = -2155751617983175675L;
 
         ViewSelectedThreadStackMemoryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected thread's stack" : actionTitle);
@@ -837,6 +878,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      *Action:  view the memory allocated to the currently selected thread's stack.
      */
     final class ViewSelectedThreadVMLogMemoryAction extends InspectorAction {
+
+        private static final long serialVersionUID = 1075237137719450774L;
 
         ViewSelectedThreadVMLogMemoryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected thread's VM log" : actionTitle);
@@ -877,6 +920,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewSelectedThreadLocalsBlockMemoryAction extends InspectorAction {
 
+        private static final long serialVersionUID = 4124812489440812281L;
+
         ViewSelectedThreadLocalsBlockMemoryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected thread's locals block" : actionTitle);
         }
@@ -911,6 +956,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewSelectedThreadLocalsAreaMemoryAction extends InspectorAction {
 
+        private static final long serialVersionUID = 2568996303761914719L;
         private final SafepointPoll.State state;
 
         ViewSelectedThreadLocalsAreaMemoryAction(SafepointPoll.State state, String actionTitle) {
@@ -964,6 +1010,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewSelectedStackFrameMemoryAction extends InspectorAction {
 
+        private static final long serialVersionUID = 2557538914151636180L;
+
         ViewSelectedStackFrameMemoryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected stack frame" : actionTitle);
             refreshableActions.add(this);
@@ -999,6 +1047,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewStackFrameMemoryAction extends InspectorAction {
 
+        private static final long serialVersionUID = -8828003984715564367L;
         private final MaxStackFrame stackFrame;
 
         ViewStackFrameMemoryAction(MaxStackFrame stackFrame, String actionTitle) {
@@ -1030,6 +1079,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      *Action:  view the memory allocated to the currently selected memory watchpoint.
      */
     final class ViewSelectedMemoryWatchpointAction extends InspectorAction {
+
+        private static final long serialVersionUID = 1460400077536763554L;
 
         ViewSelectedMemoryWatchpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory at selected watchpoint" : actionTitle);
@@ -1068,6 +1119,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewSelectedMemoryRegionAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View selected memory region";
+        private static final long serialVersionUID = 3071045813982118922L;
 
         ViewSelectedMemoryRegionAction() {
             super(inspection(), DEFAULT_TITLE);
@@ -1103,6 +1155,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class SelectMemoryRegionAction extends InspectorAction {
 
+        private static final long serialVersionUID = -2599048098727973030L;
         private final MaxMemoryRegion memoryRegion;
         private static final String DEFAULT_TITLE = "Select memory region";
 
@@ -1170,6 +1223,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewClassActorByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View ClassActor by name...";
+        private static final long serialVersionUID = -2887827135607408559L;
 
         ViewClassActorByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1201,6 +1255,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewClassActorByHexIdAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View ClassActor by ID (Hex) ...";
+        private static final long serialVersionUID = 2426724003818767365L;
 
         ViewClassActorByHexIdAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1242,6 +1297,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewClassActorByDecimalIdAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View ClassActor by ID (decimal) ...";
+        private static final long serialVersionUID = -5040390162383725072L;
+
         ViewClassActorByDecimalIdAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
@@ -1282,6 +1339,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewStaticTupleByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View StaticTuple by class name...";
+        private static final long serialVersionUID = 2711445660644985883L;
 
         ViewStaticTupleByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1318,6 +1376,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewStaticTupleForObjectAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View StaticTuple for object class";
+        private static final long serialVersionUID = 2893804264029199959L;
 
         private final MaxObject object;
         private TeleStaticTuple staticTuple = null;
@@ -1372,6 +1431,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewDynamicHubByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View DynamicHub by class name...";
+        private static final long serialVersionUID = 7439882082127256103L;
 
         ViewDynamicHubByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1408,6 +1468,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewStaticHubByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View StaticHub by class name...";
+        private static final long serialVersionUID = -4650582974518178746L;
 
         ViewStaticHubByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1443,6 +1504,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMethodActorByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE =  "View MethodActor by name...";
+        private static final long serialVersionUID = -3697914981739377335L;
 
         ViewMethodActorByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1475,6 +1537,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewSubstitutionSourceClassActorAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE =  "View method substitution source";
+        private static final long serialVersionUID = -4199406299703176636L;
 
         private final TeleClassMethodActor teleClassMethodActor;
 
@@ -1568,6 +1631,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewJavaSourceAction extends InspectorAction {
 
+        private static final long serialVersionUID = -3781934720541258425L;
         private final TeleClassMethodActor teleClassMethodActor;
 
         ViewJavaSourceAction(TeleClassMethodActor teleClassMethodActor) {
@@ -1598,6 +1662,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMachineCodeByAddressAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View code by address...";
+        private static final long serialVersionUID = 3497343059308808845L;
 
         ViewMachineCodeByAddressAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1662,6 +1727,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMethodCodeAtLocationAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View code at a location";
+        private static final long serialVersionUID = 7982425922473499811L;
         private final MaxCodeLocation codeLocation;
 
         ViewMethodCodeAtLocationAction(MaxCodeLocation codeLocation, String actionTitle) {
@@ -1695,6 +1761,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMethodCodeAtSelectionAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View code at current selection";
+        private static final long serialVersionUID = -7507962236929171221L;
+
         ViewMethodCodeAtSelectionAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
@@ -1727,6 +1795,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMethodCodeAtIPAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View code at current IP";
+        private static final long serialVersionUID = 6346614182154669643L;
+
         ViewMethodCodeAtIPAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
@@ -1759,6 +1829,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMethodBytecodeAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View bytecode...";
+        private static final long serialVersionUID = -8323855891288120164L;
         private final TeleClassMethodActor teleClassMethodActor;
 
         ViewMethodBytecodeAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
@@ -1800,6 +1871,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMethodBytecodeByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Bytecode...";
+        private static final long serialVersionUID = -7901262764439821848L;
 
         ViewMethodBytecodeByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1849,6 +1921,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMethodCompilationByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Method compilation...";
+        private static final long serialVersionUID = 2145149581479418751L;
 
         ViewMethodCompilationByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1883,6 +1956,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewNativeFunctionByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Native function...";
+        private static final long serialVersionUID = -3740185060688023113L;
 
         ViewNativeFunctionByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -1914,12 +1988,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return viewNativeFunctionByNameAction;
     }
 
-   /**
+    /**
      * Action:  displays the compiled code for an interactively specified method.
      */
     final class ViewMethodMachineCodeAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View compiled code...";
+        private static final long serialVersionUID = -2869372759700500996L;
 
         ViewMethodMachineCodeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2005,6 +2080,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewMethodCodeInBootImageAction extends InspectorAction {
 
+        private static final long serialVersionUID = -1615056764692554313L;
         private final int offset;
 
         ViewMethodCodeInBootImageAction(int offset, Class clazz, String name, Class... parameterTypes) {
@@ -2055,6 +2131,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class CopyCompiledCodeToClipboardAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Copy disassembled machine code to clipboard";
+        private static final long serialVersionUID = -7735365195634765094L;
 
         private final MaxCompilation compilation;
 
@@ -2086,6 +2163,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class CopyBytecodeToClipboardAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Copy disassembled bytecode to clipboard";
+        private static final long serialVersionUID = 8040739894504557905L;
 
         private final TeleClassMethodActor teleClassMethodActor;
 
@@ -2134,12 +2212,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         }
     }
 
-   /**
+    /**
      * Action:  removes the currently selected breakpoint from the VM.
      */
     final class RemoveSelectedBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove selected breakpoint";
+        private static final long serialVersionUID = 3398144637211834032L;
 
         RemoveSelectedBreakpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2159,7 +2238,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
                 try {
                     selectedBreakpoint.remove();
                     focus().setBreakpoint(null);
-                }  catch (MaxVMBusyException maxVMBusyException) {
+                } catch (MaxVMBusyException maxVMBusyException) {
                     inspection().announceVMBusyFailure(name());
                 }
             } else {
@@ -2188,6 +2267,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove breakpoint";
+        private static final long serialVersionUID = 5072038816040661512L;
 
         final MaxBreakpoint breakpoint;
 
@@ -2224,6 +2304,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveAllBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove all breakpoints";
+        private static final long serialVersionUID = -8481736252819916034L;
 
         RemoveAllBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2269,6 +2350,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class EnableBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Enable breakpoint";
+        private static final long serialVersionUID = -3347427511692101083L;
         final MaxBreakpoint breakpoint;
 
         EnableBreakpointAction(MaxBreakpoint breakpoint, String actionTitle) {
@@ -2310,6 +2392,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DisableBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Disable breakpoint";
+        private static final long serialVersionUID = -4493523105922241520L;
 
         final MaxBreakpoint breakpoint;
 
@@ -2352,6 +2435,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set breakpoint";
+        private static final long serialVersionUID = 4377439691819378164L;
 
         private final MaxCodeLocation codeLocation;
 
@@ -2393,6 +2477,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set machine code breakpoint";
+        private static final long serialVersionUID = -5593104873355884917L;
 
         private final MaxCodeLocation codeLocation;
 
@@ -2430,6 +2515,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveMachineCodeBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove machine code breakpoint";
+        private static final long serialVersionUID = 432943343992817449L;
 
         private final MaxCodeLocation codeLocation;
 
@@ -2470,6 +2556,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ToggleMachineCodeBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Toggle machine code breakpoint";
+        private static final long serialVersionUID = -2553423927939109613L;
 
         private final MaxCodeLocation codeLocation;
 
@@ -2553,6 +2640,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeBreakpointAtAddressAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "At address...";
+        private static final long serialVersionUID = 3593011515434598327L;
 
         SetMachineCodeBreakpointAtAddressAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2606,6 +2694,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeLabelBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set breakpoint at every machine code label";
+        private static final long serialVersionUID = -196455151183719240L;
         final MaxCompilation compilation;
 
         SetMachineCodeLabelBreakpointsAction(MaxCompilation compilation, String actionTitle) {
@@ -2640,6 +2729,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveMachineCodeLabelBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove breakpoint at every machine code label";
+        private static final long serialVersionUID = -871774817396040904L;
         private final MaxCompilation compilation;
 
         RemoveMachineCodeLabelBreakpointsAction(MaxCompilation compilation, String actionTitle) {
@@ -2677,6 +2767,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeBreakpointAtEntryAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Set machine code breakpoint at code entry";
+        private static final long serialVersionUID = -5856156887692864320L;
         private final MaxCompilation compilation;
         SetMachineCodeBreakpointAtEntryAction(MaxCompilation compilation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2721,6 +2812,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeBreakpointAtEntriesByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Compiled code...";
+        private static final long serialVersionUID = 9065065847434605771L;
 
         SetMachineCodeBreakpointAtEntriesByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2772,6 +2864,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetNativeFunctionBreakpointByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Native function...";
+        private static final long serialVersionUID = -8767009834517060439L;
 
         SetNativeFunctionBreakpointByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2824,6 +2917,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetMachineCodeBreakpointAtObjectInitializerAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Object initializers of class...";
+        private static final long serialVersionUID = -4499304893204457949L;
 
         SetMachineCodeBreakpointAtObjectInitializerAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2882,6 +2976,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     class ToggleBytecodeBreakpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Toggle bytecode breakpoint";
+        private static final long serialVersionUID = -5589033690391060071L;
 
         ToggleBytecodeBreakpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -2932,6 +3027,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetBytecodeBreakpointAtMethodEntryAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Method on classpath";
+        private static final long serialVersionUID = 6768881228874147027L;
         private final TeleClassMethodActor teleClassMethodActor;
 
         SetBytecodeBreakpointAtMethodEntryAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
@@ -2977,6 +3073,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetBytecodeBreakpointAtMethodEntryByNameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Method on classpath, by name...";
+        private static final long serialVersionUID = -8601745790648036112L;
 
         SetBytecodeBreakpointAtMethodEntryByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3020,6 +3117,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetBytecodeBreakpointAtMethodEntryByKeyAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Method matched by key...";
+        private static final long serialVersionUID = -1991733734434240294L;
 
         SetBytecodeBreakpointAtMethodEntryByKeyAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3054,12 +3152,13 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         return setBytecodeBreakpointAtMethodEntryByKeyAction;
     }
 
-   /**
+    /**
      * Action: create a memory word watchpoint, interactive if no location specified.
      */
     final class SetWordWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch memory word";
+        private static final long serialVersionUID = -5653221920340412599L;
         private final MaxMemoryRegion memoryRegion;
 
         SetWordWatchpointAction() {
@@ -3139,6 +3238,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Watch memory region";
         private static final String DEFAULT_REGION_DESCRIPTION = "";
+        private static final long serialVersionUID = 793593211628518033L;
         private final MaxMemoryRegion memoryRegion;
         private final String regionDescription;
 
@@ -3222,6 +3322,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetObjectWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch object memory";
+        private static final long serialVersionUID = -1909245964624295488L;
         private final MaxObject object;
         private final MaxMemoryRegion memoryRegion;
 
@@ -3277,6 +3378,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetFieldWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch object field";
+        private static final long serialVersionUID = -2327665394721731084L;
         private final MaxObject object;
         private final FieldActor fieldActor;
         private final MaxMemoryRegion memoryRegion;
@@ -3335,6 +3437,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetArrayElementWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch array element";
+        private static final long serialVersionUID = -6511196556033934129L;
         private final MaxObject object;
         private final Kind elementKind;
         private final int arrayOffsetFromOrigin;
@@ -3404,6 +3507,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetHeaderWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch object header field";
+        private static final long serialVersionUID = 1565957512034560869L;
         private final MaxObject object;
         private final HeaderField headerField;
         private final MaxMemoryRegion memoryRegion;
@@ -3462,6 +3566,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class SetThreadLocalWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Watch thread local variable";
+        private static final long serialVersionUID = -1710900134476670846L;
         private final MaxThreadLocalVariable threadLocalVariable;
 
         SetThreadLocalWatchpointAction(MaxThreadLocalVariable threadLocalVariable, String actionTitle) {
@@ -3517,6 +3622,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove memory watchpoint";
+        private static final long serialVersionUID = -1473512768092057288L;
         private final MaxWatchpoint watchpoint;
 
         RemoveWatchpointAction(MaxWatchpoint watchpoint, String actionTitle) {
@@ -3556,6 +3662,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveSelectedWatchpointAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove selected watchpoint";
+        private static final long serialVersionUID = -2340838696421042374L;
 
         RemoveSelectedWatchpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3607,6 +3714,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveWatchpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove watchpoints";
+        private static final long serialVersionUID = 67680943382960667L;
         private final List<MaxWatchpoint> watchpoints;
 
         RemoveWatchpointsAction(List<MaxWatchpoint> watchpoints, String actionTitle) {
@@ -3650,6 +3758,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class RemoveAllWatchpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Remove all watchpoints";
+        private static final long serialVersionUID = 8839904800812582083L;
 
         RemoveAllWatchpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3687,6 +3796,8 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
     final class SetMarkBitAction extends InspectorAction {
         private static final String DEFAULT_TITLE = "Set Mark bit";
+        private static final long serialVersionUID = -7055406253715665722L;
+
         SetMarkBitAction() {
             super(inspection(), "Mark word at address...");
             refreshableActions.add(this);
@@ -3738,6 +3849,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugPauseAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Pause process";
+        private static final long serialVersionUID = 236783297933301055L;
 
         DebugPauseAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3774,6 +3886,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugResumeAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Resume";
+        private static final long serialVersionUID = 9142599681741414237L;
 
         DebugResumeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3811,6 +3924,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugReturnFromFrameAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Return from frame (ignoring breakpoints)";
+        private static final long serialVersionUID = -329622991953260688L;
 
         DebugReturnFromFrameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3850,6 +3964,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugReturnFromFrameWithBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Return from frame";
+        private static final long serialVersionUID = 2905947112457744989L;
 
         DebugReturnFromFrameWithBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -3888,6 +4003,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugRunToInstructionAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Run to selected instruction (ignoring breakpoints)";
+        private static final long serialVersionUID = -3426011439257833204L;
 
         private final MaxCodeLocation codeLocation;
 
@@ -3945,6 +4061,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugRunToInstructionWithBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Run to selected instruction";
+        private static final long serialVersionUID = -684342234430893583L;
 
         final MaxCodeLocation codeLocation;
 
@@ -4002,6 +4119,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugRunToNextCallAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Run to next call instruction (ignoring breakpoints)";
+        private static final long serialVersionUID = -5164978749595551000L;
 
         DebugRunToNextCallAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4053,6 +4171,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugRunToNextCallWithBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Run to next call instruction";
+        private static final long serialVersionUID = 8850364387227099202L;
 
         DebugRunToNextCallWithBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4104,6 +4223,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     class DebugSingleStepAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Single instruction step";
+        private static final long serialVersionUID = 5568202826995232777L;
 
         DebugSingleStepAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4142,6 +4262,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugStepOverAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Step over (ignoring breakpoints)";
+        private static final long serialVersionUID = 2519958034618920084L;
 
         DebugStepOverAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4181,6 +4302,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class DebugStepOverWithBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Step over";
+        private static final long serialVersionUID = -3772199711023772898L;
 
         DebugStepOverWithBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4219,6 +4341,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     private class DebugInvokeMethodAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "Invoke method";
+        private static final long serialVersionUID = -3237560331145911068L;
         private final TeleClassMethodActor teleClassMethodActor;
 
         DebugInvokeMethodAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
@@ -4282,6 +4405,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ListVMStateHistoryAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "List VM state history";
+        private static final long serialVersionUID = -2290532387264792235L;
 
         ListVMStateHistoryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4308,6 +4432,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ListThreadsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "List all threads";
+        private static final long serialVersionUID = 5465273903806702833L;
 
         ListThreadsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4334,6 +4459,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ListStackFrames extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "List current thread's stack";
+        private static final long serialVersionUID = 6495554548260278506L;
 
         ListStackFrames(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4363,6 +4489,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ListMachineCodeAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "List compilations & native functions";
+        private static final long serialVersionUID = 4888760990728732774L;
 
         ListMachineCodeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4389,6 +4516,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ListMachineCodeToFileAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "List compilations & native functions to a file...";
+        private static final long serialVersionUID = -2660938696172693656L;
 
         ListMachineCodeToFileAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4432,6 +4560,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ListBreakpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "List all breakpoints";
+        private static final long serialVersionUID = -400623629790585808L;
 
         ListBreakpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4458,6 +4587,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ListInspectableMethodsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "List inspectable methods for menu";
+        private static final long serialVersionUID = -8008283550217680065L;
 
         ListInspectableMethodsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4488,6 +4618,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ListWatchpointsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "List all watchpoints";
+        private static final long serialVersionUID = 9089480572937668338L;
 
         ListWatchpointsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4514,6 +4645,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ListSettingsAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "List all settings";
+        private static final long serialVersionUID = -4559557240062269975L;
 
         ListSettingsAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4540,6 +4672,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     class InvokeHostMethod extends InspectorAction {
         private static final String DEFAULT_TITLE = "Invoke a host method";
+        private static final long serialVersionUID = -3903699941994261043L;
 
         InvokeHostMethod(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
@@ -4614,6 +4747,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     }
 
     private class ExecuteSpecificHostMethod extends InvokeHostMethod {
+        private static final long serialVersionUID = -5651947921247286467L;
         private final Method method;
         private final Kind[] parameterKinds;
 

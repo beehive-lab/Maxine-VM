@@ -131,6 +131,8 @@ public final class ObjectFieldsPaddedTable extends InspectorTable {
         if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
+                private static final long serialVersionUID = 6200786356024059181L;
+
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setFieldWatchpoint(objectView.object(), tableModel.rowToFieldActor(row), "Watch this field's memory").perform();
@@ -151,6 +153,8 @@ public final class ObjectFieldsPaddedTable extends InspectorTable {
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             final MaxObject object = objectView.object();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
+
+                private static final long serialVersionUID = -5961774782594677056L;
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
@@ -227,6 +231,8 @@ public final class ObjectFieldsPaddedTable extends InspectorTable {
      */
     private final class ObjectFieldsTableColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
+        private static final long serialVersionUID = 2100691455342729080L;
+
         ObjectFieldsTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, ObjectViewPreferences viewPreferences) {
             super(inspection(), ObjectColumnKind.values().length, viewPreferences);
             addColumnIfSupported(ObjectColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
@@ -248,6 +254,8 @@ public final class ObjectFieldsPaddedTable extends InspectorTable {
      * The origin may change because of GC.
      */
     private final class ObjectFieldsTableModel extends InspectorMemoryTableModel {
+
+        private static final long serialVersionUID = -5094209448693582852L;
 
         ObjectFieldsTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);

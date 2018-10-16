@@ -33,6 +33,7 @@ import com.sun.cri.ri.*;
  * operand stack values and locked objects of the bytecode frame(s).
  */
 public class CiFrame extends CiCodePos implements Serializable {
+    private static final long serialVersionUID = -8375043821303678002L;
     /**
      * An array of values representing how to reconstruct the state of the Java frame.
      * This is array is partitioned as follows:

@@ -27,6 +27,7 @@ package com.sun.max.jdwp.vm.data;
  *
  */
 public class VariableTableEntry extends AbstractSerializableObject {
+    private static final long serialVersionUID = -5483179015025347323L;
     private long codeIndex;
     private int length;
     private String name;

@@ -48,4 +48,5 @@ public class Catch_Loop03 {
 }
 
 class Catch_Loop03_Exception1 extends RuntimeException {
+    private static final long serialVersionUID = 4918788561831427369L;
 }

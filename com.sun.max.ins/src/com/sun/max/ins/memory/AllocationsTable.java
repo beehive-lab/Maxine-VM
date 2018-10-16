@@ -138,6 +138,8 @@ public final class AllocationsTable extends InspectorTable {
 
     private final class AllocationsColumnModel extends InspectorTableColumnModel<AllocationsColumnKind> {
 
+        private static final long serialVersionUID = -8744239250832587682L;
+
         private AllocationsColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, AllocationsViewPreferences viewPreferences) {
             super(inspection(), AllocationsColumnKind.values().length, viewPreferences);
             addColumnIfSupported(AllocationsColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
@@ -156,6 +158,7 @@ public final class AllocationsTable extends InspectorTable {
      */
     private final class AllocationsTableModel extends InspectorMemoryTableModel {
 
+        private static final long serialVersionUID = 8894903043615986252L;
         private MaxMemoryRegion[] sortedRegions = null;
         private int[] displayedRows = null;
 

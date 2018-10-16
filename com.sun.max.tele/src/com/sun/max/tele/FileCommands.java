@@ -134,6 +134,8 @@ public class FileCommands {
     }
 
     static class CommandException extends Exception {
+        private static final long serialVersionUID = 7999169309911295512L;
+
         CommandException(String message) {
             super("error at line " + +lineNumber + ": " + message);
         }

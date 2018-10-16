@@ -111,6 +111,8 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         add(statusLabel);
 
         previousButton = new JButton(new AbstractAction() {
+            private static final long serialVersionUID = -6844954992854881987L;
+
             public void actionPerformed(ActionEvent actionEvent) {
                 owner.selectPreviousResult();
             }
@@ -122,6 +124,8 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         add(previousButton);
 
         nextButton = new JButton(new AbstractAction() {
+            private static final long serialVersionUID = -419635829970623696L;
+
             public void actionPerformed(ActionEvent actionEvent) {
                 owner.selectNextResult();
             }
@@ -133,6 +137,8 @@ public class RowTextSearchToolBar extends InspectorToolBar {
         add(nextButton);
 
         final JButton closeButton = new JButton(new AbstractAction() {
+            private static final long serialVersionUID = -3030079683963657516L;
+
             public void actionPerformed(ActionEvent actionEvent) {
                 owner.closeRequested();
             }

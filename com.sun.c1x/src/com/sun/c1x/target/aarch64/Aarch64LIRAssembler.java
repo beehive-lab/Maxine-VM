@@ -951,6 +951,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     @Override
+    @SuppressWarnings("fallthrough")
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
         // Checkstyle: off
         assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == CiKind.Long && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " +

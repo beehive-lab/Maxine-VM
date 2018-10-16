@@ -28,6 +28,8 @@ package com.sun.max.tele;
  */
 public abstract class MaxException extends Exception {
 
+    private static final long serialVersionUID = 3737238688516424608L;
+
     /**
      * Creates a checked exception that can be
      * thrown when access to the VM fails for

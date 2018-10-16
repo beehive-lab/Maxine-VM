@@ -608,6 +608,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         // Only need one, but maybe not even that one; create lazily.
         return new InspectorAction(inspection(), pinnedPrefix() + getTextForTitle()) {
 
+            private static final long serialVersionUID = 5975240619970592412L;
+
             @Override
             protected void procedure() {
                 highlight();
@@ -622,6 +624,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
         // Only need one, but maybe not even that one; create lazily.
         if (closeViewAction == null) {
             closeViewAction = new InspectorAction(inspection(), "Close") {
+
+                private static final long serialVersionUID = 6625436010349037513L;
 
                 @Override
                 protected void procedure() {
@@ -643,6 +647,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      */
     protected InspectorAction getViewOptionsAction() {
         final InspectorAction dummyViewOptionsAction = new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = -606087376652374777L;
+
             @Override
             protected void procedure() {
             }
@@ -656,6 +662,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      */
     protected final InspectorAction getRefreshAction() {
         return new InspectorAction(inspection(), "Refresh") {
+            private static final long serialVersionUID = -6516563415329513364L;
+
             @Override
             protected void procedure() {
                 Trace.line(TRACE_VALUE, "Refreshing view: " + AbstractView.this);
@@ -670,6 +678,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      */
     protected final InspectorAction getDefaultPrintAction() {
         return new InspectorAction(inspection(), "Print") {
+            private static final long serialVersionUID = -6485276539139696048L;
+
             @Override
             public void procedure() {
                 final MessageFormat footer = new MessageFormat(vm().entityName() + ": " + getTextForTitle() + "  Printed: " + new Date() + " -- Page: {0, number, integer}");
@@ -690,6 +700,8 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
      */
     protected InspectorAction getPrintAction() {
         final InspectorAction dummyPrintAction = new InspectorAction(inspection(), "Print") {
+            private static final long serialVersionUID = 6369597674421874721L;
+
             @Override
             protected void procedure() {
             }

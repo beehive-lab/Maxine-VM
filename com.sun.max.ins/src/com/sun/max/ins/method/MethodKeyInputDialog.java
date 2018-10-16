@@ -51,6 +51,7 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
      * updated with the selected type in {@linkplain TypeDescriptor#toJavaString() Java source format}.
      */
     class TypeFieldChooser extends InspectorAction {
+        private static final long serialVersionUID = -7501211455692282352L;
         final JTextComponent field;
         TypeFieldChooser(String name, JTextComponent field) {
             super(inspection(), name);
@@ -232,11 +233,15 @@ public class MethodKeyInputDialog extends InspectorDialog implements DocumentLis
         parametersButton.setToolTipText("Find parameters....");
 
         okButton = new JButton(new AbstractAction("OK") {
+            private static final long serialVersionUID = -8569593300720430552L;
+
             public void actionPerformed(ActionEvent e) {
                 dispose();
             }
         });
         final JButton cancelButton = new JButton(new AbstractAction("Cancel") {
+            private static final long serialVersionUID = -7966036728716876773L;
+
             public void actionPerformed(ActionEvent e) {
                 methodKey = null;
                 dispose();

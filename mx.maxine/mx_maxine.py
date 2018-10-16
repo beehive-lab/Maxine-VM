@@ -89,6 +89,14 @@ def checkcopyrights(args):
     mx.checkcopyrights(['--', '--copyright-dir', 'mx.maxine'] + args)
 
 
+def build(args):
+    for i in args:
+        if i == '-h' or i == '-help' or i == '--help':
+            print '"for help run mx :build -h"'
+            return
+    mx.build(['--warning-as-error'] + args)
+
+
 def eclipse(args):
     """launch Eclipse with the Maxine VM
 
@@ -795,6 +803,7 @@ def mx_init(suite):
                     help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
 
     commands = {
+        'build': [build, '"for help run mx :build -h"'],
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],
         'checkcopyrights': [checkcopyrights, '"for help run mx :checkcopyrights -h"'],

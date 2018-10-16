@@ -166,6 +166,7 @@ final class HeapRegionInfoTable extends InspectorTable {
     static final String [] infoNames = {"start", "end", "firstFreeChunk", "state", "tag"};
 
     final class HeapRegionInfoTableModel extends InspectorTableModel  implements TableCellRenderer, Prober {
+        private static final long serialVersionUID = -1871997797652571715L;
         TextLabel [] nameLabels = new TextLabel[infoNames.length];
         InspectorLabel[] valueLabels = new InspectorLabel[infoNames.length];
 
@@ -230,6 +231,8 @@ final class HeapRegionInfoTable extends InspectorTable {
     }
 
     final class HeapRegionInfoColumnModel extends InspectorTableColumnModel<HeapRegionInfoColumnKind> {
+        private static final long serialVersionUID = -5260216104389883015L;
+
         HeapRegionInfoColumnModel(TableCellRenderer cellRenderer, HeapRegionInfoViewPreferences viewPreferences) {
             super(inspection(), HeapRegionInfoColumnKind.values().length, viewPreferences);
             addColumnIfSupported(HeapRegionInfoColumnKind.NAME, cellRenderer, null);

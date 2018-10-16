@@ -33,6 +33,8 @@ import com.sun.max.*;
  */
 public class SortedProperties extends Properties {
 
+    private static final long serialVersionUID = 1581951588007506153L;
+
     /**
      * Overridden so that the properties are {@linkplain #store(Writer, String) saved} sorted according their keys.
      */

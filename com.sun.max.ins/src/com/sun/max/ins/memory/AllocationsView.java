@@ -171,6 +171,8 @@ public final class AllocationsView extends AbstractView<AllocationsView> impleme
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 55419632179360393L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<AllocationsColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);

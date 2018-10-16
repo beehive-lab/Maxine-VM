@@ -34,6 +34,7 @@ import com.sun.cri.ri.*;
  * for exceptions and to create {@linkplain CiFrame frames} for deoptimization.
  */
 public class CiCodePos implements Serializable {
+    private static final long serialVersionUID = -7915965117950466395L;
     /**
      * The position where this position has been called, {@code null} if none.
      */

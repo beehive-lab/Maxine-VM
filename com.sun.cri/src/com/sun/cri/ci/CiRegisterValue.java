@@ -28,6 +28,7 @@ package com.sun.cri.ci;
  */
 public final class CiRegisterValue extends CiValue {
 
+    private static final long serialVersionUID = -8085239665007333977L;
     /**
      * The register.
      */

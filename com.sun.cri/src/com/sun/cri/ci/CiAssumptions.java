@@ -36,10 +36,14 @@ import com.sun.cri.ri.*;
  */
 public final class CiAssumptions implements Serializable, Iterable<CiAssumptions.Assumption> {
 
+    private static final long serialVersionUID = -5031690874247489933L;
+
     public abstract static class Assumption implements Serializable {
+        private static final long serialVersionUID = 3437421236796115665L;
     }
 
     public abstract static class ContextAssumption extends Assumption {
+        private static final long serialVersionUID = -7708206565909657504L;
         /**
          * Type the assumption is made about.
          */
@@ -62,6 +66,7 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
      * An assumption about a unique subtype of a given type.
      */
     public static final class ConcreteSubtype extends ContextAssumption {
+        private static final long serialVersionUID = -8301122865045363744L;
         /**
          * Assumed unique concrete sub-type of the context type.
          */
@@ -91,6 +96,7 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
      * Captures a generic dependency between two methods.
      */
     public static abstract class DependentMethod extends ContextAssumption {
+        private static final long serialVersionUID = 2728007216348440219L;
         public final RiResolvedMethod method;
 
         /**
@@ -128,6 +134,8 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
      */
     public static final class ConcreteMethod extends DependentMethod {
 
+        private static final long serialVersionUID = 6750488694103510537L;
+
         /**
          *
          * @param method a virtual (or interface) method whose unique implementation for the receiver type
@@ -154,6 +162,8 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
      * An assumption about a inlined method.
      */
     public static final class InlinedMethod extends DependentMethod {
+
+        private static final long serialVersionUID = -113698117659404283L;
 
         /**
          *

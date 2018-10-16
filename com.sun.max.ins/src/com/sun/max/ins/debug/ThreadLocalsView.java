@@ -226,6 +226,8 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 9044618903793885394L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<ThreadLocalVariablesColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
@@ -236,6 +238,8 @@ public final class ThreadLocalsView extends AbstractView<ThreadLocalsView> imple
     @Override
     public InspectorAction getPrintAction() {
         return new InspectorAction(inspection(), "Print") {
+            private static final long serialVersionUID = 1227383442551786053L;
+
             @Override
             public void procedure() {
                 final ThreadLocalsAreaPanel tlaPanel = (ThreadLocalsAreaPanel) tabbedPane.getSelectedComponent();

@@ -73,6 +73,8 @@ public final class MemoryWordsTable extends InspectorTable {
         } else if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
+                private static final long serialVersionUID = 5883648646414965524L;
+
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setRegionWatchpoint(tableModel.getMemoryRegion(row), null, null).perform();
@@ -93,6 +95,8 @@ public final class MemoryWordsTable extends InspectorTable {
         if (vm().watchpointManager() != null) {
             final MaxMemoryRegion memoryRegion = tableModel.getMemoryRegion(row);
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
+
+                private static final long serialVersionUID = -6249842169512150939L;
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
@@ -205,6 +209,8 @@ public final class MemoryWordsTable extends InspectorTable {
 
     private final class MemoryWordsColumnModel extends InspectorTableColumnModel<MemoryColumnKind> {
 
+        private static final long serialVersionUID = 1367388540324787976L;
+
         private MemoryWordsColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, TableColumnVisibilityPreferences<MemoryColumnKind> instanceViewPreferences) {
             super(inspection(), MemoryColumnKind.values().length, instanceViewPreferences);
             addColumnIfSupported(MemoryColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
@@ -232,6 +238,7 @@ public final class MemoryWordsTable extends InspectorTable {
      */
     private final class MemoryWordsTableModel extends InspectorMemoryTableModel {
 
+        private static final long serialVersionUID = 9014355576982132982L;
         MemoryWordRegion memoryWordRegion;
 
         // Number of words offset from origin to beginning of region; may be negative.

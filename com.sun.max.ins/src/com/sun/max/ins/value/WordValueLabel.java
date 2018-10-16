@@ -1399,6 +1399,8 @@ public class WordValueLabel extends ValueLabel {
             final DisplayMode newValueKind = alternateValueKind;
             return new InspectorAction(inspection(), "Cycle alternate display text") {
 
+                private static final long serialVersionUID = 5706051414573333248L;
+
                 @Override
                 public void procedure() {
                     Trace.line(TRACE_VALUE, "WVL: " + displayMode.toString() + "->" + newValueKind);
@@ -1436,6 +1438,8 @@ public class WordValueLabel extends ValueLabel {
                         if (newObject != null) {
                             final MaxObject finalObject = newObject;
                             action = new InspectorAction(inspection(), null) {
+
+                                private static final long serialVersionUID = 7870893976185233032L;
 
                                 @Override
                                 protected void procedure() {
@@ -1505,6 +1509,8 @@ public class WordValueLabel extends ValueLabel {
                     final Address address = taggedCodePointer == null ? valueAsAddress : taggedCodePointer.getAddress();
                     final MaxCodeLocation codeLocation = vm().codeLocations().createMachineCodeLocation(address, "code address from WordValueLabel");
                     action = new InspectorAction(inspection(), "View Code at address") {
+                        private static final long serialVersionUID = 6951019380040860439L;
+
                         @Override
                         public void procedure() {
                             focus().setCodeLocation(codeLocation, true);
@@ -1629,6 +1635,8 @@ public class WordValueLabel extends ValueLabel {
                 sb.append(markColor);
                 action = new InspectorAction(inspection(), sb.toString()) {
 
+                    private static final long serialVersionUID = -5576031740254513616L;
+
                     @Override
                     protected void procedure() {
                         focus().setMarkBitIndex(bitIndex);
@@ -1707,6 +1715,7 @@ public class WordValueLabel extends ValueLabel {
 
         private final class MenuViewObjectAction extends InspectorAction {
 
+            private static final long serialVersionUID = 8278080986585473815L;
             private final InspectorAction inspectAction;
 
             private MenuViewObjectAction(Value value) {
@@ -1723,6 +1732,7 @@ public class WordValueLabel extends ValueLabel {
 
         private final class MenuCloseAndViewObjectAction extends InspectorAction {
 
+            private static final long serialVersionUID = -6628418618255896397L;
             private InspectorAction inspectAction;
 
             private MenuCloseAndViewObjectAction(Value value) {
@@ -1739,6 +1749,7 @@ public class WordValueLabel extends ValueLabel {
 
         private final class MenuCycleDisplayAction extends InspectorAction {
 
+            private static final long serialVersionUID = -1379285484297610680L;
             private final InspectorAction cycleAction;
 
             private MenuCycleDisplayAction() {
@@ -1755,6 +1766,7 @@ public class WordValueLabel extends ValueLabel {
 
         private final class MenuViewMemoryAction extends InspectorAction {
 
+            private static final long serialVersionUID = -1550010429350745929L;
             private final InspectorAction viewMemoryAction;
 
             private MenuViewMemoryAction(Value value) {
@@ -1776,6 +1788,7 @@ public class WordValueLabel extends ValueLabel {
 
         private final class MenuShowMemoryRegionAction extends InspectorAction {
 
+            private static final long serialVersionUID = -6133543708591570513L;
             private final InspectorAction showMemoryRegionAction;
 
             private MenuShowMemoryRegionAction(Value value) {
@@ -1797,6 +1810,7 @@ public class WordValueLabel extends ValueLabel {
 
         private final class MenuShowHeapMarkAction extends InspectorAction {
 
+            private static final long serialVersionUID = -176244839777354196L;
             private final InspectorAction showHeapMarkAction;
 
             private MenuShowHeapMarkAction(Value value) {

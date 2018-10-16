@@ -57,6 +57,11 @@ public class JavaExecHarness implements TestHarness<JavaExecHarness.JavaTestCase
             return super.equals(obj);
         }
 
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
+
         public Object resolve() {
             String s = codeLiteral;
             String className = s.substring(0, s.lastIndexOf('.'));

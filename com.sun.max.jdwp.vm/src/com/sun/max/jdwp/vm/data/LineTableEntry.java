@@ -28,6 +28,7 @@ package com.sun.max.jdwp.vm.data;
  */
 public class LineTableEntry extends AbstractSerializableObject {
 
+    private static final long serialVersionUID = -6415369515380098840L;
     private final long codeIndex;
     private final int lineNumber;
 

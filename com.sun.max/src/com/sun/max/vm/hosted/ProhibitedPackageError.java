@@ -28,6 +28,8 @@ package com.sun.max.vm.hosted;
  */
 public class ProhibitedPackageError extends Error {
 
+    private static final long serialVersionUID = 3318693449122848520L;
+
     public ProhibitedPackageError(String className) {
         super("Class is in prohibited package: " + className);
     }

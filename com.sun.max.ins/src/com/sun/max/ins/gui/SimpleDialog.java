@@ -46,6 +46,8 @@ public class SimpleDialog extends InspectorDialog {
 
         final JPanel buttonsPanel = new InspectorPanel(inspection);
         buttonsPanel.add(new InspectorButton(inspection, new AbstractAction("Close") {
+            private static final long serialVersionUID = 6808609048878112818L;
+
             public void actionPerformed(ActionEvent e) {
                 inspection.settings().save();
                 dispose();

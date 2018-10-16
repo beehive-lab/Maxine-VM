@@ -280,6 +280,7 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
          * and we may decide here to throw it away if we are not generating that advice.
          */
         @Override
+        @SuppressWarnings("fallthrough")
         public void generate(T1XTemplateTag tag, AdviceType at, Object... args) {
             byteArrayOut.setTag(tag);
             if (!generateTag(tag, at)) {
@@ -584,10 +585,9 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
                 case NEW_HYBRID:
                     methodName = "New";
-                    // Checkstyle: stop
+                    // fall through
                 case NEW:
                 case NEW$init:
-                    // Checkstyle: resume
                     assert adviceType == AdviceType.AFTER;
                     generateNew();
                     break;

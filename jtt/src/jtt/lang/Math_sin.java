@@ -32,7 +32,9 @@ package jtt.lang;
  */
 public class Math_sin {
 
-    public static class NaN extends Throwable { }
+    public static class NaN extends Throwable {
+        private static final long serialVersionUID = 8961935263956554727L;
+    }
 
     public static double test(double arg) throws NaN {
         double v = Math.sin(arg);

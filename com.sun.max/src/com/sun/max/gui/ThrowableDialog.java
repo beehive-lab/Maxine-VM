@@ -35,6 +35,7 @@ import javax.swing.border.*;
  * trace. When the stack trace is shown, pressing the same button hides the stack trace.
  */
 public final class ThrowableDialog extends JDialog {
+    private static final long serialVersionUID = 545946631878377462L;
 
     /**
      * Creates a dialog to display the details of an exception and makes it visible.

@@ -61,6 +61,8 @@ public class PrimitiveValueLabel extends ValueLabel {
                         menu.add(actions().copyValue(value(), "Copy value to clipboard"));
                         menu.add(new InspectorAction(inspection(), "Cycle display (Middle-Button)") {
 
+                            private static final long serialVersionUID = 7382514400963336482L;
+
                             @Override
                             protected void procedure() {
                                 cycleDisplay();

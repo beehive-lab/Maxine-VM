@@ -28,6 +28,8 @@ package com.sun.max.tele.debug;
  */
 public class ProcessException extends Exception {
 
+    private static final long serialVersionUID = -2137869006356276383L;
+
     public ProcessException(String message) {
         super(message);
     }

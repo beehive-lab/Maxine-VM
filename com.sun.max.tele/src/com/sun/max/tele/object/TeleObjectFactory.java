@@ -91,6 +91,8 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      *
      */
     private static class TimerPerType extends HashMap<Class, long[]> {
+        private static final long serialVersionUID = -5324548953846359187L;
+
         @Override
         public long[] get(Object key) {
             long[] time = super.get(key);
@@ -225,6 +227,8 @@ public final class TeleObjectFactory extends AbstractVmHolder implements TeleVMC
      * Map: {@link Class} of a {@link TeleObject} --> counter for number of instances created during session.
      */
     private final HashMap<Class, ClassCount> objectsCreatedPerType = new HashMap<Class, ClassCount>() {
+
+        private static final long serialVersionUID = -6200534475703380118L;
 
         @Override
         public ClassCount get(Object key) {

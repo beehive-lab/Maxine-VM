@@ -94,6 +94,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
      */
     private final class MainFrameTransferHandler extends TransferHandler {
 
+        private static final long serialVersionUID = -21055934228033353L;
+
         /**
          * Returns true iff there is at least one element that is contained in both arrays.
          */
@@ -430,6 +432,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     public InspectorAction moveToMiddleAction(final InspectorView view) {
         return new InspectorAction(inspection, "Move to center of frame") {
 
+            private static final long serialVersionUID = 1362163939191414632L;
+
             @Override
             protected void procedure() {
                 moveToMiddle(view);
@@ -485,6 +489,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
     public InspectorAction resizeToFitAction(final InspectorView view) {
         return new InspectorAction(inspection, "Resize to fit inside frame") {
 
+            private static final long serialVersionUID = -7506679321393945321L;
+
             @Override
             protected void procedure() {
                 resizeToFit(view);
@@ -498,6 +504,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
     public InspectorAction resizeToFillAction(final InspectorView view) {
         return new InspectorAction(inspection, "Resize to fill frame") {
+
+            private static final long serialVersionUID = 5133484262487146128L;
 
             @Override
             protected void procedure() {
@@ -517,6 +525,8 @@ public final class InspectorMainFrame extends JFrame implements InspectorGUI, Pr
 
     public InspectorAction restoreDefaultGeometryAction(final InspectorView view) {
         return new InspectorAction(inspection, "Restore size/location to default") {
+
+            private static final long serialVersionUID = -2422709912988600409L;
 
             @Override
             protected void procedure() {

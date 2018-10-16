@@ -65,11 +65,15 @@ class ButtonTabComponent extends InspectorPanel {
         label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
         final JPopupMenu popupMenu = new JPopupMenu();
         popupMenu.add(new AbstractAction("Close tab") {
+            private static final long serialVersionUID = -5914636957335204135L;
+
             public void actionPerformed(ActionEvent e) {
                 tabbedView.close(ButtonTabComponent.this.view);
             }
         });
         popupMenu.add(new AbstractAction("Close other tabs") {
+            private static final long serialVersionUID = 8939687535411414812L;
+
             public void actionPerformed(ActionEvent e) {
                 tabbedView.closeOthers(ButtonTabComponent.this.view);
             }

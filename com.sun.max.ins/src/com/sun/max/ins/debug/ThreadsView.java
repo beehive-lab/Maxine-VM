@@ -134,6 +134,8 @@ public final class ThreadsView extends AbstractView<ThreadsView> implements Tabl
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = -8282469235937392293L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<ThreadsColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);

@@ -270,6 +270,7 @@ public class CiUtil {
      * @return the result of formatting this method according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
+    @SuppressWarnings("fallthrough")
     public static String format(String format, RiMethod method) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;
@@ -360,6 +361,7 @@ public class CiUtil {
      * @return the result of formatting this field according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
+    @SuppressWarnings("fallthrough")
     public static String format(String format, RiField field) throws IllegalFormatException {
         final StringBuilder sb = new StringBuilder();
         int index = 0;

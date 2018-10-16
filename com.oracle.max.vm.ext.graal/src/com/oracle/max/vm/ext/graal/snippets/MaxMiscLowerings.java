@@ -340,12 +340,15 @@ public class MaxMiscLowerings extends SnippetLowerings {
     }
 
     private static class UnexpectedDeoptReasonException extends RuntimeException {
+        private static final long serialVersionUID = -6422922658193791552L;
+
         UnexpectedDeoptReasonException(String message) {
             super(message);
         }
     }
 
     private static class LoopLimitCheckException extends RuntimeException {
+        private static final long serialVersionUID = 5903963383578501828L;
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)

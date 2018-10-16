@@ -66,6 +66,8 @@ public final class BootImageTable extends InspectorTable {
      */
     private final class BootImageColumnModel extends InspectorTableColumnModel<BootImageColumnKind> {
 
+        private static final long serialVersionUID = 9009629397596313617L;
+
         private BootImageColumnModel(BootImageViewPreferences viewPreferences) {
             super(inspection(), BootImageColumnKind.values().length, viewPreferences);
             addColumnIfSupported(BootImageColumnKind.NAME, new NameCellRenderer(inspection()), null);
@@ -76,6 +78,7 @@ public final class BootImageTable extends InspectorTable {
 
     private final class BootImageTableModel extends InspectorTableModel {
 
+        private static final long serialVersionUID = 1067953878216443689L;
         private final List<String> names = new ArrayList<String>(50);
         private final List<InspectorLabel> valueLabels = new ArrayList<InspectorLabel>(50);
         private final List<InspectorLabel> regionLabels = new ArrayList<InspectorLabel>(50);

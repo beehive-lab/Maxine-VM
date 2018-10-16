@@ -30,6 +30,7 @@ package jtt.except;
 
 public class Catch_NPE_07 {
     public static class MyThrowable extends Throwable {
+        private static final long serialVersionUID = -8368270634090761069L;
     }
 
     public static int foo(Throwable t) {

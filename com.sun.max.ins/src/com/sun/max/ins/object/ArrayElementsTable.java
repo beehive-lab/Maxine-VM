@@ -115,6 +115,8 @@ public final class ArrayElementsTable extends InspectorTable {
         if (mouseEvent.getClickCount() > 1 && vm().watchpointManager() != null) {
             final InspectorAction toggleAction = new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint") {
 
+                private static final long serialVersionUID = -2322348856344874299L;
+
                 @Override
                 public MaxWatchpoint setWatchpoint() {
                     actions().setArrayElementWatchpoint(objectView.object(), elementKind, startOffset, tableModel.rowToElementIndex(row), indexPrefix, null).perform();
@@ -135,6 +137,8 @@ public final class ArrayElementsTable extends InspectorTable {
             final MaxObject object = objectView.object();
             final InspectorPopupMenu menu = new InspectorPopupMenu();
             menu.add(new Watchpoints.ToggleWatchpointRowAction(inspection(), tableModel, row, "Toggle watchpoint (double-click)") {
+
+                private static final long serialVersionUID = 9040592583908950868L;
 
                 @Override
                 public MaxWatchpoint setWatchpoint() {
@@ -219,6 +223,8 @@ public final class ArrayElementsTable extends InspectorTable {
      */
     private final class ArrayElementsTableColumnModel extends InspectorTableColumnModel<ObjectColumnKind> {
 
+        private static final long serialVersionUID = 8808824316776791379L;
+
         ArrayElementsTableColumnModel(InspectorTable table, InspectorMemoryTableModel tableModel, ObjectViewPreferences viewPreferences) {
             super(inspection(), ObjectColumnKind.values().length, viewPreferences);
             addColumnIfSupported(ObjectColumnKind.TAG, new MemoryTagTableCellRenderer(inspection(), table, tableModel), null);
@@ -242,6 +248,7 @@ public final class ArrayElementsTable extends InspectorTable {
      */
     private final class ArrayElementsTableModel extends InspectorMemoryTableModel {
 
+        private static final long serialVersionUID = -7590001598089386028L;
         private final int nBytesInElement;
 
         /**
@@ -482,6 +489,8 @@ public final class ArrayElementsTable extends InspectorTable {
     }
 
     private final class ScrollToIndexAction extends InspectorAction {
+
+        private static final long serialVersionUID = -2487275487284717521L;
 
         ScrollToIndexAction(Inspection inspection) {
             super(inspection, "Show array index...");

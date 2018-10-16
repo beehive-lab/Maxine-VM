@@ -43,6 +43,8 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
      */
     public static final class HoldsThreadLockError extends OutOfMemoryError {
 
+        private static final long serialVersionUID = 2203845237800814436L;
+
         private HoldsThreadLockError() {
         }
 

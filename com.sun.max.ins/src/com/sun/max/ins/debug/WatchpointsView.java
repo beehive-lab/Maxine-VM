@@ -143,6 +143,8 @@ public final class WatchpointsView extends AbstractView<WatchpointsView> impleme
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "Options") {
+            private static final long serialVersionUID = -1812654543006149135L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<WatchpointsColumnKind>(inspection(), "Watchpoints Options", viewPreferences);

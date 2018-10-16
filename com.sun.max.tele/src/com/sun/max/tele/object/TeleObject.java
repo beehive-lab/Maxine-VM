@@ -479,6 +479,8 @@ public abstract class TeleObject extends AbstractVmHolder implements TeleVMCache
 
         static HashMap<Class, Count> copiesPerType = new HashMap<Class, Count>() {
 
+            private static final long serialVersionUID = 6336698430500865300L;
+
             @Override
             public Count get(Object key) {
                 Count count = super.get(key);

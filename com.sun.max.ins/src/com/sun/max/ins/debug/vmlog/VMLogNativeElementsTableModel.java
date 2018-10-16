@@ -30,6 +30,7 @@ import com.sun.max.unsafe.*;
 
 abstract class VMLogNativeElementsTableModel extends VMLogElementsTableModel {
 
+    private static final long serialVersionUID = 2695572773524607885L;
     protected final TeleVMLogNative teleVMLogNative;
 
     protected VMLogNativeElementsTableModel(Inspection inspection, TeleVMLog teleVMLog) {

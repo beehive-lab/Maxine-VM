@@ -27,6 +27,7 @@ package com.sun.max.jdwp.data;
  */
 public class JDWPIncomingPacketException extends JDWPException {
 
+    private static final long serialVersionUID = -3848851576440162107L;
     private final JDWPException innerException;
     private final IncomingPacket<? extends IncomingData, ? extends OutgoingData> packet;
 

@@ -103,6 +103,8 @@ public final class MethodViewContainer extends TabbedView<MethodViewContainer> {
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = -7415432825982553959L;
+
             @Override
             public void procedure() {
                 MethodViewPreferences.globalPreferences(inspection()).showDialog();
@@ -113,6 +115,8 @@ public final class MethodViewContainer extends TabbedView<MethodViewContainer> {
     @Override
     public InspectorAction getPrintAction() {
         return new InspectorAction(inspection(), "Print") {
+            private static final long serialVersionUID = 4081592375584510824L;
+
             @Override
             public void procedure() {
                 final InspectorView view = MethodViewContainer.this.getSelected();

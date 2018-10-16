@@ -179,6 +179,8 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
 
     private final class FocusColumnModel extends InspectorTableColumnModel<FocusColumnKind> {
 
+        private static final long serialVersionUID = 4703540486889594423L;
+
         private FocusColumnModel(FocusViewPreferences viewPreferences) {
             super(inspection(), FocusColumnKind.values().length, viewPreferences);
             addColumnIfSupported(FocusColumnKind.NAME, new NameCellRenderer(inspection()), null);
@@ -187,6 +189,8 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
     }
 
     private final class FocusTableModel extends InspectorTableModel {
+
+        private static final long serialVersionUID = 5149076787245189146L;
 
         FocusTableModel(Inspection inspection) {
             super(inspection);

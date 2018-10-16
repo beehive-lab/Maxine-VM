@@ -97,6 +97,8 @@ public final class MemoryRegionAllocationLabel extends AbstractMemoryRegionLabel
             final DisplayMode newDisplayMode = alternateDisplayMode;
             return new InspectorAction(inspection(), "Cycle display (Middle-Button)") {
 
+                private static final long serialVersionUID = 1627882280785074108L;
+
                 @Override
                 public void procedure() {
                     //Trace.line(TRACE_VALUE, "WVL: " + displayMode.toString() + "->" + newValueKind);

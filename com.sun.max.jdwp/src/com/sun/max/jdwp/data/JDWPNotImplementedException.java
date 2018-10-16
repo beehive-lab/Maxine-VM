@@ -29,6 +29,8 @@ import com.sun.max.jdwp.constants.Error;
  */
 public class JDWPNotImplementedException extends JDWPException {
 
+    private static final long serialVersionUID = 5307580753079007373L;
+
     public JDWPNotImplementedException() {
         super((short) Error.NOT_IMPLEMENTED, "Not implemented.");
     }

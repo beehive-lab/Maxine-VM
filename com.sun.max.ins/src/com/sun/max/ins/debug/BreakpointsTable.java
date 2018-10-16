@@ -144,6 +144,8 @@ public final class BreakpointsTable extends InspectorTable {
 
     private final class BreakpointsColumnModel extends InspectorTableColumnModel<BreakpointsColumnKind>  {
 
+        private static final long serialVersionUID = 5637011363562262901L;
+
         private BreakpointsColumnModel(BreakpointsViewPreferences viewPreferences) {
             super(inspection(), BreakpointsColumnKind.values().length, viewPreferences);
             addColumnIfSupported(BreakpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
@@ -160,6 +162,8 @@ public final class BreakpointsTable extends InspectorTable {
      *
      */
     private final class BreakpointsTableModel extends InspectorTableModel {
+
+        private static final long serialVersionUID = 8720968731635754977L;
 
         BreakpointsTableModel(Inspection inspection) {
             super(inspection);

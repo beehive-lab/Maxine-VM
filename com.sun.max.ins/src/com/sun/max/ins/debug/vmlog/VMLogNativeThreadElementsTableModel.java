@@ -42,6 +42,7 @@ import com.sun.max.vm.log.nat.thread.*;
  */
 class VMLogNativeThreadElementsTableModel extends VMLogNativeElementsTableModel {
 
+    private static final long serialVersionUID = -5558733861849818681L;
     /**
      * This records the log records for all threads, including those that have died.
      */

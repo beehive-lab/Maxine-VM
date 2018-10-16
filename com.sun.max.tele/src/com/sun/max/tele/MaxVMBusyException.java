@@ -29,6 +29,8 @@ package com.sun.max.tele;
  */
 public class MaxVMBusyException extends MaxException {
 
+    private static final long serialVersionUID = -7283793790749003985L;
+
     /**
      * Creates an exception signifying that non thread-safe data about the state
      * of the VM is currently unavailable.

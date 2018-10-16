@@ -81,6 +81,8 @@ public abstract class CodeViewer extends InspectorPanel {
         this.parent = parent;
 
         searchButton = new InspectorButton(inspection, new AbstractAction("Search...") {
+            private static final long serialVersionUID = 7200447912834388137L;
+
             public void actionPerformed(ActionEvent actionEvent) {
                 addSearchToolBar();
             }
@@ -91,6 +93,8 @@ public abstract class CodeViewer extends InspectorPanel {
         searchButton.setToolTipText("Open toolbar for searching");
 
         activeRowsButton = new InspectorButton(inspection, new AbstractAction(null, style.navigationForwardIcon()) {
+            private static final long serialVersionUID = -6124752121247173265L;
+
             public void actionPerformed(ActionEvent actionEvent) {
                 int nextActiveRow = nextActiveRow();
                 if (nextActiveRow >= 0) {
@@ -110,6 +114,8 @@ public abstract class CodeViewer extends InspectorPanel {
         viewCloseButton =
             new InspectorButton(inspection(), "", "Close " + codeViewerKindName());
         viewCloseButton.setAction(new AbstractAction() {
+            private static final long serialVersionUID = 6891671369679368741L;
+
             public void actionPerformed(ActionEvent actionEvent) {
                 parent().closeCodeViewer(CodeViewer.this);
             }

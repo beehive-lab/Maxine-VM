@@ -79,6 +79,7 @@ public class CatchInInvalidatedMethod {
     }
 
     static class MyException extends Exception {
+        private static final long serialVersionUID = -4291696362538645702L;
     }
 
     /**

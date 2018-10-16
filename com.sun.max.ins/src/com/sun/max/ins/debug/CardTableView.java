@@ -176,6 +176,8 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
         });
 
         previousButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = 6244679569503244291L;
+
             public void actionPerformed(ActionEvent e) {
                 moveBack();
             }
@@ -184,6 +186,8 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
         previousButton.setIcon(style.navigationBackIcon());
 
         nextButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = 145215084036981255L;
+
             public void actionPerformed(ActionEvent e) {
                 moveForward();
             }
@@ -191,6 +195,8 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
         nextButton.setIcon(style.navigationForwardIcon());
 
         prefsButton = new InspectorButton(inspection(), new AbstractAction() {
+            private static final long serialVersionUID = -8497889645726910400L;
+
             public void actionPerformed(ActionEvent e) {
                 new SimpleDialog(inspection(), viewPreferences.getPanel(), "View Preferences", true);
             }
@@ -443,6 +449,8 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = -2873056483629290541L;
+
             @Override
             public void procedure() {
                 new TableColumnVisibilityPreferences.ColumnPreferencesDialog<CardTableColumnKind>(inspection(), viewManager.shortName() + " View Options", viewPreferences);
@@ -468,6 +476,8 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
 
     private final class ScrollToFocusAction extends InspectorAction {
 
+        private static final long serialVersionUID = -720003795120652361L;
+
         ScrollToFocusAction(Inspection inspection) {
             super(inspection(), "Scroll to selected (covered) memory location");
             refresh(true);
@@ -488,6 +498,7 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
     private final class ViewBitmapDataAction extends InspectorAction {
 
         private static final String TITLE = "View Bitmap Data as Array";
+        private static final long serialVersionUID = -4361289077424652730L;
 
         ViewBitmapDataAction(Inspection inspection) {
             super(inspection, TITLE);
@@ -510,6 +521,7 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
     private final class ViewCardTableMemoryAction extends InspectorAction {
 
         private static final String TITLE = "View Card Table Memory";
+        private static final long serialVersionUID = 5513321017010699406L;
 
         ViewCardTableMemoryAction(Inspection inspection) {
             super(inspection, TITLE);

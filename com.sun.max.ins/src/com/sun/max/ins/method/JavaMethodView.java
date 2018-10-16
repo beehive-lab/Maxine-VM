@@ -96,6 +96,8 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
      */
     private final Map<MethodCodeKind, CodeViewer> codeViewers = new EnumMap<MethodCodeKind, CodeViewer>(MethodCodeKind.class) {
 
+        private static final long serialVersionUID = 1955442139933147398L;
+
         @Override
         public CodeViewer put(MethodCodeKind kind, CodeViewer value) {
             final CodeViewer old = super.put(kind, value);
@@ -388,6 +390,8 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
     @Override
     public InspectorAction getViewOptionsAction() {
         return new InspectorAction(inspection(), "View Options") {
+            private static final long serialVersionUID = 6300407261262833422L;
+
             @Override
             protected void procedure() {
                 showViewOptionsDialog(inspection());

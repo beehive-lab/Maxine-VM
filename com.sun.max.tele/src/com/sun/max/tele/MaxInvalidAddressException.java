@@ -30,6 +30,7 @@ import com.sun.max.unsafe.*;
  */
 public final class MaxInvalidAddressException extends MaxException {
 
+    private static final long serialVersionUID = 346842031377060080L;
     private final Address address;
 
     public MaxInvalidAddressException(Address address, String message) {

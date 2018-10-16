@@ -27,6 +27,8 @@ package com.sun.max.util;
  */
 public class Utf8Exception extends Exception {
 
+    private static final long serialVersionUID = 5982621155136696282L;
+
     Utf8Exception() {
         super();
     }

@@ -116,6 +116,8 @@ public final class WatchpointsTable extends InspectorTable {
 
     private final class WatchpointsColumnModel extends InspectorTableColumnModel<WatchpointsColumnKind> {
 
+        private static final long serialVersionUID = 1464283521867006996L;
+
         private WatchpointsColumnModel(WatchpointsViewPreferences viewPreferences) {
             super(inspection(), WatchpointsColumnKind.values().length, viewPreferences);
             addColumnIfSupported(WatchpointsColumnKind.TAG, new TagCellRenderer(inspection()), null);
@@ -140,6 +142,8 @@ public final class WatchpointsTable extends InspectorTable {
      *
      */
     private final class WatchpointsTableModel extends InspectorTableModel {
+
+        private static final long serialVersionUID = -7390949321102647170L;
 
         WatchpointsTableModel(Inspection inspection) {
             super(inspection);

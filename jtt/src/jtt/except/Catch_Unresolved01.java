@@ -62,7 +62,9 @@ public class Catch_Unresolved01 {
 }
 
 class Catch_Unresolved_Exception3 extends RuntimeException {
+    private static final long serialVersionUID = -3095174541075036585L;
 }
 
 class Catch_Unresolved_Exception4 extends RuntimeException {
+    private static final long serialVersionUID = -7551412906230585207L;
 }

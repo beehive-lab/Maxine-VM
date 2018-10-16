@@ -52,6 +52,8 @@ public final class ProcessEnvironment_init {
 
     private static final class StringEnvironment extends HashMap<Object, Object> {
 
+        private static final long serialVersionUID = -7806818832807475724L;
+
         StringEnvironment(HashMap<Object, Object> theenvironment) {
         }
     }

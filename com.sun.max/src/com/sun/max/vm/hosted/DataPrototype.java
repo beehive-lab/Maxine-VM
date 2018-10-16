@@ -1210,6 +1210,7 @@ public final class DataPrototype extends Prototype {
     }
 
     private static class MissingCellException extends RuntimeException {
+        private static final long serialVersionUID = -5611931508575826580L;
         final Object object;
         MissingCellException(Object object) {
             this.object = object;

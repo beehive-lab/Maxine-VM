@@ -69,6 +69,8 @@ public final class AboutSessionDialog extends InspectorDialog {
         final JPanel buttonsPanel = new InspectorPanel(inspection);
         buttonsPanel.add(verboseRadioButton);
         buttonsPanel.add(new InspectorButton(inspection, new AbstractAction("Close") {
+            private static final long serialVersionUID = 7291951516635240495L;
+
             public void actionPerformed(ActionEvent e) {
                 inspection.settings().save();
                 dispose();

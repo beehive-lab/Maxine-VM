@@ -38,6 +38,7 @@ import com.sun.max.vm.type.*;
 public abstract class InspectorMemoryTableModel extends InspectorTableModel {
 
     private static final List<MaxWatchpoint> EMPTY_WATCHPOINT_LIST = Collections.emptyList();
+    private static final long serialVersionUID = -5787519221030792626L;
 
     // Memory location from which to compute offsets
     private Address origin = Address.zero();

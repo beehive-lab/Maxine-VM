@@ -70,6 +70,7 @@ public final class X86InstructionDecoder {
         return currentDisplacementPosition;
     }
 
+    @SuppressWarnings("fallthrough")
     public void decodePosition(int inst) {
 
         assert inst >= 0 && inst < code.length;

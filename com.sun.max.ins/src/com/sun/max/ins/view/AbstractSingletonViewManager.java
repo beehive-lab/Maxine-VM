@@ -161,6 +161,8 @@ public abstract class AbstractSingletonViewManager<View_Kind extends InspectorVi
      */
     private final class ActivateViewAction extends InspectorAction {
 
+        private static final long serialVersionUID = -2676467277055870749L;
+
         ActivateViewAction(String title) {
             super(inspection(), "View " + title);
             refresh(true);
@@ -182,6 +184,8 @@ public abstract class AbstractSingletonViewManager<View_Kind extends InspectorVi
      * means only the one view, if already activated.
      */
     private final class DeactivateAllAction extends InspectorAction {
+
+        private static final long serialVersionUID = 7944722313615438651L;
 
         DeactivateAllAction(String title) {
             super(inspection(), "Close " + title + " view");
@@ -206,6 +210,7 @@ public abstract class AbstractSingletonViewManager<View_Kind extends InspectorVi
      */
     private final class DeactivateAllExceptAction extends InspectorAction {
 
+        private static final long serialVersionUID = 938331495875184542L;
         private final InspectorView exceptInspector;
 
         DeactivateAllExceptAction(String title, InspectorView exceptInspector) {
