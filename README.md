@@ -3,6 +3,7 @@
 #### Releases
 
 (See [CHANGELOG](CHANGELOG.md) for more)
+* 2018-10-16: Maxine VM 2.5.2 Release
 * 2018-10-16: Maxine VM 2.5.1 Release
 * 2018-08-27: Maxine VM 2.5.0 Release
 * 2018-06-26: Maxine VM 2.4.2 Release
