@@ -1053,7 +1053,7 @@ public class Stubs {
 
             // re-execute the static call. Now that the call has been patched we need to return to the beginning of the
             // patched call site, thus we need to subtract from the link register the size of the segment preparing the call
-            asm.sub(callSite, RISCV64.ra, 5 * Aarch64TargetMethodUtil.INSTRUCTION_SIZE);
+            asm.sub(callSite, RISCV64.ra, 5 * RISCV64TargetMethodUtil.INSTRUCTION_SIZE);
             asm.ret(callSite);
 
             String stubName = "strampoline";
