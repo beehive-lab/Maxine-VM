@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.crossisa.riscv64.jtt;
+package com.oracle.max.vm.tests.crossisa.riscv64.jtt;
 
 import static com.oracle.max.asm.target.riscv64.RISCV64.*;
 import static com.sun.max.vm.MaxineVM.*;
@@ -31,6 +31,8 @@ import com.oracle.max.asm.target.riscv64.*;
 import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.riscv64.*;
+import com.oracle.max.vm.tests.crossisa.riscv64.asm.MaxineRISCV64Tester;
+import com.oracle.max.vm.tests.crossisa.riscv64.asm.RISCV64CodeWriter;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -39,7 +41,6 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 import org.junit.*;
-import test.crossisa.riscv64.asm.*;
 
 public class RISCV64JTTT1XTest {
 

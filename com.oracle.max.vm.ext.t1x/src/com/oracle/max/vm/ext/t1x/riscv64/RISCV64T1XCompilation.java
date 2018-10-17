@@ -20,27 +20,23 @@
  */
 package com.oracle.max.vm.ext.t1x.riscv64;
 
-import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
-
-import java.util.*;
 
 import com.oracle.max.asm.target.riscv64.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.DebugMethodWriter;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.riscv64.*;
+import com.sun.max.vm.stack.riscv64.RISCV64JVMSFrameLayout;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 

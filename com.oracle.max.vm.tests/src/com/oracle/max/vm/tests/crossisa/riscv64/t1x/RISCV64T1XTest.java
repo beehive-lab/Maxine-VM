@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.crossisa.riscv64.t1x;
+package com.oracle.max.vm.tests.crossisa.riscv64.t1x;
 
 import static com.sun.max.vm.MaxineVM.*;
 
@@ -28,6 +28,8 @@ import com.oracle.max.asm.target.riscv64.*;
 import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.riscv64.*;
+import com.oracle.max.vm.tests.crossisa.riscv64.asm.MaxineRISCV64Tester;
+import com.oracle.max.vm.tests.crossisa.riscv64.asm.RISCV64CodeWriter;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
@@ -39,8 +41,6 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
-
-import test.crossisa.riscv64.asm.*;
 
 public class RISCV64T1XTest extends MaxTestCase {
 
@@ -141,7 +141,6 @@ public class RISCV64T1XTest extends MaxTestCase {
         MaxineRISCV64Tester r = new MaxineRISCV64Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
-        r.assembleStartup();
         r.compile();
         r.link();
         r.runSimulation();

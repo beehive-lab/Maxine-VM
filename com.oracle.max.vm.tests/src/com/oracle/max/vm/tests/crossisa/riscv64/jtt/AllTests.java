@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.crossisa.riscv64.t1x;
+package com.oracle.max.vm.tests.crossisa.riscv64.jtt;
 
 import junit.framework.*;
 
@@ -27,6 +27,7 @@ import com.sun.max.ide.*;
 
 @RunWith(org.junit.runners.AllTests.class)
 public final class AllTests {
+
     private AllTests() {
     }
 

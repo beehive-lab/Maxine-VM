@@ -137,7 +137,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param shamt
      * @param ext
      */
-    private void shiftHelper(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int shamt, int ext) {
+    private void shiftHelper(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int shamt, int ext) {
         itype(opcode, rd, funct3, rs1, ext << 5 | shamt);
     }
 
