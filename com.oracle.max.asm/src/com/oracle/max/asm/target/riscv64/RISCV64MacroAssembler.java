@@ -342,17 +342,17 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void ldr(int srcSize, CiRegister rd, CiRegister rs, int offset) {
-        if(srcSize == 32) {
+        if (srcSize == 32) {
             lw(rd, rs, offset);
-        } else if(srcSize == 64) {
+        } else if (srcSize == 64) {
             ld(rd, rs, offset);
         }
     }
 
     public void str(int srcSize, CiRegister rd, CiRegister rs, int offset) {
-        if(srcSize == 32) {
+        if (srcSize == 32) {
             sw(rd, rs, offset);
-        } else if(srcSize == 64) {
+        } else if (srcSize == 64) {
             sd(rd, rs, offset);
         }
     }
