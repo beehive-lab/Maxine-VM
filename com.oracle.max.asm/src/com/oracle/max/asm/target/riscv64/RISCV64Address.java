@@ -39,6 +39,7 @@ import com.sun.cri.ci.*;
 public final class RISCV64Address extends CiAddress {
     // Placeholder for addresses that get patched later.
     public static final RISCV64Address Placeholder = new RISCV64Address(CiKind.Illegal, RISCV64.zr.asValue(), RISCV64.zr.asValue(), 0, false, null, AddressingMode.PC_LITERAL);
+    private static final long serialVersionUID = 2306820231108443722L;
 
     public enum AddressingMode {
         /**
