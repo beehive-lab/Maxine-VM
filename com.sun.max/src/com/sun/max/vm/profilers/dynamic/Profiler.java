@@ -48,10 +48,11 @@ public class Profiler {
      *
      */
     //histogram initialization
-    public static int initialSize = 50;
+    public static int initialSize = 6;
     public static int currentSize = initialSize;
     public static int growStep = 10;
     public static HistogramCell[] histogram; // = new HistogramCell[initialSize];
+    public static TypeHistogramCell[] typeHistogram;
     public static int profilingCycle;
 
     private static boolean PrintHistogram;
@@ -65,9 +66,12 @@ public class Profiler {
 
     public Profiler() {
         histogram = new HistogramCell[initialSize];
+        typeHistogram = new TypeHistogramCell[initialSize];
+
         //initial cell allocation for our histogram
         for (int i = 0; i < initialSize; i++) {
             histogram[i] = new HistogramCell();
+            typeHistogram[i] = new TypeHistogramCell();
         }
         profilingCycle = 0;
 
@@ -110,16 +114,31 @@ public class Profiler {
      */
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
-    public void profile(int size) {
+    public void profile(int size, String type) {
         //if (VmThread.current().PROFILE) {
             //if (MaxineVM.isRunning()) {
         final boolean lockDisabledSafepoints = lock();
         //record(size);
         histogram[profilingCycle].record(size);
+        typeHistogram[profilingCycle].record(size, type);
         unlock(lockDisabledSafepoints);
             //}
         //}
     }
+
+    /*@NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public void profile(int size, String type) {
+        //if (VmThread.current().PROFILE) {
+        //if (MaxineVM.isRunning()) {
+        final boolean lockDisabledSafepoints = lock();
+        //record(size);
+        histogram[profilingCycle].record(size, type);
+        typeHistogram[profilingCycle].record(size, type);
+        unlock(lockDisabledSafepoints);
+        //}
+        //}
+    }*/
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
@@ -155,6 +174,28 @@ public class Profiler {
 
     }
 
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    public void printTypeHistogram() {
+        typeHistogram[profilingCycle].sortHistogram();
+
+        int lastEntry = typeHistogram[profilingCycle].lastEntry;
+
+        Log.println("====TYPE HISTOGRAM====");
+        for (int i = 1; i < lastEntry; i++) {
+            Log.print("[");
+            Log.print(typeHistogram[profilingCycle].mutatorTypes[i]);
+            Log.print("] ");
+            Log.print(" [");
+            Log.print(typeHistogram[profilingCycle].mutatorHistogram[i][0]);
+            Log.print(" Bytes]  : ");
+            Log.println(typeHistogram[profilingCycle].mutatorHistogram[i][1]);
+        }
+        Log.print("Total histogram objects =");
+        Log.println(histogram[profilingCycle].totalRecordedObjects);
+        Log.println("=======END=======");
+
+    }
+
     /**
      * Dump Profiler findings/stats to Maxine's Log output (for validation purposes).
      * TODO: create a -XX option for that functionality
@@ -180,7 +221,8 @@ public class Profiler {
         //Log.println(" MB\n");
 
         if (PrintHistogram) {
-            printHistogram();
+            //printHistogram();
+            printTypeHistogram();
         }
 
         unlock(lockDisabledSafepoints);
