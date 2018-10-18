@@ -486,7 +486,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final void c1xCallsProfiler(int size, Hub hub) {
         final String objectType = hub.classActor.name();
 
-        dynamicProfiler.profile(size);
+        dynamicProfiler.profile(size, objectType);
     }
 
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
@@ -494,7 +494,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final void c1xCallsProfilerArray(int size, Hub hub) {
         final String objectType = hub.classActor.name();
 
-        dynamicProfiler.profile(size);
+        dynamicProfiler.profile(size, objectType);
     }
 
     /**
@@ -547,7 +547,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         final String objectType = dynamicHub.classActor.name();
 
-        dynamicProfiler.profile(size.toInt());
+        dynamicProfiler.profile(size.toInt(), objectType);
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
 
@@ -562,7 +562,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         } else {
             final String objectType = hub.classActor.name();
 
-            dynamicProfiler.profile(hub.tupleSize.toInt());
+            dynamicProfiler.profile(hub.tupleSize.toInt(), objectType);
             return Cell.plantTuple(cell, hub);
         }
     }
@@ -574,7 +574,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         final String objectType = hub.classActor.name();
 
-        dynamicProfiler.profile(size.toInt());
+        dynamicProfiler.profile(size.toInt(), objectType);
         return Cell.plantHybrid(cell, size, hub);
     }
 
@@ -587,7 +587,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Hub hub = Layout.getHub(oldOrigin);
         final String objectType = hub.classActor.name();
 
-        dynamicProfiler.profile(size.toInt());
+        dynamicProfiler.profile(size.toInt(), objectType);
         return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
 
@@ -600,7 +600,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Hub hub = Layout.getHub(oldOrigin);
         final String objectType = hub.classActor.name();
 
-        dynamicProfiler.profile(size.toInt());
+        dynamicProfiler.profile(size.toInt(), objectType);
         return Cell.plantClone(cell, size, object);
     }
 
