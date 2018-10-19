@@ -44,14 +44,16 @@ public class Profiler {
     static native void dynamicProfiler_unlock();
 
     /**
-     * Histogram: the data structure that stores the profiling outcome.
+     * The profiling outcome is stored in histograms.
+     * Size Histogram: stores the allocated objects sizes for the profiling method chain.
+     * Type Histogram: stores the allocated objects sizes in relation with their object type for the profiling method chain.
      *
      */
     //histogram initialization
     public static int initialSize = 6;
     public static int currentSize = initialSize;
     public static int growStep = 10;
-    public static HistogramCell[] histogram; // = new HistogramCell[initialSize];
+    public static HistogramCell[] sizeHistogram;
     public static TypeHistogramCell[] typeHistogram;
     public static int profilingCycle;
 
@@ -65,12 +67,12 @@ public class Profiler {
     }
 
     public Profiler() {
-        histogram = new HistogramCell[initialSize];
+        sizeHistogram = new HistogramCell[initialSize];
         typeHistogram = new TypeHistogramCell[initialSize];
 
         //initial cell allocation for our histogram
         for (int i = 0; i < initialSize; i++) {
-            histogram[i] = new HistogramCell();
+            sizeHistogram[i] = new HistogramCell();
             typeHistogram[i] = new TypeHistogramCell();
         }
         profilingCycle = 0;
@@ -95,7 +97,7 @@ public class Profiler {
 
         //copy the contents of the old to the new histogram
         for (int i = 0; i < currentSize - 1; i++) {
-            newHistogram[i] = histogram[i];
+            newHistogram[i] = sizeHistogram[i];
         }
 
         //allocate new cells in the histogram
@@ -104,7 +106,7 @@ public class Profiler {
         }
 
         currentSize = newSize;
-        histogram = newHistogram;
+        sizeHistogram = newHistogram;
 
         unlock(lockDisabledSafepoints);
     }
@@ -119,7 +121,7 @@ public class Profiler {
             //if (MaxineVM.isRunning()) {
         final boolean lockDisabledSafepoints = lock();
         //record(size);
-        histogram[profilingCycle].record(size);
+        sizeHistogram[profilingCycle].record(size);
         typeHistogram[profilingCycle].record(size, type);
         unlock(lockDisabledSafepoints);
             //}
@@ -146,7 +148,7 @@ public class Profiler {
         //if (VmThread.current().PROFILE) {
         //if (MaxineVM.isRunning()) {
         final boolean lockDisabledSafepoints = lock();
-        histogram[profilingCycle].recordGC(size);
+        sizeHistogram[profilingCycle].recordGC(size);
         unlock(lockDisabledSafepoints);
         //}
         //}
@@ -157,19 +159,19 @@ public class Profiler {
      */
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public void printHistogram() {
-        histogram[profilingCycle].sortHistogram();
+        sizeHistogram[profilingCycle].sortHistogram();
 
-        int lastEntry = histogram[profilingCycle].lastEntry;
+        int lastEntry = sizeHistogram[profilingCycle].lastEntry;
 
         Log.println("====HISTOGRAM====");
         for (int i = 1; i < lastEntry; i++) {
             Log.print("[");
-            Log.print(histogram[profilingCycle].mutatorHistogram[i][0]);
+            Log.print(sizeHistogram[profilingCycle].mutatorHistogram[i][0]);
             Log.print("]\t\t");
-            Log.println(histogram[profilingCycle].mutatorHistogram[i][1]);
+            Log.println(sizeHistogram[profilingCycle].mutatorHistogram[i][1]);
         }
         Log.print("Total histogram objects =");
-        Log.println(histogram[profilingCycle].totalRecordedObjects);
+        Log.println(sizeHistogram[profilingCycle].totalRecordedObjects);
         Log.println("=======END=======");
 
     }
@@ -191,7 +193,7 @@ public class Profiler {
             Log.println(typeHistogram[profilingCycle].mutatorHistogram[i][1]);
         }
         Log.print("Total histogram objects =");
-        Log.println(histogram[profilingCycle].totalRecordedObjects);
+        Log.println(sizeHistogram[profilingCycle].totalRecordedObjects);
         Log.println("=======END=======");
 
     }
@@ -205,7 +207,7 @@ public class Profiler {
     public void printStats() {
         final boolean lockDisabledSafepoints = lock();
         final float reportInMbs = (float) Heap.reportUsedSpace() / 1048576;
-        final float histogramInMbs = (float) histogram[profilingCycle].totalObjectsize / 1048576;
+        final float histogramInMbs = (float) sizeHistogram[profilingCycle].totalObjectsize / 1048576;
 
         Log.print("Reported heap used space = ");
         Log.print(reportInMbs);
@@ -243,7 +245,7 @@ public class Profiler {
         Log.println(Heap.reportUsedSpace());
 
         Log.print("HistogramGC heap used space = ");
-        Log.println(histogram[profilingCycle].totalObjectsizeGC);
+        Log.println(sizeHistogram[profilingCycle].totalObjectsizeGC);
 
         //if we need more space, grow histogram
         if ((profilingCycle + 1) == currentSize) {
