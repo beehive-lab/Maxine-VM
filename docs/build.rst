@@ -92,7 +92,7 @@ To build maxine we first need to define a number of environment variables:
 
   * Extend ``PATH`` to include the *to be generated* maxvm::
 
-     export PATH=$PATH:$MAXINE_HOME/com.oracle.max.vm.native/generated/Linux/
+     export PATH=$PATH:$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/
 
   * Define ``LD_LIBRARY_PATH``::
 
