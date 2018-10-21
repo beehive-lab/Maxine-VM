@@ -46,6 +46,8 @@ public interface RiRegisterConfig {
 
     CiRegister getScratchRegister();
 
+    CiRegister getScratchRegister1();
+
     /**
      * Gets the calling convention describing how arguments are passed.
      *

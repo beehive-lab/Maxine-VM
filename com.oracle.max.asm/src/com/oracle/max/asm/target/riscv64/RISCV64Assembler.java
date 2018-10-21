@@ -29,6 +29,7 @@ import com.sun.cri.ri.RiRegisterConfig;
 public class RISCV64Assembler extends AbstractAssembler {
     public CiRegister frameRegister;
     public CiRegister scratchRegister;
+    public CiRegister scratchRegister1;
 
     public RISCV64Assembler(CiTarget target) {
         super(target);
@@ -38,6 +39,7 @@ public class RISCV64Assembler extends AbstractAssembler {
         super(target);
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
         this.scratchRegister = registerConfig == null ? RISCV64.x28 : registerConfig.getScratchRegister();
+        this.scratchRegister1 = registerConfig == null ? RISCV64.x29 : registerConfig.getScratchRegister1();
     }
 
     @Override
