@@ -179,7 +179,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     }
 
     @Override
-    protected void assignLong(CiRegister dst, long value) {
+    public void assignLong(CiRegister dst, long value) {
         asm.mov64BitConstant(dst, value);
     }
 
