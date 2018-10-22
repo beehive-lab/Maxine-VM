@@ -358,6 +358,18 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.stackOverflowCheck();
         }
 
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
+        XirOperand trueValue1 = asm.createTemp("trueValue1", CiKind.Int);
+
+        trueValue1 = asm.i(1);
+
+        XirConstant offsetProfiler = asm.i(VmThreadLocal.PROFILER_TLA.offset);
+
+        asm.pstore(WordUtil.archKind(), tla, offsetProfiler, trueValue1, false);
+
+        Log.println("# PrologueMethod= " + method.name() + " #?");
+
+
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
 
