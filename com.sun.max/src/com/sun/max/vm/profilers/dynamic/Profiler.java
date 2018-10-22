@@ -132,20 +132,6 @@ public class Profiler {
         //}
     }
 
-    /*@NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
-    @NEVER_INLINE
-    public void profile(int size, String type) {
-        //if (VmThread.current().PROFILE) {
-        //if (MaxineVM.isRunning()) {
-        final boolean lockDisabledSafepoints = lock();
-        //record(size);
-        histogram[profilingCycle].record(size, type);
-        typeHistogram[profilingCycle].record(size, type);
-        unlock(lockDisabledSafepoints);
-        //}
-        //}
-    }*/
-
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void profileGC(int size) {
