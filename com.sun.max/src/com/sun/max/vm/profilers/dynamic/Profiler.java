@@ -83,7 +83,7 @@ public class Profiler {
      * Grow the histogram array after GC.
      *
      */
-    public void growHistogram(Heap.GCCallbackPhase when) {
+    public void growHistograms(Heap.GCCallbackPhase when) {
         final boolean lockDisabledSafepoints = lock();
 
         final int newSize =  currentSize + growStep;
@@ -94,19 +94,23 @@ public class Profiler {
         Log.println(newSize);
 
         HistogramCell[] newHistogram = new HistogramCell[newSize];
+        TypeHistogramCell[] newTypeHistogram = new TypeHistogramCell[newSize];
 
         //copy the contents of the old to the new histogram
         for (int i = 0; i < currentSize - 1; i++) {
             newHistogram[i] = sizeHistogram[i];
+            newTypeHistogram[i] = typeHistogram[i];
         }
 
         //allocate new cells in the histogram
         for (int i = currentSize - 1; i < newSize; i++) {
             newHistogram[i] = new HistogramCell();
+            newTypeHistogram[i] = new TypeHistogramCell();
         }
 
         currentSize = newSize;
         sizeHistogram = newHistogram;
+        typeHistogram = newTypeHistogram;
 
         unlock(lockDisabledSafepoints);
     }
@@ -247,17 +251,10 @@ public class Profiler {
         Log.print("HistogramGC heap used space = ");
         Log.println(sizeHistogram[profilingCycle].totalObjectsizeGC);
 
-        //if we need more space, grow histogram
+        //if we need more space, grow histograms
         if ((profilingCycle + 1) == currentSize) {
-            growHistogram(Heap.GCCallbackPhase.AFTER);
+            growHistograms(Heap.GCCallbackPhase.AFTER);
         }
-
-        Log.print("Histogram Current Size = ");
-        Log.println(currentSize);
-
-        Log.print("Profiling cycle = ");
-        Log.println(profilingCycle);
-        Log.println("\n");
 
         profilingCycle++;
 
