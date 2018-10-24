@@ -562,13 +562,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             }
 
             Memory.copyBytes(fromCell, toCell, size);
-            //call the profiler
-            dynamicProfiler.profileGC(size.toInt());
 
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Reference toRef = Reference.fromOrigin(toOrigin);
             Layout.writeForwardRef(fromOrigin, toRef);
-
 
             return toRef;
         }
@@ -626,6 +623,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             TupleReferenceMap.visitReferences(hub, origin, refUpdater);
         }
         return cell.plus(Layout.size(origin));
+    }
+
+    public static void profilerScan(){
+        Log.println("Hello From Heap Scheme");
     }
 
     void moveReachableObjects(Pointer start) {
