@@ -29,6 +29,7 @@ import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
@@ -134,11 +135,12 @@ public class Profiler {
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
-    public void profileGC(int size) {
+    public void profileGC(int size, String type) {
         //if (VmThread.current().PROFILE) {
         //if (MaxineVM.isRunning()) {
         final boolean lockDisabledSafepoints = lock();
         sizeHistogram[profilingCycle].recordGC(size);
+        typeHistogram[profilingCycle].recordGC(size, type);
         unlock(lockDisabledSafepoints);
         //}
         //}
@@ -220,6 +222,11 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    public void scanAndProfile(Heap.GCCallbackPhase when) {
+        SemiSpaceHeapScheme.profilerScan();
+    }
+
     /**
      *  This method is called every time a GC has been completed.
      *  At this point the profiler has completed a full profiling cycle.
@@ -233,6 +240,9 @@ public class Profiler {
         // for validation purposes
         Log.print("Collected heap used space = ");
         Log.println(Heap.reportUsedSpace());
+
+        //scan the collected heap and profile the survived objects
+        scanAndProfile(Heap.GCCallbackPhase.AFTER);
 
         Log.print("HistogramGC heap used space = ");
         Log.println(sizeHistogram[profilingCycle].totalObjectsizeGC);
