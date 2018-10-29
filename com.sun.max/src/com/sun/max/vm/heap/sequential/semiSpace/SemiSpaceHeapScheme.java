@@ -48,6 +48,7 @@ import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLogger.Interval;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.management.*;
+import com.sun.max.vm.object.Hybrid;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -625,8 +626,33 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         return cell.plus(Layout.size(origin));
     }
 
-    public static void profilerScan(){
-        Log.println("Hello From Heap Scheme");
+    /**
+     * This method traverses the heap and profiles the currently existing objects.
+     */
+    public void profilerScan() {
+        final Pointer start = toSpace.start().asPointer();
+        Pointer cell = start;
+
+        while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {
+            final Pointer origin = Layout.cellToOrigin(cell);
+            final Hub hub = Layout.getHub(origin);
+            final String objectType = hub.classActor.name();
+            if (hub.specificLayout.isTupleLayout()) {
+                final int size = hub.tupleSize.toInt();
+                dynamicProfiler.profileGC(size, objectType);
+                cell = cell.plus(Layout.size(origin));
+            } else if (hub.specificLayout.isArrayLayout()) {
+                //final Size size = Layout.getArraySize(hub.classActor.componentClassActor().kind, hub.length());
+                final Size size = Layout.size(origin);
+                dynamicProfiler.profileGC(size.toInt(), objectType);
+                cell = cell.plus(size);
+            } else {
+                //final int size = hub.tupleSize.toInt();
+                final Size size = Layout.size(origin);
+                dynamicProfiler.profileGC(size.toInt(), objectType);
+                cell = cell.plus(size);
+            }
+        }
     }
 
     void moveReachableObjects(Pointer start) {
