@@ -27,6 +27,7 @@ import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.program.ProgramError;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMConfiguration;
 import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
@@ -224,7 +225,8 @@ public class Profiler {
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public void scanAndProfile(Heap.GCCallbackPhase when) {
-        SemiSpaceHeapScheme.profilerScan();
+        SemiSpaceHeapScheme sshs = (SemiSpaceHeapScheme) VMConfiguration.vmConfig().heapScheme();
+        sshs.profilerScan();
     }
 
     /**
@@ -239,13 +241,17 @@ public class Profiler {
 
         // for validation purposes
         Log.print("Collected heap used space = ");
-        Log.println(Heap.reportUsedSpace());
+        final float reportCollectedHeapInMbs = (float) Heap.reportUsedSpace() / 1048576;
+        Log.print(reportCollectedHeapInMbs);
+        Log.println(" MBs");
 
-        //scan the collected heap and profile the survived objects
+        //scan the recently collected heap and profile the survived objects
         scanAndProfile(Heap.GCCallbackPhase.AFTER);
 
         Log.print("HistogramGC heap used space = ");
-        Log.println(sizeHistogram[profilingCycle].totalObjectsizeGC);
+        final float reportCollectedHeapHistogramInMbs = (float) sizeHistogram[profilingCycle].totalObjectsizeGC / 1048576;
+        Log.print(reportCollectedHeapHistogramInMbs);
+        Log.println(" MBs\n");
 
         //if we need more space, grow histograms
         if ((profilingCycle + 1) == currentSize) {
