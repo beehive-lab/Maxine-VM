@@ -152,7 +152,6 @@ public class RISCV64Assembler extends AbstractAssembler {
      *     |     7     |  5  |  5  |    3   |    5     |    7   |
      * </pre>
      * @param opcode
-     * @param rd
      * @param funct3
      * @param rs1
      * @param rs2
@@ -180,7 +179,6 @@ public class RISCV64Assembler extends AbstractAssembler {
      *     |       7      |  5  |  5  |    3   |      5      |    7   |
      * </pre>
      * @param opcode
-     * @param rd
      * @param funct3
      * @param rs1
      * @param rs2
@@ -400,12 +398,12 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     /**
      *
-     * @param rs1
-     * @param rs2
+     * @param rd
+     * @param rs
      * @param imm32
      */
-    public void sw(CiRegister rs1, CiRegister rs2, int imm32) {
-        stype(STORE, 2, rs1, rs2, imm32);
+    public void sw(CiRegister rd, CiRegister rs, int imm32) {
+        stype(STORE, 2, rd, rs, imm32);
     }
 
     /**
@@ -722,12 +720,12 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     /**
      *
-     * @param rs1
-     * @param rs2
+     * @param rd
+     * @param rs
      * @param imm32
      */
-    public void sd(CiRegister rs1, CiRegister rs2, int imm32) {
-        stype(SD, 3, rs1, rs2, imm32);
+    public void sd(CiRegister rd, CiRegister rs, int imm32) {
+        stype(SD, 3, rd, rs, imm32);
     }
 
     /**
@@ -820,22 +818,24 @@ public class RISCV64Assembler extends AbstractAssembler {
         rtype(SRAW, rd, 5, rs1, rs2, 32);
     }
 
-    // Floating point instructions
+    // Floating point instructions double precision
     public void fadd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         throw new UnsupportedOperationException("Unimplemented");
     }
 
     public void fmvxd(CiRegister rd, CiRegister rs) {
-        if (rd.isFpu() && rs.isGeneral()) {
-            throw new UnsupportedOperationException("Unimplemented");
+        if (rd.isGeneral() && rs.isFpu()) {
+            itype(FMV, rd, 0, rs, 0b111000100000);
+            return;
         }
 
         throw new Error("should not reach here");
     }
 
     public void fmvdx(CiRegister rd, CiRegister rs) {
-        if (rd.isGeneral() && rs.isFpu()) {
-            throw new UnsupportedOperationException("Unimplemented");
+        if (rd.isFpu() && rs.isGeneral()) {
+            itype(FMV, rd, 0, rs, 0b111100100000);
+            return;
         }
 
         throw new Error("should not reach here");
@@ -847,6 +847,40 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     public void fsd(CiRegister dst, CiRegister base, int offset) {
         stype(STORE_FP, 3, dst, base, offset);
+    }
+
+
+    // Floating point instructions single precision
+    public void flw(CiRegister dst, CiRegister base, int offset) {
+        itype(LOAD_FP, dst, 2, base, offset);
+    }
+
+    public void fsw(CiRegister dst, CiRegister base, int offset) {
+        stype(STORE_FP, 2, dst, base, offset);
+    }
+
+    public void fcvtws(CiRegister rd, CiRegister rs) {
+        itype(FCVTWS, rd, 0, rs, 0b110000000000);
+    }
+
+    public void fcvtwus(CiRegister rd, CiRegister rs) {
+        itype(FCVTWS, rd, 0, rs, 0b110000000001);
+    }
+
+    public void fcvtsw(CiRegister rd, CiRegister rs) {
+        itype(FCVTSW, rd, 0, rs, 0b110100000000);
+    }
+
+    public void fcvtswu(CiRegister rd, CiRegister rs) {
+        itype(FCVTSW, rd, 0, rs, 0b110100000001);
+    }
+
+    public void fmvxw(CiRegister rd, CiRegister rs) {
+        itype(FMV, rd, 0, rs, 0b111000000000);
+    }
+
+    public void fmvwx(CiRegister rd, CiRegister rs) {
+        itype(FMV, rd, 0, rs, 0b111100000000);
     }
 
     public enum ExtendType {

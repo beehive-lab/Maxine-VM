@@ -352,258 +352,267 @@ public class RISCV64T1XTest extends MaxTestCase {
         assert simulatedValues[30] == expectedValues[31] : String.format("Register %d %d expected %d ", 31, simulatedValues[30], expectedValues[31]);
     }
 
+
+    public void test_PeekAndPokeFloat() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
+        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
+
+        expectedValues[5] = Float.floatToRawIntBits(Float.MAX_VALUE);
+        expectedValues[6] = Float.floatToRawIntBits(Float.MIN_VALUE);
+        expectedValues[7] = Float.floatToRawIntBits(0.0f);
+        expectedValues[8] = Float.floatToRawIntBits(-1.0F);
+        expectedValues[9] = Float.floatToRawIntBits(-123.89F);
+
+        theCompiler.incStack(5);
+        for (int i = 0; i < 5; i++) {
+            testValues[i] = true;
+            masm.mov32BitConstant(RISCV64.x31, (int) expectedValues[i + 5]);
+            masm.fmvwx(RISCV64.f31, RISCV64.x31);
+            theCompiler.pokeFloat(RISCV64.f31, i);
+        }
+
+        theCompiler.peekFloat(RISCV64.f31, 4);
+        theCompiler.peekFloat(RISCV64.f30, 3);
+        theCompiler.peekFloat(RISCV64.f7, 2);
+        theCompiler.peekFloat(RISCV64.f6, 1);
+        theCompiler.peekFloat(RISCV64.f5, 0);
+
+        masm.fmvxw(RISCV64.x5, RISCV64.f5);
+        masm.fmvxw(RISCV64.x6, RISCV64.f6);
+        masm.fmvxw(RISCV64.x7, RISCV64.f7);
+        masm.fmvxw(RISCV64.x30, RISCV64.f30);
+        masm.fmvxw(RISCV64.x31, RISCV64.f31);
+
+        long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
+
+        for (int i = 5; i <= 7; i++) {
+            System.out.println(i + " sim: " + Float.intBitsToFloat((int) simulatedValues[i - 1]) + ", exp: " + Float.intBitsToFloat((int) expectedValues[i]));
+            assert Float.intBitsToFloat((int) simulatedValues[i - 1]) == Float.intBitsToFloat((int) expectedValues[i])
+                    : "Register " + i + " " + simulatedValues[i - 1] + " expected " + expectedValues[i];
+        }
+
+        assert Float.intBitsToFloat((int) simulatedValues[29]) == Float.intBitsToFloat((int) expectedValues[8])
+                : "Register " + 30 + " " + simulatedValues[29] + " expected " + expectedValues[8];
+        assert Float.intBitsToFloat((int) simulatedValues[30]) == Float.intBitsToFloat((int) expectedValues[9])
+                : "Register " + 31 + " " + simulatedValues[30] + " expected " + expectedValues[9];
+
+    }
 //
-//    public void test_PeekAndPokeFloat() throws Exception {
-//        initialiseExpectedValues();
-//        resetIgnoreValues();
+//
+//    public void ignore_PokeFloat() throws Exception {
+//        /* not used - test incorporated in test_PeekFloat */
+//    }
+//
+    public void test_AssignDouble() throws Exception {
+        long[] expectedLongValues = new long[5];
+        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+
+        expectedLongValues[0] = Double.doubleToRawLongBits(Double.MIN_VALUE);
+        expectedLongValues[1] = Double.doubleToRawLongBits(Double.MAX_VALUE);
+        expectedLongValues[2] = Double.doubleToRawLongBits(0.0);
+        expectedLongValues[3] = Double.doubleToRawLongBits(-1.0);
+        expectedLongValues[4] = Double.doubleToRawLongBits(-100.75);
+
+        for (int i = 0; i < 5; i++) {
+            theCompiler.assignDoubleTest(RISCV64.fpuRegisters[i], Double.longBitsToDouble(expectedLongValues[i]));
+        }
+
+        masm.fmvxd(RISCV64.x5, RISCV64.f0);
+        masm.fmvxd(RISCV64.x6, RISCV64.f1);
+        masm.fmvxd(RISCV64.x7, RISCV64.f2);
+        masm.fmvxd(RISCV64.x30, RISCV64.f3);
+        masm.fmvxd(RISCV64.x31, RISCV64.f4);
+
+        long[] returnValues = generateAndTest(expectedValues, testValues, bitmasks);
+        for (int i = 5; i < 7; i++) {
+                assert returnValues[i - 1] == expectedLongValues[i - 5];
+        }
+        assert returnValues[29] == expectedLongValues[3];
+        assert returnValues[30] == expectedLongValues[4];
+    }
+
+
+    public void ignore_PokeDouble() throws Exception {
+        /* not used - test incorporated in test_PeekDouble */
+    }
+
+    public void test_PeekAndPokeDouble() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
+        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
+
+        expectedValues[5] = Double.doubleToRawLongBits(Double.MAX_VALUE);
+        expectedValues[6] = Double.doubleToRawLongBits(Double.MIN_VALUE);
+        expectedValues[7] = Double.doubleToRawLongBits(0.0);
+        expectedValues[8] = Double.doubleToRawLongBits(-1.0);
+        expectedValues[9] = Double.doubleToRawLongBits(-123.89);
+
+        theCompiler.incStack(5);
+        for (int i = 5; i <= 9; i++) {
+            testValues[i] = true;
+            masm.mov64BitConstant(RISCV64.x31, expectedValues[i]);
+            masm.fmvdx(RISCV64.f31, RISCV64.x31);
+            theCompiler.pokeDouble(RISCV64.f31, i - 5);
+        }
+
+        theCompiler.peekDouble(RISCV64.f4, 4);
+        theCompiler.peekDouble(RISCV64.f3, 3);
+        theCompiler.peekDouble(RISCV64.f2, 2);
+        theCompiler.peekDouble(RISCV64.f1, 1);
+        theCompiler.peekDouble(RISCV64.f0, 0);
+
+        masm.fmvxd(RISCV64.x31, RISCV64.f4);
+        masm.fmvxd(RISCV64.x30, RISCV64.f3);
+        masm.fmvxd(RISCV64.x7, RISCV64.f2);
+        masm.fmvxd(RISCV64.x6, RISCV64.f1);
+        masm.fmvxd(RISCV64.x5, RISCV64.f0);
+
+        long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
+
+        for (int i = 5; i <= 7; i++) {
+            System.out.println(i + " sim: " + simulatedValues[i - 1] + ", exp: " + expectedValues[i] + " dbl: " + Double.longBitsToDouble(expectedValues[i]));
+            assert expectedValues[i] == simulatedValues[i - 1]
+                            : "Register " + i + " " + simulatedValues[i - 1] + " expected " + expectedValues[i];
+        }
+        assert expectedValues[8] == simulatedValues[29]
+                : "Register " + 30 + " " + simulatedValues[29] + " expected " + expectedValues[8];
+        assert expectedValues[9] == simulatedValues[30]
+                : "Register " + 31 + " " + simulatedValues[30] + " expected " + expectedValues[9];
+    }
+
+    public void test_DoLconst() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
+        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
+
+        masm.mov(RISCV64.x6, RISCV64.sp); // copy stack pointer to r2
+        theCompiler.do_lconstTests(0xffffffff0000ffffL);
+        masm.mov(RISCV64.x7, RISCV64.sp); // copy revised stack pointer to r3
+        theCompiler.peekLong(RISCV64.x5, 0);
+
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        assert registerValues[4] == 0xffffffff0000ffffL;
+        assert registerValues[5] - registerValues[6] == 32;
+    }
+
+    public void test_DoDconst() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
+
+        double myVal = 3.14123;
+
+        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
+
+        masm.mov(RISCV64.x6, RISCV64.sp); // copy stack pointer to r2
+        theCompiler.do_dconstTests(myVal);
+        masm.mov(RISCV64.x7, RISCV64.sp); // copy revised stack pointer to r3
+        theCompiler.peekLong(RISCV64.x5, 0);  // recover value pushed by do_dconstTests
+
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        assert registerValues[4] == Double.doubleToRawLongBits(myVal); // test that poke & peek work
+        assert (registerValues[5] - registerValues[6]) == 32; // test if sp changes correctly
+    }
+
+    public void test_DoFconst() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
+
+        float myVal = 3.14123f;
+
+        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
+
+        masm.mov(RISCV64.x6, RISCV64.sp); // copy stack pointer to r2
+        theCompiler.do_fconstTests(myVal);
+        masm.mov(RISCV64.x7, RISCV64.sp); // copy revised stack pointer to r3
+        theCompiler.peekInt(RISCV64.x5, 0);  // recover value pushed by do_dconstTests
+
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        assert registerValues[4] == Float.floatToRawIntBits(myVal); // test that poke & peek work
+        assert (registerValues[5] - registerValues[6]) == 16; // test if sp changes correctly
+    }
+//
+//    public void test_DoLoad() throws Exception {
+    //TODO
+//        initialiseFrameForCompilation();
+//        theCompiler.do_initFrameTests(anMethod, codeAttr);
+//        theCompiler.emitPrologueTests();
 //        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-//        masm.codeBuffer.reset();
-//
-//        expectedValues[0] = Float.floatToRawIntBits(Float.MAX_VALUE);
-//        expectedValues[1] = Float.floatToRawIntBits(Float.MIN_VALUE);
-//        expectedValues[2] = Float.floatToRawIntBits(0.0f);
-//        expectedValues[3] = Float.floatToRawIntBits(-1.0F);
-//        expectedValues[4] = Float.floatToRawIntBits(-123.89F);
-//
-//        theCompiler.incStack(5);
-//        for (int i = 0; i < 5; i++) {
+//        expectedValues[0] = -2;
+//        expectedValues[1] = -1;
+//        expectedValues[2] = 0;
+//        expectedValues[3] = 1;
+//        expectedValues[4] = 2;
+//        expectedValues[5] = 3;
+//        expectedValues[6] = 4;
+//        expectedValues[7] = 5;
+//        expectedValues[8] = 6;
+//        expectedValues[9] = 7;
+//        expectedValues[10] = 8;
+//        for (int i = 0; i < 11; i++) {
 //            testValues[i] = true;
-//            masm.mov32BitConstant(RISCV64.x16, (int) expectedValues[i]);
-//            masm.fmovCpu2Fpu(32, RISCV64.f16, RISCV64.x16);
-//            theCompiler.pokeFloat(RISCV64.f16, i);
+//            masm.mov32BitConstant(RISCV64.cpuRegisters[i],(int) expectedValues[i]);
 //        }
-//
-//        theCompiler.peekFloat(RISCV64.f4, 4);
-//        theCompiler.peekFloat(RISCV64.f3, 3);
-//        theCompiler.peekFloat(RISCV64.f2, 2);
-//        theCompiler.peekFloat(RISCV64.f1, 1);
-//        theCompiler.peekFloat(RISCV64.f0, 0);
-//
-//        masm.fmovFpu2Cpu(32, RISCV64.x4, RISCV64.f4);
-//        masm.fmovFpu2Cpu(32, RISCV64.x3, RISCV64.f3);
-//        masm.fmovFpu2Cpu(32, RISCV64.x2, RISCV64.f2);
-//        masm.fmovFpu2Cpu(32, RISCV64.x1, RISCV64.f1);
-//        masm.fmovFpu2Cpu(32, RISCV64.x0, RISCV64.f0);
-//
-//        long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
-//
+//        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024);
+//        for (int i = 0; i <= 10; i++) {
+//            masm.mov32BitConstant(RISCV64.cpuRegisters[i], -25);
+//        }
 //        for (int i = 0; i < 5; i++) {
-//            System.out.println(i + " sim: " + Float.intBitsToFloat((int) simulatedValues[i]) + ", exp: " + Float.intBitsToFloat((int) expectedValues[i]));
-//            assert Float.intBitsToFloat((int) simulatedValues[i]) == Float.intBitsToFloat((int) expectedValues[i])
-//                            : "Register " + i + " " + simulatedValues[i] + " expected " + expectedValues[i];
+//            theCompiler.do_loadTests(i, Kind.INT);
+//            masm.pop(1);
+//            masm.mov32BitConstant(RISCV64.x0, 100 + i);
+//            masm.push(1);
+//            theCompiler.do_storeTests(i, Kind.INT);
 //        }
-//    }
-////
-////
-////    public void ignore_PokeFloat() throws Exception {
-////        /* not used - test incorporated in test_PeekFloat */
-////    }
-////
-////    public void test_AssignDouble() throws Exception {
-////        long[] expectedLongValues = new long[5];
-////        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-////
-////        expectedLongValues[0] = Double.doubleToRawLongBits(Double.MIN_VALUE);
-////        expectedLongValues[1] = Double.doubleToRawLongBits(Double.MAX_VALUE);
-////        expectedLongValues[2] = Double.doubleToRawLongBits(0.0);
-////        expectedLongValues[3] = Double.doubleToRawLongBits(-1.0);
-////        expectedLongValues[4] = Double.doubleToRawLongBits(-100.75);
-////
-////        for (int i = 0; i < 5; i++) {
-////            theCompiler.assignDoubleTest(RISCV64.fpuRegisters[i], Double.longBitsToDouble(expectedLongValues[i]));
-////        }
-////
-////        for (int i = 0; i < 5; i++) {
-////            masm.mov64BitConstant(RISCV64.cpuRegisters[i], -25);
-////        }
-////
-////        masm.fmov(64, RISCV64.x0, RISCV64.f0);
-////        masm.fmov(64, RISCV64.x1, RISCV64.f1);
-////        masm.fmov(64, RISCV64.x2, RISCV64.f2);
-////        masm.fmov(64, RISCV64.x3, RISCV64.f3);
-////        masm.fmov(64, RISCV64.x4, RISCV64.f4);
-////
-////        long[] returnValues = generateAndTest(expectedValues, testValues, bitmasks);
-////        for (int i = 0; i < 5; i++) {
-////                assert returnValues[i] == expectedLongValues[i];
-////        }
-////    }
-////
-////
-////    public void ignore_PokeDouble() throws Exception {
-////        /* not used - test incorporated in test_PeekDouble */
-////    }
-////
-////    public void test_PeekDouble() throws Exception {
-////        initialiseExpectedValues();
-////        resetIgnoreValues();
-////        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-////        masm.codeBuffer.reset();
-////
-////        expectedValues[0] = Double.doubleToRawLongBits(Double.MAX_VALUE);
-////        expectedValues[2] = Double.doubleToRawLongBits(Double.MIN_VALUE);
-////        expectedValues[4] = Double.doubleToRawLongBits(0.0);
-////        expectedValues[6] = Double.doubleToRawLongBits(-1.0);
-////        expectedValues[8] = Double.doubleToRawLongBits(-123.89);
-////
-////        theCompiler.incStack(10);
-////        for (int i = 0; i < 10; i += 2) {
-////            testValues[i] = true;
-////            masm.mov64BitConstant(RISCV64.x16, expectedValues[i]);
-////            masm.fmovCpu2Fpu(64, RISCV64.f16, RISCV64.x16);
-////            theCompiler.pokeDouble(RISCV64.f16, i);
-////        }
-////
-////        theCompiler.peekDouble(RISCV64.f8, 8);
-////        theCompiler.peekDouble(RISCV64.f6, 6);
-////        theCompiler.peekDouble(RISCV64.f4, 4);
-////        theCompiler.peekDouble(RISCV64.f2, 2);
-////        theCompiler.peekDouble(RISCV64.f0, 0);
-////
-////        masm.fmovFpu2Cpu(64, RISCV64.x8, RISCV64.f8);
-////        masm.fmovFpu2Cpu(64, RISCV64.x6, RISCV64.f6);
-////        masm.fmovFpu2Cpu(64, RISCV64.x4, RISCV64.f4);
-////        masm.fmovFpu2Cpu(64, RISCV64.x2, RISCV64.f2);
-////        masm.fmovFpu2Cpu(64, RISCV64.x0, RISCV64.f0);
-////
-////        long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
-////
-////        for (int i = 0; i < 10; i += 2) {
-////            System.out.println(i + " sim: " + simulatedValues[i] + ", exp: " + expectedValues[i] + " dbl: " + Double.longBitsToDouble(expectedValues[i]));
-////            assert expectedValues[i] == simulatedValues[i]
-////                            : "Register " + i + " " + simulatedValues[i] + " expected " + expectedValues[i];
-////        }
-////    }
+//        theCompiler.do_loadTests(5, Kind.LONG);
+//        masm.pop(1 | 2);
+//        masm.mov32BitConstant(RISCV64.x0, (int) (172L & 0xffff)); //172
+//        masm.mov32BitConstant(RISCV64.x1, (int) (((172L >> 32) & 0xffff))); //0
+//        masm.push(1 | 2);
+//        theCompiler.do_storeTests(5, Kind.LONG);
+//        for (int i = 0; i < 5; i++) {
+//            theCompiler.do_loadTests(i, Kind.INT);
+//        }
+//        theCompiler.do_loadTests(5, Kind.LONG);
+//        masm.pop(1 | 2 | 4 | 8 | 16 | 32 | 64);
+//        theCompiler.emitEpilogueTests();
 //
-//    public void test_DoLconst() throws Exception {
-//        initialiseExpectedValues();
-//        resetIgnoreValues();
-//
-//        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-//        masm.codeBuffer.reset();
-//
-//        masm.mov(RISCV64.x2, RISCV64.sp); // copy stack pointer to r2
-//        theCompiler.do_lconstTests(0xffffffff0000ffffL);
-//        masm.mov(RISCV64.x3, RISCV64.sp); // copy revised stack pointer to r3
-//        theCompiler.peekLong(RISCV64.x0, 0);
-//
+//        expectedValues[0] = 100;
+//        expectedValues[1] = 101;
+//        expectedValues[2] = 102;
+//        expectedValues[3] = 103;
+//        expectedValues[4] = 104;
+//        expectedValues[5] = 172;
+//        expectedValues[6] = 0;
 //        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-//        assert registerValues[0] == 0xffffffff0000ffffL;
-//        assert registerValues[2] - registerValues[3] == 32;
+//        for (int i = 0; i <= 6; i++) {
+//            assert registerValues[i] == expectedValues[i] : "Reg val " + registerValues[i] + "  Exp " + expectedValues[i];
+//        }
+//
 //    }
-//
-//    public void test_DoDconst() throws Exception {
-//        initialiseExpectedValues();
-//        resetIgnoreValues();
-//
-//        double myVal = 3.14123;
-//
-//        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-//        masm.codeBuffer.reset();
-//
-//        masm.mov(RISCV64.x2, RISCV64.sp); // copy stack pointer to r2
-//        theCompiler.do_dconstTests(myVal);
-//        masm.mov(RISCV64.x3, RISCV64.sp); // copy revised stack pointer to r3
-//        theCompiler.peekLong(RISCV64.x0, 0);  // recover value pushed by do_dconstTests
-//
-//        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-//        assert registerValues[0] == Double.doubleToRawLongBits(myVal); // test that poke & peek work
-//        assert (registerValues[2] - registerValues[3]) == 32; // test if sp changes correctly
-//    }
-//
-//    public void test_DoFconst() throws Exception {
-//        initialiseExpectedValues();
-//        resetIgnoreValues();
-//
-//        float myVal = 3.14123f;
-//
-//        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-//        masm.codeBuffer.reset();
-//
-//        masm.mov(RISCV64.x2, RISCV64.sp); // copy stack pointer to r2
-//        theCompiler.do_fconstTests(myVal);
-//        masm.mov(RISCV64.x3, RISCV64.sp); // copy revised stack pointer to r3
-//        theCompiler.peekInt(RISCV64.x0, 0);  // recover value pushed by do_dconstTests
-//
-//        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-//        assert registerValues[0] == Float.floatToRawIntBits(myVal); // test that poke & peek work
-//        assert (registerValues[2] - registerValues[3]) == 16; // test if sp changes correctly
-//    }
-//
-////    public void test_DoLoad() throws Exception {
-////        initialiseFrameForCompilation();
-////        theCompiler.do_initFrameTests(anMethod, codeAttr);
-////        theCompiler.emitPrologueTests();
-////        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-////        expectedValues[0] = -2;
-////        expectedValues[1] = -1;
-////        expectedValues[2] = 0;
-////        expectedValues[3] = 1;
-////        expectedValues[4] = 2;
-////        expectedValues[5] = 3;
-////        expectedValues[6] = 4;
-////        expectedValues[7] = 5;
-////        expectedValues[8] = 6;
-////        expectedValues[9] = 7;
-////        expectedValues[10] = 8;
-////        for (int i = 0; i < 11; i++) {
-////            testValues[i] = true;
-////            masm.mov32BitConstant(RISCV64.cpuRegisters[i], expectedValues[i]);
-////        }
-////        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024);
-////        for (int i = 0; i <= 10; i++) {
-////            masm.mov32BitConstant(RISCV64.cpuRegisters[i], -25);
-////        }
-////        for (int i = 0; i < 5; i++) {
-////            theCompiler.do_loadTests(i, Kind.INT);
-////            masm.pop(1);
-////            masm.mov32BitConstant(RISCV64.x0, 100 + i);
-////            masm.push(1);
-////            theCompiler.do_storeTests(i, Kind.INT);
-////        }
-////        theCompiler.do_loadTests(5, Kind.LONG);
-////        masm.pop(1 | 2);
-////        masm.mov32BitConstant(RISCV64.x0, (int) (172L & 0xffff)); //172
-////        masm.mov32BitConstant(RISCV64.x1, (int) (((172L >> 32) & 0xffff))); //0
-////        masm.push(1 | 2);
-////        theCompiler.do_storeTests(5, Kind.LONG);
-////        for (int i = 0; i < 5; i++) {
-////            theCompiler.do_loadTests(i, Kind.INT);
-////        }
-////        theCompiler.do_loadTests(5, Kind.LONG);
-////        masm.pop(1 | 2 | 4 | 8 | 16 | 32 | 64);
-////        theCompiler.emitEpilogueTests();
-////
-////        expectedValues[0] = 100;
-////        expectedValues[1] = 101;
-////        expectedValues[2] = 102;
-////        expectedValues[3] = 103;
-////        expectedValues[4] = 104;
-////        expectedValues[5] = 172;
-////        expectedValues[6] = 0;
-////        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-////        for (int i = 0; i <= 6; i++) {
-////            assert registerValues[i] == expectedValues[i] : "Reg val " + registerValues[i] + "  Exp " + expectedValues[i];
-////        }
-////
-////    }
 //
 //    public void test_Add() throws Exception {
 //        initialiseFrameForCompilation();
 //        theCompiler.do_initFrameTests(anMethod, codeAttr);
 //        theCompiler.emitPrologueTests();
-//        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-//        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-//        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-//        theCompiler.do_iconstTests(1);
-//        theCompiler.do_iconstTests(2);
-//        theCompiler.do_iaddTests();
+////        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+////        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+////        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+////        theCompiler.do_iconstTests(1);
+////        theCompiler.do_iconstTests(2);
+////        theCompiler.do_iaddTests();
 //        theCompiler.emitEpilogueTests();
-//        expectedValues[0] = 3;
-//        expectedValues[1] = 2;
+//        expectedValues[5] = 3;
+////        expectedValues[6] = 2;
 //
 //        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-//        assert expectedValues[0] == registerValues[0];
+//        System.out.println("Register " + 5 + " expected " + expectedValues[5] + " actual " + registerValues[4]);
+//        assert expectedValues[5] == registerValues[4];
 //    }
 //
 //    public void test_Mul() throws Exception {

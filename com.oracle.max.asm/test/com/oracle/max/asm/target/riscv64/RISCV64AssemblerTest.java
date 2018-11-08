@@ -82,6 +82,13 @@ public class RISCV64AssemblerTest {
     }
 
     @Test
+    public void sd() {
+        asm.sd(RISCV64.x5, RISCV64.x6, 32);
+        final String assemblyInstruction = "sd x" + RISCV64.x6.getEncoding() + ", " + 32 + "(x" + RISCV64.x5.getEncoding() + ")";
+        assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
+    }
+
+    @Test
     public void auipc() {
         final int[] immediates = {0, 0xff, 0x0fff, 0xf000, 0xff_f000, 0xffff_ffff};
         for (CiRegister dest: RISCV64.cpuRegisters) {

@@ -26,6 +26,8 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64MacroAssembler extends RISCV64Assembler {
+    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 5;
+
     public RISCV64MacroAssembler(CiTarget target) {
         super(target);
     }
@@ -93,13 +95,13 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void push(CiRegister reg) {
-        subi(RISCV64.sp, RISCV64.sp, 32);
-        sw(reg, RISCV64.sp, 0);
+        subi(RISCV64.sp, RISCV64.sp, 64);
+        sd(RISCV64.sp, reg, 0);
     }
 
     public void pop(CiRegister reg) {
-        lw(reg, RISCV64.sp, 0);
-        addi(RISCV64.sp, RISCV64.sp, 32);
+        ld(reg, RISCV64.sp, 0);
+        addi(RISCV64.sp, RISCV64.sp, 64);
     }
 
     public void push(CiRegister... registers) {
@@ -309,17 +311,21 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
             if (r.isCpu()) {
                 if (NumUtil.isSignedNbit(9, displacement)) {
-                    sd(r, frameRegister, displacement);
+                    sd(frameRegister, r, displacement);
                 } else {
-                    mov(scratchRegister, displacement);
-                    sd(frameRegister, scratchRegister, 0);
+                    mov(scratchRegister, frameRegister);
+                    mov(scratchRegister1, displacement);
+                    add(scratchRegister, scratchRegister, scratchRegister1);
+                    sd(scratchRegister, r, 0);
                 }
             } else {
                 if (NumUtil.isSignedNbit(9, displacement)) {
-                    fsd(r, frameRegister, displacement);
+                    fsd(frameRegister, r, displacement);
                 } else {
-                    mov(scratchRegister, displacement);
-                    fsd(frameRegister, scratchRegister, 0);
+                    mov(scratchRegister, frameRegister);
+                    mov(scratchRegister1, displacement);
+                    add(scratchRegister, scratchRegister, scratchRegister1);
+                    fsd(scratchRegister, r, 0);
                 }
             }
         }
@@ -372,11 +378,27 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void fldr(int srcSize, CiRegister rd, CiRegister rs, int offset) {
+        if (srcSize == 32) {
+            flw(rd, rs, offset);
+        } else if (srcSize == 64) {
+            fld(rd, rs, offset);
+        }
+    }
+
     public void str(int srcSize, CiRegister rd, CiRegister rs, int offset) {
         if (srcSize == 32) {
             sw(rd, rs, offset);
         } else if (srcSize == 64) {
             sd(rd, rs, offset);
+        }
+    }
+
+    public void fstr(int srcSize, CiRegister rd, CiRegister rs, int offset) {
+        if (srcSize == 32) {
+            fsw(rd, rs, offset);
+        } else if (srcSize == 64) {
+            fsd(rd, rs, offset);
         }
     }
 
@@ -390,6 +412,22 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 break;
             case IMMEDIATE_UNSCALED:
                 ldr(srcSize, rt, a.getBase(), a.getImmediateRaw());
+                break;
+            default:
+                throw new UnsupportedOperationException("Unimplemented");
+        }
+    }
+
+    public void fldr(int srcSize, CiRegister rt, RISCV64Address a) {
+        switch(a.getAddressingMode()) {
+            case BASE_REGISTER_ONLY:
+                fldr(srcSize, rt, a.getBase(), 0);
+                break;
+            case REGISTER_OFFSET:
+                fldr(srcSize, rt, a.getBase(), a.displacement);
+                break;
+            case IMMEDIATE_UNSCALED:
+                fldr(srcSize, rt, a.getBase(), a.getImmediateRaw());
                 break;
             default:
                 throw new UnsupportedOperationException("Unimplemented");
@@ -412,9 +450,24 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void fstr(int srcSize, CiRegister rt, RISCV64Address a) {
+        switch(a.getAddressingMode()) {
+            case BASE_REGISTER_ONLY:
+                fstr(srcSize, a.getBase(), rt, 0);
+                break;
+            case REGISTER_OFFSET:
+                fstr(srcSize, a.getBase(), rt, a.displacement);
+                break;
+            case IMMEDIATE_UNSCALED:
+                fstr(srcSize, a.getBase(), rt, a.getImmediateRaw());
+                break;
+            default:
+                throw new UnsupportedOperationException("Unimplemented");
+        }
+    }
+
     public void load(CiRegister dest, CiAddress addr, CiKind kind) {
         RISCV64Address address = calculateAddress(addr);
-
         switch (kind) {
             case Object:
             case Long:
@@ -422,6 +475,12 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 break;
             case Int:
                 ldr(32, dest, address);
+                break;
+            case Float:
+                fldr(32, dest, address);
+                break;
+            case Double:
+                fldr(64, dest, address);
                 break;
             default:
                 assert false : "Unknown kind!";
@@ -437,6 +496,12 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 break;
             case Int:
                 str(32, src, address);
+                break;
+            case Float:
+                fstr(32, src, address);
+                break;
+            case Double:
+                fstr(64, src, address);
                 break;
             default:
                 assert false : "Unknown kind!";

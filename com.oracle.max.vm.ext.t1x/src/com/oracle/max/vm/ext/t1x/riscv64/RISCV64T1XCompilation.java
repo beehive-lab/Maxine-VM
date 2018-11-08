@@ -295,9 +295,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignDouble(CiRegister dst, double value) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.mov64BitConstant(scratch, Double.doubleToRawLongBits(value));
-//        asm.fmovCpu2Fpu(dst, scratch);
+        asm.mov64BitConstant(scratch, Double.doubleToRawLongBits(value));
+        asm.fmvdx(dst, scratch);
     }
 
     @Override
@@ -416,10 +415,10 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         protectionLiteralIndex = objectLiterals.size();
         objectLiterals.add(T1XTargetMethod.PROTECTED);
         int dispPos = buf.position();
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.adr(scratch, 0); // this gets patched
-//        asm.str(RISCV64.zr, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
-//        patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
+        asm.auipc(scratch, 0);
+        asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+        asm.str(64, RISCV64.zr, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
+        patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
     }
 
     @Override
@@ -1034,13 +1033,13 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     }
 
     public void do_iaddTests() {
-        peekInt(RISCV64.x0, 0);
+        peekInt(RISCV64.x5, 0);
         decStack(1);
-        peekInt(RISCV64.x1, 0);
+        peekInt(RISCV64.x6, 0);
         decStack(1);
-        asm.add(RISCV64.x0, RISCV64.x0, RISCV64.x1);
+        asm.add(RISCV64.x5, RISCV64.x5, RISCV64.x6);
         incStack(1);
-        pokeInt(RISCV64.x0, 0);
+        pokeInt(RISCV64.x5, 0);
     }
 
     public void do_laddTests() {
