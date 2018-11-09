@@ -824,21 +824,13 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fmvxd(CiRegister rd, CiRegister rs) {
-        if (rd.isGeneral() && rs.isFpu()) {
-            itype(FMV, rd, 0, rs, 0b111000100000);
-            return;
-        }
-
-        throw new Error("should not reach here");
+        assert rd.isGeneral() && rs.isFpu();
+        itype(FMV, rd, 0, rs, 0b111000100000);
     }
 
     public void fmvdx(CiRegister rd, CiRegister rs) {
-        if (rd.isFpu() && rs.isGeneral()) {
-            itype(FMV, rd, 0, rs, 0b111100100000);
-            return;
-        }
-
-        throw new Error("should not reach here");
+        assert rd.isFpu() && rs.isGeneral();
+        itype(FMV, rd, 0, rs, 0b111100100000);
     }
 
     public void fld(CiRegister dst, CiRegister base, int offset) {
