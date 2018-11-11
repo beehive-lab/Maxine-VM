@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -15,22 +16,17 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
-//package com.oracle.graal.asm.armv8;
-package com.oracle.max.asm.target.aarch64;
+package com.oracle.max.asm.target.riscv64;
 
-import static com.oracle.max.asm.target.aarch64.Aarch64.*;
+import static com.oracle.max.asm.target.riscv64.RISCV64.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 
 /**
  * Represents an address in target machine memory, specified using one of the different addressing modes of the
- * Aarch64 ISA.
+ * RISCV64 ISA.
  * - Base register only
  * - Base register + immediate or register with shifted offset
  * - Pre-indexed: base + immediate offset are written back to base register, value used in instruction is base + offset
@@ -40,10 +36,10 @@ import com.sun.cri.ci.*;
  * <p>
  * Not all addressing modes are supported for all instructions.
  */
-public final class Aarch64Address extends CiAddress {
+public final class RISCV64Address extends CiAddress {
     // Placeholder for addresses that get patched later.
-    public static final Aarch64Address Placeholder = new Aarch64Address(CiKind.Illegal, Aarch64.zr.asValue(), Aarch64.zr.asValue(), 0, false, null, AddressingMode.PC_LITERAL);
-    private static final long serialVersionUID = -6489231419881663165L;
+    public static final RISCV64Address Placeholder = new RISCV64Address(CiKind.Illegal, RISCV64.zr.asValue(), RISCV64.zr.asValue(), 0, false, null, AddressingMode.PC_LITERAL);
+    private static final long serialVersionUID = 2306820231108443722L;
 
     public enum AddressingMode {
         /**
@@ -89,7 +85,7 @@ public final class Aarch64Address extends CiAddress {
      * Should register offset be scaled or not.
      */
     private final boolean scaled;
-    private final Aarch64Assembler.ExtendType extendType;
+    private final RISCV64Assembler.ExtendType extendType;
     private final AddressingMode addressingMode;
 
     /**
@@ -97,56 +93,56 @@ public final class Aarch64Address extends CiAddress {
      * Null is never accepted for a register, if an addressMode doesn't use a register the register has to be the zero-register.
      * extendType has to be null for every addressingMode except EXTENDED_REGISTER_OFFSET.
      */
-    public static Aarch64Address createAddress(CiKind kind, AddressingMode addressingMode, CiRegister base, CiRegister offset,
-                                             int immediate, boolean isScaled, Aarch64Assembler.ExtendType extendType) {
-        return new Aarch64Address(kind, base.asValue(), offset.asValue(), immediate, isScaled, extendType, addressingMode);
+    public static RISCV64Address createAddress(CiKind kind, AddressingMode addressingMode, CiRegister base, CiRegister offset,
+                                             int immediate, boolean isScaled, RISCV64Assembler.ExtendType extendType) {
+        return new RISCV64Address(kind, base.asValue(), offset.asValue(), immediate, isScaled, extendType, addressingMode);
     }
 
     /**
      * @param base may not be null or the zero-register.
      * @param imm9 Signed 9 bit immediate value.
-     * @return Aarch64Address specifying a post-indexed immediate address pointing to base.
+     * @return RISCV64Address specifying a post-indexed immediate address pointing to base.
      *         After ldr/str instruction, base is updated to point to base + imm9
      */
-    public static Aarch64Address createPostIndexedImmediateAddress(CiRegister base, int imm9) {
-        return new Aarch64Address(CiKind.Int, base.asValue(), Aarch64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_POST_INDEXED);
+    public static RISCV64Address createPostIndexedImmediateAddress(CiRegister base, int imm9) {
+        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_POST_INDEXED);
     }
 
     /**
      * @param base may not be null or the zero-register.
      * @param imm9 Signed 9 bit immediate value.
-     * @return Aarch64Address specifying a pre-indexed immediate address pointing to base + imm9.
+     * @return RISCV64Address specifying a pre-indexed immediate address pointing to base + imm9.
      *         After ldr/str instruction, base is updated to point to base + imm9
      */
-    public static Aarch64Address createPreIndexedImmediateAddress(CiRegister base, int imm9) {
-        return new Aarch64Address(CiKind.Int, base.asValue(), Aarch64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_PRE_INDEXED);
+    public static RISCV64Address createPreIndexedImmediateAddress(CiRegister base, int imm9) {
+        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_PRE_INDEXED);
     }
 
     /**
      * @param base  may not be null or the zero-register.
      * @param imm12 Unsigned 12 bit immediate value. This is scaled by the word access size. This means if this
      *              address is used to load/store a word, the immediate is shifted by 2 (log2Ceil(4)).
-     * @return Aarch64Address specifying a signed address of the form base + imm12 << log2(memory_transfer_size).
+     * @return RISCV64Address specifying a signed address of the form base + imm12 << log2(memory_transfer_size).
      */
-    public static Aarch64Address createScaledImmediateAddress(CiRegister base, int imm12) {
-        return new Aarch64Address(CiKind.Int, base.asValue(), Aarch64.zr.asValue(), imm12, true, null, AddressingMode.IMMEDIATE_SCALED);
+    public static RISCV64Address createScaledImmediateAddress(CiRegister base, int imm12) {
+        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), imm12, true, null, AddressingMode.IMMEDIATE_SCALED);
     }
 
     /**
      * @param base may not be null or the zero-register.
      * @param imm9 Signed 9 bit immediate value.
-     * @return Aarch64Address specifying an unscaled immediate address of the form base + imm9
+     * @return RISCV64Address specifying an unscaled immediate address of the form base + imm9
      */
-    public static Aarch64Address createUnscaledImmediateAddress(CiRegister base, int imm9) {
-        return new Aarch64Address(CiKind.Int, base.asValue(), Aarch64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_UNSCALED);
+    public static RISCV64Address createUnscaledImmediateAddress(CiRegister base, int imm9) {
+        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_UNSCALED);
     }
 
     /**
      * @param base May not be null or the zero register.
-     * @return Aarch64Address specifying the address pointed to by base.
+     * @return RISCV64Address specifying the address pointed to by base.
      */
-    public static Aarch64Address createBaseRegisterOnlyAddress(CiRegister base) {
-        return createRegisterOffsetAddress(base, Aarch64.zr, false);
+    public static RISCV64Address createBaseRegisterOnlyAddress(CiRegister base) {
+        return createRegisterOffsetAddress(base, RISCV64.zr, false);
     }
 
     /**
@@ -154,11 +150,11 @@ public final class Aarch64Address extends CiAddress {
      * @param offset Register specifying some offset, optionally scaled by the memory_transfer_size.
      *               May not be null or the stackpointer.
      * @param scaled Specifies whether offset should be scaled by memory_transfer_size or not.
-     * @return Aarch64Address specifying a register offset address of the form base + offset [<< log2
+     * @return RISCV64Address specifying a register offset address of the form base + offset [<< log2
      *         (memory_transfer_size)]
      */
-    public static Aarch64Address createRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled) {
-        return new Aarch64Address(CiKind.Int, base.asValue(), offset.asValue(), 0, scaled, null, AddressingMode.REGISTER_OFFSET);
+    public static RISCV64Address createRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled) {
+        return new RISCV64Address(CiKind.Int, base.asValue(), offset.asValue(), 0, scaled, null, AddressingMode.REGISTER_OFFSET);
     }
 
     /**
@@ -167,17 +163,17 @@ public final class Aarch64Address extends CiAddress {
      *                   May not be null or the stackpointer.
      * @param scaled     Specifies whether offset should be scaled by memory_transfer_size or not.
      * @param extendType Describes whether register is zero- or sign-extended. May not be null.
-     * @return Aarch64Address specifying an extended register offset of the form base + extendType(offset)
+     * @return RISCV64Address specifying an extended register offset of the form base + extendType(offset)
      *         [<< log2(memory_transfer_size)]
      */
-    public Aarch64Address createExtendedRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled,
-                                                                   Aarch64Assembler.ExtendType extendType) {
-        return new Aarch64Address(CiKind.Int, base.asValue(), offset.asValue(), 0, scaled, extendType, AddressingMode.EXTENDED_REGISTER_OFFSET);
+    public RISCV64Address createExtendedRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled,
+                                                                   RISCV64Assembler.ExtendType extendType) {
+        return new RISCV64Address(CiKind.Int, base.asValue(), offset.asValue(), 0, scaled, extendType, AddressingMode.EXTENDED_REGISTER_OFFSET);
     }
 
 
-    private Aarch64Address(CiKind kind, CiValue base, CiValue offset, int immediate, boolean scaled,
-                         Aarch64Assembler.ExtendType extendType, AddressingMode addressingMode) {
+    private RISCV64Address(CiKind kind, CiValue base, CiValue offset, int immediate, boolean scaled,
+                         RISCV64Assembler.ExtendType extendType, AddressingMode addressingMode) {
         super(kind, base, offset);
         this.base = base.asRegister();
         this.offset = offset.asRegister();
@@ -195,7 +191,7 @@ public final class Aarch64Address extends CiAddress {
 
     private void verify() {
         assert addressingMode != null;
-        assert Aarch64.isIntReg(base) && Aarch64.isIntReg(offset);
+        assert RISCV64.isIntReg(base) && RISCV64.isIntReg(offset);
         switch (addressingMode) {
             case IMMEDIATE_SCALED:
                 assert !base.equals(zr);
@@ -217,14 +213,14 @@ public final class Aarch64Address extends CiAddress {
                 break;
             case REGISTER_OFFSET:
                 assert !base.equals(zr);
-                assert Aarch64.isGeneralPurposeReg(offset);
+                assert RISCV64.isGeneralPurposeReg(offset);
                 assert extendType == null;
                 assert immediate == 0;
                 break;
             case EXTENDED_REGISTER_OFFSET:
                 assert !base.equals(zr);
-                assert Aarch64.isGeneralPurposeReg(offset);
-                assert extendType == Aarch64Assembler.ExtendType.SXTW || extendType == Aarch64Assembler.ExtendType.UXTW;
+                assert RISCV64.isGeneralPurposeReg(offset);
+                assert extendType == RISCV64Assembler.ExtendType.SXTW || extendType == RISCV64Assembler.ExtendType.UXTW;
                 assert immediate == 0;
                 break;
             case PC_LITERAL:
@@ -298,7 +294,7 @@ public final class Aarch64Address extends CiAddress {
         return scaled;
     }
 
-    public Aarch64Assembler.ExtendType getExtendType() {
+    public RISCV64Assembler.ExtendType getExtendType() {
         return extendType;
     }
 

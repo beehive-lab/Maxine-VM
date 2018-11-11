@@ -30,7 +30,8 @@ import java.util.regex.*;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
-import com.oracle.max.asm.target.riscv.*;
+import com.oracle.max.asm.target.riscv64.*;
+import com.oracle.max.asm.target.riscv32.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -180,20 +181,9 @@ public final class Platform {
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
-        } else if (isa == ISA.RISCV) {
-            if (cpu == CPU.RISCV32) {
-                arch = new RISCV32();
-            } else {
-                arch = new RISCV64();
-            }
+        } else if (isa == ISA.RISCV64) {
+            arch = new RISCV64();
             if (os == OS.LINUX) {
-                // Linux apparently also requires it for functions that pass floating point functions on the stack.
-                // One such function in the Maxine code base is log_print_float() in log.c which passes a float
-                // value to fprintf on the stack. However, gcc doesn't fix the alignment itself so we simply
-                // adopt the global convention on Linux of 16-byte alignment for stacks. If this is a performance issue,
-                // this can later be refined to only be for JNI stubs that pass a float or double to native code.
-
-                // Solaris has the same issues.
                 stackAlignment = 16;
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);

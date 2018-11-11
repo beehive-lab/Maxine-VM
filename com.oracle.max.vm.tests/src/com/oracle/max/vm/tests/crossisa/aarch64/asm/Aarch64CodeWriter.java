@@ -101,8 +101,8 @@ public class Aarch64CodeWriter {
         createCodeFile(0);
     }
 
-    public void createCodeFile(int numberOfArguemnts) {
-        assert numberOfArguemnts >= 0;
+    public void createCodeFile(int numberOfArguments) {
+        assert numberOfArguments >= 0;
         try {
             PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
             writer.println("unsigned char code[" + ((totalInstructions + 1) * 4) + "] __attribute__((aligned(0x1000))) = {");
@@ -119,8 +119,8 @@ public class Aarch64CodeWriter {
             writer.println("void c_entry() {");
             String preAmble = preAmble("void", "", "");
             writer.print(preAmble);
-            if (numberOfArguemnts != 0) {
-                final int size = numberOfArguemnts * JVMS_SLOT_SIZE;
+            if (numberOfArguments != 0) {
+                final int size = numberOfArguments * JVMS_SLOT_SIZE;
                 writer.println("asm (\"add sp, sp, #" + size + "\");");
             }
             writer.println("}");

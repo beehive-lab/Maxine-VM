@@ -202,4 +202,8 @@ public abstract class CiArchitecture {
     public boolean isSPARC() {
         return false;
     }
+
+    public boolean isRISCV64() {
+        return false;
+    }
 }

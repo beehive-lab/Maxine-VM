@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.asm.target.riscv;
+package com.oracle.max.asm.target.riscv64;
 
 import com.sun.cri.ci.CiRegister;
 import com.sun.cri.ci.CiTarget;
@@ -29,13 +29,13 @@ import java.io.InputStreamReader;
 
 import static org.junit.Assert.*;
 
-public class RISCVAssemblerTest {
+public class RISCV64AssemblerTest {
 
-    private RISCVAssembler asm;
+    private RISCV64Assembler asm;
 
-    public RISCVAssemblerTest() {
+    public RISCV64AssemblerTest() {
         CiTarget risc64 = new CiTarget(new RISCV64(), true, 8, 0, 4096, 0, false, false, false, true);
-        asm = new RISCVAssembler(risc64);
+        asm = new RISCV64Assembler(risc64);
     }
 
     private int assemble(String instruction) {
@@ -79,6 +79,13 @@ public class RISCVAssemblerTest {
                 assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
             }
         }
+    }
+
+    @Test
+    public void sd() {
+        asm.sd(RISCV64.x5, RISCV64.x6, 32);
+        final String assemblyInstruction = "sd x" + RISCV64.x6.getEncoding() + ", " + 32 + "(x" + RISCV64.x5.getEncoding() + ")";
+        assertEquals(assemblyInstruction, assemble(assemblyInstruction), asm.codeBuffer.getInt(0));
     }
 
     @Test

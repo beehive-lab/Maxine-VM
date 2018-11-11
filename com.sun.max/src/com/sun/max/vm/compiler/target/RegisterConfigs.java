@@ -34,6 +34,7 @@ import java.util.*;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -381,6 +382,108 @@ public class RegisterConfigs {
                                 roleMap);            // VM register role map
 
                 setNonZero(template.getAttributesMap(), Aarch64.LATCH_REGISTER, Aarch64.sp, Aarch64.fp);
+                return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
+            }
+        } else if (platform().isa == ISA.RISCV64) {
+            if (os == OS.LINUX) {
+                allocatable = new CiRegister[] {
+                    RISCV64.x1,  RISCV64.x2,  RISCV64.x3,  RISCV64.x4,  RISCV64.x5,  RISCV64.x6,  RISCV64.x7,
+                    RISCV64.x8,  RISCV64.x9,  RISCV64.x10, RISCV64.x11, RISCV64.x12, RISCV64.x13, RISCV64.x14, RISCV64.x15,
+                    RISCV64.x16, RISCV64.x17, RISCV64.x18, RISCV64.x19, RISCV64.x20, RISCV64.x21, RISCV64.x22, RISCV64.x23,
+                    RISCV64.x24, RISCV64.x25, RISCV64.x26, RISCV64.x27,
+
+                    RISCV64.f0,  RISCV64.f1,  RISCV64.f2,  RISCV64.f3,  RISCV64.f4,  RISCV64.f5,  RISCV64.f6,  RISCV64.f7,
+                    RISCV64.f8,  RISCV64.f9,  RISCV64.f10, RISCV64.f11, RISCV64.f12, RISCV64.f13, RISCV64.f14, RISCV64.f15,
+                    RISCV64.f16, RISCV64.f17, RISCV64.f18, RISCV64.f19, RISCV64.f20, RISCV64.f21, RISCV64.f22, RISCV64.f23,
+                    RISCV64.f24, RISCV64.f25, RISCV64.f26, RISCV64.f27
+                };
+                parameters = new CiRegister[] {
+                    RISCV64.x10, RISCV64.x11, RISCV64.x12, RISCV64.x13,
+                    RISCV64.x14, RISCV64.x15, RISCV64.x16, RISCV64.x17,
+
+                    RISCV64.f10, RISCV64.f11, RISCV64.f12, RISCV64.f13,
+                    RISCV64.f14, RISCV64.f15, RISCV64.f16, RISCV64.f17,
+                };
+                // A call to the runtime may change the state of the safepoint latch
+                // and so a compiler stub must leave the latch register alone
+                allRegistersExceptLatch = new CiRegister[] {
+                    RISCV64.x1,  RISCV64.x2,  RISCV64.x3,  RISCV64.x4,  RISCV64.x5,  RISCV64.x6,  RISCV64.x7,
+                    RISCV64.x8,  RISCV64.x9,  RISCV64.x10, RISCV64.x11, RISCV64.x12, RISCV64.x13, RISCV64.x14, RISCV64.x15,
+                    RISCV64.x16, RISCV64.x17, RISCV64.x18, RISCV64.x19, RISCV64.x20, RISCV64.x21, RISCV64.x22, RISCV64.x23,
+                    RISCV64.x24, RISCV64.x25, RISCV64.x26, RISCV64.x27, RISCV64.x28, RISCV64.x29, RISCV64.x31,
+
+                    RISCV64.f0,  RISCV64.f1,  RISCV64.f2,  RISCV64.f3,  RISCV64.f4,  RISCV64.f5,  RISCV64.f6,  RISCV64.f7,
+                    RISCV64.f8,  RISCV64.f9,  RISCV64.f10, RISCV64.f11, RISCV64.f12, RISCV64.f13, RISCV64.f14, RISCV64.f15,
+                    RISCV64.f16, RISCV64.f17, RISCV64.f18, RISCV64.f19, RISCV64.f20, RISCV64.f21, RISCV64.f22, RISCV64.f23,
+                    RISCV64.f24, RISCV64.f25, RISCV64.f26, RISCV64.f27, RISCV64.f28, RISCV64.f29, RISCV64.f30, RISCV64.f31
+                };
+
+                roleMap.put(CPU_SP, RISCV64.sp);
+                roleMap.put(CPU_FP, RISCV64.fp);
+                roleMap.put(ABI_SP, RISCV64.sp);
+                roleMap.put(ABI_FP, RISCV64.fp);
+                roleMap.put(LATCH, RISCV64.LATCH_REGISTER);
+
+                /**
+                 * The register configuration for a normal Java method.
+                 * This configuration specifies <b>all</b> allocatable registers as caller-saved
+                 * as inlining is expected to reduce the call overhead sufficiently.
+                 */
+                standard = new CiRegisterConfig(
+                        RISCV64.fp,          // frame
+                        RISCV64.ra,          // integral return value
+                        RISCV64.fa0,          // floating point return value
+                        RISCV64.x28,         // scratch
+                        RISCV64.x29,         // scratch 1
+                        allocatable,         // allocatable
+                        allocatable,         // caller save
+                        parameters,          // parameter registers
+                        null,                // no callee save
+                        RISCV64.allRegisters, // all AMD64 registers
+                        roleMap);            // VM register role map
+
+
+                // Account for the word at the bottom of the frame used
+                // for saving an overwritten return address during deoptimization
+                int javaStackArg0Offset = Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET + Word.size();
+                int nativeStackArg0Offset = 0;
+                standard.stackArg0Offsets[JavaCall.ordinal()] = javaStackArg0Offset;
+                standard.stackArg0Offsets[JavaCallee.ordinal()] = javaStackArg0Offset;
+                standard.stackArg0Offsets[RuntimeCall.ordinal()] = javaStackArg0Offset;
+                standard.stackArg0Offsets[NativeCall.ordinal()] = nativeStackArg0Offset;
+
+                setNonZero(standard.getAttributesMap(), RISCV64.LATCH_REGISTER, RISCV64.sp, RISCV64.fp);
+
+                CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, csaRegisters));
+                CiRegisterConfig trapStub = new CiRegisterConfig(standard, Aarch64TrapFrameAccess.CSL);
+                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
+                        RISCV64.x10, RISCV64.x11, RISCV64.x12, RISCV64.x13,
+                        RISCV64.x14, RISCV64.x15, RISCV64.x16, RISCV64.x17, // parameters
+                        RISCV64.fp,   // must be preserved for baseline compiler ???frame pointer???
+                        standard.getScratchRegister(),    // dynamic dispatch index is saved here for stack frame walker
+                        RISCV64.f10, RISCV64.f11, RISCV64.f12, RISCV64.f13,
+                        RISCV64.f14, RISCV64.f15, RISCV64.f16, RISCV64.f17  // parameters
+                ));
+
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, calleeSavedRegisters));
+                n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
+
+                roleMap.put(ABI_FP, RISCV64.x29);
+                CiRegisterConfig template = new CiRegisterConfig(
+                        RISCV64.fp,          // frame???
+                        RISCV64.ra,          // integral return value
+                        RISCV64.fa0,          // floating point return value
+                        RISCV64.x28,         // scratch
+                        RISCV64.x29,         // scratch 1
+                        allocatable,         // allocatable
+                        allocatable,         // caller save
+                        parameters,          // parameter registers
+                        null,                // no callee save
+                        RISCV64.allRegisters,        // all AMD64 registers
+                        roleMap);            // VM register role map
+
+                setNonZero(template.getAttributesMap(), RISCV64.LATCH_REGISTER, RISCV64.sp, RISCV64.fp);
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
         } else {

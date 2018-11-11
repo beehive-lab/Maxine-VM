@@ -17,9 +17,9 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.asm.target.riscv;
+package com.oracle.max.asm.target.riscv64;
 
-public enum RISCVopCodes {
+public enum RISCV64opCodes {
 
     // RV32I Base instruction set /////////////////////////////////////////////
 
@@ -50,7 +50,16 @@ public enum RISCVopCodes {
     SUBW((byte) 0b0111011),
     SRAW((byte) 0b0111011),
     LD((byte) 0b0000011),
-    SD((byte) 0b0100011);
+    SD((byte) 0b0100011),
+
+    // Floating-point
+    LOAD_FP((byte) 0b0000111),
+    STORE_FP((byte) 0b0100111),
+    FCVTWS((byte) 0b1010011),
+    FCVTSW((byte) 0b1010011),
+    FMV((byte) 0b1010011),
+
+    MULW((byte) 0b0110011);
 
     public byte getValue() {
         return value;
@@ -58,7 +67,7 @@ public enum RISCVopCodes {
 
     private byte value;
 
-    RISCVopCodes(byte opcode) {
+    RISCV64opCodes(byte opcode) {
         value = opcode;
     }
 }

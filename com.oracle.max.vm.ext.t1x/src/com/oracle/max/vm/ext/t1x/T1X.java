@@ -526,7 +526,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     private MaxTargetMethod compileTemplate(RuntimeCompiler bootCompiler, ClassMethodActor templateSource) {
         FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
-        FatalError.check(!(hasStackParameters(templateSource) && (isAMD64() || isAARCH64())), "Template must not have *any* stack parameters on AMD64 and Aarch64: " + templateSource);
+        FatalError.check(!(hasStackParameters(templateSource) && (isAMD64() || isAARCH64() || isRISCV64())), "Template must not have *any* stack parameters on AMD64, Aarch64, and RISCV64: " + templateSource);
         FatalError.check(!(isARM() && hasStackParameters(templateSource) && !hasLongValues(templateSource)), "Template must not have non-long stack parameters on ARMv7: " + templateSource);
         FatalError.check(templateSource.resultKind().stackKind == templateSource.resultKind(), "Template return type must be a stack kind: " + templateSource);
         for (int i = 0; i < templateSource.getParameterKinds().length; i++) {
@@ -726,6 +726,11 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     @FOLD
     public static boolean isAARCH64() {
         return platform().isa == ISA.Aarch64;
+    }
+
+    @FOLD
+    public static boolean isRISCV64() {
+        return platform().isa == ISA.RISCV64;
     }
 
     /**

@@ -96,6 +96,10 @@ public class RISCV64CodeWriter {
     }
 
     public void createCodeFile() {
+        createCodeFile(0);
+    }
+
+    public void createCodeFile(int numberOfArguments) {
         try {
             PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
             writer.println("unsigned char code[" + ((totalInstructions + 1) * 4) + "] __attribute__((aligned(0x1000))) ;\n");
@@ -128,7 +132,7 @@ public class RISCV64CodeWriter {
             log("code[" + totalInstructions * 4 + "+2] = " + 0x2f + ";");
             writer.println("code[" + totalInstructions * 4 + "+3] = " + 0x00 + ";");
             log("code[" + totalInstructions * 4 + "+3] = " + 0xe1 + ";");
-            String preAmble = preAmble("void", "int", "1");
+            String preAmble = preAmble("void", "int", String.valueOf(numberOfArguments));
             writer.print(preAmble);
             log(preAmble);
             writer.println("}");

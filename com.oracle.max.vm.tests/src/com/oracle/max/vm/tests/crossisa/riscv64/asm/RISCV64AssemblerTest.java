@@ -19,22 +19,25 @@
  */
 package com.oracle.max.vm.tests.crossisa.riscv64.asm;
 
-import static com.oracle.max.asm.target.riscv.RISCV64.*;
+import static com.oracle.max.asm.target.riscv64.RISCV64.*;
 
+import com.oracle.max.vm.tests.crossisa.CrossISATester;
+import com.oracle.max.asm.Label;
 import org.junit.*;
 
-import com.oracle.max.vm.tests.crossisa.*;
-import com.oracle.max.asm.target.riscv.*;
+import com.oracle.max.asm.target.riscv64.*;
 import com.sun.cri.ci.*;
+
+import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.ConditionFlag;
 
 public class RISCV64AssemblerTest {
 
-    private RISCVAssembler asm;
+    private RISCV64MacroAssembler asm;
     private MaxineRISCV64Tester tester = new MaxineRISCV64Tester();
 
     public RISCV64AssemblerTest() {
         CiTarget risc64 = new CiTarget(new RISCV64(), true, 8, 0, 4096, 0, false, false, false, true);
-        asm = new RISCVAssembler(risc64);
+        asm = new RISCV64MacroAssembler(risc64);
     }
 
     @Before
@@ -924,5 +927,20 @@ public class RISCV64AssemblerTest {
         tester.setExpectedValue(t0, 0x0005588d);
         tester.setExpectedValue(t1, 0x02222244);
         tester.setExpectedValue(t2, 0x0);
+    }
+
+    @Test
+    public void bLabel() {
+        Label loop = new Label();
+
+        asm.add(t1, zero, 0);
+        asm.add(t2, zero, 4);
+
+        asm.bind(loop);
+
+        asm.add(t1, t1, 1);
+        asm.branchConditionally(ConditionFlag.LT, t1, t2, loop);
+
+        tester.setExpectedValue(t1, 0x4);
     }
 }
