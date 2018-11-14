@@ -359,16 +359,12 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
-        XirOperand trueValue1 = asm.createTemp("trueValue1", CiKind.Int);
+        XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
 
-        trueValue1 = asm.i(1);
-
-        XirConstant offsetProfiler = asm.i(VmThreadLocal.PROFILER_TLA.offset);
-
-        asm.pstore(WordUtil.archKind(), tla, offsetProfiler, trueValue1, false);
-
-        Log.println("# PrologueMethod= " + method.name() + " #?");
-
+        if (method.name().equals("entryPoint")) {
+            XirOperand trueValue1 = asm.i(1);
+            asm.pstore(WordUtil.archKind(), tla, offsetToProfile, trueValue1, false);
+        }
 
         return new XirSnippet(finishTemplate(asm, "prologue"));
     }
@@ -386,6 +382,13 @@ public class MaxXirGenerator implements RiXirGenerator {
         ClassMethodActor callee = (ClassMethodActor) method;
         if (callee.isTemplate()) {
             return null;
+        }
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
+        XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
+
+        if (method.name().equals("exitPoint")) {
+            XirOperand trueValue1 = asm.i(0);
+            asm.pstore(WordUtil.archKind(), tla, offsetToProfile, trueValue1, false);
         }
         return new XirSnippet(epilogueTemplate);
     }
