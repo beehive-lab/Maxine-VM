@@ -56,7 +56,7 @@ public class Aarch64T1XTest extends MaxTestCase {
     public void initialiseFrameForCompilation() {
         // TODO: compute max stack
         codeAttr = new CodeAttribute(null, new byte[15], (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
-        anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(Ljava/util/Map;)V"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
+        anMethod = new StaticMethodActor(null, SignatureDescriptor.create("()V"), Actor.ACC_STATIC, codeAttr, new String());
     }
 
     public void initialiseFrameForCompilation(byte[] code, String sig) {
