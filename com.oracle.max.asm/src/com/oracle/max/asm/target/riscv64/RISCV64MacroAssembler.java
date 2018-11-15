@@ -95,13 +95,13 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void push(CiRegister reg) {
-        subi(RISCV64.sp, RISCV64.sp, 64);
+        subi(RISCV64.sp, RISCV64.sp, 16);
         sd(RISCV64.sp, reg, 0);
     }
 
     public void pop(CiRegister reg) {
         ld(reg, RISCV64.sp, 0);
-        addi(RISCV64.sp, RISCV64.sp, 64);
+        addi(RISCV64.sp, RISCV64.sp, 16);
     }
 
     public void push(CiRegister... registers) {
@@ -367,7 +367,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public final void ret(CiRegister r) {
-        jal(RISCV64.ra, 0);
+        jalr(RISCV64.x0, r, 0);
     }
 
     public void ldr(int srcSize, CiRegister rd, CiRegister rs, int offset) {
