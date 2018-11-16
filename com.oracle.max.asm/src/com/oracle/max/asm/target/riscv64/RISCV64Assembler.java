@@ -37,7 +37,7 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     public RISCV64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
-        this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
+        this.frameRegister = registerConfig == null ? RISCV64.fp : registerConfig.getFrameRegister();
         this.scratchRegister = registerConfig == null ? RISCV64.x28 : registerConfig.getScratchRegister();
         this.scratchRegister1 = registerConfig == null ? RISCV64.x29 : registerConfig.getScratchRegister1();
     }

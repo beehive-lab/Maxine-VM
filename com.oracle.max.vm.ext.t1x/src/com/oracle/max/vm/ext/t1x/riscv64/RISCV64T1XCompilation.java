@@ -1063,13 +1063,13 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     }
 
     public void do_imulTests() {
-        peekInt(RISCV64.x0, 0);
+        peekInt(RISCV64.x5, 0);
         decStack(1);
-        peekInt(RISCV64.x1, 0);
+        peekInt(RISCV64.x6, 0);
         decStack(1);
-        asm.mul(RISCV64.x0, RISCV64.x0, RISCV64.x1);
+        asm.mul(RISCV64.x5, RISCV64.x5, RISCV64.x6);
         incStack(1);
-        pokeInt(RISCV64.x0, 0);
+        pokeInt(RISCV64.x5, 0);
     }
 
     public void do_initFrameTests(ClassMethodActor method, CodeAttribute codeAttribute) {
