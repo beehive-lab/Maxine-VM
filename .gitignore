@@ -30,6 +30,11 @@ com.oracle.max.vm.native/generated/
 /scratch/
 /maxine-tester/*
 !/maxine-tester/junit-tests/
+/docs/_build/
+/maxjdk/
+/mxbuild/
+/production/
+/mx.maxine/savedDeps/
 
 # mx
 mx/
@@ -70,5 +75,5 @@ codebuffer.c
 maxine-tester/junit-tests/FileReader.input
 maxine-tester/junit-tests/GetResource.input
 maxine-tester/junit-tests/ZipFileReader.input
-
-/docs/_build/
+com.sun.max.ins/NB3B.jar.sha1
+test/jasmin_classes.jar.sha1
