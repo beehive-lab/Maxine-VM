@@ -34,6 +34,7 @@ import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.thread.VmThreadLocal;
 
 import static com.sun.max.vm.MaxineVM.isHosted;
 
@@ -60,6 +61,7 @@ public class Profiler {
     public static int profilingCycle;
 
     private static boolean PrintHistogram;
+    public static int profilerTLAcounter = 0;
 
     /**
      * Use -XX:+PrintHistogram flag to accompany the profiler stats with a complete histogram view.
@@ -118,28 +120,57 @@ public class Profiler {
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void profile(int size, String type) {
-        //if (VmThread.current().PROFILE) {
-            //if (MaxineVM.isRunning()) {
-        final boolean lockDisabledSafepoints = lock();
-        //record(size);
-        sizeHistogram[profilingCycle].record(size);
-        typeHistogram[profilingCycle].record(size, type);
-        unlock(lockDisabledSafepoints);
-            //}
-        //}
+        int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
+        if (profilerTLA == 1) {
+            final boolean lockDisabledSafepoints = lock();
+            sizeHistogram[profilingCycle].record(size);
+            typeHistogram[profilingCycle].record(size, type);
+            unlock(lockDisabledSafepoints);
+        }
+        if (profilerTLA == 0 && profilerTLAcounter == 0) {
+            Log.print("Profiler TLA = ");
+            Log.print(profilerTLA);
+            Log.print(" (");
+            Log.print(VmThread.current().id());
+            Log.println(") ");
+            profilerTLAcounter = 1;
+        }
+        if (profilerTLA == 1 && profilerTLAcounter == 1) {
+            Log.print("Profiler TLA = ");
+            Log.print(profilerTLA);
+            Log.print(" (");
+            Log.print(VmThread.current().id());
+            Log.println(") ");
+            profilerTLAcounter = 0;
+        }
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void profileGC(int size, String type) {
-        //if (VmThread.current().PROFILE) {
-        //if (MaxineVM.isRunning()) {
-        final boolean lockDisabledSafepoints = lock();
-        sizeHistogram[profilingCycle].recordGC(size);
-        typeHistogram[profilingCycle].recordGC(size, type);
-        unlock(lockDisabledSafepoints);
-        //}
-        //}
+        int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
+        if (profilerTLA == 1) {
+            final boolean lockDisabledSafepoints = lock();
+            sizeHistogram[profilingCycle].recordGC(size);
+            typeHistogram[profilingCycle].recordGC(size, type);
+            unlock(lockDisabledSafepoints);
+        }
+        if (profilerTLA == 0 && profilerTLAcounter == 0) {
+            Log.print("Profiler TLA = ");
+            Log.print(profilerTLA);
+            Log.print(" (");
+            Log.print(VmThread.current().id());
+            Log.println(") ");
+            profilerTLAcounter = 1;
+        }
+        if (profilerTLA == 1 && profilerTLAcounter == 1) {
+            Log.print("Profiler TLA = ");
+            Log.print(profilerTLA);
+            Log.print(" (");
+            Log.print(VmThread.current().id());
+            Log.println(") ");
+            profilerTLAcounter = 0;
+        }
     }
 
     /**
