@@ -27,6 +27,7 @@ import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64MacroAssembler extends RISCV64Assembler {
     public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 5;
+    public static final int INSTRUCTION_SIZE = 4;
 
     public RISCV64MacroAssembler(CiTarget target) {
         super(target);
@@ -407,9 +408,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BASE_REGISTER_ONLY:
                 ldr(srcSize, rt, a.getBase(), 0);
                 break;
-            case REGISTER_OFFSET:
-                ldr(srcSize, rt, a.getBase(), a.displacement);
-                break;
             case IMMEDIATE_UNSCALED:
                 ldr(srcSize, rt, a.getBase(), a.getImmediateRaw());
                 break;
@@ -422,9 +420,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         switch(a.getAddressingMode()) {
             case BASE_REGISTER_ONLY:
                 fldr(srcSize, rt, a.getBase(), 0);
-                break;
-            case REGISTER_OFFSET:
-                fldr(srcSize, rt, a.getBase(), a.displacement);
                 break;
             case IMMEDIATE_UNSCALED:
                 fldr(srcSize, rt, a.getBase(), a.getImmediateRaw());
@@ -439,9 +434,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BASE_REGISTER_ONLY:
                 str(srcSize, a.getBase(), rt, 0);
                 break;
-            case REGISTER_OFFSET:
-                str(srcSize, a.getBase(), rt, a.displacement);
-                break;
             case IMMEDIATE_UNSCALED:
                 str(srcSize, a.getBase(), rt, a.getImmediateRaw());
                 break;
@@ -454,9 +446,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         switch(a.getAddressingMode()) {
             case BASE_REGISTER_ONLY:
                 fstr(srcSize, a.getBase(), rt, 0);
-                break;
-            case REGISTER_OFFSET:
-                fstr(srcSize, a.getBase(), rt, a.displacement);
                 break;
             case IMMEDIATE_UNSCALED:
                 fstr(srcSize, a.getBase(), rt, a.getImmediateRaw());
@@ -530,11 +519,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
 
         if (disp != 0) {
-            if (NumUtil.isSignedNbit(9, disp)) {
+            if (NumUtil.isSignedNbit(11, disp)) {
                 return RISCV64Address.createUnscaledImmediateAddress(base, disp);
             } else {
-                mov(RISCV64.t1, disp);
-                return RISCV64Address.createRegisterOffsetAddress(base, RISCV64.t1, false);
+                throw new UnsupportedOperationException("Offset is larger than 12 bit signed "
+                        + Integer.toBinaryString(disp));
             }
         }
 

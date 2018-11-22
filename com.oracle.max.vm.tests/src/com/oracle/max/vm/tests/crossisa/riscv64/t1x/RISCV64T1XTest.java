@@ -819,159 +819,130 @@ public class RISCV64T1XTest extends MaxTestCase {
                     : "Register " + (int) pair.first + " " + simulatedValues[(int) pair.first - 1] + " expected " + expectedValues[(int) pair.first];
         });
     }
-//
-//    static final class BranchInfo {
-//
-//        private int bc;
-//        private int start;
-//        private int end;
-//        private int expected;
-//        private int step;
-//
-//        private BranchInfo(int bc, int start, int end, int expected, int step) {
-//            this.bc = bc;
-//            this.end = end;
-//            this.start = start;
-//            this.expected = expected;
-//            this.step = step;
-//        }
-//
-//        public int getBytecode() {
-//            return bc;
-//        }
-//
-//        public int getStart() {
-//            return start;
-//        }
-//
-//        public int getEnd() {
-//            return end;
-//        }
-//
-//        public int getExpected() {
-//            return expected;
-//        }
-//
-//        public int getStep() {
-//            return step;
-//        }
-//    }
-//
-//    public void test_SwitchTable() throws Exception {
-//        // int i = 1;
-//        // int j, k , l, m;
-//        // switch(i) {
-//        // case 0: j=10;
-//        // case 1: k=20;
-//        // case 2: l=30;
-//        // default: m=40;
-//        // }
-//
-//        // int chooseNear(int i) {
-//        // switch (i) {
-//        // } }
-//        // compiles to:
-//        // case 0: return 0;
-//        // case 1: return 1;
-//        // case 2: return 2;
-//        // default: return -1;
-//        // Method int chooseNear(int)
-//        // 0 iload_1 // Push local variable 1 (argument i)
-//        // 1 tableswitch 0 to 2: // Valid indices are 0 through 2
-//        // 0: 28
-//        // 1: 30
-//        // 2: 32
-//        // default:34
-//        // 28 iconst_0
-//        // 29 ireturn
-//        // 30 iconst_1
-//        // 31 ireturn
-//        // 32 iconst_2
-//        // 33 ireturn
-//        // 34 iconst_m1
-//        // 35 ireturn
-//
+
+    public void test_SwitchTable() throws Exception {
+        // int i = 1;
+        // int j, k , l, m;
+        // switch(i) {
+        // case 0: j=10;
+        // case 1: k=20;
+        // case 2: l=30;
+        // default: m=40;
+        // }
+
+        // int chooseNear(int i) {
+        // switch (i) {
+        // } }
+        // compiles to:
+        // case 0: return 0;
+        // case 1: return 1;
+        // case 2: return 2;
+        // default: return -1;
+        // Method int chooseNear(int)
+        // 0 iload_1 // Push local variable 1 (argument i)
+        // 1 tableswitch 0 to 2: // Valid indices are 0 through 2
+        // 0: 28
+        // 1: 30
+        // 2: 32
+        // default:34
+        // 28 iconst_0
+        // 29 ireturn
+        // 30 iconst_1
+        // 31 ireturn
+        // 32 iconst_2
+        // 33 ireturn
+        // 34 iconst_m1
+        // 35 ireturn
+
+        List<Pair> pairs = new ArrayList<>();
+        pairs.add(new Pair(5, 10));
+        pairs.add(new Pair(6, 20));
+        pairs.add(new Pair(7, 30));
+        pairs.add(new Pair(30, 40));
+
 //        int[] values = new int[] {10, 20, 30, 40};
-//        for (int i = 0; i < values.length; i++) {
-//            for (int j = 0; j < values.length; j++) {
-//                if (i > j) {
-//                    expectedValues[j] = 0;
-//                } else {
-//                    expectedValues[j] = values[j];
-//                }
-//            }
-//
-//            byte[] instructions = new byte[36];
-//            if (i == 0) {
-//                instructions[0] = (byte) Bytecodes.ICONST_0;
-//            } else if (i == 1) {
-//                instructions[0] = (byte) Bytecodes.ICONST_1;
-//            } else if (i == 2) {
-//                instructions[0] = (byte) Bytecodes.ICONST_2;
-//            } else {
-//                instructions[0] = (byte) Bytecodes.ICONST_3;
-//            }
-//            instructions[1] = (byte) Bytecodes.ISTORE_1;
-//            instructions[2] = (byte) Bytecodes.ILOAD_1;
-//
-//            instructions[3] = (byte) Bytecodes.TABLESWITCH;
-//            instructions[4] = (byte) 0;
-//            instructions[5] = (byte) 0;
-//            instructions[6] = (byte) 0;
-//            instructions[7] = (byte) 0x1f; //31
-//
-//            instructions[8] = (byte) 0;
-//            instructions[9] = (byte) 0;
-//            instructions[10] = (byte) 0;
-//            instructions[11] = (byte) 0;
-//
-//            instructions[12] = (byte) 0;
-//            instructions[13] = (byte) 0;
-//            instructions[14] = (byte) 0;
-//            instructions[15] = (byte) 0x2;  //2
-//
-//            instructions[16] = (byte) 0;
-//            instructions[17] = (byte) 0;
-//            instructions[18] = (byte) 0;
-//            instructions[19] = (byte) 0x19; // 25
-//
-//            instructions[20] = (byte) 0;
-//            instructions[21] = (byte) 0;
-//            instructions[22] = (byte) 0;
-//            instructions[23] = (byte) 0x1b; // 27
-//
-//            instructions[24] = (byte) 0;
-//            instructions[25] = (byte) 0;
-//            instructions[26] = (byte) 0;
-//            instructions[27] = (byte) 0x1d; // 29
-//
-//            instructions[28] = (byte) Bytecodes.BIPUSH;
-//            instructions[29] = (byte) values[0];
-//
-//            instructions[30] = (byte) Bytecodes.BIPUSH;
-//            instructions[31] = (byte) values[1];
-//
-//            instructions[32] = (byte) Bytecodes.BIPUSH;
-//            instructions[33] = (byte) values[2];
-//
-//            instructions[34] = (byte) Bytecodes.BIPUSH;
-//            instructions[35] = (byte) values[3];
-//
-//            initialiseFrameForCompilation(instructions, "(II)I");
-//            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, instructions);
-//            theCompiler.peekInt(RISCV64.x3, 0);
-//            theCompiler.peekInt(RISCV64.x2, 1);
-//            theCompiler.peekInt(RISCV64.x1, 2);
-//            theCompiler.peekInt(RISCV64.x0, 3);
-//
-//            long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-//            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
-//            assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
-//            assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
-//            assert registerValues[3] == expectedValues[3] : "Failed incorrect value " + registerValues[3] + " " + expectedValues[3];
-//            theCompiler.cleanup();
-//        }
-//    }
+        for (int i = 0; i < pairs.size(); i++) {
+            for (int j = 0; j < pairs.size(); j++) {
+                if (i > j) {
+                    expectedValues[(int) pairs.get(j).first] = 0;
+                } else {
+                    expectedValues[(int) pairs.get(j).first] = pairs.get(j).second;
+                }
+            }
+
+            byte[] instructions = new byte[36];
+            if (i == 0) {
+                instructions[0] = (byte) Bytecodes.ICONST_0;
+            } else if (i == 1) {
+                instructions[0] = (byte) Bytecodes.ICONST_1;
+            } else if (i == 2) {
+                instructions[0] = (byte) Bytecodes.ICONST_2;
+            } else {
+                instructions[0] = (byte) Bytecodes.ICONST_3;
+            }
+            instructions[1] = (byte) Bytecodes.ISTORE_1;
+            instructions[2] = (byte) Bytecodes.ILOAD_1;
+
+            instructions[3] = (byte) Bytecodes.TABLESWITCH;
+            instructions[4] = (byte) 0;
+            instructions[5] = (byte) 0;
+            instructions[6] = (byte) 0;
+            instructions[7] = (byte) 0x1f; //31
+
+            instructions[8] = (byte) 0;
+            instructions[9] = (byte) 0;
+            instructions[10] = (byte) 0;
+            instructions[11] = (byte) 0;
+
+            instructions[12] = (byte) 0;
+            instructions[13] = (byte) 0;
+            instructions[14] = (byte) 0;
+            instructions[15] = (byte) 0x2;  //2
+
+            instructions[16] = (byte) 0;
+            instructions[17] = (byte) 0;
+            instructions[18] = (byte) 0;
+            instructions[19] = (byte) 0x19; // 25
+
+            instructions[20] = (byte) 0;
+            instructions[21] = (byte) 0;
+            instructions[22] = (byte) 0;
+            instructions[23] = (byte) 0x1b; // 27
+
+            instructions[24] = (byte) 0;
+            instructions[25] = (byte) 0;
+            instructions[26] = (byte) 0;
+            instructions[27] = (byte) 0x1d; // 29
+
+            instructions[28] = (byte) Bytecodes.BIPUSH;
+            instructions[29] = (byte) pairs.get(0).second;
+
+            instructions[30] = (byte) Bytecodes.BIPUSH;
+            instructions[31] = (byte) pairs.get(1).second;
+
+            instructions[32] = (byte) Bytecodes.BIPUSH;
+            instructions[33] = (byte) pairs.get(2).second;
+
+            instructions[34] = (byte) Bytecodes.BIPUSH;
+            instructions[35] = (byte) pairs.get(3).second;
+
+            initialiseFrameForCompilation(instructions, "(I)I");
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, instructions);
+            theCompiler.peekInt(RISCV64.x30, 0);
+            theCompiler.peekInt(RISCV64.x7, 1);
+            theCompiler.peekInt(RISCV64.x6, 2);
+            theCompiler.peekInt(RISCV64.x5, 3);
+
+            long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+
+            System.out.println("Current itteration is " + i);
+            assert registerValues[4] == expectedValues[5] : "Reg 5 incorrect value " + registerValues[4] + " " + expectedValues[5];
+            assert registerValues[5] == expectedValues[6] : "Reg 6 incorrect value " + registerValues[5] + " " + expectedValues[6];
+            assert registerValues[6] == expectedValues[7] : "Reg 7 incorrect value " + registerValues[6] + " " + expectedValues[7];
+            assert registerValues[29] == expectedValues[30] : "Reg 30 incorrect value " + registerValues[29] + " " + expectedValues[30];
+            theCompiler.cleanup();
+        }
+    }
 //
 //    public void test_LookupTable() throws Exception {
 //        // int ii = 1;
@@ -1085,8 +1056,44 @@ public class RISCV64T1XTest extends MaxTestCase {
 //            theCompiler.cleanup();
 //        }
 //    }
-//
-//
+
+    static final class BranchInfo {
+
+        private int bc;
+        private int start;
+        private int end;
+        private int expected;
+        private int step;
+
+        private BranchInfo(int bc, int start, int end, int expected, int step) {
+            this.bc = bc;
+            this.end = end;
+            this.start = start;
+            this.expected = expected;
+            this.step = step;
+        }
+
+        public int getBytecode() {
+            return bc;
+        }
+
+        public int getStart() {
+            return start;
+        }
+
+        public int getEnd() {
+            return end;
+        }
+
+        public int getExpected() {
+            return expected;
+        }
+
+        public int getStep() {
+            return step;
+        }
+    }
+
 //    private static final List<BranchInfo> branches = new LinkedList<>();
 //    static {
 //        branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10, 1));

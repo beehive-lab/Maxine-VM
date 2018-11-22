@@ -431,7 +431,7 @@ public class RegisterConfigs {
                  */
                 standard = new CiRegisterConfig(
                         RISCV64.fp,          // frame
-                        RISCV64.ra,          // integral return value
+                        RISCV64.ra0,          // integral return value
                         RISCV64.fa0,          // floating point return value
                         RISCV64.x28,         // scratch
                         RISCV64.x29,         // scratch 1
@@ -472,7 +472,7 @@ public class RegisterConfigs {
                 roleMap.put(ABI_FP, RISCV64.fp);
                 CiRegisterConfig template = new CiRegisterConfig(
                         RISCV64.fp,          // frame???
-                        RISCV64.ra,          // integral return value
+                        RISCV64.ra0,          // integral return value
                         RISCV64.fa0,          // floating point return value
                         RISCV64.x28,         // scratch
                         RISCV64.x29,         // scratch 1
