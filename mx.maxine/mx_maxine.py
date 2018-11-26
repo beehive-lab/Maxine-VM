@@ -401,7 +401,8 @@ def inspect(args):
 
     mx.expand_project_in_args(vmArgs)
 
-    cmd = mx.get_jdk().processArgs(
+    cmd = [mx.get_jdk().java]
+    cmd += mx.get_jdk().processArgs(
         sysProps + ['-cp', sanitized_classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
         insArgs + ['-a=' + ' '.join(vmArgs)])
 
@@ -421,7 +422,8 @@ def inspectoragent(args):
     The agent listens on a given port for an incoming connection from
     a remote Inspector process."""
 
-    cmd = mx.get_jdk().processArgs(['-cp', mx.classpath(), 'com.sun.max.tele.channel.agent.InspectorAgent'] + args)
+    cmd = [mx.get_jdk().java]
+    cmd += mx.get_jdk().processArgs(['-cp', mx.classpath(), 'com.sun.max.tele.channel.agent.InspectorAgent'] + args)
     if mx.get_os() == 'darwin':
         # The -E option propagates the environment variables into the sudo process
         mx.run(['sudo', '-E', '-p',
