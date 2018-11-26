@@ -120,12 +120,11 @@ public class Profiler {
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void profile(int size, String type) {
+        final boolean lockDisabledSafepoints = lock();
         int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
         if (profilerTLA == 1) {
-            final boolean lockDisabledSafepoints = lock();
             sizeHistogram[profilingCycle].record(size);
             typeHistogram[profilingCycle].record(size, type);
-            unlock(lockDisabledSafepoints);
         }
         if (profilerTLA == 0 && profilerTLAcounter == 0) {
             Log.print("Profiler TLA = ");
@@ -143,17 +142,17 @@ public class Profiler {
             Log.println(") ");
             profilerTLAcounter = 0;
         }
+        unlock(lockDisabledSafepoints);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public void profileGC(int size, String type) {
+        final boolean lockDisabledSafepoints = lock();
         int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
         if (profilerTLA == 1) {
-            final boolean lockDisabledSafepoints = lock();
             sizeHistogram[profilingCycle].recordGC(size);
             typeHistogram[profilingCycle].recordGC(size, type);
-            unlock(lockDisabledSafepoints);
         }
         if (profilerTLA == 0 && profilerTLAcounter == 0) {
             Log.print("Profiler TLA = ");
@@ -171,6 +170,7 @@ public class Profiler {
             Log.println(") ");
             profilerTLAcounter = 0;
         }
+        unlock(lockDisabledSafepoints);
     }
 
     /**
