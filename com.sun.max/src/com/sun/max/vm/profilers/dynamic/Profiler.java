@@ -122,26 +122,26 @@ public class Profiler {
     public void profile(int size, String type) {
         final boolean lockDisabledSafepoints = lock();
         int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-        if (profilerTLA == 1) {
+        if (profilerTLA == 1 && MaxineVM.isRunning()) {
             sizeHistogram[profilingCycle].record(size);
             typeHistogram[profilingCycle].record(size, type);
         }
-        if (profilerTLA == 0 && profilerTLAcounter == 0) {
-            Log.print("Profiler TLA = ");
-            Log.print(profilerTLA);
-            Log.print(" (");
-            Log.print(VmThread.current().id());
-            Log.println(") ");
-            profilerTLAcounter = 1;
-        }
-        if (profilerTLA == 1 && profilerTLAcounter == 1) {
-            Log.print("Profiler TLA = ");
-            Log.print(profilerTLA);
-            Log.print(" (");
-            Log.print(VmThread.current().id());
-            Log.println(") ");
-            profilerTLAcounter = 0;
-        }
+        // if (profilerTLA == 0 && profilerTLAcounter == 0) {
+        //     Log.print("Profiler TLA = ");
+        //     Log.print(profilerTLA);
+        //     Log.print(" (");
+        //     Log.print(VmThread.current().id());
+        //     Log.println(") ");
+        //     profilerTLAcounter = 1;
+        // }
+        // if (profilerTLA == 1 && profilerTLAcounter == 1) {
+        //     Log.print("Profiler TLA = ");
+        //     Log.print(profilerTLA);
+        //     Log.print(" (");
+        //     Log.print(VmThread.current().id());
+        //     Log.println(") ");
+        //     profilerTLAcounter = 0;
+        // }
         unlock(lockDisabledSafepoints);
     }
 
@@ -150,26 +150,26 @@ public class Profiler {
     public void profileGC(int size, String type) {
         final boolean lockDisabledSafepoints = lock();
         int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-        if (profilerTLA == 1) {
+        if (profilerTLA == 1 && MaxineVM.isRunning()) {
             sizeHistogram[profilingCycle].recordGC(size);
             typeHistogram[profilingCycle].recordGC(size, type);
         }
-        if (profilerTLA == 0 && profilerTLAcounter == 0) {
-            Log.print("Profiler TLA = ");
-            Log.print(profilerTLA);
-            Log.print(" (");
-            Log.print(VmThread.current().id());
-            Log.println(") ");
-            profilerTLAcounter = 1;
-        }
-        if (profilerTLA == 1 && profilerTLAcounter == 1) {
-            Log.print("Profiler TLA = ");
-            Log.print(profilerTLA);
-            Log.print(" (");
-            Log.print(VmThread.current().id());
-            Log.println(") ");
-            profilerTLAcounter = 0;
-        }
+        // if (profilerTLA == 0 && profilerTLAcounter == 0) {
+        //     Log.print("Profiler TLA = ");
+        //     Log.print(profilerTLA);
+        //     Log.print(" (");
+        //     Log.print(VmThread.current().id());
+        //     Log.println(") ");
+        //     profilerTLAcounter = 1;
+        // }
+        // if (profilerTLA == 1 && profilerTLAcounter == 1) {
+        //     Log.print("Profiler TLA = ");
+        //     Log.print(profilerTLA);
+        //     Log.print(" (");
+        //     Log.print(VmThread.current().id());
+        //     Log.println(") ");
+        //     profilerTLAcounter = 0;
+        // }
         unlock(lockDisabledSafepoints);
     }
 
