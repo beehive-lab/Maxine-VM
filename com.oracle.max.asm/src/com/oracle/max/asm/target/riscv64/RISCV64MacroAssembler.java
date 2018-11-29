@@ -95,42 +95,50 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         addi(rd, rs, -imm32);
     }
 
-    public void push(CiRegister reg) {
+    public void push(int size, CiRegister reg) {
         subi(RISCV64.sp, RISCV64.sp, 16);
-        sd(RISCV64.sp, reg, 0);
+        switch (size) {
+            case 64: sd(RISCV64.sp, reg, 0); break;
+            case 32: sw(RISCV64.sp, reg, 0); break;
+            default: throw new UnsupportedOperationException("Unimplemented push for size: " + size);
+        }
     }
 
-    public void pop(CiRegister reg) {
-        ld(reg, RISCV64.sp, 0);
+    public void pop(int size, CiRegister reg) {
+        switch (size) {
+            case 64: ld(reg, RISCV64.sp, 0); break;
+            case 32: lw(reg, RISCV64.sp, 0); break;
+            default: throw new UnsupportedOperationException("Unimplemented pop for size: " + size);
+        }
         addi(RISCV64.sp, RISCV64.sp, 16);
     }
 
-    public void push(CiRegister... registers) {
+    public void push(int size, CiRegister... registers) {
         for (CiRegister register : registers) {
-            push(register);
+            push(size, register);
         }
     }
 
-    public void pop(CiRegister... registers) {
+    public void pop(int size, CiRegister... registers) {
         for (CiRegister register : registers) {
-            pop(register);
+            pop(size, register);
         }
     }
 
-    public void push(int registerList) {
+    public void push(int size, int registerList) {
         for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
             if (registerList % 2 == 1) {
-                push(RISCV64.cpuRegisters[regNumber]);
+                push(size, RISCV64.cpuRegisters[regNumber]);
             }
 
             registerList = registerList >> 1;
         }
     }
 
-    public void pop(int registerList) {
+    public void pop(int size, int registerList) {
         for (int regNumber = Integer.SIZE - 1; regNumber >= 0; regNumber--) {
             if ((registerList >> regNumber) % 2 == 1) {
-                pop(RISCV64.cpuRegisters[regNumber]);
+                pop(size, RISCV64.cpuRegisters[regNumber]);
             }
         }
     }
@@ -184,8 +192,13 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void b(int offset) {
+//        The  unconditional  jump  instructions  all  use  PC-relative  addressing  to  help  support  position-
+//        independent  code.   The  JALR  instruction  was  defined  to  enable  a  two-instruction  sequence  to
+//        jump anywhere in a 32-bit absolute address range.  A LUI instruction can first load rs1 with the
+//        upper 20 bits of a target address, then JALR can add in the lower bits.  Similarly, AUIPC then
+//        JALR can jump anywhere in a 32-bit pc-relative address range.
         auipc(RISCV64.x28, offset);
-        jalr(RISCV64.zero, RISCV64.x28, 0);
+        jalr(RISCV64.zero, RISCV64.x28, offset);
     }
 
     /**

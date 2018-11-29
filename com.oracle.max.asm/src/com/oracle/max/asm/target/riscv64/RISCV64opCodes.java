@@ -29,6 +29,7 @@ public enum RISCV64opCodes {
     SLT((byte) 0b0110011),
     SLTU((byte) 0b0110011),
     COMP((byte) 0b0010011), // Computational instructions
+    SRLL((byte) 0b0110011),
     XOR((byte) 0b0110011),
     OR((byte) 0b0110011),
     AND((byte) 0b0110011),

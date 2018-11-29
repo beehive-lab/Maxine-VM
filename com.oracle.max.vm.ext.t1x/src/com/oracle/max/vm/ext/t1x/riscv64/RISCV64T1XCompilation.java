@@ -382,8 +382,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
          * of the other machinery e.g. stack walking if there is the assumption that the caller's FP lives
          * in a single JVMS_STACK_SLOT.
          */
-        asm.push(RISCV64.ra);
-        asm.push(RISCV64.fp);
+        asm.push(64, RISCV64.ra);
+        asm.push(64, RISCV64.fp);
         asm.sub(RISCV64.fp, RISCV64.sp, framePointerAdjustment()); // fp set relative to sp
         /*
          * Extend the stack pointer past the frame size minus the slot used for the callers
@@ -430,8 +430,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     protected void emitEpilogue() {
         // rewind stack pointer
         asm.add(RISCV64.sp, RISCV64.fp, framePointerAdjustment());
-        asm.pop(RISCV64.fp);
-        asm.pop(RISCV64.ra);
+        asm.pop(64, RISCV64.fp);
+        asm.pop(64, RISCV64.ra);
         asm.add(RISCV64.sp, RISCV64.sp, frame.sizeOfParameters());
         asm.ret(RISCV64.ra);
         if (T1XOptions.DebugMethods) {
@@ -482,26 +482,22 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
         asm.mov64BitConstant(scratch, lowMatch);
 
-        asm.pop(scratch1); // Pop index from stack
+        asm.pop(32, scratch1); // Pop index from stack
 
         // Jump to default target if index is not within the jump table
-//        asm.cmp(32, scratch1, lowMatch);
         startBlock(ts.defaultTarget());
         int pos = buf.position();
         // Check if index is lower than lowMatch and branch
         patchInfo.addJCC(RISCV64MacroAssembler.ConditionFlag.LT, pos, ts.defaultTarget(), scratch1, scratch);
         jcc(RISCV64MacroAssembler.ConditionFlag.LT, 0, scratch1, scratch);
 
+        // index = index - lowMatch
+        asm.sub(scratch1, scratch1, scratch);
+
         // mov64BitConstant uses scratch1...
-        asm.push(scratch1);
+        asm.push(32, scratch1);
         asm.mov64BitConstant(scratch, highMatch - lowMatch);
-        asm.pop(scratch1);
-//        if (lowMatch == 0) {
-//            asm.cmp(32, scratch1, highMatch);
-//        } else {
-//            asm.sub(scratch1, scratch1, lowMatch);
-//            asm.cmp(32, scratch1, highMatch - lowMatch);
-//        }
+        asm.pop(32, scratch1);
 
         pos = buf.position();
         // Check if index is higher than highMatch and branch
@@ -546,83 +542,84 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     protected void do_lookupswitch() {
         int bci = stream.currentBCI();
         BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream, bci);
+        if (ls.numberOfCases() == 0) {
+            // Pop the key
+            decStack(1);
+            int targetBCI = ls.defaultTarget();
+            startBlock(targetBCI);
+            if (stream.nextBCI() == targetBCI) {
+                // Skip completely if default target is next instruction
+            } else if (targetBCI <= bci) {
+                int target = bciToPos[targetBCI];
+                assert target != 0;
+                jmp(target);
+            } else {
+                patchInfo.addJMP(buf.position(), targetBCI);
+                jmp(0);
+            }
+        } else {
+            asm.pop(32, scratch);  // Pop the key we are looking for
 
-        throw new UnsupportedOperationException("Unimplemented");
+            asm.push(64, RISCV64.s3); // Use s3/x19 as the loop counter
+            asm.push(64, RISCV64.s4); // Use s4/x20 as the current key
 
-//        if (ls.numberOfCases() == 0) {
-//            // Pop the key
-//            decStack(1);
-//            int targetBCI = ls.defaultTarget();
-//            startBlock(targetBCI);
-//            if (stream.nextBCI() == targetBCI) {
-//                // Skip completely if default target is next instruction
-//            } else if (targetBCI <= bci) {
-//                int target = bciToPos[targetBCI];
-//                assert target != 0;
-//                jmp(target);
-//            } else {
-//                patchInfo.addJMP(buf.position(), targetBCI);
-//                asm.jmp(RISCV64.zr);
-//            }
-//        } else {
-//            asm.pop(32, scratch);  // Pop the key we are looking for
-//
-//            asm.push(RISCV64.x19); // Use r19 as the loop counter
-//            asm.push(RISCV64.x20); // Use r20 as the current key
-//
-//            int adrPos = buf.position();
-//            asm.adr(scratch2, 0);  // lookup table base
-//
-//            // Initialize loop counter to number of cases x2 to account for pairs of integers (key-offset)
-//            asm.mov(RISCV64.x19, (ls.numberOfCases() - 1) * 2);
-//
-//            int loopPos = buf.position();
-//            asm.load(RISCV64.x20, RISCV64Address.createRegisterOffsetAddress(scratch2, RISCV64.x19, true), CiKind.Int);
-//            asm.cmp(32, scratch, RISCV64.x20);
-//            int branchPos = buf.position();
-//            asm.b(ConditionFlag.EQ, 0);                             // break out of loop
-//            asm.subs(32, RISCV64.x19, RISCV64.x19, 2);              // decrement loop counter (1 pair at a time)
-//            jcc(ConditionFlag.PL, loopPos);                         // iterate again if >= 0
-//            startBlock(ls.defaultTarget());                         // No match, jump to default target
-//            asm.pop(RISCV64.x20);                                   // after restoring registers r20
-//            asm.pop(RISCV64.x19);                                   // and r19.
-//            patchInfo.addJMP(buf.position(), ls.defaultTarget());
-//            jmp(0);
-//
-//            // Patch b instruction above
-//            int branchTargetPos = buf.position();
-//            buf.setPosition(branchPos);
-//            asm.b(ConditionFlag.EQ, branchTargetPos - branchPos);
-//            buf.setPosition(branchTargetPos);
-//
-//            // load offset, add to lookup table base and jump.
-//            asm.add(32, RISCV64.x19, RISCV64.x19, 1); // increment r19 to get the offset (instead of the key)
-//            asm.load(scratch, RISCV64Address.createRegisterOffsetAddress(scratch2, RISCV64.x19, true), CiKind.Int);
-//            asm.add(scratch, scratch, scratch2);
-//            asm.pop(RISCV64.x20);
-//            asm.pop(RISCV64.x19);
-//            asm.jmp(scratch);
-//            int lookupTablePos = buf.position();
-//
-//            // Patch adr instruction above now that we know the position of the jump table
-//            buf.setPosition(adrPos);
-//            asm.adr(scratch2, lookupTablePos - adrPos);
-//            buf.setPosition(lookupTablePos);
-//
-//            // Emit lookup table entries
-//            for (int i = 0; i < ls.numberOfCases(); i++) {
-//                int key = ls.keyAt(i);
-//                int targetBCI = ls.targetAt(i);
-//                startBlock(targetBCI);
-//                patchInfo.addLookupTableEntry(buf.position(), key, lookupTablePos, targetBCI);
-//                buf.emitInt(key);
-//                buf.emitInt(0);
-//            }
-//            if (codeAnnotations == null) {
-//                codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
-//            }
-//            codeAnnotations.add(new LookupTable(lookupTablePos, ls.numberOfCases(), 4, 4));
-//        }
+            asm.auipc(scratch2, 0);  // lookup table base
+            int adrPos = buf.position();
+            asm.add(scratch2, scratch2, 0);
+
+            // Initialize loop counter to number of cases x2 to account for pairs of integers (key-offset)
+            asm.mov32BitConstant(RISCV64.s3, (ls.numberOfCases() - 1) * 2);
+
+            int loopPos = buf.position();
+            asm.slli(scratch1, RISCV64.s3, 2); // Multiply by 4 to get actual label offset
+            asm.add(scratch1, scratch2, scratch1);
+            asm.load(RISCV64.s4, RISCV64Address.createBaseRegisterOnlyAddress(scratch1), CiKind.Int);
+            int branchPos = buf.position();
+            asm.beq(scratch, RISCV64.s4, 0);                             // break out of loop
+            asm.sub(RISCV64.s3, RISCV64.s3, 2);              // decrement loop counter (1 pair at a time)
+            jcc(ConditionFlag.GE, loopPos, RISCV64.s3, RISCV64.zr);                         // iterate again if >= 0
+            startBlock(ls.defaultTarget());                         // No match, jump to default target
+            asm.pop(64, RISCV64.s4);                                   // after restoring registers r20
+            asm.pop(64, RISCV64.s3);                                   // and r19.
+            patchInfo.addJMP(buf.position(), ls.defaultTarget());
+            jmp(0);
+
+            // Patch b instruction above
+            int branchTargetPos = buf.position();
+            buf.setPosition(branchPos);
+            asm.beq(scratch, RISCV64.s4, branchTargetPos - branchPos);
+            buf.setPosition(branchTargetPos);
+
+            // load offset, add to lookup table base and jump.
+            asm.add(RISCV64.s3, RISCV64.s3, 1); // increment r19 to get the offset (instead of the key)
+            asm.slli(scratch1, RISCV64.s3, 2); // Multiply by 4 to get actual label offset
+            asm.add(scratch1, scratch2, scratch1);
+            asm.load(scratch, RISCV64Address.createBaseRegisterOnlyAddress(scratch1), CiKind.Int);
+            asm.add(scratch, scratch, scratch2);
+            asm.pop(64, RISCV64.s4);
+            asm.pop(64, RISCV64.s3);
+            asm.jalr(RISCV64.zr, scratch, 0);
+            int lookupTablePos = buf.position();
+
+            // Patch adr instruction above now that we know the position of the jump table
+            buf.setPosition(adrPos);
+            asm.add(scratch2, scratch2, lookupTablePos - adrPos + 4);
+            buf.setPosition(lookupTablePos);
+
+            // Emit lookup table entries
+            for (int i = 0; i < ls.numberOfCases(); i++) {
+                int key = ls.keyAt(i);
+                int targetBCI = ls.targetAt(i);
+                startBlock(targetBCI);
+                patchInfo.addLookupTableEntry(buf.position(), key, lookupTablePos, targetBCI);
+                buf.emitInt(key);
+                buf.emitInt(0);
+            }
+            if (codeAnnotations == null) {
+                codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
+            }
+            codeAnnotations.add(new CiTargetMethod.LookupTable(lookupTablePos, ls.numberOfCases(), 4, 4));
+        }
     }
 
     @Override

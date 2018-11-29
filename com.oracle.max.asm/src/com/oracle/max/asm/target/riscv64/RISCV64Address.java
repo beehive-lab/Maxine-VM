@@ -142,19 +142,7 @@ public final class RISCV64Address extends CiAddress {
      * @return RISCV64Address specifying the address pointed to by base.
      */
     public static RISCV64Address createBaseRegisterOnlyAddress(CiRegister base) {
-        return createRegisterOffsetAddress(base, RISCV64.zr, false);
-    }
-
-    /**
-     * @param base   may not be null or the zero-register.
-     * @param offset Register specifying some offset, optionally scaled by the memory_transfer_size.
-     *               May not be null or the stackpointer.
-     * @param scaled Specifies whether offset should be scaled by memory_transfer_size or not.
-     * @return RISCV64Address specifying a register offset address of the form base + offset [<< log2
-     *         (memory_transfer_size)]
-     */
-    public static RISCV64Address createRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled) {
-        return new RISCV64Address(CiKind.Int, base.asValue(), offset.asValue(), 0, scaled, null, AddressingMode.REGISTER_OFFSET);
+        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), 0, false, null, AddressingMode.REGISTER_OFFSET);
     }
 
     /**
