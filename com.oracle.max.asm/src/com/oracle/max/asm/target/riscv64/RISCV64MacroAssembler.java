@@ -566,6 +566,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public final void call(CiRegister src) {
-        jalr(RISCV64.ra, src,0);
+        jalr(RISCV64.ra, src, 0);
     }
 }
