@@ -963,7 +963,6 @@ public class RISCV64T1XTest extends MaxTestCase {
         pairs.add(new Pair(7, 30));
         pairs.add(new Pair(30, 40));
 
-//        int[] values = new int[] {10, 20, 30, 40};
         for (int i = 0; i < pairs.size(); i++) {
             for (int j = 0; j < pairs.size(); j++) {
                 if (i > j) {
@@ -1101,65 +1100,57 @@ public class RISCV64T1XTest extends MaxTestCase {
         }
     }
 
-//    private static final List<BranchInfo> branches = new LinkedList<>();
-//    static {
-//        branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10, 1));
-//        branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11, 1));
-//        branches.add(new BranchInfo(Bytecodes.IF_ICMPGT, 5, 0, 0, -1));
-//        branches.add(new BranchInfo(Bytecodes.IF_ICMPGE, 5, 0, -1, -1));
-//        branches.add(new BranchInfo(Bytecodes.IF_ICMPNE, 5, 6, 6, 1));
-//        branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 0, 2, 2));
-//    }
-//
-//
-//    public void test_BranchBytecodes() throws Exception {
-//        /*
-//         * Based on pg41 JVMSv1.7 ... iconst_0 istore_1 goto 8 wrong it needs to be 6 iinc 1 1 iload_1 bipush 100
-//         * if_icmplt 5 this is WRONG it needs to be -6 // no return. corresponding to int i; for(i = 0; i < 100;i++) { ;
-//         * // empty loop body } return;
-//         */
-//        for (BranchInfo bi : branches) {
-//            expectedValues[0] = bi.getExpected();
-//            testValues[0] = true;
-//            byte[] instructions = new byte[16];
-//            if (bi.getStart() == 0) {
-//                instructions[0] = (byte) Bytecodes.ICONST_0;
-//            } else {
-//                instructions[0] = (byte) Bytecodes.ICONST_5;
-//            }
-//            instructions[1] = (byte) Bytecodes.ISTORE_1;
-//            instructions[2] = (byte) Bytecodes.GOTO;
-//            instructions[3] = (byte) 0;
-//            instructions[4] = (byte) 6;
-//            instructions[5] = (byte) Bytecodes.IINC;
-//            instructions[6] = (byte) 1;
-//            instructions[7] = (byte) bi.getStep();
-//            instructions[8] = (byte) Bytecodes.ILOAD_1;
-//            instructions[9] = (byte) Bytecodes.BIPUSH;
-//            instructions[10] = (byte) bi.getEnd();
-//            instructions[11] = (byte) bi.getBytecode();
-//            instructions[12] = (byte) 0xff;
-//            instructions[13] = (byte) 0xfa;
-//            instructions[14] = (byte) Bytecodes.ILOAD_1;
-//            instructions[15] = (byte) Bytecodes.NOP;
-//
-//            // instructions[14] = (byte) Bytecodes.RETURN;
-//            initialiseFrameForCompilation(instructions, "(II)I");
-//            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, instructions);
-//            RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-//            //masm.pop(RISCV64Assembler.ConditionFlag.AL, 1);
-//            masm.pop(RISCV64.x0);
-//            long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-//            assert registerValues[0] == (expectedValues[0] & 0xFFFFFFFFL) : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
-//            theCompiler.cleanup();
-//        }
-//    }
-////
-//// public void ignore_Locals() throws Exception {
-//// }
-////
-//
-//
-//    public void ignore_ByteCodeLoad() throws Exception {
-//    }
+    private static final List<BranchInfo> branches = new LinkedList<>();
+    static {
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10, 1));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11, 1));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPGT, 5, 0, 0, -1));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPGE, 5, 0, -1, -1));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPNE, 5, 6, 6, 1));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 0, 2, 2));
+    }
+
+
+    public void test_BranchBytecodes() throws Exception {
+        /*
+         * Based on pg41 JVMSv1.7 ... iconst_0 istore_1 goto 8 wrong it needs to be 6 iinc 1 1 iload_1 bipush 100
+         * if_icmplt 5 this is WRONG it needs to be -6 // no return. corresponding to int i; for(i = 0; i < 100;i++) { ;
+         * // empty loop body } return;
+         */
+        for (BranchInfo bi : branches) {
+            System.out.println("Current iteration " + branches.indexOf(bi));
+            expectedValues[5] = bi.getExpected();
+            testValues[5] = true;
+            byte[] instructions = new byte[16];
+            if (bi.getStart() == 0) {
+                instructions[0] = (byte) Bytecodes.ICONST_0;
+            } else {
+                instructions[0] = (byte) Bytecodes.ICONST_5;
+            }
+            instructions[1] = (byte) Bytecodes.ISTORE_1;
+            instructions[2] = (byte) Bytecodes.GOTO;
+            instructions[3] = (byte) 0;
+            instructions[4] = (byte) 6;
+            instructions[5] = (byte) Bytecodes.IINC;
+            instructions[6] = (byte) 1;
+            instructions[7] = (byte) bi.getStep();
+            instructions[8] = (byte) Bytecodes.ILOAD_1;
+            instructions[9] = (byte) Bytecodes.BIPUSH;
+            instructions[10] = (byte) bi.getEnd();
+            instructions[11] = (byte) bi.getBytecode();
+            instructions[12] = (byte) 0xff;
+            instructions[13] = (byte) 0xfa;
+            instructions[14] = (byte) Bytecodes.ILOAD_1;
+            instructions[15] = (byte) Bytecodes.NOP;
+
+            // instructions[14] = (byte) Bytecodes.RETURN;
+            initialiseFrameForCompilation(instructions, "(I)I");
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, instructions);
+            RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.pop(32, RISCV64.x5);
+            long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+            assert (registerValues[4] & 0xFFFFFFFFL) == (expectedValues[5] & 0xFFFFFFFFL) : "Failed incorrect value " + Long.toString(registerValues[4], 16) + " exp " + Long.toString(expectedValues[5], 16);
+            theCompiler.cleanup();
+        }
+    }
 }

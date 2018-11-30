@@ -630,152 +630,141 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void branch(int opcode, int targetBCI, int bci) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        ConditionFlag cc;
-//
-//        if (stream.nextBCI() == targetBCI && methodProfileBuilder == null) {
-//            // Skip completely if target is next instruction and profiling is turned off
-//            decStack(1);
-//            return;
-//        }
-//
-//        switch (opcode) {
-//            case Bytecodes.IFEQ:
-//                peekInt(scratch, 0);
-//                decStack(1);
-//                asm.cmp(32, scratch, 0);
-//                cc = ConditionFlag.EQ;
-//                break;
-//            case Bytecodes.IFNE:
-//                peekInt(scratch, 0);
-//                decStack(1);
-//                asm.cmp(32, scratch, 0);
-//                cc = ConditionFlag.NE;
-//                break;
-//            case Bytecodes.IFLE:
-//                peekInt(scratch, 0);
-//                decStack(1);
-//                asm.cmp(32, scratch, 0);
-//                cc = ConditionFlag.LE;
-//                break;
-//            case Bytecodes.IFLT:
-//                peekInt(scratch, 0);
-//                decStack(1);
-//                asm.cmp(32, scratch, 0);
-//                cc = ConditionFlag.LT;
-//                break;
-//            case Bytecodes.IFGE:
-//                peekInt(scratch, 0);
-//                decStack(1);
-//                asm.cmp(32, scratch, 0);
-//                cc = ConditionFlag.GE;
-//                break;
-//            case Bytecodes.IFGT:
-//                peekInt(scratch, 0);
-//                decStack(1);
-//                asm.cmp(32, scratch, 0);
-//                cc = ConditionFlag.GT;
-//                break;
-//            case Bytecodes.IF_ICMPEQ:
-//                peekInt(scratch, 1);
-//                peekInt(scratch2, 0);
-//                decStack(2);
-//                asm.cmp(32, scratch, scratch2);
-//                cc = ConditionFlag.EQ;
-//                break;
-//            case Bytecodes.IF_ICMPNE:
-//                peekInt(scratch, 1);
-//                peekInt(scratch2, 0);
-//                decStack(2);
-//                asm.cmp(32, scratch, scratch2);
-//                cc = ConditionFlag.NE;
-//                break;
-//            case Bytecodes.IF_ICMPGE:
-//                peekInt(scratch, 1);
-//                peekInt(scratch2, 0);
-//                decStack(2);
-//                asm.cmp(32, scratch, scratch2);
-//                cc = ConditionFlag.GE;
-//                break;
-//            case Bytecodes.IF_ICMPGT:
-//                peekInt(scratch, 1);
-//                peekInt(scratch2, 0);
-//                decStack(2);
-//                asm.cmp(32, scratch, scratch2);
-//                cc = ConditionFlag.GT;
-//                break;
-//            case Bytecodes.IF_ICMPLE:
-//                peekInt(scratch, 1);
-//                peekInt(scratch2, 0);
-//                decStack(2);
-//                asm.cmp(32, scratch, scratch2);
-//                cc = ConditionFlag.LE;
-//                break;
-//            case Bytecodes.IF_ICMPLT:
-//                peekInt(scratch, 1);
-//                peekInt(scratch2, 0);
-//                decStack(2);
-//                asm.cmp(32, scratch, scratch2);
-//                cc = ConditionFlag.LT;
-//                break;
-//            case Bytecodes.IF_ACMPEQ:
-//                peekObject(scratch, 1);
-//                peekObject(scratch2, 0);
-//                decStack(2);
-//                asm.cmp(scratch, scratch2);
-//                cc = ConditionFlag.EQ;
-//                break;
-//            case Bytecodes.IF_ACMPNE:
-//                peekObject(scratch, 1);
-//                peekObject(scratch2, 0);
-//                decStack(2);
-//                asm.cmp(scratch, scratch2);
-//                cc = ConditionFlag.NE;
-//                break;
-//            case Bytecodes.IFNULL:
-//                peekObject(scratch, 0);
-//                assignObject(scratch2, null);
-//                decStack(1);
-//                asm.cmp(scratch, scratch2);
-//                cc = ConditionFlag.EQ;
-//                break;
-//            case Bytecodes.IFNONNULL:
-//                peekObject(scratch, 0);
-//                assignObject(scratch2, null);
-//                decStack(1);
-//                asm.cmp(scratch, scratch2);
-//                cc = ConditionFlag.NE;
-//                break;
-//            case Bytecodes.GOTO:
-//            case Bytecodes.GOTO_W:
-//                cc = null;
-//                break;
-//            default:
-//                throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
-//        }
-//
-//        int pos = buf.position();
-//
-//        if (bci < targetBCI) {
-//            // forward branch
-//            if (cc == null) {
-//                patchInfo.addJMP(pos, targetBCI);
-//                // For now we assume that the target is within a range which
-//                // can be represented with a signed 21bit offset.
-//                jmp(buf.position());
-//            } else {
-//                patchInfo.addJCC(cc, pos, targetBCI);
-//                jcc(cc, 0);
-//            }
-//        } else {
-//            // backward branch
-//            final int target = bciToPos[targetBCI];
-//            if (cc == null) {
-//                jmp(target);
-//            } else {
-//                jcc(cc, target);
-//            }
-//        }
+        ConditionFlag cc;
+
+        if (stream.nextBCI() == targetBCI && methodProfileBuilder == null) {
+            // Skip completely if target is next instruction and profiling is turned off
+            decStack(1);
+            return;
+        }
+
+        switch (opcode) {
+            case Bytecodes.IFEQ:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.lui(scratch2, 0);
+                cc = ConditionFlag.EQ;
+                break;
+            case Bytecodes.IFNE:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.lui(scratch2, 0);
+                cc = ConditionFlag.NE;
+                break;
+            case Bytecodes.IFLE:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.lui(scratch2, 0);
+                cc = ConditionFlag.LE;
+                break;
+            case Bytecodes.IFLT:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.lui(scratch2, 0);
+                cc = ConditionFlag.LT;
+                break;
+            case Bytecodes.IFGE:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.lui(scratch2, 0);
+                cc = ConditionFlag.GE;
+                break;
+            case Bytecodes.IFGT:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.lui(scratch2, 0);
+                cc = ConditionFlag.GT;
+                break;
+            case Bytecodes.IF_ICMPEQ:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                cc = ConditionFlag.EQ;
+                break;
+            case Bytecodes.IF_ICMPNE:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                cc = ConditionFlag.NE;
+                break;
+            case Bytecodes.IF_ICMPGE:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                cc = ConditionFlag.GE;
+                break;
+            case Bytecodes.IF_ICMPGT:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                cc = ConditionFlag.GT;
+                break;
+            case Bytecodes.IF_ICMPLE:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                cc = ConditionFlag.LE;
+                break;
+            case Bytecodes.IF_ICMPLT:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                cc = ConditionFlag.LT;
+                break;
+            case Bytecodes.IF_ACMPEQ:
+                peekObject(scratch, 1);
+                peekObject(scratch2, 0);
+                decStack(2);
+                cc = ConditionFlag.EQ;
+                break;
+            case Bytecodes.IF_ACMPNE:
+                peekObject(scratch, 1);
+                peekObject(scratch2, 0);
+                decStack(2);
+                cc = ConditionFlag.NE;
+                break;
+            case Bytecodes.IFNULL:
+                peekObject(scratch, 0);
+                assignObject(scratch2, null);
+                decStack(1);
+                cc = ConditionFlag.EQ;
+                break;
+            case Bytecodes.IFNONNULL:
+                peekObject(scratch, 0);
+                assignObject(scratch2, null);
+                decStack(1);
+                cc = ConditionFlag.NE;
+                break;
+            case Bytecodes.GOTO:
+            case Bytecodes.GOTO_W:
+                cc = null;
+                break;
+            default:
+                throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
+        }
+
+        int pos = buf.position();
+
+        if (bci < targetBCI) {
+            // forward branch
+            if (cc == null) {
+                patchInfo.addJMP(pos, targetBCI);
+                // For now we assume that the target is within a range which
+                // can be represented with a signed 21bit offset.
+                jmp(buf.position());
+            } else {
+                patchInfo.addJCC(cc, pos, targetBCI, scratch, scratch2);
+                jcc(cc, 0, scratch, scratch2);
+            }
+        } else {
+            // backward branch
+            final int target = bciToPos[targetBCI];
+            if (cc == null) {
+                jmp(target);
+            } else {
+                jcc(cc, target, scratch, scratch2);
+            }
+        }
     }
 
     /**
