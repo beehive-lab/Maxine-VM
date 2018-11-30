@@ -31,6 +31,7 @@ import java.util.*;
 import com.oracle.max.asm.target.aarch64.Aarch64InstructionDecoder;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.riscv64.RISCV64InstructionDecoder;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
@@ -732,6 +733,8 @@ public abstract class TargetMethod extends MemoryRegion {
             ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
         } else if (platform().isa == ISA.Aarch64) {
             Aarch64InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
+        } else if (platform().isa == ISA.RISCV64) {
+            RISCV64InstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
         } else {
             throw FatalError.unimplemented("com.sun.max.vm.compiler.target.TargetMethod.patchRelativeInstruction");
         }

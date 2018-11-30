@@ -44,6 +44,7 @@ import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class RISCV64T1XCompilation extends T1XCompilation {
 
@@ -82,7 +83,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     public void decStack(int numberOfSlots) {
         assert numberOfSlots > 0;
-        asm.addi(sp, sp, numberOfSlots * JVMS_SLOT_SIZE);
+        asm.add(sp, sp, numberOfSlots * JVMS_SLOT_SIZE);
     }
 
     @Override
@@ -198,9 +199,9 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         int index = objectLiterals.size();
         objectLiterals.add(value);
         patchInfo.addObjectLiteral(buf.position(), index);
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.adr(scratch, 0); // this gets patched
-//        asm.ldr(dst, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
+        asm.auipc(scratch, 0); // this gets patched by fixup
+        asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+        asm.ldr(64, dst, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
     }
 
     @Override
@@ -258,9 +259,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.mov32BitConstant(scratch, Float.floatToRawIntBits(value));
-//        asm.fmovCpu2Fpu(32, dst, scratch);
+        asm.mov32BitConstant(scratch, Float.floatToRawIntBits(value));
+        asm.fmvwx(dst, scratch);
     }
 
     @Override
@@ -317,7 +317,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     protected int callDirect(int receiverStackIndex) {
         if (receiverStackIndex >= 0) {
-            peekObject(RISCV64.x0, receiverStackIndex);
+            peekObject(RISCV64.a1, receiverStackIndex);
         }
         alignDirectCall(buf.position());
         int causePos = buf.position();
@@ -330,11 +330,11 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
         if (receiverStackIndex >= 0) {
-            if (target == RISCV64.x0) {
+            if (target == RISCV64.a1) {
                 asm.mov(asm.scratchRegister, target);
                 target = asm.scratchRegister;
             }
-            peekObject(RISCV64.x0, receiverStackIndex);
+            peekObject(RISCV64.a1, receiverStackIndex);
         }
         int causePos = buf.position();
         asm.call(target);
@@ -345,13 +345,11 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void nullCheck(CiRegister src) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.nullCheck(src);
+        asm.nullCheck(src);
     }
 
     private void alignDirectCall(int callPos) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.alignForPatchableDirectCall();
+        asm.alignForPatchableDirectCall();
     }
 
     /**
@@ -768,18 +766,6 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     }
 
     /**
-     * Jump (unconditionally branch) to a target address. This method will emit code to branch
-     * within a 4GB offset from the PC.
-     * @param target
-     */
-    protected void longjmp(int target) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.adrp(scratch, (target >> 12) - (buf.position() >> 12)); // address of target's page
-//        asm.add(scratch, scratch, (int) (target & 0xFFFL)); // low 12 bits of
-//        asm.br(scratch);
-    }
-
-    /**
      * Jump (unconditionally branch) to a target address. The target address must be within a
      * 28bit range of the program counter.
      * @param target
@@ -864,17 +850,12 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 // create a PC relative address in scratch
                 final long offset = dispFromCodeStart - dispPos;
-                if (NumUtil.isSignedNbit(21, offset)) {
-                    asm.auipc(scratch, (int) offset);
-                    asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
-                } else {
-                    asm.auipc(scratch, 0);
-                    int startPos = buf.position();
-                    asm.mov64BitConstant(scratch2, offset);
-                    asm.add(scratch, scratch, scratch2);
-                    int endPos = buf.position();
-                    assert endPos - startPos <= RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS * RISCV64MacroAssembler.INSTRUCTION_SIZE : endPos - startPos;
-                }
+                asm.auipc(scratch, 0);
+                int startPos = buf.position();
+                asm.mov64BitConstant(scratch2, offset);
+                asm.add(scratch, scratch, scratch2);
+                int endPos = buf.position();
+                assert endPos - startPos <= RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS * RISCV64MacroAssembler.INSTRUCTION_SIZE : endPos - startPos;
             } else {
                 throw new InternalError("Unknown PatchInfoRISCV64." + tag);
             }
@@ -883,23 +864,25 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @HOSTED_ONLY
     public static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        int[] result = {};
-//        for (int pos = 0; pos < source.codeLength(); pos++) {
-//            for (CiRegister reg : RISCV64.cpuRegisters) {
-//                RISCV64Assembler asm = new RISCV64Assembler(target(), null);
-//                asm.adr(scratch, dispFromCodeStart - pos);
-//                asm.ldr(reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
-//                // pattern must be compatible with RISCV64InstructionDecoder.patchRelativeInstruction
-//                byte[] pattern = asm.codeBuffer.close(true);
-//                byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
-//                if (Arrays.equals(pattern, instr)) {
-//                    result = Arrays.copyOf(result, result.length + 1);
-//                    result[result.length - 1] = pos;
-//                }
-//            }
-//        }
-//        return result;
+        int[] result = {};
+        for (int pos = 0; pos < source.codeLength(); pos++) {
+            for (CiRegister reg : RISCV64.cpuRegisters) {
+                RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), null);
+                asm.mov(scratch, dispFromCodeStart - pos);
+                asm.auipc(scratch1, 0);
+                asm.add(scratch, scratch1, scratch);
+                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+                asm.ldr(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
+                // pattern must be compatible with RISCV64InstructionDecoder.patchRelativeInstruction
+                byte[] pattern = asm.codeBuffer.close(true);
+                byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
+                if (Arrays.equals(pattern, instr)) {
+                    result = Arrays.copyOf(result, result.length + 1);
+                    result[result.length - 1] = pos;
+                }
+            }
+        }
+        return result;
     }
 
     static class PatchInfoRISCV64 extends PatchInfo {
@@ -1128,6 +1111,10 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     public void assignDoubleTest(CiRegister reg, double value) {
         assignDouble(reg, value);
+    }
+
+    public void assignFloatTest(CiRegister reg, float value) {
+        assignFloat(reg, value);
     }
 
     public void emitEpilogueTests() {

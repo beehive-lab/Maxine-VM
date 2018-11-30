@@ -26,7 +26,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64MacroAssembler extends RISCV64Assembler {
-    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 5;
+    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 20;
     public static final int INSTRUCTION_SIZE = 4;
 
     public RISCV64MacroAssembler(CiTarget target) {
@@ -35,6 +35,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
     public RISCV64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
+    }
+
+
+    public final void alignForPatchableDirectCall() {
+        //TODO: Can we get alignment issues?
     }
 
     public void mov(CiRegister dst, CiRegister src) {
@@ -543,6 +548,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         return RISCV64Address.createBaseRegisterOnlyAddress(base);
     }
 
+    public void nullCheck(CiRegister r) {
+        RISCV64Address address = RISCV64Address.createBaseRegisterOnlyAddress(r);
+        ldr(64, RISCV64.zr, address);
+    }
+
     /**
      * @param offset the offset RSP at which to bang. Note that this offset is relative to RSP after RSP has been
      *            adjusted to allocated the frame for the method. It denotes an offset "down" the stack. For very large
@@ -556,6 +566,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public final void call(CiRegister src) {
-        jal(src, 0);
+        jalr(RISCV64.ra, src,0);
     }
 }

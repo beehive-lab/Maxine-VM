@@ -41,6 +41,7 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
+import com.sun.org.apache.bcel.internal.generic.FLOAD;
 
 public class RISCV64T1XTest extends MaxTestCase {
 
@@ -92,31 +93,12 @@ public class RISCV64T1XTest extends MaxTestCase {
     private static VMConfigurator vmConfigurator = null;
     private static boolean initialised = false;
 
-//    private static String[] expandArguments(String[] args) throws IOException {
-//        List<String> result = new ArrayList<String>(args.length);
-//        for (String arg : args) {
-//            if (arg.charAt(0) == '@') {
-//                File file = new File(arg.substring(1));
-//                result.addAll(Files.readLines(file));
-//            } else {
-//                result.add(arg);
-//            }
-//        }
-//        return result.toArray(new String[result.size()]);
-//    }
-
-//    private static int[]                          valueTestSet   = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-//    private static long[]                         scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
     private static MaxineRISCV64Tester.BitsFlag[] bitmasks       = new MaxineRISCV64Tester.BitsFlag[MaxineRISCV64Tester.NUM_REGS];
-////    static {
-////        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
-////    }
+    static {
+        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+    }
     private static boolean[] testValues = new boolean[MaxineRISCV64Tester.NUM_REGS];
-//
-//    private static void setIgnoreValue(int i, boolean value, boolean all) {
-//        testValues[i] = value;
-//    }
-//
+
     private static void resetIgnoreValues() {
         for (int i = 0; i < testValues.length; i++) {
             testValues[i] = false;
@@ -134,12 +116,7 @@ public class RISCV64T1XTest extends MaxTestCase {
             expectedValues[i] = i;
         }
     }
-//
-//    private static void initialiseTestValues() {
-//        for (int i = 0; i < MaxineRISCV64Tester.NUM_REGS; i++) {
-//            testValues[i] = false;
-//        }
-//    }
+
     private long[] generateAndTest(long[] expected, boolean[] tests, MaxineRISCV64Tester.BitsFlag[] masks) throws Exception {
         RISCV64CodeWriter code = new RISCV64CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
@@ -352,6 +329,35 @@ public class RISCV64T1XTest extends MaxTestCase {
         assert simulatedValues[30] == expectedValues[31] : String.format("Register %d %d expected %d ", 31, simulatedValues[30], expectedValues[31]);
     }
 
+    public void test_AssignFloat() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
+        RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
+
+        CiRegister[] dregs = {RISCV64.x5, RISCV64.x6, RISCV64.x7, RISCV64.x30, RISCV64.x31};
+        CiRegister[] iregs = {RISCV64.f5, RISCV64.f6, RISCV64.f7, RISCV64.f30, RISCV64.f31};
+
+        float[] fValues = {Float.MAX_VALUE, Float.MIN_VALUE, 1.0f, 0.12345f, -1.345E36f};
+        expectedValues[5] = Float.floatToRawIntBits(Float.MAX_VALUE);
+        expectedValues[6] = Float.floatToRawIntBits(Float.MIN_VALUE);
+        expectedValues[7] = Float.floatToRawIntBits(1.0f);
+        expectedValues[30] = Float.floatToRawIntBits(0.12345f);
+        expectedValues[31] = Float.floatToRawIntBits(-1.345E36f);
+
+        for (int i = 0; i < dregs.length; i++) {
+            expectedValues[i] = Float.floatToRawIntBits(fValues[i]);
+            theCompiler.assignFloatTest(dregs[i], fValues[i]);
+            masm.fmvxw(iregs[i], dregs[i]);
+        }
+
+        long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
+        assert Float.intBitsToFloat((int) simulatedValues[4]) == fValues[0];
+        assert Float.intBitsToFloat((int) simulatedValues[5]) == fValues[1];
+        assert Float.intBitsToFloat((int) simulatedValues[6]) == fValues[2];
+        assert Float.intBitsToFloat((int) simulatedValues[29]) == fValues[3];
+        assert Float.intBitsToFloat((int) simulatedValues[30]) == fValues[4];
+    }
 
     public void test_PeekAndPokeFloat() throws Exception {
         initialiseExpectedValues();
