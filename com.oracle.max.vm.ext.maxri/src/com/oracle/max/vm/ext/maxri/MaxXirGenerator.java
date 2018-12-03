@@ -1087,7 +1087,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         Scale scale = Scale.fromInt(elemSize);
         alignArraySize(length, arraySize, elemSize, scale);
 
-        callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub);
+        if (MaxineVM.profileThatObject()) {
+            callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub);
+        }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
@@ -1139,7 +1141,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         Scale scale = Scale.fromInt(elemSize);
         alignArraySize(length, arraySize, elemSize, scale);
 
-        callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub);
+        if (MaxineVM.profileThatObject()) {
+            callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub);
+        }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
@@ -1280,7 +1284,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
 
-        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub);
+        if (MaxineVM.profileThatObject()) {
+            callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub);
+        }
 
         asm.add(newMark, cell, tupleSize);
         asm.jlteq(ok, newMark, tlabEnd);
@@ -1347,7 +1353,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
-        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub);
+        if (MaxineVM.profileThatObject()) {
+            callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub);
+        }
         asm.add(newMark, cell, tupleSize);
         asm.jgt(slowPath, newMark, tlabEnd);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
