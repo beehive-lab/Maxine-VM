@@ -123,9 +123,11 @@ public final class MaxineVM {
     private static long startupTimeNano;
 
     /**
-     * Dynamic profiler objects.
+     * The Dynamic Profiler object. It's initialized during Java Run Scheme initialization (if it's needed).
      */
-    public static Profiler dynamicProfiler = new Profiler();
+    public static Profiler dynamicProfiler;// = new Profiler();
+
+    public static boolean isDynamicProfilerInitialized = false;
 
     /**
      * This method checks if the dynamic profiler must be used, in order to initialize it or not.

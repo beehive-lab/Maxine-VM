@@ -36,6 +36,7 @@ import com.sun.max.vm.hosted.CompiledPrototype;
 import com.sun.max.vm.instrument.InstrumentationManager;
 import com.sun.max.vm.jni.JniFunctions;
 import com.sun.max.vm.log.VMLog;
+import com.sun.max.vm.profilers.dynamic.Profiler;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.RunScheme;
 import com.sun.max.vm.runtime.CriticalMethod;
@@ -244,12 +245,18 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     final String heapProfOptionPrefix = hprofOption.toString();
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
+                // The same for the Dynamic Profiler
+                if (MaxineVM.useDynamicProfiler()) {
+                    MaxineVM.dynamicProfiler = new Profiler();
+                    MaxineVM.isDynamicProfilerInitialized = true;
+                }
                 break;
             }
 
             case TERMINATING: {
                 JniFunctions.printJniFunctionTimers();
                 terminateProfilers();
+                // At this point, we can consider terminating the dynamic profiler as well, and dump its findings
                 break;
             }
             default: {
