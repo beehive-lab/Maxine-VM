@@ -126,6 +126,13 @@ public final class MaxineVM {
      * Dynamic profiler objects.
      */
     public static Profiler dynamicProfiler = new Profiler();
+
+    /**
+     * This method checks if the dynamic profiler must be used, in order to initialize it or not.
+     * The Dynamic Profiler must be used if:
+     *  1)-XX:AddEntryPoint is used
+     *  2)-XX:AddExitPoint is used
+     * @return
     public static boolean useDynamicProfiler() {
         // TODO: read the two -XX options and check
         //if both -XX are used return true
