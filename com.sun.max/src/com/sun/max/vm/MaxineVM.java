@@ -133,12 +133,44 @@ public final class MaxineVM {
      *  1)-XX:AddEntryPoint is used
      *  2)-XX:AddExitPoint is used
      * @return
+     */
     public static boolean useDynamicProfiler() {
         // TODO: read the two -XX options and check
         //if both -XX are used return true
         return true;
     }
 
+    /**
+     * This method is used to guard object allocation code sections.
+     *
+     * An object will be profiled only if:
+     *  1) MaxineVM is Running
+     *  2) We are during a profiling session (useDynamicProfiler() == true)
+     *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
+     *  4) The compiler has signalled to profile that object (ProfilerTLA = 1)
+     *
+     * The above are checked in a logical order. For instance, the profiler will never be initialized (3==true)
+     * earlier to the VM's Running Phase (1==false) but the opposite (1==true while 3==false) might happens.
+     *
+     * Furthermore, we check all the conditions individually because we might get a NullPointer Exception while checking
+     * condition 4 if a prior condition is false.
+     *
+     * @return true if all the above conditions are true.
+     */
+    public static boolean profileThatObject() {
+        if (isRunning()) {
+            if (useDynamicProfiler()) {
+                if (isDynamicProfilerInitialized) {
+                    // TODO: include tla read and check
+                    //if profiler tla == 1
+                    //just an example of TLA read, to make sure if it is readable at that point
+                    int profilerTLA = VmThreadLocal.ETLA.load(currentTLA()).toInt();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     /**
      * Allows the Inspector access to the thread locals block for the primordial thread.
