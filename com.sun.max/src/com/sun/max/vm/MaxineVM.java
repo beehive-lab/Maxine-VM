@@ -25,6 +25,7 @@ import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.thread.VmThread.currentTLA;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -125,6 +126,12 @@ public final class MaxineVM {
      * Dynamic profiler objects.
      */
     public static Profiler dynamicProfiler = new Profiler();
+    public static boolean useDynamicProfiler() {
+        // TODO: read the two -XX options and check
+        //if both -XX are used return true
+        return true;
+    }
+
 
     /**
      * Allows the Inspector access to the thread locals block for the primordial thread.
