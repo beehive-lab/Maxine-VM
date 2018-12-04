@@ -77,7 +77,8 @@ void log_lock(void) {
 
 void dynamicProfiler_lock(void) {
     int result;
-    if ((result = mutex_enter_nolog(&dynamicProfiler_mutexStruct)) != 0) {
+    result = mutex_enter_nolog(&dynamicProfiler_mutexStruct);
+    if (result != 0) {
         log_exit(-1, "Thread %p could not lock mutex %p: %s", thread_self(), &dynamicProfiler_mutexStruct, strerror(result));
     }
 }
