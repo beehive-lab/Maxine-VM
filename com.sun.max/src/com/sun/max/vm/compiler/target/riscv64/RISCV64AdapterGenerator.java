@@ -326,7 +326,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             assert adapterFrameSize >= 0 && adapterFrameSize <= Short.MAX_VALUE;
 
             // stack the baseline caller's frame pointer
-            masm.push(RISCV64.fp);
+            masm.push(64, RISCV64.fp);
 
             // the adapter frame pointer = the current stack pointer
             masm.mov(RISCV64.fp, RISCV64.sp);
@@ -372,10 +372,10 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             masm.mov(RISCV64.sp, RISCV64.fp);
 
             // and the caller's frame pointer,
-            masm.pop(RISCV64.fp);
+            masm.pop(64, RISCV64.fp);
 
             // and the baseline return address.
-            masm.pop(RISCV64.ra);
+            masm.pop(64, RISCV64.ra);
 
             // roll the stack pointer back before the first argument on the caller's stack.
             masm.add(RISCV64.sp, RISCV64.sp, baselineArgsSize);

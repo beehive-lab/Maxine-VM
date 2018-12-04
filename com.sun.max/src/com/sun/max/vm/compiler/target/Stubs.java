@@ -1137,7 +1137,7 @@ public class Stubs {
             asm.sub(callSite, RISCV64.ra, RISCV64TargetMethodUtil.INSTRUCTION_SIZE);
 
             // Push the link register
-            asm.push(RISCV64.ra);
+            asm.push(64, RISCV64.ra);
 
             // now allocate the frame for this method
             asm.sub(RISCV64.sp, RISCV64.sp, frameSize);
@@ -1165,7 +1165,7 @@ public class Stubs {
             asm.add(RISCV64.sp, RISCV64.sp, frameSize);
 
             // Pop the link register
-            asm.pop(Aarch64.linkRegister);
+            asm.pop(64, RISCV64.ra);
 
             // re-execute the static call. Now that the call has been patched we need to return to the beginning of the
             // patched call site, thus we need to subtract from the link register the size of the segment preparing the call

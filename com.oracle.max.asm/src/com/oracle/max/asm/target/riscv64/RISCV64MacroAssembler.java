@@ -26,7 +26,8 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64MacroAssembler extends RISCV64Assembler {
-    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 5;
+    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 15;
+    public static final int INSTRUCTION_SIZE = 4;
 
     public RISCV64MacroAssembler(CiTarget target) {
         super(target);
@@ -34,6 +35,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
     public RISCV64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
+    }
+
+
+    public final void alignForPatchableDirectCall(int callPos) {
+        assert callPos % INSTRUCTION_SIZE == 0 : "Should be 4 bytes aligned";
     }
 
     public void mov(CiRegister dst, CiRegister src) {
@@ -94,42 +100,52 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         addi(rd, rs, -imm32);
     }
 
-    public void push(CiRegister reg) {
-        subi(RISCV64.sp, RISCV64.sp, 64);
-        sd(RISCV64.sp, reg, 0);
-    }
-
-    public void pop(CiRegister reg) {
-        ld(reg, RISCV64.sp, 0);
-        addi(RISCV64.sp, RISCV64.sp, 64);
-    }
-
-    public void push(CiRegister... registers) {
-        for (CiRegister register : registers) {
-            push(register);
+    public void push(int size, CiRegister reg) {
+        assert size == 32 || size == 64 : "Unimplemented push for size: " + size;
+        subi(RISCV64.sp, RISCV64.sp, 16);
+        if (size == 64) {
+            sd(RISCV64.sp, reg, 0);
+        } else {
+            sw(RISCV64.sp, reg, 0);
         }
     }
 
-    public void pop(CiRegister... registers) {
+    public void pop(int size, CiRegister reg) {
+        assert size == 32 || size == 64 : "Unimplemented pop for size: " + size;
+        if (size == 64) {
+            ld(reg, RISCV64.sp, 0);
+        } else {
+            lw(reg, RISCV64.sp, 0);
+        }
+        addi(RISCV64.sp, RISCV64.sp, 16);
+    }
+
+    public void push(int size, CiRegister... registers) {
         for (CiRegister register : registers) {
-            pop(register);
+            push(size, register);
         }
     }
 
-    public void push(int registerList) {
+    public void pop(int size, CiRegister... registers) {
+        for (CiRegister register : registers) {
+            pop(size, register);
+        }
+    }
+
+    public void push(int size, int registerList) {
         for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
             if (registerList % 2 == 1) {
-                push(RISCV64.cpuRegisters[regNumber]);
+                push(size, RISCV64.cpuRegisters[regNumber]);
             }
 
             registerList = registerList >> 1;
         }
     }
 
-    public void pop(int registerList) {
+    public void pop(int size, int registerList) {
         for (int regNumber = Integer.SIZE - 1; regNumber >= 0; regNumber--) {
             if ((registerList >> regNumber) % 2 == 1) {
-                pop(RISCV64.cpuRegisters[regNumber]);
+                pop(size, RISCV64.cpuRegisters[regNumber]);
             }
         }
     }
@@ -183,8 +199,13 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void b(int offset) {
+//        The  unconditional  jump  instructions  all  use  PC-relative  addressing  to  help  support  position-
+//        independent  code.   The  JALR  instruction  was  defined  to  enable  a  two-instruction  sequence  to
+//        jump anywhere in a 32-bit absolute address range.  A LUI instruction can first load rs1 with the
+//        upper 20 bits of a target address, then JALR can add in the lower bits.  Similarly, AUIPC then
+//        JALR can jump anywhere in a 32-bit pc-relative address range.
         auipc(RISCV64.x28, offset);
-        jalr(RISCV64.zero, RISCV64.x28, 0);
+        jalr(RISCV64.zero, RISCV64.x28, offset);
     }
 
     /**
@@ -367,7 +388,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public final void ret(CiRegister r) {
-        jal(RISCV64.ra, 0);
+        jalr(RISCV64.x0, r, 0);
     }
 
     public void ldr(int srcSize, CiRegister rd, CiRegister rs, int offset) {
@@ -407,9 +428,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BASE_REGISTER_ONLY:
                 ldr(srcSize, rt, a.getBase(), 0);
                 break;
-            case REGISTER_OFFSET:
-                ldr(srcSize, rt, a.getBase(), a.displacement);
-                break;
             case IMMEDIATE_UNSCALED:
                 ldr(srcSize, rt, a.getBase(), a.getImmediateRaw());
                 break;
@@ -422,9 +440,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         switch(a.getAddressingMode()) {
             case BASE_REGISTER_ONLY:
                 fldr(srcSize, rt, a.getBase(), 0);
-                break;
-            case REGISTER_OFFSET:
-                fldr(srcSize, rt, a.getBase(), a.displacement);
                 break;
             case IMMEDIATE_UNSCALED:
                 fldr(srcSize, rt, a.getBase(), a.getImmediateRaw());
@@ -439,9 +454,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BASE_REGISTER_ONLY:
                 str(srcSize, a.getBase(), rt, 0);
                 break;
-            case REGISTER_OFFSET:
-                str(srcSize, a.getBase(), rt, a.displacement);
-                break;
             case IMMEDIATE_UNSCALED:
                 str(srcSize, a.getBase(), rt, a.getImmediateRaw());
                 break;
@@ -454,9 +466,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         switch(a.getAddressingMode()) {
             case BASE_REGISTER_ONLY:
                 fstr(srcSize, a.getBase(), rt, 0);
-                break;
-            case REGISTER_OFFSET:
-                fstr(srcSize, a.getBase(), rt, a.displacement);
                 break;
             case IMMEDIATE_UNSCALED:
                 fstr(srcSize, a.getBase(), rt, a.getImmediateRaw());
@@ -530,15 +539,20 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
 
         if (disp != 0) {
-            if (NumUtil.isSignedNbit(9, disp)) {
+            if (NumUtil.isSignedNbit(11, disp)) {
                 return RISCV64Address.createUnscaledImmediateAddress(base, disp);
             } else {
-                mov(RISCV64.t1, disp);
-                return RISCV64Address.createRegisterOffsetAddress(base, RISCV64.t1, false);
+                throw new UnsupportedOperationException("Offset is larger than 12 bit signed "
+                        + Integer.toBinaryString(disp));
             }
         }
 
         return RISCV64Address.createBaseRegisterOnlyAddress(base);
+    }
+
+    public void nullCheck(CiRegister r) {
+        RISCV64Address address = RISCV64Address.createBaseRegisterOnlyAddress(r);
+        ldr(64, RISCV64.zr, address);
     }
 
     /**
@@ -554,6 +568,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public final void call(CiRegister src) {
-        jal(src, 0);
+        jalr(RISCV64.ra, src, 0);
     }
 }

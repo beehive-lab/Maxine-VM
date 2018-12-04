@@ -62,6 +62,7 @@ public abstract class T1XCompilation {
     protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
 
     protected static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();
+    protected static final CiRegister scratch1 = vm().registerConfigs.standard.getScratchRegister1();
     protected static final CiRegister scratch2 = vm().registerConfigs.standard.getReturnRegister(CiKind.Int);
 
     protected static final CiRegister sp = vm().registerConfigs.bytecodeTemplate.getRegisterForRole(VMRegister.ABI_SP);

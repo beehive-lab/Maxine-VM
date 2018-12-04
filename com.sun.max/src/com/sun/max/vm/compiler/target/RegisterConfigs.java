@@ -431,7 +431,7 @@ public class RegisterConfigs {
                  */
                 standard = new CiRegisterConfig(
                         RISCV64.fp,          // frame
-                        RISCV64.ra,          // integral return value
+                        RISCV64.a0,          // integral return value
                         RISCV64.fa0,          // floating point return value
                         RISCV64.x28,         // scratch
                         RISCV64.x29,         // scratch 1
@@ -469,10 +469,10 @@ public class RegisterConfigs {
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, calleeSavedRegisters));
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
-                roleMap.put(ABI_FP, RISCV64.x29);
+                roleMap.put(ABI_FP, RISCV64.fp);
                 CiRegisterConfig template = new CiRegisterConfig(
                         RISCV64.fp,          // frame???
-                        RISCV64.ra,          // integral return value
+                        RISCV64.a0,          // integral return value
                         RISCV64.fa0,          // floating point return value
                         RISCV64.x28,         // scratch
                         RISCV64.x29,         // scratch 1
@@ -480,7 +480,7 @@ public class RegisterConfigs {
                         allocatable,         // caller save
                         parameters,          // parameter registers
                         null,                // no callee save
-                        RISCV64.allRegisters,        // all AMD64 registers
+                        RISCV64.allRegisters,        // all RISCV64 registers
                         roleMap);            // VM register role map
 
                 setNonZero(template.getAttributesMap(), RISCV64.LATCH_REGISTER, RISCV64.sp, RISCV64.fp);

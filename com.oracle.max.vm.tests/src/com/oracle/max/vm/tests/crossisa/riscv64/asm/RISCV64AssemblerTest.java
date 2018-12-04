@@ -439,36 +439,52 @@ public class RISCV64AssemblerTest {
     @Test
     public void srl() throws Exception {
         //store values
-        asm.lui(s1, 0xABAB1);
-        asm.addi(s2, s1, 0x0000011A);
-        asm.lui(s3, 0x11111000);
-        asm.addi(s4, s3, 0x00000222);
-        asm.lui(s5, 0x33333000);
-        asm.addi(s6, s5, 0x00000B3A);
+        asm.lui(s1, 0);
+        asm.addi(s1, s1, 30);
+        asm.lui(s3, 0);
+        asm.addi(s3, s3, 0);
+        asm.lui(s5, 0);
+        asm.addi(s5, s5, 16);
+
+        asm.lui(s2, 0x40000000);
+
+        asm.lui(s4, 0);
+        asm.addi(s4, s4, 0x2BC);
+
+        asm.lui(s6, 0x10000);
 
         asm.srl(t0, s2, s1);
         asm.srl(t1, s4, s3);
         asm.srl(t2, s6, s5);
-        tester.setExpectedValue(t0, 0x00000558);
-        tester.setExpectedValue(t1, 0x00000444);
-        tester.setExpectedValue(t2, 0x00000333);
+        tester.setExpectedValue(t0, 0b1);
+        tester.setExpectedValue(t1, 0x2BC);
+        tester.setExpectedValue(t2, 0b1);
     }
 
     @Test
     public void sll() throws Exception {
-        //store values
-        asm.lui(s1, 0xABAB1);
-        asm.addi(s2, s1, 0x0000011A);
-        asm.lui(s3, 0x00001000);
-        asm.addi(s4, s3, 0x00000223);
-        asm.lui(s5, 0x00000003);
+        asm.lui(s1, 0);
+        asm.addi(s1, s1, 31);
+        asm.lui(s3, 0);
+        asm.addi(s3, s3, 0);
+        asm.lui(s5, 0);
+        asm.addi(s5, s5, 16);
+
+        asm.lui(s2, 0);
+        asm.addi(s2, s2, 0b1);
+
+        asm.lui(s4, 0);
+        asm.addi(s4, s4, 0x2BC);
+
+        asm.lui(s6, 0);
+        asm.addi(s6, s6, 0b1);
 
         asm.sll(t0, s2, s1);
         asm.sll(t1, s4, s3);
-        asm.sll(t2, s5, s5);
-        tester.setExpectedValue(t0, 0x15623400);
-        tester.setExpectedValue(t1, 0x488c0000);
-        tester.setExpectedValue(t2, 0x0);
+        asm.sll(t2, s6, s5);
+        tester.setExpectedValue(t0, 0x80000000);
+        tester.setExpectedValue(t1, 0x2BC);
+        tester.setExpectedValue(t2, 0x10000);
     }
 
     @Test
