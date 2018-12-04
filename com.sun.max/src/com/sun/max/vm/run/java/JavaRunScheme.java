@@ -256,7 +256,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             case TERMINATING: {
                 JniFunctions.printJniFunctionTimers();
                 terminateProfilers();
-                // At this point, we can consider terminating the dynamic profiler as well, and dump its findings
+                // TODO: terminate the dynamic profiler as well, and dump its findings
                 break;
             }
             default: {
