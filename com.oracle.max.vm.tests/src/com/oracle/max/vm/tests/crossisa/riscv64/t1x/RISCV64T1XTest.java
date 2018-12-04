@@ -19,41 +19,43 @@
  */
 package com.oracle.max.vm.tests.crossisa.riscv64.t1x;
 
-import static com.sun.max.vm.MaxineVM.*;
-
-import java.io.*;
-import java.util.*;
-
-import com.oracle.max.asm.target.riscv64.*;
-import com.oracle.max.vm.ext.c1x.*;
-import com.oracle.max.vm.ext.t1x.*;
-import com.oracle.max.vm.ext.t1x.riscv64.*;
+import com.oracle.max.asm.target.riscv64.RISCV64;
+import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler;
+import com.oracle.max.vm.ext.c1x.C1X;
+import com.oracle.max.vm.ext.t1x.T1X;
+import com.oracle.max.vm.ext.t1x.riscv64.RISCV64T1XCompilation;
 import com.oracle.max.vm.tests.crossisa.riscv64.asm.MaxineRISCV64Tester;
 import com.oracle.max.vm.tests.crossisa.riscv64.asm.RISCV64CodeWriter;
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
-import com.sun.max.ide.*;
-import com.sun.max.io.*;
-import com.sun.max.program.option.*;
-import com.sun.max.vm.actor.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.type.*;
-import com.sun.org.apache.bcel.internal.generic.FLOAD;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.ci.CiRegister;
+import com.sun.max.ide.MaxTestCase;
+import com.sun.max.program.option.OptionSet;
+import com.sun.max.vm.actor.Actor;
+import com.sun.max.vm.actor.member.StaticMethodActor;
+import com.sun.max.vm.classfile.CodeAttribute;
+import com.sun.max.vm.classfile.LineNumberTable;
+import com.sun.max.vm.classfile.LocalVariableTable;
+import com.sun.max.vm.compiler.CompilationBroker;
+import com.sun.max.vm.compiler.RuntimeCompiler;
+import com.sun.max.vm.hosted.JavaPrototype;
+import com.sun.max.vm.hosted.VMConfigurator;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.SignatureDescriptor;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import static com.sun.max.vm.MaxineVM.Phase;
+import static com.sun.max.vm.MaxineVM.vm;
 
 public class RISCV64T1XTest extends MaxTestCase {
 
-//    private RISCV64Assembler      asm;
-//    private CiTarget              riscv64;
-//    private RISCV64CodeWriter     code;
-    private T1X                   t1x;
-    private C1X                   c1x;
+    private T1X t1x;
+    private C1X c1x;
     private RISCV64T1XCompilation theCompiler;
     private StaticMethodActor anMethod = null;
     private CodeAttribute codeAttr = null;
-//    private static boolean POST_CLEAN_FILES = true;
 
     public void initialiseFrameForCompilation() {
         // TODO: compute max stack
@@ -93,10 +95,12 @@ public class RISCV64T1XTest extends MaxTestCase {
     private static VMConfigurator vmConfigurator = null;
     private static boolean initialised = false;
 
-    private static MaxineRISCV64Tester.BitsFlag[] bitmasks       = new MaxineRISCV64Tester.BitsFlag[MaxineRISCV64Tester.NUM_REGS];
+    private static MaxineRISCV64Tester.BitsFlag[] bitmasks = new MaxineRISCV64Tester.BitsFlag[MaxineRISCV64Tester.NUM_REGS];
+
     static {
         MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
     }
+
     private static boolean[] testValues = new boolean[MaxineRISCV64Tester.NUM_REGS];
 
     private static void resetIgnoreValues() {
@@ -109,8 +113,6 @@ public class RISCV64T1XTest extends MaxTestCase {
     // to those expected to be found in a register after simulated execution of code.
     private static long[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 
-//    private static long[] expectedLongValues = {Long.MAX_VALUE - 100, Long.MAX_VALUE};
-//
     private static void initialiseExpectedValues() {
         for (int i = 0; i < MaxineRISCV64Tester.NUM_REGS; i++) {
             expectedValues[i] = i;

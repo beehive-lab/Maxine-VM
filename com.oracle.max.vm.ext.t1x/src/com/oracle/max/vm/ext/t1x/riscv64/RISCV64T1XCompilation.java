@@ -349,7 +349,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     }
 
     private void alignDirectCall(int callPos) {
-        asm.alignForPatchableDirectCall();
+        asm.alignForPatchableDirectCall(callPos);
     }
 
     /**

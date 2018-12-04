@@ -26,7 +26,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64MacroAssembler extends RISCV64Assembler {
-    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 20;
+    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 15;
     public static final int INSTRUCTION_SIZE = 4;
 
     public RISCV64MacroAssembler(CiTarget target) {
@@ -38,8 +38,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
 
-    public final void alignForPatchableDirectCall() {
-        //TODO: Can we get alignment issues?
+    public final void alignForPatchableDirectCall(int callPos) {
+        assert callPos % INSTRUCTION_SIZE == 0 : "Should be 4 bytes aligned";
     }
 
     public void mov(CiRegister dst, CiRegister src) {
@@ -101,19 +101,21 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void push(int size, CiRegister reg) {
+        assert size == 32 || size == 64 : "Unimplemented push for size: " + size;
         subi(RISCV64.sp, RISCV64.sp, 16);
-        switch (size) {
-            case 64: sd(RISCV64.sp, reg, 0); break;
-            case 32: sw(RISCV64.sp, reg, 0); break;
-            default: throw new UnsupportedOperationException("Unimplemented push for size: " + size);
+        if (size == 64) {
+            sd(RISCV64.sp, reg, 0);
+        } else {
+            sw(RISCV64.sp, reg, 0);
         }
     }
 
     public void pop(int size, CiRegister reg) {
-        switch (size) {
-            case 64: ld(reg, RISCV64.sp, 0); break;
-            case 32: lw(reg, RISCV64.sp, 0); break;
-            default: throw new UnsupportedOperationException("Unimplemented pop for size: " + size);
+        assert size == 32 || size == 64 : "Unimplemented pop for size: " + size;
+        if (size == 64) {
+            ld(reg, RISCV64.sp, 0);
+        } else {
+            lw(reg, RISCV64.sp, 0);
         }
         addi(RISCV64.sp, RISCV64.sp, 16);
     }
