@@ -154,22 +154,15 @@ public final class MaxineVM {
      * The above are checked in a logical order. For instance, the profiler will never be initialized (3==true)
      * earlier to the VM's Running Phase (1==false) but the opposite (1==true while 3==false) might happens.
      *
-     * Furthermore, we check all the conditions individually because we might get a NullPointer Exception while checking
-     * condition 4 if a prior condition is false.
-     *
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject() {
-        if (isRunning()) {
-            if (useDynamicProfiler()) {
-                if (isDynamicProfilerInitialized) {
-                    // TODO: include tla read and check
-                    //if profiler tla == 1
-                    //just an example of TLA read, to make sure if it is readable at that point
-                    int profilerTLA = VmThreadLocal.ETLA.load(currentTLA()).toInt();
-                    return true;
-                }
-            }
+        if (isRunning() && useDynamicProfiler() && isDynamicProfilerInitialized) {
+            // TODO: include tla read and check
+            //if profiler tla == 1
+            //just an example of TLA read, to make sure if it is readable at that point
+            int profilerTLA = VmThreadLocal.ETLA.load(currentTLA()).toInt();
+            return true;
         }
         return false;
     }
