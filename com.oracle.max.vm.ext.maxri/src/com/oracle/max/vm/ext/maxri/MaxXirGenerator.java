@@ -2108,6 +2108,11 @@ public class MaxXirGenerator implements RiXirGenerator {
             return ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xSlowPathAllocate(Size.fromInt(size), etla);
         }
 
+        /**
+         * Runtime entry point for object allocation dynamic profiling.
+         * @param size of the profiled object.
+         * @param hub object hub to obtain the type of the profiled object.
+         */
         public static void callProfiler(int size, Hub hub) {
             ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xCallsProfiler(size, hub);
         }
