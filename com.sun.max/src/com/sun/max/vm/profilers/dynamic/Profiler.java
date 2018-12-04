@@ -90,11 +90,6 @@ public class Profiler {
 
         final int newSize =  currentSize + growStep;
 
-        Log.print("currentSIze = ");
-        Log.println(currentSize);
-        Log.print("newSize = ");
-        Log.println(newSize);
-
         HistogramCell[] newHistogram = new HistogramCell[newSize];
         TypeHistogramCell[] newTypeHistogram = new TypeHistogramCell[newSize];
 
