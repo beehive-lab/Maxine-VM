@@ -181,6 +181,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.terminate();
         }
+        // TODO: terminate the dynamic profiler as well, and dump its findings
     }
 
     public static void restartProfilers() {
@@ -190,6 +191,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.restart();
         }
+        // TODO: restart the dynamic profiler as well, and dump its findings
     }
 
     @ALIAS(declaringClass = System.class)
@@ -256,7 +258,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             case TERMINATING: {
                 JniFunctions.printJniFunctionTimers();
                 terminateProfilers();
-                // TODO: terminate the dynamic profiler as well, and dump its findings
                 break;
             }
             default: {
