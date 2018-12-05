@@ -2114,10 +2114,16 @@ public class MaxXirGenerator implements RiXirGenerator {
          * @param hub object hub to obtain the type of the profiled object.
          */
         public static void callProfiler(int size, Hub hub) {
+            if (MaxineVM.isDebug()) {
+                FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
+            }
             ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub);
         }
 
         public static void callProfilerArray(int size, Hub hub) {
+            if (MaxineVM.isDebug()) {
+                FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
+            }
             ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub);
         }
 
