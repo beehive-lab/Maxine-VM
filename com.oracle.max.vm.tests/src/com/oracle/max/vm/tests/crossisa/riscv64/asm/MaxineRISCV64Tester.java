@@ -45,6 +45,14 @@ public class MaxineRISCV64Tester extends CrossISATester {
         }
     }
 
+    public MaxineRISCV64Tester(long[] expected, boolean[] test, BitsFlag[] range) {
+        super();
+        initializeQemu();
+        bitMasks = range;
+        expectedLongRegisters = expected;
+        testLongRegisters = test;
+    }
+
     public MaxineRISCV64Tester() {
         super();
         initializeQemu();
@@ -82,6 +90,11 @@ public class MaxineRISCV64Tester extends CrossISATester {
             return qemuProcessBuilder;
         }
         return new ProcessBuilder("qemu-system-riscv64", "-M", "virt", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
+    }
+
+    public long[] runRegisteredSimulation() throws Exception {
+        runSimulation();
+        return simulatedLongRegisters;
     }
 
     /**
@@ -178,5 +191,4 @@ public class MaxineRISCV64Tester extends CrossISATester {
         MaxineRISCV64Tester tester = new MaxineRISCV64Tester(args);
         tester.run();
     }
-
 }

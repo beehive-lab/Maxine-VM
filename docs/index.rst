@@ -27,6 +27,12 @@ For Maxine VM >= v2.1 please cite:
 For the original Maxine VM please cite:
 `C. Wimmer et al, “Maxine: An approachable virtual machine for, and in, java”, In ACM TACO 2013. <http://dl.acm.org/citation.cfm?id=2400689&dl=ACM&coll=DL&CFID=748733895&CFTOKEN=73017278>`_
 
+To cite the software itself please use |zenodoDOI|.
+
+.. |zenodoDOI| image:: https://zenodo.org/badge/86729772.svg
+   :target: https://zenodo.org/badge/latestdoi/86729772
+   :alt: Zenodo generated DOI
+
 Getting Started
 ---------------
 

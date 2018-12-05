@@ -17,17 +17,29 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.asm.target.riscv;
+package com.oracle.max.asm.target.riscv64;
 
-import static com.oracle.max.asm.target.riscv.RISCVopCodes.*;
+import static com.oracle.max.asm.target.riscv64.RISCV64.*;
+import static com.oracle.max.asm.target.riscv64.RISCV64opCodes.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
-import static com.oracle.max.asm.target.riscv.RISCV64.*;
+import com.sun.cri.ri.RiRegisterConfig;
 
-public class RISCVAssembler extends AbstractAssembler {
-    public RISCVAssembler(CiTarget target) {
+public class RISCV64Assembler extends AbstractAssembler {
+    public CiRegister frameRegister;
+    public CiRegister scratchRegister;
+    public CiRegister scratchRegister1;
+
+    public RISCV64Assembler(CiTarget target) {
         super(target);
+    }
+
+    public RISCV64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
+        super(target);
+        this.frameRegister = registerConfig == null ? RISCV64.fp : registerConfig.getFrameRegister();
+        this.scratchRegister = registerConfig == null ? RISCV64.x28 : registerConfig.getScratchRegister();
+        this.scratchRegister1 = registerConfig == null ? RISCV64.x29 : registerConfig.getScratchRegister1();
     }
 
     @Override
@@ -47,7 +59,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rd
      * @param imm32
      */
-    private void utype(RISCVopCodes opcode, CiRegister rd, int imm32) {
+    private void utype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
         assert opcode.getValue() >> 7 == 0 : opcode.getValue();
         assert rd.number >> 5 == 0 : rd.number;
         int instruction = opcode.getValue();
@@ -71,7 +83,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      * @param funct7
      */
-    private void rtype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
+    private void rtype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
         assert rs1.number >> 5 == 0;
@@ -99,7 +111,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs1
      * @param imm32
      */
-    private void itype(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
+    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
         assert rs1.number >> 5 == 0;
@@ -127,7 +139,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param shamt
      * @param ext
      */
-    private void shiftHelper(RISCVopCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int shamt, int ext) {
+    private void shiftHelper(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int shamt, int ext) {
         itype(opcode, rd, funct3, rs1, ext << 5 | shamt);
     }
 
@@ -140,13 +152,12 @@ public class RISCVAssembler extends AbstractAssembler {
      *     |     7     |  5  |  5  |    3   |    5     |    7   |
      * </pre>
      * @param opcode
-     * @param rd
      * @param funct3
      * @param rs1
      * @param rs2
      * @param imm32
      */
-    private void stype(RISCVopCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+    private void stype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rs1.number >> 5 == 0;
         assert rs2.number >> 5 == 0;
@@ -168,13 +179,12 @@ public class RISCVAssembler extends AbstractAssembler {
      *     |       7      |  5  |  5  |    3   |      5      |    7   |
      * </pre>
      * @param opcode
-     * @param rd
      * @param funct3
      * @param rs1
      * @param rs2
      * @param imm32
      */
-    private void btype(RISCVopCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+    private void btype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert ((byte) funct3) >> 3 == 0;
         assert rs1.number >> 5 == 0;
@@ -202,7 +212,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rd
      * @param imm32
      */
-    private void jtype(RISCVopCodes opcode, CiRegister rd, int imm32) {
+    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
         int instruction = opcode.getValue();
@@ -388,12 +398,12 @@ public class RISCVAssembler extends AbstractAssembler {
 
     /**
      *
-     * @param rs1
-     * @param rs2
+     * @param rd
+     * @param rs
      * @param imm32
      */
-    public void sw(CiRegister rs1, CiRegister rs2, int imm32) {
-        stype(STORE, 2, rs1, rs2, imm32);
+    public void sw(CiRegister rd, CiRegister rs, int imm32) {
+        stype(STORE, 2, rd, rs, imm32);
     }
 
     /**
@@ -513,7 +523,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void sll(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        rtype(COMP, rd, 1, rs1, rs2, 0);
+        rtype(SRLL, rd, 1, rs1, rs2, 0);
     }
 
     /**
@@ -553,7 +563,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param rs2
      */
     public void srl(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        rtype(COMP, rd, 5, rs1, rs2, 0);
+        rtype(SRLL, rd, 5, rs1, rs2, 0);
     }
 
     /**
@@ -584,6 +594,16 @@ public class RISCVAssembler extends AbstractAssembler {
      */
     public void and(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         rtype(AND, rd, 7, rs1, rs2, 0);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void mul(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MULW, rd, 0, rs1, rs2, 1);
     }
 
     /**
@@ -700,12 +720,12 @@ public class RISCVAssembler extends AbstractAssembler {
 
     /**
      *
-     * @param rs1
-     * @param rs2
+     * @param rd
+     * @param rs
      * @param imm32
      */
-    public void sd(CiRegister rs1, CiRegister rs2, int imm32) {
-        stype(SD, 3, rs1, rs2, imm32);
+    public void sd(CiRegister rd, CiRegister rs, int imm32) {
+        stype(SD, 3, rd, rs, imm32);
     }
 
     /**
@@ -798,4 +818,70 @@ public class RISCVAssembler extends AbstractAssembler {
         rtype(SRAW, rd, 5, rs1, rs2, 32);
     }
 
+    // Floating point instructions double precision
+    public void fadd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    public void fmvxd(CiRegister rd, CiRegister rs) {
+        assert rd.isGeneral() && rs.isFpu();
+        itype(FMV, rd, 0, rs, 0b111000100000);
+    }
+
+    public void fmvdx(CiRegister rd, CiRegister rs) {
+        assert rd.isFpu() && rs.isGeneral();
+        itype(FMV, rd, 0, rs, 0b111100100000);
+    }
+
+    public void fld(CiRegister dst, CiRegister base, int offset) {
+        itype(LOAD_FP, dst, 3, base, offset);
+    }
+
+    public void fsd(CiRegister dst, CiRegister base, int offset) {
+        stype(STORE_FP, 3, dst, base, offset);
+    }
+
+
+    // Floating point instructions single precision
+    public void flw(CiRegister dst, CiRegister base, int offset) {
+        itype(LOAD_FP, dst, 2, base, offset);
+    }
+
+    public void fsw(CiRegister dst, CiRegister base, int offset) {
+        stype(STORE_FP, 2, dst, base, offset);
+    }
+
+    public void fcvtws(CiRegister rd, CiRegister rs) {
+        itype(FCVTWS, rd, 0, rs, 0b110000000000);
+    }
+
+    public void fcvtwus(CiRegister rd, CiRegister rs) {
+        itype(FCVTWS, rd, 0, rs, 0b110000000001);
+    }
+
+    public void fcvtsw(CiRegister rd, CiRegister rs) {
+        itype(FCVTSW, rd, 0, rs, 0b110100000000);
+    }
+
+    public void fcvtswu(CiRegister rd, CiRegister rs) {
+        itype(FCVTSW, rd, 0, rs, 0b110100000001);
+    }
+
+    public void fmvxw(CiRegister rd, CiRegister rs) {
+        itype(FMV, rd, 0, rs, 0b111000000000);
+    }
+
+    public void fmvwx(CiRegister rd, CiRegister rs) {
+        itype(FMV, rd, 0, rs, 0b111100000000);
+    }
+
+    public enum ExtendType {
+        UXTB(0), UXTH(1), UXTW(2), UXTX(3), SXTB(4), SXTH(5), SXTW(6), SXTX(7);
+
+        public final int encoding;
+
+        ExtendType(int encoding) {
+            this.encoding = encoding;
+        }
+    }
 }

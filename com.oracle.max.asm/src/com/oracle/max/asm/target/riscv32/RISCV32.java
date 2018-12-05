@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.asm.target.riscv;
+package com.oracle.max.asm.target.riscv32;
 
 import static com.sun.cri.ci.CiRegister.RegisterFlag.Byte;
 import static com.sun.cri.ci.CiRegister.RegisterFlag.*;

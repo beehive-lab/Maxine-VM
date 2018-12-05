@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.asm.target.riscv;
+package com.oracle.max.asm.target.riscv64;
 
 import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
 
@@ -121,6 +121,7 @@ public class RISCV64 extends CiArchitecture {
     public static final CiRegister f31 = new CiRegister(31, 31, 8, "f31", FPU, FPU);
 
     public static final CiRegister zero = x0;
+    public static final CiRegister zr = x0;
     public static final CiRegister ra   = x1;
     public static final CiRegister sp   = x2;
     public static final CiRegister gp   = x3;
@@ -146,16 +147,16 @@ public class RISCV64 extends CiArchitecture {
     public static final CiRegister a7 = x17;
 
     public static final CiRegister s1  = x9;
-    public static final CiRegister s2  = x17;
-    public static final CiRegister s3  = x18;
-    public static final CiRegister s4  = x19;
-    public static final CiRegister s5  = x20;
-    public static final CiRegister s6  = x21;
-    public static final CiRegister s7  = x22;
-    public static final CiRegister s8  = x23;
-    public static final CiRegister s9  = x24;
-    public static final CiRegister s10 = x25;
-    public static final CiRegister s11 = x26;
+    public static final CiRegister s2  = x18;
+    public static final CiRegister s3  = x19;
+    public static final CiRegister s4  = x20;
+    public static final CiRegister s5  = x21;
+    public static final CiRegister s6  = x22;
+    public static final CiRegister s7  = x23;
+    public static final CiRegister s8  = x24;
+    public static final CiRegister s9  = x25;
+    public static final CiRegister s10 = x26;
+    public static final CiRegister s11 = x27;
 
     public static final CiRegister ft0  = f0;
     public static final CiRegister ft1  = f1;
@@ -192,6 +193,8 @@ public class RISCV64 extends CiArchitecture {
     public static final CiRegister fa6 = f16;
     public static final CiRegister fa7 = f17;
 
+    public static final CiRegister LATCH_REGISTER = x30;
+
     public static final CiRegister[] cpuRegisters = {
         x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13,
         x14, x15, x16, x17, x18, x19, x20, x21, x22, x23, x24,
@@ -213,6 +216,11 @@ public class RISCV64 extends CiArchitecture {
         f25, f26, f27, f28, f29, f30, f31
     };
 
+    @Override
+    public boolean isRISCV64() {
+        return true;
+    }
+
     public RISCV64() {
         super("RISCV64",                        //architecture name
               8,                                //word size (8 bytes)
@@ -222,6 +230,31 @@ public class RISCV64 extends CiArchitecture {
               -1,                               //nativeCallDisplacementOffset (ignore)
               32,                               //registerReferenceMapBitCount
               8);                               //returnAddressSize (8 bytes)
+    }
+
+    /**
+     * @param reg If null this method returns false.
+     * @return true if register is a general purpose register, including the stack pointer and zero register.
+     */
+    public static boolean isIntReg(CiRegister reg) {
+        return reg != null && reg.isCpu();
+    }
+
+    /**
+     * @param reg If null this method returns false..
+     * @return true if register is a floating-point register, false otherwise.
+     */
+    public static boolean isFpuReg(CiRegister reg) {
+        return reg != null && reg.isFpu();
+    }
+
+    /**
+     * @param reg the register that is checked. If null this method returns false.
+     * @return true if register can be used as a general purpose register.
+     * This means the register is neither null nor the zero/discard/stack pointer register.
+     */
+    public static boolean isGeneralPurposeReg(CiRegister reg) {
+        return isIntReg(reg) && !reg.equals(zr) && !reg.equals(sp);
     }
 
 }

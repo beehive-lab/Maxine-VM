@@ -13,9 +13,9 @@ Maxine is being developed and tested on the following configurations:
 +----------------+----------------------+--------------------------+--------------------+
 | Architecture   | OS                   | Java                     | MaxineVM Version   |
 +================+======================+==========================+====================+
-| X86            | Ubuntu 16.04/18.04   | OpenJDK 8 (u181)         | 2.5.2              |
+| X86            | Ubuntu 16.04/18.04   | OpenJDK 8 (u181)         | 2.6.0              |
 +----------------+----------------------+--------------------------+--------------------+
-| Aarch64        | Ubuntu 16.04/18.04   | OpenJDK 8 (u181)         | 2.5.2              |
+| Aarch64        | Ubuntu 16.04/18.04   | OpenJDK 8 (u181)         | 2.6.0              |
 +----------------+----------------------+--------------------------+--------------------+
 | ARMv7          | Ubuntu 16.04         | OpenJDK 7 u151           | 2.4.0              |
 +----------------+----------------------+--------------------------+--------------------+
@@ -92,7 +92,7 @@ To build maxine we first need to define a number of environment variables:
 
   * Extend ``PATH`` to include the *to be generated* maxvm::
 
-     export PATH=$PATH:$MAXINE_HOME/com.oracle.max.vm.native/generated/Linux/
+     export PATH=$PATH:$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/
 
   * Define ``LD_LIBRARY_PATH``::
 

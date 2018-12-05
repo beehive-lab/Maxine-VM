@@ -38,8 +38,8 @@ public enum CPU {
     SPARCV9(ISA.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),
     // jiaqi.liu.cs@gmail.com Add Aarch64 (ARM64) CPU
     Aarch64(ISA.Aarch64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.SequentialConsistency),
-    RISCV32(ISA.RISCV, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.RelaxedMemoryOrder),
-    RISCV64(ISA.RISCV, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.RelaxedMemoryOrder);
+    RISCV32(ISA.RISCV32, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.RelaxedMemoryOrder),
+    RISCV64(ISA.RISCV64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.RelaxedMemoryOrder);
     public final ISA isa;
 
     public final DataModel defaultDataModel;

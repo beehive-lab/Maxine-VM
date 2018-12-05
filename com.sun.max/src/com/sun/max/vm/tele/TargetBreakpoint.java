@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.tele;
 
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.max.annotate.*;
 import com.sun.max.collect.*;
 import com.sun.max.lang.*;
@@ -38,6 +39,7 @@ public final class TargetBreakpoint {
             case Aarch64:
             case AMD64:
             case ARM:
+            case RISCV64:
             case IA32: {
                 return new byte[] {(byte) 0xCC};
             }

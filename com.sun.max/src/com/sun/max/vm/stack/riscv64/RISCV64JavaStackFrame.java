@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.vma.handlers.nul.h;
+package com.sun.max.vm.stack.riscv64;
 
-import com.oracle.max.vm.ext.vma.run.java.*;
-import com.sun.max.config.*;
-import com.sun.max.vm.*;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.stack.*;
 
+@HOSTED_ONLY
+public class RISCV64JavaStackFrame extends VMStackFrame {
 
-public class Package extends BootImagePackage {
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
-        return vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java") &&
-            VMAJavaRunScheme.isHandlerClass(NullVMAdviceHandler.class);
+    public RISCV64JavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer ip, Pointer fp, Pointer sp) {
+        super(callee, targetMethod, ip, fp, sp);
     }
 
+    @Override
+    public boolean isSameFrame(StackFrame stackFrame) {
+        if (stackFrame instanceof RISCV64JavaStackFrame) {
+            return targetMethod().equals(stackFrame.targetMethod()) && sp.equals(stackFrame.sp);
+        }
+        return false;
+    }
 }
