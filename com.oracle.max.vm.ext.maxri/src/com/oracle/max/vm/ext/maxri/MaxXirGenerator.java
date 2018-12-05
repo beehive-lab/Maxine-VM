@@ -2114,11 +2114,11 @@ public class MaxXirGenerator implements RiXirGenerator {
          * @param hub object hub to obtain the type of the profiled object.
          */
         public static void callProfiler(int size, Hub hub) {
-            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xCallsProfiler(size, hub);
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub);
         }
 
         public static void callProfilerArray(int size, Hub hub) {
-            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).c1xCallsProfilerArray(size, hub);
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub);
         }
 
         public static Pointer flushLog(Pointer logTail) {

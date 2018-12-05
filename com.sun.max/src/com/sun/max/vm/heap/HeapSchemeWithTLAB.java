@@ -483,7 +483,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     @NEVER_INLINE
-    public final void c1xCallsProfiler(int size, Hub hub) {
+    public final void profile(int size, Hub hub) {
         final String objectType = hub.classActor.name();
 
         dynamicProfiler.profile(size, objectType);
@@ -491,7 +491,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     @NEVER_INLINE
-    public final void c1xCallsProfilerArray(int size, Hub hub) {
+    public final void profileArray(int size, Hub hub) {
         final String objectType = hub.classActor.name();
 
         dynamicProfiler.profile(size, objectType);
