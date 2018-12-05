@@ -29,7 +29,7 @@ import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMConfiguration;
 import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
@@ -220,8 +220,10 @@ public class Profiler {
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     public void scanAndProfile(Heap.GCCallbackPhase when) {
-        SemiSpaceHeapScheme sshs = (SemiSpaceHeapScheme) VMConfiguration.vmConfig().heapScheme();
-        sshs.profilerScan();
+        final HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
+        assert heapScheme instanceof SemiSpaceHeapScheme;
+        SemiSpaceHeapScheme semiSpaceHeapScheme = (SemiSpaceHeapScheme) heapScheme;
+        semiSpaceHeapScheme.profilerScan();
     }
 
     /**

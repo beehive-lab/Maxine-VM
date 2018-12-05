@@ -630,8 +630,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * This method traverses the heap and profiles the currently existing objects.
      */
     public void profilerScan() {
-        final Pointer start = toSpace.start().asPointer();
-        Pointer cell = start;
+        Pointer cell = toSpace.start().asPointer();
 
         while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {
             final Pointer origin = Layout.cellToOrigin(cell);
@@ -641,13 +640,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 final int size = hub.tupleSize.toInt();
                 dynamicProfiler.profileGC(size, objectType);
                 cell = cell.plus(Layout.size(origin));
-            } else if (hub.specificLayout.isArrayLayout()) {
-                //final Size size = Layout.getArraySize(hub.classActor.componentClassActor().kind, hub.length());
-                final Size size = Layout.size(origin);
-                dynamicProfiler.profileGC(size.toInt(), objectType);
-                cell = cell.plus(size);
             } else {
-                //final int size = hub.tupleSize.toInt();
                 final Size size = Layout.size(origin);
                 dynamicProfiler.profileGC(size.toInt(), objectType);
                 cell = cell.plus(size);
