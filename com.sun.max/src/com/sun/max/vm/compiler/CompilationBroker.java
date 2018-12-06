@@ -101,8 +101,8 @@ public class CompilationBroker {
     private static Integer tmCounter = 0;
     static int PrintCodeCacheMetrics;
 
-    private static String AddEntryPoint;
-    private static String AddExitPoint;
+    public static String AddEntryPoint;
+    public static String AddExitPoint;
     private static String MethodListFile = null;
 
     private static boolean offline = false;

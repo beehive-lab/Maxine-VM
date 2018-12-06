@@ -362,7 +362,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
 
-            if (method.name().equals("entryPoint")) {
+            if (method.name().equals(CompilationBroker.AddEntryPoint)) {
                 XirOperand trueValue1 = asm.i(1);
                 asm.pstore(WordUtil.archKind(), tla, offsetToProfile, trueValue1, false);
             }
@@ -389,7 +389,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
 
-            if (method.name().equals("exitPoint")) {
+            if (method.name().equals(CompilationBroker.AddExitPoint)) {
                 XirOperand trueValue1 = asm.i(0);
                 asm.pstore(WordUtil.archKind(), tla, offsetToProfile, trueValue1, false);
             }
