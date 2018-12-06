@@ -124,12 +124,12 @@ public class Profiler {
          * only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA. That
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
-        int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
+        //int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
         final boolean lockDisabledSafepoints = lock();
-        if (profilerTLA == 1 && MaxineVM.isRunning()) {
+        //if (profilerTLA == 1 && MaxineVM.isRunning()) {
             sizeHistogram[profilingCycle].record(size);
             typeHistogram[profilingCycle].record(size, type);
-        }
+        //}
         // if (profilerTLA == 0 && profilerTLAcounter == 0) {
         //     Log.print("Profiler TLA = ");
         //     Log.print(profilerTLA);
@@ -156,12 +156,12 @@ public class Profiler {
          * only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA. That
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
-        int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
+        //int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
         final boolean lockDisabledSafepoints = lock();
-        if (profilerTLA == 1 && MaxineVM.isRunning()) {
+        //if (profilerTLA == 1 && MaxineVM.isRunning()) {
             sizeHistogram[profilingCycle].recordGC(size);
             typeHistogram[profilingCycle].recordGC(size, type);
-        }
+        //}
         // if (profilerTLA == 0 && profilerTLAcounter == 0) {
         //     Log.print("Profiler TLA = ");
         //     Log.print(profilerTLA);

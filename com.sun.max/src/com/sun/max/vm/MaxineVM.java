@@ -149,20 +149,17 @@ public final class MaxineVM {
      *  1) MaxineVM is Running
      *  2) We are during a profiling session (useDynamicProfiler() == true)
      *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
-     *  4) The compiler has signalled to profile that object (ProfilerTLA = 1)
-     *
-     * The above are checked in a logical order. For instance, the profiler will never be initialized (3==true)
-     * earlier to the VM's Running Phase (1==false) but the opposite (1==true while 3==false) might happens.
+     *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
      *
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject() {
         if (isRunning() && useDynamicProfiler() && isDynamicProfilerInitialized) {
             // TODO: include tla read and check
-            //if profiler tla == 1
-            //just an example of TLA read, to make sure if it is readable at that point
-            int profilerTLA = VmThreadLocal.ETLA.load(currentTLA()).toInt();
-            return true;
+            int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
+            if (profilerTLA == 1) {
+                return true;
+            }
         }
         return false;
     }
