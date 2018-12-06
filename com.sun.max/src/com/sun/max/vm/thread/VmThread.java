@@ -240,11 +240,6 @@ public class VmThread {
     public final int uuid;
 
     /**
-     * Dynamic Profiler thread local flag.
-     */
-    public boolean PROFILE;
-
-    /**
      * Denotes if this thread was started as a daemon. This property is only set once a thread
      * is about to run (for a VM created thread) or is running (for an attached thread)
      * and never changes thereafter.
