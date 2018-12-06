@@ -83,7 +83,7 @@ public class Profiler {
 
     }
 
-    public boolean profileAll(){
+    public boolean profileAll() {
         return ProfileAll;
     }
 
@@ -129,8 +129,8 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-            sizeHistogram[profilingCycle].record(size);
-            typeHistogram[profilingCycle].record(size, type);
+        sizeHistogram[profilingCycle].record(size);
+        typeHistogram[profilingCycle].record(size, type);
         unlock(lockDisabledSafepoints);
     }
 
@@ -142,8 +142,8 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-            sizeHistogram[profilingCycle].recordGC(size);
-            typeHistogram[profilingCycle].recordGC(size, type);
+        sizeHistogram[profilingCycle].recordGC(size);
+        typeHistogram[profilingCycle].recordGC(size, type);
         unlock(lockDisabledSafepoints);
     }
 
