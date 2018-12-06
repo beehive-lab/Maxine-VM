@@ -523,7 +523,6 @@ public class CompilationBroker {
                         }
                         if (methodCheck.equals(AddEntryPoint)) {
                             addToChain = true;
-                            VmThread.current().PROFILE = true;
                         }
                         if (addToChain == true) {
                             methodChain.add(methodCheck);
@@ -531,7 +530,6 @@ public class CompilationBroker {
                         }
                         if (methodCheck.equals(AddExitPoint)) {
                             addToChain = false;
-                            VmThread.current().PROFILE = false;
                         }
                     }
                     return tm;

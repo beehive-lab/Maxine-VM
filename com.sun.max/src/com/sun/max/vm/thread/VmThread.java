@@ -605,7 +605,6 @@ public class VmThread {
         thread.stackFrameWalker.setTLA(etla);
         thread.stackDumpStackFrameWalker.setTLA(etla);
         thread.yellowZone = yellowZone;
-        thread.PROFILE = false;
 
         VM_THREAD.store3(etla, Reference.fromJava(thread));
         VmThreadMap.addThreadLocals(thread, etla, daemon);
