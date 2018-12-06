@@ -151,13 +151,17 @@ public final class MaxineVM {
      *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
      *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
      *
+     *  OR
+     *
+     *  the -XX:ProfileAll option has been used
+     *
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject() {
         if (isRunning() && useDynamicProfiler() && isDynamicProfilerInitialized) {
             // TODO: include tla read and check
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            if (profilerTLA == 1) {
+            if (profilerTLA == 1 || dynamicProfiler.profileAll()) {
                 return true;
             }
         }

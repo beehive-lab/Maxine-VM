@@ -58,13 +58,16 @@ public class Profiler {
     public static int profilingCycle;
 
     private static boolean PrintHistogram;
+    private static boolean ProfileAll;
     public static int profilerTLAcounter = 0;
 
     /**
      * Use -XX:+PrintHistogram flag to accompany the profiler stats with a complete histogram view.
+     * Use -XX:+ProfileAll to profile all application objects unconditionally.
      */
     static {
         VMOptions.addFieldOption("-XX:", "PrintHistogram", Profiler.class, "Print Dynamic Profiler's Histogram after every GC. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "ProfileAll", Profiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
     public Profiler() {
@@ -78,6 +81,10 @@ public class Profiler {
         }
         profilingCycle = 0;
 
+    }
+
+    public boolean profileAll(){
+        return ProfileAll;
     }
 
     /**
