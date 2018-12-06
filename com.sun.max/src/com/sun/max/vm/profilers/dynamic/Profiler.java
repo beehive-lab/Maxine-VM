@@ -21,7 +21,6 @@
 package com.sun.max.vm.profilers.dynamic;
 
 import com.sun.max.annotate.C_FUNCTION;
-import com.sun.max.annotate.INLINE;
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.program.ProgramError;
@@ -34,7 +33,6 @@ import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.thread.VmThreadLocal;
 
 import static com.sun.max.vm.MaxineVM.isHosted;
 
@@ -52,7 +50,6 @@ public class Profiler {
      * Type Histogram: stores the allocated objects sizes in relation with their object type for the profiling method chain.
      *
      */
-    //histogram initialization
     public static int initialSize = 6;
     public static int currentSize = initialSize;
     public static int growStep = 10;
@@ -124,28 +121,9 @@ public class Profiler {
          * only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA. That
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
-        //int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
         final boolean lockDisabledSafepoints = lock();
-        //if (profilerTLA == 1 && MaxineVM.isRunning()) {
             sizeHistogram[profilingCycle].record(size);
             typeHistogram[profilingCycle].record(size, type);
-        //}
-        // if (profilerTLA == 0 && profilerTLAcounter == 0) {
-        //     Log.print("Profiler TLA = ");
-        //     Log.print(profilerTLA);
-        //     Log.print(" (");
-        //     Log.print(VmThread.current().id());
-        //     Log.println(") ");
-        //     profilerTLAcounter = 1;
-        // }
-        // if (profilerTLA == 1 && profilerTLAcounter == 1) {
-        //     Log.print("Profiler TLA = ");
-        //     Log.print(profilerTLA);
-        //     Log.print(" (");
-        //     Log.print(VmThread.current().id());
-        //     Log.println(") ");
-        //     profilerTLAcounter = 0;
-        // }
         unlock(lockDisabledSafepoints);
     }
 
@@ -156,28 +134,9 @@ public class Profiler {
          * only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA. That
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
-        //int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
         final boolean lockDisabledSafepoints = lock();
-        //if (profilerTLA == 1 && MaxineVM.isRunning()) {
             sizeHistogram[profilingCycle].recordGC(size);
             typeHistogram[profilingCycle].recordGC(size, type);
-        //}
-        // if (profilerTLA == 0 && profilerTLAcounter == 0) {
-        //     Log.print("Profiler TLA = ");
-        //     Log.print(profilerTLA);
-        //     Log.print(" (");
-        //     Log.print(VmThread.current().id());
-        //     Log.println(") ");
-        //     profilerTLAcounter = 1;
-        // }
-        // if (profilerTLA == 1 && profilerTLAcounter == 1) {
-        //     Log.print("Profiler TLA = ");
-        //     Log.print(profilerTLA);
-        //     Log.print(" (");
-        //     Log.print(VmThread.current().id());
-        //     Log.println(") ");
-        //     profilerTLAcounter = 0;
-        // }
         unlock(lockDisabledSafepoints);
     }
 
