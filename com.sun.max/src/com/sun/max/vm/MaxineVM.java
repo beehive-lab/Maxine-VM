@@ -137,9 +137,11 @@ public final class MaxineVM {
      * @return
      */
     public static boolean useDynamicProfiler() {
-        // TODO: read the two -XX options and check
-        //if both -XX are used return true
-        return true;
+        if (CompilationBroker.AddEntryPoint != null) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
