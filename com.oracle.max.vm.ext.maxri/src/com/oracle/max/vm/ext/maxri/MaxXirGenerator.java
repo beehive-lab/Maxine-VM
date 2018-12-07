@@ -362,6 +362,11 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
 
+            if (CompilationBroker.PrintC1XMethodList) {
+                Log.print("(C1X) Method name = ");
+                Log.println(method);
+            }
+
             if (method.name().equals(CompilationBroker.AddEntryPoint)) {
                 XirOperand trueValue1 = asm.i(1);
                 asm.pstore(WordUtil.archKind(), tla, offsetToProfile, trueValue1, false);

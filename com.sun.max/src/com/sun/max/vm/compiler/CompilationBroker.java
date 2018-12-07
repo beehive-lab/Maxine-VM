@@ -114,6 +114,7 @@ public class CompilationBroker {
     private static boolean BackgroundCompilation = false;
     private static boolean backgroundCompilationInitialized = false;
     private static boolean ArgumentListOn = false;
+    public static boolean PrintC1XMethodList = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
@@ -124,6 +125,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
         addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint method");
         addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint method");
+        addFieldOption("-XX:", "PrintC1XMethodList", CompilationBroker.class, "Prints a MethodList of C1X's compiled methods (default: false)");
         addFieldOption("-XX:", "MethodListFile", CompilationBroker.class, "Set a MethodList File name, which holds the whole method chain");
         addFieldOption("-XX:", "ArgumentListOn", CompilationBroker.class, "Enable ArgumentList for Entry & Exitpoint (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
