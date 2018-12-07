@@ -161,9 +161,7 @@ public final class MaxineVM {
         if (isRunning() && useDynamicProfiler() && isDynamicProfilerInitialized) {
             // TODO: include tla read and check
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            if (profilerTLA == 1 || dynamicProfiler.profileAll()) {
-                return true;
-            }
+            return profilerTLA == 1 || dynamicProfiler.profileAll();
         }
         return false;
     }
