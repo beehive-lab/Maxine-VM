@@ -481,7 +481,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
     }
 
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public final void profile(int size, Hub hub) {
         final String objectType = hub.classActor.name();
@@ -489,7 +489,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         dynamicProfiler.profile(size, objectType);
     }
 
-    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public final void profileArray(int size, Hub hub) {
         final String objectType = hub.classActor.name();
