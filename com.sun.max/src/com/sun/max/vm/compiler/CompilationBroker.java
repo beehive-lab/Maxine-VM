@@ -523,16 +523,6 @@ public class CompilationBroker {
                                 //exception handling left as an exercise for the reader
                             }
                         }
-                        if (methodCheck.equals(AddEntryPoint)) {
-                            addToChain = true;
-                        }
-                        if (addToChain == true) {
-                            methodChain.add(methodCheck);
-                            Log.println("###### TargetMethod(" + (methodChain.size() - 1) + "): " + methodChain.get(methodChain.size() - 1) + " ######");
-                        }
-                        if (methodCheck.equals(AddExitPoint)) {
-                            addToChain = false;
-                        }
                     }
                     return tm;
                 } else {
