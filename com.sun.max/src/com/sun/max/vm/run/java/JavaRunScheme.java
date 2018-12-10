@@ -30,6 +30,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.actor.member.StaticMethodActor;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.hosted.CompiledPrototype;
@@ -248,7 +249,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
                 // The same for the Dynamic Profiler
-                if (MaxineVM.useDynamicProfiler()) {
+                if (CompilationBroker.AddEntryPoint != null) {
                     MaxineVM.dynamicProfiler = new Profiler();
                     MaxineVM.isDynamicProfilerInitialized = true;
                 }

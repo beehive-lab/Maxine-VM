@@ -130,22 +130,11 @@ public final class MaxineVM {
     public static boolean isDynamicProfilerInitialized = false;
 
     /**
-     * This method checks if the dynamic profiler must be used, in order to initialize it or not.
-     * The Dynamic Profiler must be used if:
-     *  1)-XX:AddEntryPoint is used
-     *  2)-XX:AddExitPoint is used
-     * @return
-     */
-    public static boolean useDynamicProfiler() {
-        return CompilationBroker.AddEntryPoint != null;
-    }
-
-    /**
      * This method is used to guard object allocation code sections.
      *
      * An object will be profiled only if:
      *  1) MaxineVM is Running
-     *  2) We are during a profiling session (useDynamicProfiler() == true)
+     *  2) -XX:+AddEntryPoint is used
      *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
      *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
      *
@@ -157,8 +146,8 @@ public final class MaxineVM {
      */
     public static boolean profileThatObject() {
         if (isDynamicProfilerInitialized) {
-            assert isRunning() && useDynamicProfiler() :
-                    "The DynamicProfiler should only be initialized when the VM is running and when we useDynamicProfiler";
+            assert isRunning() && CompilationBroker.AddEntryPoint != null :
+                    "The DynamicProfiler should only be initialized when the VM is running and -XX:+AddEntryPoint is used";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
             return profilerTLA == 1 || dynamicProfiler.profileAll();
         }
