@@ -103,7 +103,8 @@ public class CompilationBroker {
 
     public static String AddEntryPoint;
     public static String AddExitPoint;
-    private static String MethodListFile = null;
+    private static String MethodListFile = "MethodList";
+    private static boolean MethodList = false;
 
     private static boolean offline = false;
     private static boolean simulateAdapter = false;
@@ -126,7 +127,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint method");
         addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint method");
         addFieldOption("-XX:", "PrintC1XMethodList", CompilationBroker.class, "Prints a MethodList of C1X's compiled methods (default: false)");
-        addFieldOption("-XX:", "MethodListFile", CompilationBroker.class, "Set a MethodList File name, which holds the whole method chain");
+        addFieldOption("-XX:", "MethodList", CompilationBroker.class, "Set a MethodList File name, which holds the whole method chain (default: false)");
         addFieldOption("-XX:", "ArgumentListOn", CompilationBroker.class, "Enable ArgumentList for Entry & Exitpoint (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
@@ -513,7 +514,7 @@ public class CompilationBroker {
                         methodCheck = tm.toString();
                     }
                     if (!MaxineVM.isHosted()) {
-                        if (MethodListFile != null) {
+                        if (MethodList) {
                             tmCounter++;
                             try (FileWriter fw = new FileWriter(MethodListFile + ".txt", true);
                                 BufferedWriter bw = new BufferedWriter(fw);
