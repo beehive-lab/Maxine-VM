@@ -52,7 +52,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 
 
@@ -115,7 +114,6 @@ public class CompilationBroker {
     private static boolean BackgroundCompilation = false;
     private static boolean backgroundCompilationInitialized = false;
     private static boolean ArgumentListOn = false;
-    public static boolean PrintC1XMethodList = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
@@ -126,7 +124,6 @@ public class CompilationBroker {
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
         addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint method");
         addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint method");
-        addFieldOption("-XX:", "PrintC1XMethodList", CompilationBroker.class, "Prints a MethodList of C1X's compiled methods (default: false)");
         addFieldOption("-XX:", "MethodList", CompilationBroker.class, "Set a MethodList File name, which holds the whole method chain (default: false)");
         addFieldOption("-XX:", "ArgumentListOn", CompilationBroker.class, "Enable ArgumentList for Entry & Exitpoint (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");

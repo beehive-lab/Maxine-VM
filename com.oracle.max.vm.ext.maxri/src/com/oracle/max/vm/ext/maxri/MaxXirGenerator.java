@@ -23,6 +23,7 @@ package com.oracle.max.vm.ext.maxri;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.layout.Layout.*;
 import static java.lang.reflect.Modifier.*;
@@ -73,6 +74,13 @@ public class MaxXirGenerator implements RiXirGenerator {
     private CiRegister LATCH_REGISTER = null;
     // (tw) TODO: Up this to 255 / make a loop in the template
     private static final int MAX_MULTIANEWARRAY_RANK = 6;
+
+    public static boolean PrintC1XMethodList = false;
+
+    static {
+        addFieldOption("-XX:", "PrintC1XMethodList", MaxXirGenerator.class,
+                "Prints a MethodList of C1X's compiled methods (default: false)");
+    }
 
     static XirWriteBarrierSpecification writeBarrierSpecification() {
         HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
@@ -359,7 +367,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         if (MaxineVM.isRunning()) {
-            if (CompilationBroker.PrintC1XMethodList) {
+            if (PrintC1XMethodList) {
                 Log.print("(C1X) Method name = ");
                 Log.println(method);
             }
