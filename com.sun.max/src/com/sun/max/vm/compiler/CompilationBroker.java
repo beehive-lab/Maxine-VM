@@ -94,10 +94,10 @@ public class CompilationBroker {
     private static Integer tmCounter = 0;
     static int PrintCodeCacheMetrics;
 
-    public static String AddEntryPoint;
-    public static String AddExitPoint;
-    private static String MethodListFile = "MethodList";
-    private static boolean MethodList = false;
+    public static String        AddEntryPoint;
+    public static String        AddExitPoint;
+    private static final String METHOD_LIST_FILE    = "MethodList.txt";
+    private static boolean      DumpCompiledMethods = false;
 
     private static boolean offline = false;
     private static boolean simulateAdapter = false;
@@ -117,7 +117,7 @@ public class CompilationBroker {
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
         addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint method");
         addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint method");
-        addFieldOption("-XX:", "MethodList", CompilationBroker.class, "Set a MethodList File name, which holds the whole method chain (default: false)");
+        addFieldOption("-XX:", "DumpCompiledMethods", CompilationBroker.class, "Dump tha names of compiled methods to " + METHOD_LIST_FILE + " (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
 
@@ -489,17 +489,8 @@ public class CompilationBroker {
                         tm = compilation.compile();
                         VMTI.handler().methodCompiled(cma);
                     }
-                    if (!MaxineVM.isHosted()) {
-                        if (MethodList) {
-                            tmCounter++;
-                            try (FileWriter fw = new FileWriter(MethodListFile + ".txt", true);
-                                BufferedWriter bw = new BufferedWriter(fw);
-                                PrintWriter out = new PrintWriter(bw)) {
-                                out.println("TargetMethod(" + tmCounter + ")(" + selectRetryCompiler(cma, nature, selectCompiler(cma, nature, isDeopt)) + "): " + tm);
-                            } catch (IOException e) {
-                                //exception handling left as an exercise for the reader
-                            }
-                        }
+                    if (MaxineVM.isRunning() && DumpCompiledMethods) {
+                        logCompiledMethodToMethodList(cma, nature, isDeopt, tm);
                     }
                     return tm;
                 } else {
@@ -541,6 +532,18 @@ public class CompilationBroker {
                     Log.unlock(lockDisabledSafepoints);
                 }
             }
+        }
+    }
+
+    private void logCompiledMethodToMethodList(ClassMethodActor cma, Nature nature, boolean isDeopt, TargetMethod tm) {
+        tmCounter++;
+        try (FileWriter fw = new FileWriter(METHOD_LIST_FILE, true);
+             BufferedWriter bw = new BufferedWriter(fw);
+             PrintWriter out = new PrintWriter(bw)) {
+            out.println("TargetMethod(" + tmCounter + ")(" + selectRetryCompiler(cma, nature, selectCompiler(cma, nature, isDeopt)) + "): " + tm);
+        } catch (IOException e) {
+            Log.println("WARNING: Failed to write to " + METHOD_LIST_FILE);
+            e.printStackTrace(Log.out);
         }
     }
 
