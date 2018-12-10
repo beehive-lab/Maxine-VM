@@ -335,11 +335,6 @@ public class CompilationBroker {
     }
 
     /**
-     * Flags if ArgumentList is on/off on Entry & Exitpoint arguments.
-     */
-    private boolean argumentListOn;
-
-    /**
      * This method initializes the adaptive compilation system, either while bootstrapping or
      * at VM startup time. This implementation may create daemon threads for background compilation.
      *
@@ -350,8 +345,6 @@ public class CompilationBroker {
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
         }
-
-        argumentListOn = ArgumentListOn;
 
         if (phase == MaxineVM.Phase.HOSTED_COMPILING || phase == MaxineVM.Phase.STARTING) {
             if (AddCompiler != null) {
@@ -508,7 +501,7 @@ public class CompilationBroker {
                         tm = compilation.compile();
                         VMTI.handler().methodCompiled(cma);
                     }
-                    if (!argumentListOn) {
+                    if (!ArgumentListOn) {
                         methodCheck = tm.toString().substring(0, tm.toString().indexOf('('));
                     } else {
                         methodCheck = tm.toString();
