@@ -137,11 +137,7 @@ public final class MaxineVM {
      * @return
      */
     public static boolean useDynamicProfiler() {
-        if (CompilationBroker.AddEntryPoint != null) {
-            return true;
-        } else {
-            return false;
-        }
+        return CompilationBroker.AddEntryPoint != null;
     }
 
     /**
@@ -160,8 +156,9 @@ public final class MaxineVM {
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject() {
-        if (isRunning() && useDynamicProfiler() && isDynamicProfilerInitialized) {
-            // TODO: include tla read and check
+        if (isDynamicProfilerInitialized) {
+            assert isRunning() && useDynamicProfiler() :
+                    "The DynamicProfiler should only be initialized when the VM is running and when we useDynamicProfiler";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
             return profilerTLA == 1 || dynamicProfiler.profileAll();
         }
