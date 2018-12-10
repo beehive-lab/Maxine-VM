@@ -83,7 +83,7 @@ public class Profiler {
 
     }
 
-    public boolean profileAll() {
+    public static boolean profileAll() {
         return ProfileAll;
     }
 

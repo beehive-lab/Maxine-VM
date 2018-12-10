@@ -149,7 +149,7 @@ public final class MaxineVM {
             assert isRunning() && CompilationBroker.AddEntryPoint != null :
                     "The DynamicProfiler should only be initialized when the VM is running and -XX:+AddEntryPoint is used";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            return profilerTLA == 1 || dynamicProfiler.profileAll();
+            return profilerTLA == 1 || Profiler.profileAll();
         }
         return false;
     }
