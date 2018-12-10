@@ -364,7 +364,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 Log.println(method);
             }
 
-            if (method.toString().substring(0, method.toString().indexOf('(')).equals(CompilationBroker.AddEntryPoint)) {
+            if (methodIsEntryOrExitPoint(method, CompilationBroker.AddEntryPoint)) {
                 XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
                 XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
                 XirConstant constantOne     = asm.i(1);
@@ -389,13 +389,18 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (callee.isTemplate()) {
             return null;
         }
-        if (MaxineVM.isRunning() && method.toString().substring(0, method.toString().indexOf('(')).equals(CompilationBroker.AddExitPoint)) {
+        if (MaxineVM.isRunning() && methodIsEntryOrExitPoint(method, CompilationBroker.AddExitPoint)) {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
             XirConstant constantZero    = asm.i(0);
             asm.pstore(WordUtil.archKind(), tla, offsetToProfile, constantZero, false);
         }
         return new XirSnippet(epilogueTemplate);
+    }
+
+    private boolean methodIsEntryOrExitPoint(RiResolvedMethod method, String entryOrExitPoint) {
+        final String methodFullName = method.toString();
+        return methodFullName.substring(0, methodFullName.indexOf('(')).equals(entryOrExitPoint);
     }
 
     @Override
