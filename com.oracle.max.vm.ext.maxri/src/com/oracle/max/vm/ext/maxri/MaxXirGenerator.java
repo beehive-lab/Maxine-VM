@@ -32,8 +32,8 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.armv7.*;
-import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.*;
 import com.sun.cri.xir.*;
@@ -54,7 +54,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.methodhandle.VMTarget;
+import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.aarch64.*;
@@ -359,17 +359,16 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         if (MaxineVM.isRunning()) {
-            XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
-            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
-
             if (CompilationBroker.PrintC1XMethodList) {
                 Log.print("(C1X) Method name = ");
                 Log.println(method);
             }
 
             if (method.toString().substring(0, method.toString().indexOf('(')).equals(CompilationBroker.AddEntryPoint)) {
-                XirOperand trueValue1 = asm.i(1);
-                asm.pstore(WordUtil.archKind(), tla, offsetToProfile, trueValue1, false);
+                XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
+                XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
+                XirConstant constantOne     = asm.i(1);
+                asm.pstore(WordUtil.archKind(), tla, offsetToProfile, constantOne, false);
             }
         }
 
@@ -390,14 +389,11 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (callee.isTemplate()) {
             return null;
         }
-        if (MaxineVM.isRunning()) {
-            XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
+        if (MaxineVM.isRunning() && method.toString().substring(0, method.toString().indexOf('(')).equals(CompilationBroker.AddExitPoint)) {
+            XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
-
-            if (method.toString().substring(0, method.toString().indexOf('(')).equals(CompilationBroker.AddExitPoint)) {
-                XirOperand trueValue1 = asm.i(0);
-                asm.pstore(WordUtil.archKind(), tla, offsetToProfile, trueValue1, false);
-            }
+            XirConstant constantZero    = asm.i(0);
+            asm.pstore(WordUtil.archKind(), tla, offsetToProfile, constantZero, false);
         }
         return new XirSnippet(epilogueTemplate);
     }
