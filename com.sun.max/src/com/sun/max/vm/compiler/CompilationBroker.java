@@ -107,7 +107,6 @@ public class CompilationBroker {
 
     private static boolean BackgroundCompilation = false;
     private static boolean backgroundCompilationInitialized = false;
-    private static boolean ArgumentListOn = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
@@ -119,7 +118,6 @@ public class CompilationBroker {
         addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint method");
         addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint method");
         addFieldOption("-XX:", "MethodList", CompilationBroker.class, "Set a MethodList File name, which holds the whole method chain (default: false)");
-        addFieldOption("-XX:", "ArgumentListOn", CompilationBroker.class, "Enable ArgumentList for Entry & Exitpoint (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
 
@@ -484,18 +482,12 @@ public class CompilationBroker {
             try {
                 if (doCompile) {
                     TargetMethod tm = null;
-                    String methodCheck = "";
                     if (backgroundCompilationInitialized && nature == Nature.OPT) {
                         compilationThreadPool.addCompilationToQueue(compilation);
                         compilation.relinquishOwnership();
                     } else {
                         tm = compilation.compile();
                         VMTI.handler().methodCompiled(cma);
-                    }
-                    if (!ArgumentListOn) {
-                        methodCheck = tm.toString().substring(0, tm.toString().indexOf('('));
-                    } else {
-                        methodCheck = tm.toString();
                     }
                     if (!MaxineVM.isHosted()) {
                         if (MethodList) {
