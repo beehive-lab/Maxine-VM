@@ -88,14 +88,8 @@ public class CompilationBroker {
      */
     private HashMap<String, RuntimeCompiler> altCompilers = new HashMap<String, RuntimeCompiler>();
 
-    /**
-     * Create an array of strings, that holds the method chain between given Entrypoint and Exitpoint.
-     */
-    private ArrayList<String> methodChain = new ArrayList<String>();
-
     private static boolean opt;
     private static boolean FailOverCompilation = true;
-    private static boolean addToChain = false;
     private static boolean VMExtOpt;
     private static Integer tmCounter = 0;
     static int PrintCodeCacheMetrics;
