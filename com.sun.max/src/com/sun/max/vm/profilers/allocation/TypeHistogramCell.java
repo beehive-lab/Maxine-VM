@@ -133,9 +133,23 @@ public class TypeHistogramCell {
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
+    public int findVirtualSpace(long address) {
+        //currently unimplemented. always return 0.
+        return 0;
+    }
+
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NEVER_INLINE
+    public int findPhysicalSpace(long address) {
+        //currently unimplemented. always return 0.
+        return 0;
+    }
+
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NEVER_INLINE
     public void record(int size, String type, long address) {
-        //int vSpace = findVirtualSpace(address);
-        //int pSpace = findPhysicalSpace(address);
+        int vSpace = findVirtualSpace(address);
+        int pSpace = findPhysicalSpace(address);
         //Log.println(type);
         int entry = searchFor(size, type);
 
