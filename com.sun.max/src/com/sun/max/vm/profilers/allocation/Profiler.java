@@ -18,7 +18,7 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package com.sun.max.vm.profilers.dynamic;
+package com.sun.max.vm.profilers.allocation;
 
 import com.sun.max.annotate.C_FUNCTION;
 import com.sun.max.annotate.NEVER_INLINE;
@@ -39,10 +39,10 @@ import static com.sun.max.vm.MaxineVM.isHosted;
 public class Profiler {
 
     @C_FUNCTION
-    static native void dynamicProfiler_lock();
+    static native void allocationProfiler_lock();
 
     @C_FUNCTION
-    static native void dynamicProfiler_unlock();
+    static native void allocationProfiler_unlock();
 
     /**
      * The profiling outcome is stored in histograms.
@@ -120,7 +120,7 @@ public class Profiler {
     /**
      * This method is called when a profiled object is allocated.
      */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void profile(int size, String type) {
         /* PROFILER_TLA is currently a thread local that has it's value maintained
@@ -133,7 +133,7 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void profileGC(int size, String type) {
         /* PROFILER_TLA is currently a thread local that has it's value maintained
@@ -149,7 +149,7 @@ public class Profiler {
     /**
      * Sort and print Histogram.
      */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     public void printHistogram() {
         sizeHistogram[profilingCycle].sortHistogram();
 
@@ -168,7 +168,7 @@ public class Profiler {
 
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     public void printTypeHistogram() {
         typeHistogram[profilingCycle].sortHistogram();
 
@@ -194,7 +194,7 @@ public class Profiler {
      * Dump Profiler findings/stats to Maxine's Log output (for validation purposes).
      * TODO: create a -XX option for that functionality
      */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void printStats() {
         final boolean lockDisabledSafepoints = lock();
@@ -222,7 +222,7 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     public void scanAndProfile(Heap.GCCallbackPhase when) {
         final HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
         assert heapScheme instanceof SemiSpaceHeapScheme;
@@ -235,7 +235,7 @@ public class Profiler {
      *  At this point the profiler has completed a full profiling cycle.
      *  We check if the Histogram needs more space for a potential next profiling cycle and we increase the cycle counter.
      */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void postGCActions() {
         final boolean lockDisabledSafepoints = lock();
@@ -278,7 +278,7 @@ public class Profiler {
      * lock() and unlock() methods have been implemented according to the Log.lock() and Log.unlock() ones.
      *
      */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public static boolean lock() {
         if (isHosted()) {
@@ -286,9 +286,9 @@ public class Profiler {
         }
 
         boolean wasDisabled = SafepointPoll.disable();
-        Profiler.dynamicProfiler_lock();
+        Profiler.allocationProfiler_lock();
         if (lockDepth == 0) {
-            FatalError.check(lockOwner == null, "dynamic profiler lock should have no owner with depth 0");
+            FatalError.check(lockOwner == null, "allocation profiler lock should have no owner with depth 0");
             lockOwner = VmThread.current();
         }
         lockDepth++;
@@ -299,7 +299,7 @@ public class Profiler {
      * lock() and unlock() methods have been implemented according to the Log.lock() and Log.unlock() ones.
      *
      */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public static void unlock(boolean lockDisabledSafepoints) {
         if (isHosted()) {
@@ -308,11 +308,11 @@ public class Profiler {
 
         --lockDepth;
         FatalError.check(lockDepth >= 0, "mismatched lock/unlock");
-        FatalError.check(lockOwner == VmThread.current(), "dynamic profiler lock should be owned by current thread");
+        FatalError.check(lockOwner == VmThread.current(), "allocation profiler lock should be owned by current thread");
         if (lockDepth == 0) {
             lockOwner = null;
         }
-        Profiler.dynamicProfiler_unlock();
+        Profiler.allocationProfiler_unlock();
         ProgramError.check(SafepointPoll.isDisabled(), "Safepoints must not be re-enabled in code surrounded by Profiler.lock() and Profiler.unlock()");
         if (lockDisabledSafepoints) {
             SafepointPoll.enable();

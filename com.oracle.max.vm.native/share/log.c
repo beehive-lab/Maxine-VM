@@ -41,11 +41,11 @@ void log_assert(boolean condition, char *conditionString, char *fileName, int li
 }
 
 static mutex_Struct log_mutexStruct;
-static mutex_Struct dynamicProfiler_mutexStruct;
+static mutex_Struct allocationProfiler_mutexStruct;
 
 void log_initialize(const char *path) {
     mutex_initialize(&log_mutexStruct);
-    mutex_initialize(&dynamicProfiler_mutexStruct);
+    mutex_initialize(&allocationProfiler_mutexStruct);
 #if !os_MAXVE
     if (path == NULL) {
         path = "stdout";
@@ -75,11 +75,11 @@ void log_lock(void) {
 	}
 }
 
-void dynamicProfiler_lock(void) {
+void allocationProfiler_lock(void) {
     int result;
-    result = mutex_enter_nolog(&dynamicProfiler_mutexStruct);
+    result = mutex_enter_nolog(&allocationProfiler_mutexStruct);
     if (result != 0) {
-        log_exit(-1, "Thread %p could not lock mutex %p: %s", thread_self(), &dynamicProfiler_mutexStruct, strerror(result));
+        log_exit(-1, "Thread %p could not lock mutex %p: %s", thread_self(), &allocationProfiler_mutexStruct, strerror(result));
     }
 }
 
@@ -90,11 +90,11 @@ void log_unlock(void) {
 	}
 }
 
-void dynamicProfiler_unlock(void) {
+void allocationProfiler_unlock(void) {
     int result;
-    result = mutex_exit_nolog(&dynamicProfiler_mutexStruct);
+    result = mutex_exit_nolog(&allocationProfiler_mutexStruct);
     if (result != 0) {
-        log_exit(-1, "Thread %p could not unlock mutex %p: %s", thread_self(), &dynamicProfiler_mutexStruct, strerror(result));
+        log_exit(-1, "Thread %p could not unlock mutex %p: %s", thread_self(), &allocationProfiler_mutexStruct, strerror(result));
     }
 }
 

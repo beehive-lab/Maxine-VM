@@ -18,11 +18,10 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package com.sun.max.vm.profilers.dynamic;
+package com.sun.max.vm.profilers.allocation;
 
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
-import com.sun.max.vm.Log;
 
 public class HistogramCell {
 
@@ -84,7 +83,7 @@ public class HistogramCell {
      * @param size
      * @return found index
      */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     public int searchFor(int size) {
         for (int i = 0; i < lastEntry; i++) {
             if (mutatorHistogram[i][0] == size) {
@@ -94,7 +93,7 @@ public class HistogramCell {
         return -1;
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     public int searchForGC(int size) {
         for (int i = 0; i < lastEntryGC; i++) {
             if (gcHistogram[i][0] == size) {
@@ -104,29 +103,29 @@ public class HistogramCell {
         return -1;
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     public void recordNewEntry(int size, int index) {
         mutatorHistogram[index][0] = size;
         mutatorHistogram[index][1] = 1;
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     public void recordNewEntryGC(int size, int index) {
         gcHistogram[index][0] = size;
         gcHistogram[index][1] = 1;
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     public void increment(int index) {
         mutatorHistogram[index][1]++;
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     public void incrementGC(int index) {
         gcHistogram[index][1]++;
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int size) {
         int entry = searchFor(size);
@@ -141,7 +140,7 @@ public class HistogramCell {
         totalObjectsize = totalObjectsize + size;
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void recordGC(int size) {
         int entry = searchForGC(size);
@@ -159,7 +158,7 @@ public class HistogramCell {
     /**
      * A simple sort histogram implementation (using bubble sort).
      */
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void sortHistogram() {
         int n = lastEntry + 1;
@@ -174,7 +173,7 @@ public class HistogramCell {
         }
     }
 
-    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void swapEntries(int i, int j) {
         int temp0;

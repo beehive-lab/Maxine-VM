@@ -79,11 +79,11 @@ public final class JDK_java_lang_Runtime {
         if (!Heap.gcDisabled()) {
             final GCRequest gcRequest = GCRequest.clearedGCRequest();
             gcRequest.explicit = true;
-            if (MaxineVM.isDynamicProfilerInitialized) {
+            if (MaxineVM.isAllocationProfilerInitialized) {
                 Log.println("== Explicit GC ==");
-                MaxineVM.dynamicProfiler.printStats();
+                MaxineVM.allocationProfiler.printStats();
                 Heap.collectGarbage();
-                MaxineVM.dynamicProfiler.postGCActions();
+                MaxineVM.allocationProfiler.postGCActions();
             } else {
                 Heap.collectGarbage();
             }

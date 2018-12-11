@@ -38,8 +38,8 @@ extern void log_initialize(const char *path);
 extern void log_lock(void);
 extern void log_unlock(void);
 
-extern void dynamicProfiler_lock(void);
-extern void dynamicProfiler_unlock(void);
+extern void allocationProfiler_lock(void);
+extern void allocationProfiler_unlock(void);
 
 extern void log_print_int(int val);
 extern void log_print_boolean(char val);

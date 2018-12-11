@@ -24,7 +24,7 @@ package com.sun.max.vm.heap;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
-import static com.sun.max.vm.MaxineVM.dynamicProfiler;
+import static com.sun.max.vm.MaxineVM.allocationProfiler;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -486,7 +486,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final void profile(int size, Hub hub) {
         final String objectType = hub.classActor.name();
 
-        dynamicProfiler.profile(size, objectType);
+        allocationProfiler.profile(size, objectType);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
@@ -494,7 +494,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final void profileArray(int size, Hub hub) {
         final String objectType = hub.classActor.name();
 
-        dynamicProfiler.profile(size, objectType);
+        allocationProfiler.profile(size, objectType);
     }
 
     /**
@@ -547,7 +547,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         if (MaxineVM.profileThatObject()) {
             final String objectType = dynamicHub.classActor.name();
-            dynamicProfiler.profile(size.toInt(), objectType);
+            allocationProfiler.profile(size.toInt(), objectType);
         }
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -564,7 +564,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
             if (MaxineVM.profileThatObject()) {
                 final String objectType = hub.classActor.name();
-                dynamicProfiler.profile(hub.tupleSize.toInt(), objectType);
+                allocationProfiler.profile(hub.tupleSize.toInt(), objectType);
             }
             return Cell.plantTuple(cell, hub);
         }
@@ -577,7 +577,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
         if (MaxineVM.profileThatObject()) {
             final String objectType = hub.classActor.name();
-            dynamicProfiler.profile(size.toInt(), objectType);
+            allocationProfiler.profile(size.toInt(), objectType);
         }
         return Cell.plantHybrid(cell, size, hub);
     }
@@ -591,7 +591,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Pointer oldOrigin = Reference.fromJava(hybrid).toOrigin();
             final Hub hub = Layout.getHub(oldOrigin);
             final String objectType = hub.classActor.name();
-            dynamicProfiler.profile(size.toInt(), objectType);
+            allocationProfiler.profile(size.toInt(), objectType);
         }
         return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
@@ -605,7 +605,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Pointer oldOrigin = Reference.fromJava(object).toOrigin();
             final Hub hub = Layout.getHub(oldOrigin);
             final String objectType = hub.classActor.name();
-            dynamicProfiler.profile(size.toInt(), objectType);
+            allocationProfiler.profile(size.toInt(), objectType);
         }
         return Cell.plantClone(cell, size, object);
     }

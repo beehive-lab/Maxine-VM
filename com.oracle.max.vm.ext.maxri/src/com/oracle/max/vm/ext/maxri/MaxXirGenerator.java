@@ -2129,7 +2129,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         /**
-         * Runtime entry point for object allocation dynamic profiling.
+         * Runtime entry point for object allocation profiling.
          * @param size of the profiled object.
          * @param hub object hub to obtain the type of the profiled object.
          */

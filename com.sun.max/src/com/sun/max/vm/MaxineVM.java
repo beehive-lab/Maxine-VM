@@ -50,7 +50,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.profilers.dynamic.Profiler;
+import com.sun.max.vm.profilers.allocation.Profiler;
 
 /**
  * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time.
@@ -124,9 +124,9 @@ public final class MaxineVM {
     /**
      * The Dynamic Profiler object. It's initialized during Java Run Scheme initialization (if it's needed).
      */
-    public static Profiler dynamicProfiler;
+    public static Profiler allocationProfiler;
 
-    public static boolean isDynamicProfilerInitialized = false;
+    public static boolean isAllocationProfilerInitialized = false;
 
     /**
      * This method is used to guard object allocation code sections.
@@ -144,9 +144,9 @@ public final class MaxineVM {
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject() {
-        if (isDynamicProfilerInitialized) {
+        if (isAllocationProfilerInitialized) {
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
-                    "The DynamicProfiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
+                    "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
             return profilerTLA == 1 || Profiler.profileAll();
         }

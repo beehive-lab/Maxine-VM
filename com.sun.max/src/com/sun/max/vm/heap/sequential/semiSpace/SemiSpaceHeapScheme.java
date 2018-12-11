@@ -21,7 +21,7 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
-import static com.sun.max.vm.MaxineVM.dynamicProfiler;
+import static com.sun.max.vm.MaxineVM.allocationProfiler;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
@@ -48,7 +48,6 @@ import com.sun.max.vm.log.*;
 import com.sun.max.vm.log.VMLogger.Interval;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.management.*;
-import com.sun.max.vm.object.Hybrid;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -638,11 +637,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             final String objectType = hub.classActor.name();
             if (hub.specificLayout.isTupleLayout()) {
                 final int size = hub.tupleSize.toInt();
-                dynamicProfiler.profileGC(size, objectType);
+                allocationProfiler.profileGC(size, objectType);
                 cell = cell.plus(Layout.size(origin));
             } else {
                 final Size size = Layout.size(origin);
-                dynamicProfiler.profileGC(size.toInt(), objectType);
+                allocationProfiler.profileGC(size.toInt(), objectType);
                 cell = cell.plus(size);
             }
         }

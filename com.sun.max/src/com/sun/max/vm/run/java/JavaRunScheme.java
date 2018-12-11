@@ -37,7 +37,7 @@ import com.sun.max.vm.hosted.CompiledPrototype;
 import com.sun.max.vm.instrument.InstrumentationManager;
 import com.sun.max.vm.jni.JniFunctions;
 import com.sun.max.vm.log.VMLog;
-import com.sun.max.vm.profilers.dynamic.Profiler;
+import com.sun.max.vm.profilers.allocation.Profiler;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.RunScheme;
 import com.sun.max.vm.runtime.CriticalMethod;
@@ -181,7 +181,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.terminate();
         }
-        // TODO: terminate the dynamic profiler as well, and dump its findings
+        // TODO: terminate the allocation profiler as well, and dump its findings
     }
 
     public static void restartProfilers() {
@@ -191,7 +191,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.restart();
         }
-        // TODO: restart the dynamic profiler as well, and dump its findings
+        // TODO: restart the allocation profiler as well, and dump its findings
     }
 
     @ALIAS(declaringClass = System.class)
@@ -248,9 +248,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
                 // The same for the Dynamic Profiler
-                if (CompilationBroker.AllocationProfilerEntryPoint != null) {
-                    MaxineVM.dynamicProfiler = new Profiler();
-                    MaxineVM.isDynamicProfilerInitialized = true;
+                if (CompilationBroker.AllocationProfilerEntryPoint != null || Profiler.profileAll()) {
+                    MaxineVM.allocationProfiler = new Profiler();
+                    MaxineVM.isAllocationProfilerInitialized = true;
                 }
                 break;
             }

@@ -452,9 +452,9 @@ public final class Heap {
     }
 
     private static boolean heapLockedCollectGarbage() {
-        if (MaxineVM.isDynamicProfilerInitialized && !VmThread.current().gcRequest.explicit) {
+        if (MaxineVM.isAllocationProfilerInitialized && !VmThread.current().gcRequest.explicit) {
             Log.println("== Implicit GC ==");
-            MaxineVM.dynamicProfiler.printStats();
+            MaxineVM.allocationProfiler.printStats();
         }
         if (verbose()) {
             VmThread.current().gcRequest.printBeforeGC();
@@ -463,8 +463,8 @@ public final class Heap {
         if (verbose()) {
             VmThread.current().gcRequest.printAfterGC(result);
         }
-        if (MaxineVM.isDynamicProfilerInitialized && !VmThread.current().gcRequest.explicit) {
-            MaxineVM.dynamicProfiler.postGCActions();
+        if (MaxineVM.isAllocationProfilerInitialized && !VmThread.current().gcRequest.explicit) {
+            MaxineVM.allocationProfiler.postGCActions();
         }
         return result;
     }
