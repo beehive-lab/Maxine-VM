@@ -112,6 +112,14 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     @INSPECTED
     private LinearAllocationMemoryRegion toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
 
+    public LinearAllocationMemoryRegion getToSpace() {
+        return toSpace;
+    }
+
+    public LinearAllocationMemoryRegion getFromSpace() {
+        return fromSpace;
+    }
+
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
