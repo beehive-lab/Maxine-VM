@@ -57,6 +57,8 @@ public class Profiler {
     public static TypeHistogramCell[] typeHistogram;
     public static int profilingCycle;
 
+    public static HeapConfiguration heapConfig;
+
     private static boolean AllocationProfilerPrintHistogram;
     private static boolean AllocationProfilerAll;
 
@@ -70,13 +72,23 @@ public class Profiler {
     }
 
     public Profiler() {
+        heapConfig = new HeapConfiguration();
+        Log.print("vs0 s =");
+        Log.println(heapConfig.vSpacesStartAddr[0]);
+        Log.print("vs0 e =");
+        Log.println(heapConfig.vSpacesEndAddr[0]);
+        Log.print("vs1 s =");
+        Log.println(heapConfig.vSpacesStartAddr[1]);
+        Log.print("vs1 e =");
+        Log.println(heapConfig.vSpacesEndAddr[1]);
+
         sizeHistogram = new HistogramCell[initialSize];
         typeHistogram = new TypeHistogramCell[initialSize];
 
         //initial cell allocation for our histogram
         for (int i = 0; i < initialSize; i++) {
             sizeHistogram[i] = new HistogramCell();
-            typeHistogram[i] = new TypeHistogramCell();
+            typeHistogram[i] = new TypeHistogramCell(heapConfig.virtSpaces, 1);
         }
         profilingCycle = 0;
 
@@ -107,7 +119,7 @@ public class Profiler {
         //allocate new cells in the histogram
         for (int i = currentSize - 1; i < newSize; i++) {
             newHistogram[i] = new HistogramCell();
-            newTypeHistogram[i] = new TypeHistogramCell();
+            newTypeHistogram[i] = new TypeHistogramCell(heapConfig.virtSpaces, 1);
         }
 
         currentSize = newSize;
@@ -182,7 +194,12 @@ public class Profiler {
             Log.print(" [");
             Log.print(typeHistogram[profilingCycle].mutatorHistogram[i][0]);
             Log.print(" Bytes]  : ");
-            Log.println(typeHistogram[profilingCycle].mutatorHistogram[i][1]);
+            Log.print(typeHistogram[profilingCycle].mutatorHistogram[i][1]);
+            Log.print(" | Placement Histogram: <0,0>:");
+            Log.print(typeHistogram[profilingCycle].mutatorObjPlacement[i][0][0]);
+            Log.print(" <1,0>: ");
+            Log.println(typeHistogram[profilingCycle].mutatorObjPlacement[i][1][0]);
+
         }
         Log.print("Total histogram objects =");
         Log.println(sizeHistogram[profilingCycle].totalRecordedObjects);
