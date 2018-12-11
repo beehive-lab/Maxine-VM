@@ -25,7 +25,6 @@ import static com.sun.max.lang.Classes.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.thread.VmThread.currentTLA;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -134,7 +133,7 @@ public final class MaxineVM {
      *
      * An object will be profiled only if:
      *  1) MaxineVM is Running
-     *  2) -XX:+AddEntryPoint is used
+     *  2) -XX:+AllocationProfilerEntryPoint is used
      *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
      *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
      *
@@ -146,8 +145,8 @@ public final class MaxineVM {
      */
     public static boolean profileThatObject() {
         if (isDynamicProfilerInitialized) {
-            assert isRunning() && CompilationBroker.AddEntryPoint != null :
-                    "The DynamicProfiler should only be initialized when the VM is running and -XX:+AddEntryPoint is used";
+            assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
+                    "The DynamicProfiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
             return profilerTLA == 1 || Profiler.profileAll();
         }

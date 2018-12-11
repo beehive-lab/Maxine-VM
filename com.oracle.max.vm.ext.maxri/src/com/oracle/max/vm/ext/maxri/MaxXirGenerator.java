@@ -23,7 +23,6 @@ package com.oracle.max.vm.ext.maxri;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.layout.Layout.*;
 import static java.lang.reflect.Modifier.*;
@@ -359,7 +358,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.stackOverflowCheck();
         }
 
-        if (MaxineVM.isRunning() && methodIsEntryOrExitPoint(method, CompilationBroker.AddEntryPoint)) {
+        if (MaxineVM.isRunning() &&
+                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.AllocationProfilerEntryPoint)) {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
             XirConstant constantOne     = asm.i(1);
@@ -383,7 +383,8 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (callee.isTemplate()) {
             return null;
         }
-        if (MaxineVM.isRunning() && methodIsEntryOrExitPoint(method, CompilationBroker.AddExitPoint)) {
+        if (MaxineVM.isRunning() &&
+                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.AllocationProfilerExitPoint)) {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
             XirConstant constantZero    = asm.i(0);
@@ -392,7 +393,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         return new XirSnippet(epilogueTemplate);
     }
 
-    private boolean methodIsEntryOrExitPoint(RiResolvedMethod method, String entryOrExitPoint) {
+    private boolean methodIsAllocationProfilerEntryOrExitPoint(RiResolvedMethod method, String entryOrExitPoint) {
         final String methodFullName = method.toString();
         return methodFullName.substring(0, methodFullName.indexOf('(')).equals(entryOrExitPoint);
     }

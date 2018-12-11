@@ -45,7 +45,6 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.PrintThreads;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.ti.VMTI;
-import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.SignatureDescriptor;
 import com.sun.max.vm.type.VMClassLoader;
 import sun.misc.Launcher;
@@ -249,7 +248,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
                 // The same for the Dynamic Profiler
-                if (CompilationBroker.AddEntryPoint != null) {
+                if (CompilationBroker.AllocationProfilerEntryPoint != null) {
                     MaxineVM.dynamicProfiler = new Profiler();
                     MaxineVM.isDynamicProfilerInitialized = true;
                 }

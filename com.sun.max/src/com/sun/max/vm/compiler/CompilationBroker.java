@@ -93,9 +93,9 @@ public class CompilationBroker {
     private static Integer tmCounter = 0;
     static int PrintCodeCacheMetrics;
 
-    public static String        AddEntryPoint;
-    public static String        AddExitPoint;
-    private static boolean      LogCompiledMethods = false;
+    public static String   AllocationProfilerEntryPoint;
+    public static String   AllocationProfilerExitPoint;
+    private static boolean LogCompiledMethods = false;
 
     private static boolean offline = false;
     private static boolean simulateAdapter = false;
@@ -113,8 +113,8 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
-        addFieldOption("-XX:", "AddEntryPoint", CompilationBroker.class, "Add a compiler entryPoint method");
-        addFieldOption("-XX:", "AddExitPoint", CompilationBroker.class, "Add a compiler exitPoint method");
+        addFieldOption("-XX:", "AllocationProfilerEntryPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should start");
+        addFieldOption("-XX:", "AllocationProfilerExitPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should end");
         addFieldOption("-XX:", "LogCompiledMethods", CompilationBroker.class, "Log the names of compiled methods (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
