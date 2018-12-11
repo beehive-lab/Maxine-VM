@@ -30,12 +30,14 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.actor.member.StaticMethodActor;
+import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.hosted.CompiledPrototype;
 import com.sun.max.vm.instrument.InstrumentationManager;
 import com.sun.max.vm.jni.JniFunctions;
 import com.sun.max.vm.log.VMLog;
+import com.sun.max.vm.profilers.allocation.Profiler;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.RunScheme;
 import com.sun.max.vm.runtime.CriticalMethod;
@@ -43,7 +45,6 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.PrintThreads;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.ti.VMTI;
-import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.SignatureDescriptor;
 import com.sun.max.vm.type.VMClassLoader;
 import sun.misc.Launcher;
@@ -180,6 +181,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.terminate();
         }
+        // TODO: terminate the allocation profiler as well, and dump its findings
     }
 
     public static void restartProfilers() {
@@ -189,6 +191,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.restart();
         }
+        // TODO: restart the allocation profiler as well, and dump its findings
     }
 
     @ALIAS(declaringClass = System.class)
@@ -243,6 +246,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 if (heapProfOptionValue != null) {
                     final String heapProfOptionPrefix = hprofOption.toString();
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
+                }
+                // The same for the Dynamic Profiler
+                if (CompilationBroker.AllocationProfilerEntryPoint != null || Profiler.profileAll()) {
+                    MaxineVM.allocationProfiler = new Profiler();
+                    MaxineVM.isAllocationProfilerInitialized = true;
                 }
                 break;
             }

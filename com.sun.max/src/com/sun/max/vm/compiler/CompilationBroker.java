@@ -31,6 +31,7 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
+import com.sun.max.vm.thread.VmThread;
 
 import com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler;
 import com.sun.cri.ci.*;
@@ -50,7 +51,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 
 
@@ -72,7 +72,7 @@ public class CompilationBroker {
      */
     public final RuntimeCompiler baselineCompiler;
 
-    /** 
+    /**
      * The optimizing compiler.
      */
     public final RuntimeCompiler optimizingCompiler;
@@ -90,7 +90,12 @@ public class CompilationBroker {
     private static boolean opt;
     private static boolean FailOverCompilation = true;
     private static boolean VMExtOpt;
+    private static Integer tmCounter = 0;
     static int PrintCodeCacheMetrics;
+
+    public static String   AllocationProfilerEntryPoint;
+    public static String   AllocationProfilerExitPoint;
+    private static boolean LogCompiledMethods = false;
 
     private static boolean offline = false;
     private static boolean simulateAdapter = false;
@@ -108,6 +113,9 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
+        addFieldOption("-XX:", "AllocationProfilerEntryPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should start");
+        addFieldOption("-XX:", "AllocationProfilerExitPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should end");
+        addFieldOption("-XX:", "LogCompiledMethods", CompilationBroker.class, "Log the names of compiled methods (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
 
@@ -478,6 +486,10 @@ public class CompilationBroker {
                     } else {
                         tm = compilation.compile();
                         VMTI.handler().methodCompiled(cma);
+                    }
+                    if (MaxineVM.isRunning() && LogCompiledMethods) {
+                        Log.println("TargetMethod(" + tmCounter++ + ")(" +
+                                selectRetryCompiler(cma, nature, selectCompiler(cma, nature, isDeopt)) + "): " + tm);
                     }
                     return tm;
                 } else {

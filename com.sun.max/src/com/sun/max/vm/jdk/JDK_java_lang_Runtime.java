@@ -21,6 +21,8 @@
 package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.HeapScheme.GCRequest;
 
@@ -77,7 +79,14 @@ public final class JDK_java_lang_Runtime {
         if (!Heap.gcDisabled()) {
             final GCRequest gcRequest = GCRequest.clearedGCRequest();
             gcRequest.explicit = true;
-            Heap.collectGarbage();
+            if (MaxineVM.isAllocationProfilerInitialized) {
+                Log.println("== Explicit GC ==");
+                MaxineVM.allocationProfiler.printStats();
+                Heap.collectGarbage();
+                MaxineVM.allocationProfiler.postGCActions();
+            } else {
+                Heap.collectGarbage();
+            }
         }
     }
 

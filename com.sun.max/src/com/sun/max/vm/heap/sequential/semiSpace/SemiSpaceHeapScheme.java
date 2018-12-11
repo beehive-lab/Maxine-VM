@@ -21,6 +21,7 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
+import static com.sun.max.vm.MaxineVM.allocationProfiler;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
@@ -566,7 +567,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             final Reference toRef = Reference.fromOrigin(toOrigin);
             Layout.writeForwardRef(fromOrigin, toRef);
 
-
             return toRef;
         }
         return ref;
@@ -623,6 +623,28 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             TupleReferenceMap.visitReferences(hub, origin, refUpdater);
         }
         return cell.plus(Layout.size(origin));
+    }
+
+    /**
+     * This method traverses the heap and profiles the currently existing objects.
+     */
+    public void profilerScan() {
+        Pointer cell = toSpace.start().asPointer();
+
+        while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {
+            final Pointer origin = Layout.cellToOrigin(cell);
+            final Hub hub = Layout.getHub(origin);
+            final String objectType = hub.classActor.name();
+            if (hub.specificLayout.isTupleLayout()) {
+                final int size = hub.tupleSize.toInt();
+                allocationProfiler.profileGC(size, objectType);
+                cell = cell.plus(Layout.size(origin));
+            } else {
+                final Size size = Layout.size(origin);
+                allocationProfiler.profileGC(size.toInt(), objectType);
+                cell = cell.plus(size);
+            }
+        }
     }
 
     void moveReachableObjects(Pointer start) {
