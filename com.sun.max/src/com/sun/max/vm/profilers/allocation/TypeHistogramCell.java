@@ -23,6 +23,7 @@ package com.sun.max.vm.profilers.allocation;
 
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
+import com.sun.max.vm.Log;
 
 public class TypeHistogramCell {
 
@@ -105,10 +106,11 @@ public class TypeHistogramCell {
     }
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
-    public void recordNewEntry(int size, int index, String type) {
+    public void recordNewEntry(int index, int size, String type, int vSpace, int pSpace) {
         mutatorHistogram[index][0] = size;
         mutatorTypes[index] = type;
         mutatorHistogram[index][1] = 1;
+        mutatorObjPlacement[index][vSpace][pSpace]++;
     }
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
@@ -119,8 +121,9 @@ public class TypeHistogramCell {
     }
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
-    public void increment(int index) {
+    public void increment(int index, int vSpace, int pSpace) {
         mutatorHistogram[index][1]++;
+        mutatorObjPlacement[index][vSpace][pSpace]++;
     }
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
@@ -130,15 +133,17 @@ public class TypeHistogramCell {
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int size, String type) {
+    public void record(int size, String type, long address) {
+        //int vSpace = findVirtualSpace(address);
+        //int pSpace = findPhysicalSpace(address);
         //Log.println(type);
         int entry = searchFor(size, type);
 
         if (entry == -1) {
-            recordNewEntry(size, lastEntry, type);
+            recordNewEntry(lastEntry, size, type, vSpace, pSpace);
             lastEntry++;
         } else {
-            increment(entry);
+            increment(entry, vSpace, pSpace);
         }
         totalRecordedObjects++;
         totalObjectsize = totalObjectsize + size;
