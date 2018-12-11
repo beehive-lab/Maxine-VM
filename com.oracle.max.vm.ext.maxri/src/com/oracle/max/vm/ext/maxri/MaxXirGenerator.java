@@ -1108,7 +1108,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         alignArraySize(length, arraySize, elemSize, scale);
 
         if (MaxineVM.profileThatObject()) {
-            callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub);
+            callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub, cell);
         }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
@@ -1162,7 +1162,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         alignArraySize(length, arraySize, elemSize, scale);
 
         if (MaxineVM.profileThatObject()) {
-            callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub);
+            callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub, cell);
         }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
@@ -1305,7 +1305,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
 
         if (MaxineVM.profileThatObject()) {
-            callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub);
+            callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub, cell);
         }
 
         asm.add(newMark, cell, tupleSize);
@@ -1374,7 +1374,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
         if (MaxineVM.profileThatObject()) {
-            callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub);
+            callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub, cell);
         }
         asm.add(newMark, cell, tupleSize);
         asm.jgt(slowPath, newMark, tlabEnd);
@@ -2133,18 +2133,18 @@ public class MaxXirGenerator implements RiXirGenerator {
          * @param size of the profiled object.
          * @param hub object hub to obtain the type of the profiled object.
          */
-        public static void callProfiler(int size, Hub hub) {
+        public static void callProfiler(int size, Hub hub, Pointer cell) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
-            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub);
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub, cell);
         }
 
-        public static void callProfilerArray(int size, Hub hub) {
+        public static void callProfilerArray(int size, Hub hub, Pointer cell) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
-            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub);
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub, cell);
         }
 
         public static Pointer flushLog(Pointer logTail) {
