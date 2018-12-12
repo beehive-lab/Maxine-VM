@@ -197,14 +197,18 @@ public class TypeHistogramCell {
         int temp0;
         int temp1;
         String temp2;
+        int[][] temp3;
         temp0 = mutatorHistogram[i][0];
         temp1 = mutatorHistogram[i][1];
         temp2 = mutatorTypes[i];
+        temp3 = mutatorObjPlacement[i];
         mutatorHistogram[i][0] = mutatorHistogram[j][0];
         mutatorHistogram[i][1] = mutatorHistogram[j][1];
         mutatorTypes[i] = mutatorTypes[j];
+        mutatorObjPlacement[i] = mutatorObjPlacement[j];
         mutatorHistogram[j][0] = temp0;
         mutatorHistogram[j][1] = temp1;
         mutatorTypes[j] = temp2;
+        mutatorObjPlacement[j] = temp3;
     }
 }
