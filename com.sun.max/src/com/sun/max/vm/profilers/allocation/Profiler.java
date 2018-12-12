@@ -195,7 +195,7 @@ public class Profiler {
             Log.print(typeHistogram[profilingCycle].mutatorHistogram[i][0]);
             Log.print(" Bytes]  : ");
             Log.print(typeHistogram[profilingCycle].mutatorHistogram[i][1]);
-            Log.print(" | Placement Histogram: <0,0>:");
+            Log.print(" | <0,0>:");
             Log.print(typeHistogram[profilingCycle].mutatorObjPlacement[i][0][0]);
             Log.print(" <1,0>: ");
             Log.println(typeHistogram[profilingCycle].mutatorObjPlacement[i][1][0]);
