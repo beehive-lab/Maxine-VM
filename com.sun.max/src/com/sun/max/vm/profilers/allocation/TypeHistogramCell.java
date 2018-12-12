@@ -132,8 +132,12 @@ public class TypeHistogramCell {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public int findVirtualSpace(long address) {
-        //currently unimplemented. always return 0.
-        return 0;
+        for (int i = 0; i < Profiler.heapConfig.virtSpaces; i++) {
+            if (address < Profiler.heapConfig.vSpacesEndAddr[i]) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
