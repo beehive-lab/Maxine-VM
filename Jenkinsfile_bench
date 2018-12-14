@@ -2,7 +2,7 @@ pipeline {
     agent any
     options {
         timestamps()
-        timeout(time: 3, unit: 'HOURS')
+        timeout(time: 5, unit: 'HOURS')
     }
     tools {
         jdk 'openJDK8'
@@ -33,7 +33,7 @@ pipeline {
                 }
                 // Trigger fetch of dependencies
                 dir(env.MAXINE_HOME) {
-                    sh '$MX help'
+                    sh '$MX help > /dev/null'
                 }
             }
         }
@@ -51,47 +51,53 @@ pipeline {
                     }
             }
         }
+        stage('setup benchmarks') {
+            steps {
+                dir(env.MAXINE_HOME) {
+                    sh 'cp $DACAPO/dacapo-9.12-MR1-bach.jar .'
+                    sh 'cp -r $SPECJVM2008 .'
+                }
+            }
+        }
         stage('DACAPO benchmarks') {
             steps {
-                dir(env.DACAPO) {
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar avrora || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar batik || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar eclipse || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar fop || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar h2 || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar jython || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar luindex || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar lusearch || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar pmd || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar sunflow || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar tomcat || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar tradebeans || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar tradesoap || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar xalan || true'
+                dir(env.MAXINE_HOME) {
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 avrora || true'
+                    // sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 batik || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 eclipse || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 fop || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 h2 || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 jython || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 luindex || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 lusearch || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 pmd || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 sunflow || true'
+                    // sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 tomcat || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 tradebeans || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 tradesoap || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 xalan || true'
                 }
             }
         }
         stage('SPECJVM benchmarks') {
             steps {
-                dir(env.SPECJVM2008) {
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 startup || true'
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 compiler || true'
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 compress || true'
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 crypto || true'
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 derby || true'
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 mpegaudio || true'
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 scimark || true'
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 serial || true'
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 sunflow || true'
-                    sh 'timeout -s SIGINT 7m $MX --vm=maxine vm -jar SPECjvm2008.jar -wt 5s -it 5s -bt 2 xml || true'
+                dir(env.MAXINE_HOME) {
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 startup || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 compiler || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 compress || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 crypto || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 derby || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 mpegaudio || true'
+                    sh 'timeout -s SIGINT 90m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 scimark || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 serial || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 sunflow || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 xml || true'
                 }
             }
         }
         stage('db_update') {
             steps {
-                dir(env.DJANGO) {
-                   sh 'python manage.py addBenchToJob $JOB_NAME --get_jenkins_latest'
-                }
+                sh 'python $DJANGO/manage.py addBenchToJob $JOB_NAME --get_jenkins_latest'
             }
         }
     }
