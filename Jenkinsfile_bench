@@ -9,14 +9,14 @@ pipeline {
     }
     environment {
         //Change the first three variables
-        DJANGO="/home/vasilis/Desktop/BenchVisualizer"
-        DACAPO="/home/vasilis/Desktop/SPECjvm2008"
-        SPECJVM2008="/home/vasilis/Desktop/SPECjvm2008"
+        USER_HOME="/localhome/regression"
+        DJANGO="$USER_HOME/benchvisualizer/BenchVisualizer"
+        DACAPO="$USER_HOME"
+        SPECJVM2008="$USER_HOME/SPECjvm2008"
 
         MAXINE_HOME="$WORKSPACE/maxine"
         MX_HOME="$WORKSPACE/mx"
         MX="$MX_HOME/mx"
-        PATH="/localhome/regression/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin:/localhome/regression/gcc-arm-none-eabi-7-2017-q4-major/bin:/localhome/regression/qemu-2.10.1/build/aarch64-softmmu:/localhome/regression/qemu-2.10.1/build/arm-softmmu:/localhome/regression/riscv/bin:$PATH"
         LD_LIBRARY_PATH="$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/"
     }
 
@@ -54,20 +54,20 @@ pipeline {
         stage('DACAPO benchmarks') {
             steps {
                 dir(env.DACAPO) {
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar avrora || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar batik || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar eclipse || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar fop || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar h2 || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar jython || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar luindex || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar lusearch || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar pmd || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar sunflow || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar tomcat || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar tradebeans || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar tradesoap || true'
-                    sh '$MX --vm=maxine vm -jar dacapo-9.12-bach.jar xalan || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar avrora || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar batik || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar eclipse || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar fop || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar h2 || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar jython || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar luindex || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar lusearch || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar pmd || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar sunflow || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar tomcat || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar tradebeans || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar tradesoap || true'
+                    sh '$MX --vm=maxine vm -jar dacapo-9.12-MR1-bach.jar xalan || true'
                 }
             }
         }
