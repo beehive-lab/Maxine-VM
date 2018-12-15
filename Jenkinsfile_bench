@@ -102,5 +102,12 @@ pipeline {
         }
     }
 
-
+    post {
+        success {
+            slackSend color: '#00CC00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) check the results at http://apt-supermicro1.cs.man.ac.uk:8090/visualizer/MaxineBenchmarks/"
+        }
+        failure {
+            slackSend color: '#CC0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
+        }
+    }
 }
