@@ -60,6 +60,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void mov32BitConstant(CiRegister dst, int imm32) {
+        //Any change made to this function must also be applied to mov32BitConstantHelper
         if (imm32 == 0) {
             and(dst, RISCV64.x0, RISCV64.x0);
             return;
@@ -78,6 +79,36 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public static int[] mov32BitConstantHelper(CiRegister dst, int imm32) {
+        int[] instructions = new int[4];
+
+        if (imm32 == 0) {
+            // and(dst, RISCV64.x0, RISCV64.x0);
+            instructions[0] = AND.getValue() | dst.number << 7 | 7 << 12 |
+                    RISCV64.x0.number << 15 | RISCV64.x0.number << 20;
+            return instructions;
+        }
+
+        if ((imm32 & 0xFFF) >>> 11 == 0b0) {
+            // lui(dst, imm32);
+            instructions[0] = LUI.getValue() | dst.number << 7 | (imm32 & 0xFFFFF000);
+        } else {
+            // lui(dst, (imm32 + (0b1 << 12)) & 0xFFFFF000);
+            instructions[0] = LUI.getValue() | dst.number << 7 | ((imm32 + (0b1 << 12)) & 0xFFFFF000);
+        }
+        // addi(dst, dst, imm32);
+        instructions[1] = COMP.getValue() | dst.number << 7 | 0 << 12 | dst.number << 15 | imm32 << 20;
+
+        if (imm32 > 0) {
+            // slli(dst, dst, 32);
+            instructions[2] = COMP.getValue() | dst.number << 7 | 1 << 12 | dst.number << 15 | 32 << 20;
+            // srli(dst, dst, 32);
+            instructions[3] = COMP.getValue() | dst.number << 7 | 5 << 12 | dst.number << 15 | 32 << 20;
+        }
+
+        return instructions;
+    }
+
     public void mov(CiRegister rd, long imm) {
         if (imm <= Integer.MAX_VALUE && imm >= Integer.MIN_VALUE) {
             mov32BitConstant(rd, (int) imm);
@@ -85,6 +116,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             mov64BitConstant(rd, imm);
         }
     }
+
+
 
     public void nop() {
         addi(RISCV64.x0, RISCV64.x0, 0);
