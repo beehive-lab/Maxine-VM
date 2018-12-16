@@ -24,9 +24,6 @@
  */
 package com.oracle.max.asm.target.riscv64;
 
-import com.oracle.max.asm.target.aarch64.Aarch64;
-import com.oracle.max.asm.target.aarch64.Aarch64Assembler;
-
 public final class RISCV64InstructionDecoder {
 
     public static void patchRelativeInstruction(byte[] code, int codePos, int relative) {
@@ -34,12 +31,18 @@ public final class RISCV64InstructionDecoder {
     }
 
     private static void patchDisp32(byte[] code, int pos, int offset) {
-        assert pos + 4 <= code.length;
+        assert pos + RISCV64MacroAssembler.INSTRUCTION_SIZE *
+                RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS <= code.length;
 
-        int instruction = Aarch64Assembler.adrHelper(Aarch64.r16, offset);
-        code[pos] = (byte) (instruction & 0xFF);
-        code[pos + 1] = (byte) ((instruction >> 8) & 0xFF);
-        code[pos + 2] = (byte) ((instruction >> 16) & 0xFF);
-        code[pos + 3] = (byte) ((instruction >> 24) & 0xFF);
+        int[] instructions = RISCV64MacroAssembler.mov32BitConstantHelper(RISCV64.x28, offset);
+
+        for (int i = 0; i < instructions.length; i++) {
+            code[pos] = (byte) (instructions[i] & 0xFF);
+            code[pos + 1] = (byte) ((instructions[i] >> 8) & 0xFF);
+            code[pos + 2] = (byte) ((instructions[i] >> 16) & 0xFF);
+            code[pos + 3] = (byte) ((instructions[i] >> 24) & 0xFF);
+            pos += 4;
+        }
     }
 }
+

@@ -868,10 +868,10 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : RISCV64.cpuRegisters) {
                 RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), null);
-                asm.mov(scratch, dispFromCodeStart - pos);
+                asm.mov32BitConstant(scratch, dispFromCodeStart - pos);
+                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 asm.auipc(scratch1, 0);
                 asm.add(scratch, scratch1, scratch);
-                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 asm.ldr(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
                 // pattern must be compatible with RISCV64InstructionDecoder.patchRelativeInstruction
                 byte[] pattern = asm.codeBuffer.close(true);
