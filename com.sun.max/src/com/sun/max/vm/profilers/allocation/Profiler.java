@@ -53,10 +53,11 @@ public class Profiler {
     public static int initialSize = 6;
     public static int currentSize = initialSize;
     public static int growStep = 10;
-    public static HistogramCell[] sizeHistogram;
-    public static TypeHistogramCell[] typeHistogram;
     public static int profilingCycle;
 
+    public static int currentIndex = 0;
+
+    public static ProfiledObjects objects;
     public static HeapConfiguration heapConfig;
 
     private static boolean AllocationProfilerPrintHistogram;
@@ -82,16 +83,9 @@ public class Profiler {
         Log.print("vs1 e =");
         Log.println(heapConfig.vSpacesEndAddr[1]);
 
-        sizeHistogram = new HistogramCell[initialSize];
-        typeHistogram = new TypeHistogramCell[initialSize];
+        objects = new ProfiledObjects();
 
-        //initial cell allocation for our histogram
-        for (int i = 0; i < initialSize; i++) {
-            sizeHistogram[i] = new HistogramCell();
-            typeHistogram[i] = new TypeHistogramCell(heapConfig.virtSpaces, 1);
-        }
         profilingCycle = 0;
-
     }
 
     public static boolean profileAll() {
@@ -104,7 +98,7 @@ public class Profiler {
      */
     public void growHistograms(Heap.GCCallbackPhase when) {
         final boolean lockDisabledSafepoints = lock();
-
+/*
         final int newSize =  currentSize + growStep;
 
         HistogramCell[] newHistogram = new HistogramCell[newSize];
@@ -125,7 +119,7 @@ public class Profiler {
         currentSize = newSize;
         sizeHistogram = newHistogram;
         typeHistogram = newTypeHistogram;
-
+*/
         unlock(lockDisabledSafepoints);
     }
 
@@ -140,8 +134,8 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        sizeHistogram[profilingCycle].record(size);
-        typeHistogram[profilingCycle].record(size, type, address);
+        objects.record(currentIndex, type, size, address);
+        currentIndex++;
         unlock(lockDisabledSafepoints);
     }
 
@@ -153,58 +147,23 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        sizeHistogram[profilingCycle].recordGC(size);
-        typeHistogram[profilingCycle].recordGC(size, type);
+
         unlock(lockDisabledSafepoints);
     }
 
-    /**
-     * Sort and print Histogram.
-     */
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
-    public void printHistogram() {
-        sizeHistogram[profilingCycle].sortHistogram();
+    public int cycle = 0;
 
-        int lastEntry = sizeHistogram[profilingCycle].lastEntry;
-
-        Log.println("====HISTOGRAM====");
-        for (int i = 1; i < lastEntry; i++) {
-            Log.print("[");
-            Log.print(sizeHistogram[profilingCycle].mutatorHistogram[i][0]);
-            Log.print("]\t\t");
-            Log.println(sizeHistogram[profilingCycle].mutatorHistogram[i][1]);
-        }
-        Log.print("Total histogram objects =");
-        Log.println(sizeHistogram[profilingCycle].totalRecordedObjects);
-        Log.println("=======END=======");
-
-    }
-
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
-    public void printTypeHistogram() {
-        typeHistogram[profilingCycle].sortHistogram();
-
-        int lastEntry = typeHistogram[profilingCycle].lastEntry;
-
-        Log.println("====TYPE HISTOGRAM====");
-        for (int i = 1; i < lastEntry; i++) {
-            Log.print("[");
-            Log.print(typeHistogram[profilingCycle].mutatorTypes[i]);
-            Log.print("] ");
-            Log.print(" [");
-            Log.print(typeHistogram[profilingCycle].mutatorHistogram[i][0]);
-            Log.print(" Bytes]  : ");
-            Log.print(typeHistogram[profilingCycle].mutatorHistogram[i][1]);
-            Log.print(" | <0,0>:");
-            Log.print(typeHistogram[profilingCycle].mutatorObjPlacement[i][0][0]);
-            Log.print(" <1,0>: ");
-            Log.println(typeHistogram[profilingCycle].mutatorObjPlacement[i][1][0]);
-
-        }
-        Log.print("Total histogram objects =");
-        Log.println(sizeHistogram[profilingCycle].totalRecordedObjects);
-        Log.println("=======END=======");
-
+    public void printCycle() {
+        Log.print("==== Profiling Cycle ");
+        Log.print(cycle);
+        Log.println(" Start ====");
+        objects.print();
+        Log.print("length = ");
+        Log.println(objects.address.length);
+        Log.print("==== Profiling Cycle ");
+        Log.print(cycle);
+        Log.println(" End ====");
+        cycle++;
     }
 
     /**
@@ -215,6 +174,7 @@ public class Profiler {
     @NEVER_INLINE
     public void printStats() {
         final boolean lockDisabledSafepoints = lock();
+        /*
         final float reportInMbs = (float) Heap.reportUsedSpace() / 1048576;
         final float histogramInMbs = (float) sizeHistogram[profilingCycle].totalObjectsize / 1048576;
 
@@ -235,7 +195,7 @@ public class Profiler {
             //printHistogram();
             printTypeHistogram();
         }
-
+        */
         unlock(lockDisabledSafepoints);
     }
 
@@ -248,7 +208,7 @@ public class Profiler {
     @NEVER_INLINE
     public void postGCActions() {
         final boolean lockDisabledSafepoints = lock();
-
+        /*
         // for validation purposes
         Log.print("Collected heap used space = ");
         final float reportCollectedHeapInMbs = (float) Heap.reportUsedSpace() / 1048576;
@@ -262,6 +222,10 @@ public class Profiler {
         final float reportCollectedHeapHistogramInMbs = (float) sizeHistogram[profilingCycle].totalObjectsizeGC / 1048576;
         Log.print(reportCollectedHeapHistogramInMbs);
         Log.println(" MBs\n");
+        */
+
+        printCycle();
+        objects.resetCycle();
 
         //if we need more space, grow histograms
         if ((profilingCycle + 1) == currentSize) {
