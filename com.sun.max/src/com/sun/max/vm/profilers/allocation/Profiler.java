@@ -34,6 +34,11 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import static com.sun.max.vm.MaxineVM.isHosted;
 
 public class Profiler {
@@ -60,8 +65,13 @@ public class Profiler {
     public static ProfiledObjects objects;
     public static HeapConfiguration heapConfig;
 
+    public static String fileName = "profilerout.txt";
+    public static FileWriter fileWriter;
+    public static PrintWriter printWriter;
+
     private static boolean AllocationProfilerPrintHistogram;
     private static boolean AllocationProfilerAll;
+    private static boolean AllocationProfilerDump;
 
     /**
      * Use -XX:+AllocationProfilerPrintHistogram flag to accompany the profiler stats with a complete histogram view.
@@ -70,6 +80,7 @@ public class Profiler {
     static {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerPrintHistogram", Profiler.class, "Print Dynamic Profiler's Histogram after every GC. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", Profiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerDump", Profiler.class, "Dump profiled objects to a file. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
     public Profiler() {
@@ -84,6 +95,13 @@ public class Profiler {
         Log.println(heapConfig.vSpacesEndAddr[1]);
 
         objects = new ProfiledObjects();
+
+        try {
+            fileWriter = new FileWriter(fileName);
+            printWriter = new PrintWriter(fileWriter);
+        } catch (IOException ioe) {
+            Log.print("exception at initialization");
+        }
 
         profilingCycle = 0;
     }
@@ -154,16 +172,14 @@ public class Profiler {
     public int cycle = 0;
 
     public void printCycle() {
-        Log.print("==== Profiling Cycle ");
-        Log.print(cycle);
-        Log.println(" Start ====");
-        objects.print();
-        Log.print("length = ");
-        Log.println(objects.address.length);
-        Log.print("==== Profiling Cycle ");
-        Log.print(cycle);
-        Log.println(" End ====");
+        final boolean lockDisabledSafepoints = lock();
+        if (AllocationProfilerDump) {
+            objects.print(printWriter, cycle);
+        } else {
+            objects.print(null, cycle);
+        }
         cycle++;
+        unlock(lockDisabledSafepoints);
     }
 
     /**
@@ -226,6 +242,8 @@ public class Profiler {
 
         printCycle();
         objects.resetCycle();
+        //ProfiledObjects tmp = new ProfiledObjects();
+        //objects = tmp;
 
         //if we need more space, grow histograms
         if ((profilingCycle + 1) == currentSize) {
@@ -235,6 +253,10 @@ public class Profiler {
         profilingCycle++;
 
         unlock(lockDisabledSafepoints);
+    }
+
+    public void terminate() {
+        printWriter.close();
     }
 
     private static VmThread lockOwner;

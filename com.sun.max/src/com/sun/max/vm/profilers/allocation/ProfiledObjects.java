@@ -23,13 +23,15 @@ import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.vm.Log;
 
+import java.io.PrintWriter;
+
 public class ProfiledObjects {
 
     /**
      * Each profiling cycle is predefined to track 10000 objects.
-     * TODO: configurable
+     * TODO: auto-configurable
      */
-    public int SIZE = 100000;
+    public int SIZE = 210000;
 
     /**
      * The following 4 variables compose the stored information for each object.
@@ -46,7 +48,7 @@ public class ProfiledObjects {
 
     public int currentIndex;
 
-    public ProfiledObjects () {
+    public ProfiledObjects() {
         index = new int[SIZE];
         type = new String[SIZE];
         size = new int[SIZE];
@@ -98,8 +100,30 @@ public class ProfiledObjects {
         currentIndex++;
     }
 
-    public void print() {
-        for(int i=0; i<currentIndex; i++){
+    public void dumpToFile(PrintWriter printWriter, int cycle) {
+        printWriter.print("==== Profiling Cycle ");
+        printWriter.print(cycle);
+        printWriter.println(" Start ====");
+        for (int i = 0; i < currentIndex; i++) {
+            printWriter.print(index[i]);
+            printWriter.print(" ");
+            printWriter.print(type[i]);
+            printWriter.print(" ");
+            printWriter.print(size[i]);
+            printWriter.print(" ");
+            printWriter.println(address[i]);
+        }
+        printWriter.print("Buffer usage = ");
+        printWriter.print(currentIndex);
+        printWriter.print(" / ");
+        printWriter.println(address.length);
+    }
+
+    public void dumpToStdOut(int cycle) {
+        Log.print("==== Profiling Cycle ");
+        Log.print(cycle);
+        Log.println(" Start ====");
+        for (int i = 0; i < currentIndex; i++) {
             Log.print(index[i]);
             Log.print(" ");
             Log.print(type[i]);
@@ -107,6 +131,18 @@ public class ProfiledObjects {
             Log.print(size[i]);
             Log.print(" ");
             Log.println(address[i]);
+        }
+        Log.print("Buffer usage = ");
+        Log.print(currentIndex);
+        Log.print(" / ");
+        Log.println(address.length);
+    }
+
+    public void print(PrintWriter printWriter, int cycle) {
+        if (printWriter != null) {
+            dumpToFile(printWriter, cycle);
+        } else {
+            dumpToStdOut(cycle);
         }
     }
 
