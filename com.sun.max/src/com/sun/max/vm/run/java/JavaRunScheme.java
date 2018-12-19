@@ -66,6 +66,7 @@ import java.util.List;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+import static com.sun.max.vm.MaxineVM.allocationProfiler;
 import static com.sun.max.vm.MaxineVM.vm;
 import static com.sun.max.vm.VMConfiguration.vmConfig;
 import static com.sun.max.vm.VMOptions.register;
@@ -181,7 +182,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.terminate();
         }
-        // TODO: terminate the allocation profiler as well, and dump its findings
+        if (MaxineVM.allocationProfiler != null) {
+            MaxineVM.allocationProfiler.terminate();
+        }
     }
 
     public static void restartProfilers() {
