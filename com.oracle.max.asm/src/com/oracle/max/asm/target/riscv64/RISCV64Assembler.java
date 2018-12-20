@@ -44,7 +44,7 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     @Override
     protected void patchJumpTarget(int branch, int target) {
-        throw new UnsupportedOperationException("Unimplemented");
+        throw new UnsupportedOperationException("This is implemented in the MacroAssembler");
     }
 
     /**
@@ -58,14 +58,24 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param opcode
      * @param rd
      * @param imm32
+     * @param pos
      */
-    private void utype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
+    private void utype(RISCV64opCodes opcode, CiRegister rd, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0 : opcode.getValue();
         assert rd.number >> 5 == 0 : rd.number;
         int instruction = opcode.getValue();
         instruction |= rd.number << 7;
         instruction |= imm32 & 0xFFFFF000;
-        emitInt(instruction);
+
+        if (pos == -1) {
+            emitInt(instruction);
+        } else {
+            emitInt(instruction, pos);
+        }
+    }
+
+    private void utype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
+        utype(opcode, rd, imm32, -1);
     }
 
     /**
@@ -211,8 +221,9 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param opcode
      * @param rd
      * @param imm32
+     * @param pos
      */
-    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
+    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
         int instruction = opcode.getValue();
@@ -221,7 +232,16 @@ public class RISCV64Assembler extends AbstractAssembler {
         instruction |= ((imm32 >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm32 in bits 30:21 of instruction
         instruction |= ((imm32 >> 11) & 1) << 20; // This places bit 11 of imm32 in bit20 of instruction
         instruction |= ((imm32 >> 12) & 0xFF) << 12; // This places bits 19:12 of imm32 in bits 19:12 of instruction
-        emitInt(instruction);
+
+        if (pos == -1) {
+            emitInt(instruction);
+        } else {
+            emitInt(instruction, pos);
+        }
+    }
+
+    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
+        jtype(opcode, rd, imm32, -1);
     }
 
     // RV32I Base instruction set /////////////////////////////////////////////
@@ -247,11 +267,22 @@ public class RISCV64Assembler extends AbstractAssembler {
         utype(AUIPC, rd, imm32);
     }
 
+    public void auipc(CiRegister rd, int imm32, int pos) {
+        utype(AUIPC, rd, imm32, pos);
+    }
+
+
+
     /**
      *
      * @param rd
      * @param imm32
+     * @param pos
      */
+    public void jal(CiRegister rd, int imm32, int pos) {
+        jtype(JAL, rd, imm32, pos);
+    }
+
     public void jal(CiRegister rd, int imm32) {
         jtype(JAL, rd, imm32);
     }
@@ -849,6 +880,10 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     public void fsw(CiRegister dst, CiRegister base, int offset) {
         stype(STORE_FP, 2, dst, base, offset);
+    }
+
+    public void fcvtls(CiRegister rd, CiRegister rs) {
+        itype(FCVTLS, rd, 0, rs, 0b110000000010);
     }
 
     public void fcvtws(CiRegister rd, CiRegister rs) {

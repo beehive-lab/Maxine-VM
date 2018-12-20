@@ -1750,7 +1750,7 @@ public class Stubs {
 //                }
 //            }
 
-            asm.ret(0);
+            asm.jalr(RISCV64.x0, RISCV64.x0, 0);
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         } else {
