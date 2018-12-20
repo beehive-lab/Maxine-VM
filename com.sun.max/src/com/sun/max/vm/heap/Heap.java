@@ -452,19 +452,12 @@ public final class Heap {
     }
 
     private static boolean heapLockedCollectGarbage() {
-        if (MaxineVM.isAllocationProfilerInitialized && !VmThread.current().gcRequest.explicit) {
-            Log.println("== Implicit GC ==");
-            MaxineVM.allocationProfiler.printStats();
-        }
         if (verbose()) {
             VmThread.current().gcRequest.printBeforeGC();
         }
         final boolean result = heapScheme().collectGarbage();
         if (verbose()) {
             VmThread.current().gcRequest.printAfterGC(result);
-        }
-        if (MaxineVM.isAllocationProfilerInitialized && !VmThread.current().gcRequest.explicit) {
-            MaxineVM.allocationProfiler.postGCActions();
         }
         return result;
     }

@@ -36,9 +36,14 @@ public class ProfilerGCCallback implements Heap.GCCallback {
     @Override
     public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
         if (gcCallbackPhase == Heap.GCCallbackPhase.BEFORE) {
-            //TODO: move here pre-gc actions
+            if (MaxineVM.isRunning() && MaxineVM.isAllocationProfilerInitialized) {
+                //any PRE gc action must be placed here
+            }
         } else if (gcCallbackPhase == Heap.GCCallbackPhase.AFTER) {
-            //TODO: move here pre-gc actions
+            if (MaxineVM.isRunning() && MaxineVM.isAllocationProfilerInitialized) {
+                //any POST gc action must be placed here
+                //MaxineVM.allocationProfiler.postGCActions();
+            }
         }
     }
 }
