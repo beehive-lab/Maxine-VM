@@ -37,6 +37,67 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         super(target, registerConfig);
     }
 
+    @Override
+    protected void patchJumpTarget(int branch, int target) {
+        int branchOffset = target - branch;
+        PatchLabelKind type = PatchLabelKind.fromEncoding(codeBuffer.getByte(branch));
+        switch (type) {
+            case BRANCH_CONDITIONALLY:
+                throw new UnsupportedOperationException("Unimplemented");
+//                assert codeBuffer.getShort(branch + 2) == 0;
+//                ConditionFlag cf = ConditionFlag.fromEncoding(codeBuffer.getByte(branch + 1));
+//                b(cf, branchOffset, branch);
+//                break;
+            case TABLE_SWITCH:
+            case BRANCH_UNCONDITIONALLY:
+                assert codeBuffer.getByte(branch + 1) == 0;
+                assert codeBuffer.getShort(branch + 2) == 0;
+                jal(RISCV64.zero, branchOffset, branch);
+                break;
+            case BRANCH_NONZERO:
+            case BRANCH_ZERO:
+                throw new UnsupportedOperationException("Unimplemented");
+//                int size = codeBuffer.getByte(branch + 1);
+//                int regEncoding = codeBuffer.getShort(branch + 2);
+//                CiRegister reg = Aarch64.cpuRegisters[regEncoding];
+//                switch (type) {
+//                    case BRANCH_NONZERO:
+//                        cbnz(size, reg, branchOffset, branch);
+//                        break;
+//                    case BRANCH_ZERO:
+//                        cbz(size, reg, branchOffset, branch);
+//                        break;
+//                }
+//                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
+    /**
+     * When patching up Labels we have to know what kind of code to generate.
+     */
+    public enum PatchLabelKind {
+        BRANCH_CONDITIONALLY(0x0),
+        BRANCH_UNCONDITIONALLY(0x1),
+        BRANCH_NONZERO(0x2),
+        BRANCH_ZERO(0x3),
+        TABLE_SWITCH(0x4);
+
+        public final int encoding;
+
+        PatchLabelKind(int encoding) {
+            this.encoding = encoding;
+        }
+
+        /**
+         * @return PatchLabelKind with given encoding.
+         */
+        private static PatchLabelKind fromEncoding(int encoding) {
+            return values()[encoding];
+        }
+    }
+
 
     public final void alignForPatchableDirectCall(int callPos) {
         assert callPos % INSTRUCTION_SIZE == 0 : "Should be 4 bytes aligned";
@@ -117,7 +178,23 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void movByte(CiRegister rd, int imm) {
+        int val = imm & 0xFF;
+        if (val >>> 7 == 1) {
+            val = ~0xFF | val;
+        }
 
+        mov64BitConstant(rd, imm);
+    }
+
+    public void movShort(CiRegister rd, int imm) {
+        int val = imm & 0xFFFF;
+        if (val >>> 15 == 1) {
+            val = ~0xFFFF | val;
+        }
+
+        mov64BitConstant(rd, imm);
+    }
 
     public void nop() {
         addi(RISCV64.x0, RISCV64.x0, 0);
@@ -237,8 +314,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 //        jump anywhere in a 32-bit absolute address range.  A LUI instruction can first load rs1 with the
 //        upper 20 bits of a target address, then JALR can add in the lower bits.  Similarly, AUIPC then
 //        JALR can jump anywhere in a 32-bit pc-relative address range.
-        auipc(RISCV64.x28, offset);
-        jalr(RISCV64.zero, RISCV64.x28, offset);
+        auipc(scratchRegister, offset);
+        jalr(RISCV64.zero, scratchRegister, offset);
     }
 
     /**
@@ -367,18 +444,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 if (NumUtil.isSignedNbit(9, displacement)) {
                     sd(frameRegister, r, displacement);
                 } else {
-                    mov(scratchRegister, frameRegister);
-                    mov(scratchRegister1, displacement);
-                    add(scratchRegister, scratchRegister, scratchRegister1);
+                    mov(scratchRegister, displacement);
+                    add(scratchRegister, frameRegister, scratchRegister);
                     sd(scratchRegister, r, 0);
                 }
             } else {
                 if (NumUtil.isSignedNbit(9, displacement)) {
                     fsd(frameRegister, r, displacement);
                 } else {
-                    mov(scratchRegister, frameRegister);
-                    mov(scratchRegister1, displacement);
-                    add(scratchRegister, scratchRegister, scratchRegister1);
+                    mov(scratchRegister, displacement);
+                    add(scratchRegister, frameRegister, scratchRegister);
                     fsd(scratchRegister, r, 0);
                 }
             }
@@ -398,30 +473,51 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     ld(r, frameRegister, displacement);
                 } else {
                     mov(scratchRegister, displacement);
-                    ld(frameRegister, scratchRegister, 0);
+                    add (scratchRegister, frameRegister, scratchRegister);
+                    ld(r, scratchRegister, 0);
                 }
             } else if (r.isFpu()) {
                 if (NumUtil.isSignedNbit(9, displacement)) {
                     fld(r, frameRegister, displacement);
                 } else {
                     mov(scratchRegister, displacement);
-                    fld(frameRegister, scratchRegister, 0);
+                    add(scratchRegister, frameRegister, scratchRegister);
+                    fld(r, scratchRegister, 0);
                 }
             }
         }
     }
 
-    public final void ret(int imm16) {
-        if (imm16 == 0) {
-            jal(RISCV64.ra, 0);
-        } else {
-            add(RISCV64.sp, RISCV64.sp, imm16);
-            jal(RISCV64.ra, 0);
-        }
+    public final void ret() {
+        pop(64, RISCV64.ra);
+        ret(RISCV64.ra);
     }
 
     public final void ret(CiRegister r) {
         jalr(RISCV64.x0, r, 0);
+    }
+
+    public void leaq(CiRegister dest, CiAddress addr) {
+        if (addr == CiAddress.Placeholder) {
+            nop(4);
+        } else {
+            setUpScratch(addr);
+            mov(dest, scratchRegister);
+        }
+    }
+
+    public void pause() {
+        //TODO Implement software pause
+    }
+
+    public final void crashme() {
+        mov(scratchRegister, 0);
+        ldr(64, scratchRegister, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister));
+        insertForeverLoop();
+    }
+
+    public void insertForeverLoop() {
+        b(0);
     }
 
     public void ldr(int srcSize, CiRegister rd, CiRegister rs, int offset) {
@@ -581,6 +677,46 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
 
         return RISCV64Address.createBaseRegisterOnlyAddress(base);
+    }
+
+    public void setUpScratch(CiAddress addr) {
+        setUpRegister(scratchRegister, addr);
+    }
+
+    public void setUpRegister(CiRegister dest, CiAddress addr) {
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+        int disp = addr.displacement;
+        if (addr == CiAddress.Placeholder) {
+            nop(4);
+            return;
+        }
+
+        assert !(base.isValid() && disp == 0 && base.compareTo(RISCV64.LATCH_REGISTER) == 0);
+        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
+
+        if (base == CiRegister.Frame) {
+            base = frameRegister;
+        }
+
+        assert base.isValid();
+
+        if (disp != 0) {
+            if (isAimm(Math.abs(disp))) {
+                add(dest, base, disp);
+            } else {
+                mov32BitConstant(dest, disp);
+                add(dest, dest, base);
+            }
+            base = dest;
+        } else if (!index.isValid()) {
+            mov(dest, base);
+        }
+        if (index.isValid()) {
+            slli(dest, index, scale.log2);
+            add(dest, base, dest);
+        }
     }
 
     public void nullCheck(CiRegister r) {
