@@ -259,7 +259,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
-        asm.mov32BitConstant(scratch, Float.floatToRawIntBits(value));
+        asm.mov64BitConstant(scratch, Float.floatToRawIntBits(value));
         asm.fmvwx(dst, scratch);
     }
 

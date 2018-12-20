@@ -59,6 +59,7 @@ public enum RISCV64opCodes {
     FCVTWS((byte) 0b1010011),
     FCVTSW((byte) 0b1010011),
     FMV((byte) 0b1010011),
+    FCVTLS((byte) 0b1010011),
 
     MULW((byte) 0b0110011);
 
