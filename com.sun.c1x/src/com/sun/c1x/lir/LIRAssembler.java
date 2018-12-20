@@ -189,7 +189,7 @@ public abstract class LIRAssembler {
                 TTY.println();
             }
 
-            op.emitCode(this);
+            op. emitCode(this);
 
             if (C1XOptions.PrintLIRWithAssembly) {
                 printAssembly(asm);
