@@ -38,6 +38,7 @@ import com.sun.max.vm.instrument.InstrumentationManager;
 import com.sun.max.vm.jni.JniFunctions;
 import com.sun.max.vm.log.VMLog;
 import com.sun.max.vm.profilers.allocation.Profiler;
+import com.sun.max.vm.profilers.allocation.ProfilerGCCallback;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.RunScheme;
 import com.sun.max.vm.runtime.CriticalMethod;
@@ -210,6 +211,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         switch (phase) {
             case BOOTSTRAPPING: {
                 if (MaxineVM.isHosted()) {
+                    ProfilerGCCallback.init();
                     // Make sure MaxineVM.exit is available when running the JavaRunScheme.
                     new CriticalMethod(MaxineVM.class, "exit",
                                     SignatureDescriptor.create(void.class, int.class, boolean.class));
