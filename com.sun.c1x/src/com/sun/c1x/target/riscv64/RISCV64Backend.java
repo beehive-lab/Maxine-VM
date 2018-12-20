@@ -21,6 +21,7 @@
 package com.sun.c1x.target.riscv64;
 
 import com.oracle.max.asm.AbstractAssembler;
+import com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler;
 import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler;
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.C1XCompiler;
@@ -31,6 +32,7 @@ import com.sun.c1x.lir.LIRAssembler;
 import com.sun.c1x.stub.CompilerStub;
 import com.sun.c1x.stub.CompilerStub.Id;
 import com.sun.c1x.target.Backend;
+import com.sun.c1x.util.Util;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiRuntimeCall;

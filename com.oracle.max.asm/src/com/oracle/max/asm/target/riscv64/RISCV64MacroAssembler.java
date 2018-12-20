@@ -51,52 +51,35 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         int branchOffset = target - branch;
         PatchLabelKind type = PatchLabelKind.fromEncoding(codeBuffer.getByte(branch));
         switch (type) {
-            case BRANCH_CONDITIONALLY: {
-                ConditionFlag cf = ConditionFlag.fromEncoding(codeBuffer.getByte(branch + 1));
-                CiRegister rs1 = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 2) & 0b11111];
-                CiRegister rs2 = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 3) & 0b11111];
-                emitConditionalBranch(cf, rs1, rs2, branchOffset, branch);
-                break;
-            }
+            case BRANCH_CONDITIONALLY:
+                throw new UnsupportedOperationException("Unimplemented");
+//                assert codeBuffer.getShort(branch + 2) == 0;
+//                ConditionFlag cf = ConditionFlag.fromEncoding(codeBuffer.getByte(branch + 1));
+//                b(cf, branchOffset, branch);
+//                break;
             case TABLE_SWITCH:
-            case BRANCH_UNCONDITIONALLY: {
+            case BRANCH_UNCONDITIONALLY:
                 assert codeBuffer.getByte(branch + 1) == 0;
                 assert codeBuffer.getShort(branch + 2) == 0;
                 jal(RISCV64.zero, branchOffset, branch);
                 break;
-            }
             case BRANCH_NONZERO:
             case BRANCH_ZERO:
-                switch (type) {
-                    case BRANCH_NONZERO: {
-                        int oldPos = codeBuffer.position();
-                        codeBuffer.setPosition(branch - INSTRUCTION_SIZE);
-                        mov32BitConstant(scratchRegister1, 0);
-                        CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
-                        emitConditionalBranch(ConditionFlag.NE, cmp, scratchRegister1, branchOffset);
-                        codeBuffer.setPosition(oldPos);
-                        break;
-                    }
-                    case BRANCH_ZERO: {
-                        int oldPos = codeBuffer.position();
-                        codeBuffer.setPosition(branch - INSTRUCTION_SIZE);
-                        mov32BitConstant(scratchRegister1, 0);
-                        CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
-                        emitConditionalBranch(ConditionFlag.EQ, cmp, scratchRegister1, branchOffset);
-                        codeBuffer.setPosition(oldPos);
-                        break;
-                    }
-                }
-                break;
+                throw new UnsupportedOperationException("Unimplemented");
+//                int size = codeBuffer.getByte(branch + 1);
+//                int regEncoding = codeBuffer.getShort(branch + 2);
+//                CiRegister reg = Aarch64.cpuRegisters[regEncoding];
+//                switch (type) {
+//                    case BRANCH_NONZERO:
+//                        cbnz(size, reg, branchOffset, branch);
+//                        break;
+//                    case BRANCH_ZERO:
+//                        cbz(size, reg, branchOffset, branch);
+//                        break;
+//                }
+//                break;
             default:
                 throw new IllegalArgumentException();
-        }
-    }
-
-    public void align(int modulus) {
-        if (codeBuffer.position() % modulus != 0) {
-            assert modulus % 4 == 0;
-            nop((modulus - (codeBuffer.position() % modulus)) / 4);
         }
     }
 
@@ -230,7 +213,23 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void movByte(CiRegister rd, int imm) {
+        int val = imm & 0xFF;
+        if (val >>> 7 == 1) {
+            val = ~0xFF | val;
+        }
 
+        mov64BitConstant(rd, imm);
+    }
+
+    public void movShort(CiRegister rd, int imm) {
+        int val = imm & 0xFFFF;
+        if (val >>> 15 == 1) {
+            val = ~0xFFFF | val;
+        }
+
+        mov64BitConstant(rd, imm);
+    }
 
     public void nop() {
         addi(RISCV64.x0, RISCV64.x0, 0);
@@ -501,11 +500,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         jalr(RISCV64.zero, scratchRegister, offset);
     }
 
-    public void b(int offset, int pos) {
-        auipc(scratchRegister, offset, pos);
-        jalr(RISCV64.zero, scratchRegister, offset, pos + INSTRUCTION_SIZE);
-    }
-
     /**
      * Branch unconditionally to a label.
      *
@@ -774,7 +768,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     ld(r, frameRegister, displacement);
                 } else {
                     mov(scratchRegister, displacement);
-                    add(scratchRegister, frameRegister, scratchRegister);
+                    add (scratchRegister, frameRegister, scratchRegister);
                     ld(r, scratchRegister, 0);
                 }
             } else if (r.isFpu()) {
