@@ -23,8 +23,9 @@ package com.sun.c1x.target.riscv64;
 import com.oracle.max.asm.Buffer;
 import com.oracle.max.asm.Label;
 import com.oracle.max.asm.NumUtil;
+import com.oracle.max.asm.target.aarch64.Aarch64;
+import com.oracle.max.asm.target.aarch64.Aarch64Assembler;
 import com.oracle.max.asm.target.riscv64.RISCV64;
-import com.oracle.max.asm.target.riscv64.RISCV64Address;
 import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler;
 import com.oracle.max.criutils.TTY;
 import com.sun.c1x.C1XCompilation;
@@ -47,7 +48,6 @@ import com.sun.cri.xir.XirTemplate;
 import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.Word;
 import com.sun.max.vm.compiler.CompilationBroker;
-import com.sun.max.vm.runtime.FatalError;
 
 import java.util.Map;
 
@@ -57,7 +57,7 @@ import static com.sun.cri.ci.CiValue.IllegalValue;
 public final class RISCV64LIRAssembler extends LIRAssembler {
 
     private static final Object[] NO_PARAMS = new Object[0];
-    private static final CiRegister SHIFTCount = RISCV64.a2;
+    private static final CiRegister SHIFTCount = Aarch64.r1;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
 
@@ -121,7 +121,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitMonitorAddress(int monitor, CiValue dst) {
         CiStackSlot slot = frameMap.toMonitorBaseStackAddress(monitor);
-        masm.leaq(dst.asRegister(), new CiAddress(slot.kind, RISCV64.sp.asValue(), slot.index() * target.arch.wordSize));
+        masm.leaq(dst.asRegister(), new CiAddress(slot.kind, Aarch64.sp.asValue(), slot.index() * target.arch.wordSize));
     }
 
     @Override
@@ -162,12 +162,12 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
     private void const2reg(CiRegister dst, float constant) {
         masm.mov64BitConstant(scratchRegister, Float.floatToRawIntBits(constant));
-        masm.fmov(32, dst, scratchRegister);
+        masm.fmvwx(dst, scratchRegister);
     }
 
     private void const2reg(CiRegister dst, double constant) {
         masm.mov64BitConstant(scratchRegister, Double.doubleToRawLongBits(constant));
-        masm.fmov(64, dst, scratchRegister);
+        masm.fmvdx(dst, scratchRegister);
     }
 
     @Override
@@ -270,9 +270,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         assert src.isRegister();
         assert dest.isRegister();
         if (dest.kind.isFloat()) {
-            masm.fmov(32, dest.asRegister(), src.asRegister());
+            masm.fmvwx(dest.asRegister(), src.asRegister());
         } else if (dest.kind.isDouble()) {
-            masm.fmov(64, dest.asRegister(), src.asRegister());
+            masm.fmvdx(dest.asRegister(), src.asRegister());
         } else {
             moveRegs(src.asRegister(), dest.asRegister());
         }
@@ -300,13 +300,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         assert src.isStackSlot();
         assert dest.isRegister();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
-
-//        System.out.println("\"Stack2Reg\" = " + "Stack2Reg");
-//        System.out.println("src = " + src);
-//        System.out.println("dest = " + dest);
-//        System.out.println("kind = " + kind);
-//        System.out.println();
-
         masm.load(dest.asRegister(), addr, dest.kind.stackKind());
     }
 
@@ -331,6 +324,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
     protected void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         assert src.isAddress();
         assert dest.isRegister() : "dest=" + dest;
+
         CiAddress addr = (CiAddress) src;
         masm.load(dest.asRegister(), addr, kind);
         if (info != null) {
@@ -461,10 +455,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             RISCV64MacroAssembler.ConditionFlag acond;
             if (op.code == LIROpcode.CondFloatBranch) {
                 assert op.unorderedBlock() != null : "must have unordered successor";
-                // Check if NV flag in fflags is set to 1. If it is, then one of the operands from emitCompare was NaN.
-                // Should go to the 'false' branch in this case
-                masm.csrrci(scratchRegister, 0x001, 0b10000); // Read and clear NV flag
-                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.NE, scratchRegister, RISCV64.zero, op.unorderedBlock().label());
+                masm.branchConditionally(ConditionFlag.VS, op.unorderedBlock().label());
 
                 switch (op.cond()) {
                     case EQ:
@@ -491,8 +482,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             } else {
                 acond = convertCondition(op.cond());
             }
-            masm.mov64BitConstant(scratchRegister, 0);
-            masm.branchConditionally(acond, RISCV64.x31, scratchRegister, op.label());
+            masm.branchConditionally(acond, op.label());
         }
     }
 
@@ -502,72 +492,63 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         CiValue dest = op.result();
         switch (op.opcode) {
             case I2L:
-                masm.mov(dest.asRegister(), src.asRegister());
+                masm.sxt(64, 32, dest.asRegister(), src.asRegister());
                 break;
             case L2I:
-                masm.mov64BitConstant(scratchRegister, 0xFFFFFFFFL);
-                masm.and(dest.asRegister(), src.asRegister(), scratchRegister);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFFFFFL);
                 break;
             case I2B:
-                masm.andi(dest.asRegister(), src.asRegister(), 0x0FF);
-                masm.slli(dest.asRegister(), dest.asRegister(), 24);
-                masm.addiw(dest.asRegister(), dest.asRegister(), 0);
-                masm.srli(dest.asRegister(), dest.asRegister(), 24);
-                masm.addiw(dest.asRegister(), dest.asRegister(), 0);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFL);
+                masm.sxt(64, 8, dest.asRegister(), src.asRegister());
                 break;
             case I2C:
-                masm.mov32BitConstant(scratchRegister, 0xFFFF);
-                masm.and(dest.asRegister(), src.asRegister(), scratchRegister);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFL);
                 break;
             case I2S:
-                masm.mov32BitConstant(scratchRegister, 0xFFFF);
-                masm.and(dest.asRegister(), src.asRegister(), scratchRegister);
-                masm.slli(dest.asRegister(), dest.asRegister(), 16);
-                masm.addiw(dest.asRegister(), dest.asRegister(), 0);
-                masm.srli(dest.asRegister(), dest.asRegister(), 16);
-                masm.addiw(dest.asRegister(), dest.asRegister(), 0);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFL);
+                masm.sxt(64, 16, dest.asRegister(), src.asRegister());
                 break;
             case F2D:
-                masm.fcvtds(dest.asRegister(), src.asRegister());
+                masm.fcvt(32, dest.asRegister(), src.asRegister());
                 break;
             case D2F:
-                masm.fcvtsd(dest.asRegister(), src.asRegister());
+                masm.fcvt(64, dest.asRegister(), src.asRegister());
                 break;
             case I2F:
-                masm.fcvtsw(dest.asRegister(), src.asRegister());
+                masm.scvtf(32, 32, dest.asRegister(), src.asRegister());
                 break;
             case I2D:
-                masm.fcvtdw(dest.asRegister(), src.asRegister());
+                masm.scvtf(64, 32, dest.asRegister(), src.asRegister());
                 break;
             case F2I:
-                masm.fcvtws(dest.asRegister(), src.asRegister());
+                masm.fcvtzs(32, 32, dest.asRegister(), src.asRegister());
                 break;
             case D2I:
-                masm.fcvtwd(dest.asRegister(), src.asRegister());
+                masm.fcvtzs(32, 64, dest.asRegister(), src.asRegister());
                 break;
             case L2F:
-                masm.fcvtsl(dest.asRegister(), src.asRegister());
+                masm.scvtf(32, 64, dest.asRegister(), src.asRegister());
                 break;
             case L2D:
-                masm.fcvtdl(dest.asRegister(), src.asRegister());
+                masm.scvtf(64, 64, dest.asRegister(), src.asRegister());
                 break;
             case F2L:
-                masm.fcvtls(dest.asRegister(), src.asRegister());
+                masm.fcvtzs(64, 32, dest.asRegister(), src.asRegister());
                 break;
             case D2L:
-                masm.fcvtld(dest.asRegister(), src.asRegister());
+                masm.fcvtzs(64, 64, dest.asRegister(), src.asRegister());
                 break;
             case MOV_I2F:
-                masm.fmvwx(dest.asRegister(), src.asRegister());
+                masm.fmovCpu2Fpu(32, dest.asRegister(), src.asRegister());
                 break;
             case MOV_L2D:
-                masm.fmvdx(dest.asRegister(), src.asRegister());
+                masm.fmovCpu2Fpu(64, dest.asRegister(), src.asRegister());
                 break;
             case MOV_F2I:
-                masm.fmvxw(dest.asRegister(), src.asRegister());
+                masm.fmovFpu2Cpu(32, dest.asRegister(), src.asRegister());
                 break;
             case MOV_D2L:
-                masm.fmvxd(dest.asRegister(), src.asRegister());
+                masm.fmovFpu2Cpu(64, dest.asRegister(), src.asRegister());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -576,7 +557,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompareAndSwap(LIRCompareAndSwap op) {
-        RISCV64Address address = RISCV64Address.createBaseRegisterOnlyAddress(op.address().asRegister());
+        Aarch64Address address = Aarch64Address.createBaseRegisterOnlyAddress(op.address().asRegister());
         CiRegister newval = op.newValue().asRegister();
         CiRegister cmpval = op.expectedValue().asRegister();
         assert newval != null : "new val must be register";
@@ -596,48 +577,48 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitConditionalMove(Condition condition, CiValue opr1, CiValue opr2, CiValue result) {
-        RISCV64MacroAssembler.ConditionFlag acond;
-        RISCV64MacroAssembler.ConditionFlag ncond;
+        ConditionFlag acond;
+        ConditionFlag ncond;
         switch (condition) {
             case EQ:
-                acond = RISCV64MacroAssembler.ConditionFlag.EQ;
-                ncond = RISCV64MacroAssembler.ConditionFlag.NE;
+                acond = ConditionFlag.EQ;
+                ncond = ConditionFlag.NE;
                 break;
             case NE:
-                ncond = RISCV64MacroAssembler.ConditionFlag.EQ;
-                acond = RISCV64MacroAssembler.ConditionFlag.NE;
+                ncond = ConditionFlag.EQ;
+                acond = ConditionFlag.NE;
                 break;
             case LT:
-                acond = RISCV64MacroAssembler.ConditionFlag.LT;
-                ncond = RISCV64MacroAssembler.ConditionFlag.GE;
+                acond = ConditionFlag.LT;
+                ncond = ConditionFlag.GE;
                 break;
             case LE:
-                acond = RISCV64MacroAssembler.ConditionFlag.LE;
-                ncond = RISCV64MacroAssembler.ConditionFlag.GT;
+                acond = ConditionFlag.LE;
+                ncond = ConditionFlag.GT;
                 break;
             case GE:
-                acond = RISCV64MacroAssembler.ConditionFlag.GE;
-                ncond = RISCV64MacroAssembler.ConditionFlag.LT;
+                acond = ConditionFlag.GE;
+                ncond = ConditionFlag.LT;
                 break;
             case GT:
-                acond = RISCV64MacroAssembler.ConditionFlag.GT;
-                ncond = RISCV64MacroAssembler.ConditionFlag.LE;
+                acond = ConditionFlag.GT;
+                ncond = ConditionFlag.LE;
                 break;
             case BE:
-                acond = RISCV64MacroAssembler.ConditionFlag.LEU;
-                ncond = RISCV64MacroAssembler.ConditionFlag.GTU;
+                acond = ConditionFlag.LS;
+                ncond = ConditionFlag.HI;
                 break;
             case BT:
-                acond = RISCV64MacroAssembler.ConditionFlag.LTU;
-                ncond = RISCV64MacroAssembler.ConditionFlag.GEU;
+                acond = ConditionFlag.LO;
+                ncond = ConditionFlag.HS;
                 break;
             case AE:
-                acond = RISCV64MacroAssembler.ConditionFlag.GEU;
-                ncond = RISCV64MacroAssembler.ConditionFlag.LTU;
+                acond = ConditionFlag.HS;
+                ncond = ConditionFlag.LO;
                 break;
             case AT:
-                acond = RISCV64MacroAssembler.ConditionFlag.GTU;
-                ncond = RISCV64MacroAssembler.ConditionFlag.LEU;
+                acond = ConditionFlag.HI;
+                ncond = ConditionFlag.LS;
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -651,7 +632,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             def = opr2;
             other = opr1;
             // and flip the condition
-            RISCV64MacroAssembler.ConditionFlag tcond = acond;
+            ConditionFlag tcond = acond;
             acond = ncond;
             ncond = tcond;
         }
@@ -683,8 +664,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         } else {
             // conditional move not available, use emit a branch and move
             Label skip = new Label();
-            masm.mov64BitConstant(scratchRegister, 0);
-            masm.branchConditionally(acond, RISCV64.x31, scratchRegister, skip);
+            masm.branchConditionally(acond, skip);
             if (other.isRegister()) {
                 reg2reg(other, result);
             } else if (other.isStackSlot()) {
@@ -714,10 +694,10 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 final long delta = ((CiConstant) right).asLong();
                 switch (code) {
                     case Add:
-                        masm.add(dest.asRegister(), lreg, delta);
+                        masm.add(size, dest.asRegister(), lreg, delta);
                         break;
                     case Sub:
-                        masm.sub(dest.asRegister(), lreg, delta);
+                        masm.sub(size, dest.asRegister(), lreg, delta);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -733,8 +713,8 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     rreg = scratchRegister;
                 } else {
                     assert kind.isFloat() || kind.isDouble();
-                    masm.load(RISCV64.f30, raddr, kind);
-                    rreg = RISCV64.f30;
+                    masm.load(Aarch64.d30, raddr, kind);
+                    rreg = Aarch64.d30;
                 }
             } else {
                 assert right.isConstant();
@@ -744,12 +724,10 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 } else {
                     tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                 }
-                masm.mov32BitConstant(scratchRegister, 0); // this gets patched by RISCV64InstructionDecoder.patchRelativeInstruction
-                masm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
-                masm.auipc(scratchRegister1, 0);
-                masm.add(scratchRegister, scratchRegister1, scratchRegister);
-                rreg = RISCV64.f30;
-                masm.load(rreg, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister), kind);
+                masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+                rreg = Aarch64.d30;
+                masm.load(rreg, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), kind);
             }
             if (kind.isInt() || kind.isLong()) {
                 switch (code) {
@@ -782,11 +760,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.fmul(size, dest.asRegister(), lreg, rreg);
                         break;
                     case Div:
-                        masm.insertFloatingDivByZeroCheck(lreg, rreg, kind.isDouble());
                         masm.fdiv(size, dest.asRegister(), lreg, rreg);
                         break;
                     case Rem:
-                        masm.insertFloatingDivByZeroCheck(lreg, rreg, kind.isDouble());
                         masm.frem(size, dest.asRegister(), lreg, rreg);
                         break;
                     default:
@@ -796,15 +772,15 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         } else {
             assert kind.isInt();
             CiAddress laddr = asAddress(left);
-            masm.load(scratchRegister1, laddr, kind);
+            masm.load(scratchRegister, laddr, kind);
             if (right.isRegister()) {
                 CiRegister rreg = right.asRegister();
                 switch (code) {
                     case Add:
-                        masm.add(32, scratchRegister1, scratchRegister1, rreg);
+                        masm.add(32, scratchRegister, scratchRegister, rreg);
                         break;
                     case Sub:
-                        masm.sub(32, scratchRegister1, scratchRegister1, rreg);
+                        masm.sub(32, scratchRegister, scratchRegister, rreg);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -812,19 +788,19 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 }
             } else {
                 assert right.isConstant();
-                masm.mov(scratchRegister, ((CiConstant) right).asInt());
+                int c = ((CiConstant) right).asInt();
                 switch (code) {
                     case Add:
-                        masm.add(32, scratchRegister1, scratchRegister, scratchRegister1);
+                        masm.add(32, scratchRegister, scratchRegister, (long) c);
                         break;
                     case Sub:
-                        masm.sub(32, scratchRegister1, scratchRegister, scratchRegister1);
+                        masm.sub(32, scratchRegister, scratchRegister, (long) c);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
             }
-            masm.store(scratchRegister1, laddr, kind);
+            masm.store(scratchRegister, laddr, kind);
         }
     }
 
@@ -871,13 +847,13 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         }
         switch (code) {
             case LogicAnd:
-                masm.and(dest, reg, rright);
+                masm.and(size, dest, reg, rright);
                 break;
             case LogicOr:
-                masm.or(dest, reg, rright);
+                masm.or(size, dest, reg, rright);
                 break;
             case LogicXor:
-                masm.xor(dest, reg, rright);
+                masm.eor(size, dest, reg, rright);
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -902,27 +878,27 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 // check for special case of MIN_VALUE / -1
                 Label normalCase = new Label();
                 masm.mov(scratchRegister, size == 32 ? Integer.MIN_VALUE : Long.MIN_VALUE);
-                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.NE, numerator, scratchRegister, normalCase);
+                masm.cmp(size, numerator, scratchRegister);
+                masm.branchConditionally(ConditionFlag.NE, normalCase);
+                masm.cmp(size, denominator, -1);
                 if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
                     // prepare scratch for possible special case where remainder = 0
                     masm.mov(quotient, 0);
                 }
-                masm.mov(scratchRegister, -1);
-                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, denominator, scratchRegister, continuation);
+                masm.branchConditionally(ConditionFlag.EQ, continuation);
                 masm.bind(normalCase);
             }
-            int offset = masm.insertDivByZeroCheck(denominator);
+            int offset = masm.insertDivByZeroCheck(size, denominator);
             tasm.recordImplicitException(offset, info);
             if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
                 if (quotient == numerator || quotient == denominator) {
                     quotient = scratchRegister;
                 }
-                masm.div(size, quotient, numerator, denominator);
-                masm.mul(size, quotient, quotient, denominator);
-                masm.sub(size, result.asRegister(), numerator, quotient);
+                masm.sdiv(size, quotient, numerator, denominator);
+                masm.msub(size, result.asRegister(), quotient, denominator, numerator);
             } else {
                 assert code == LIROpcode.Idiv || code == LIROpcode.Ldiv;
-                masm.div(size, quotient, numerator, denominator);
+                masm.sdiv(size, quotient, numerator, denominator);
             }
             masm.bind(continuation);
         }
@@ -937,53 +913,52 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         CiRegister quotient    = result.asRegister();
         CiRegister denominator = right.asRegister();
 
-        int offset = masm.insertDivByZeroCheck(denominator);
+        int offset = masm.insertDivByZeroCheck(size, denominator);
         tasm.recordImplicitException(offset, info);
         if (code == LIROpcode.Iurem || code == LIROpcode.Lurem) {
             if (quotient == numerator || quotient == denominator) {
                 quotient = scratchRegister;
             }
-            masm.divu(size, quotient, numerator, denominator);
-            masm.mul(size, quotient, quotient, denominator);
-            masm.sub(size, result.asRegister(), numerator, quotient);
+            masm.udiv(size, quotient, numerator, denominator);
+            masm.msub(size, result.asRegister(), quotient, denominator, numerator);
         } else {
             assert code == LIROpcode.Iudiv || code == LIROpcode.Ludiv;
-            masm.divu(size, quotient, numerator, denominator);
+            masm.udiv(size, quotient, numerator, denominator);
         }
     }
 
-    private RISCV64MacroAssembler.ConditionFlag convertCondition(Condition condition) {
-        RISCV64MacroAssembler.ConditionFlag acond;
+    private ConditionFlag convertCondition(Condition condition) {
+        ConditionFlag acond;
         switch (condition) {
             case EQ:
-                acond = RISCV64MacroAssembler.ConditionFlag.EQ;
+                acond = ConditionFlag.EQ;
                 break;
             case NE:
-                acond = RISCV64MacroAssembler.ConditionFlag.NE;
+                acond = ConditionFlag.NE;
                 break;
             case LT:
-                acond = RISCV64MacroAssembler.ConditionFlag.LT;
+                acond = ConditionFlag.LT;
                 break;
             case LE:
-                acond = RISCV64MacroAssembler.ConditionFlag.LE;
+                acond = ConditionFlag.LE;
                 break;
             case GE:
-                acond = RISCV64MacroAssembler.ConditionFlag.GE;
+                acond = ConditionFlag.GE;
                 break;
             case GT:
-                acond = RISCV64MacroAssembler.ConditionFlag.GT;
+                acond = ConditionFlag.GT;
                 break;
             case BE:
-                acond = RISCV64MacroAssembler.ConditionFlag.LEU;
+                acond = ConditionFlag.LS;
                 break;
             case AE:
-                acond = RISCV64MacroAssembler.ConditionFlag.GEU;
+                acond = ConditionFlag.HS;
                 break;
             case BT:
-                acond = RISCV64MacroAssembler.ConditionFlag.LTU;
+                acond = ConditionFlag.LO;
                 break;
             case AT:
-                acond = RISCV64MacroAssembler.ConditionFlag.GTU;
+                acond = ConditionFlag.HI;
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -1015,77 +990,20 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Byte:
                     case Char:
                     case Short:
-                    case Int: {
-                        Label continueLabel = new Label();
-                        // reg1 - Integer.MIN_VALUE results into integer overflow. We need a special case for this comparison.
-                        masm.mov64BitConstant(scratchRegister, Integer.MIN_VALUE);
-                        masm.mov32BitConstant(RISCV64.x31, 1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, opr2.asRegister(), continueLabel);
-                        // Integer.MIN_VALUE - opr2 results into integer overflow. We need a special case for this comparison.
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, reg1, continueLabel);
-
-                        masm.sub(32, RISCV64.x31, reg1, opr2.asRegister());
-                        masm.bind(continueLabel);
+                    case Int:
+                        masm.cmp(32, reg1, opr2.asRegister());
                         break;
-                    }
                     case Object:
-                    case Long: {
-                        Label continueLabel = new Label();
-                        // reg1 - Long.MIN_VALUE results into long overflow. We need a special case for this comparison.
-                        masm.mov64BitConstant(scratchRegister, Long.MIN_VALUE);
-                        masm.mov32BitConstant(RISCV64.x31, 1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, opr2.asRegister(), continueLabel);
-                        // Long.MIN_VALUE - opr2 results into long overflow. We need a special case for this comparison.
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, reg1, continueLabel);
-
-                        masm.sub(64, RISCV64.x31, reg1, opr2.asRegister());
-                        masm.bind(continueLabel);
+                    case Long:
+                        assert (reg1 != Aarch64.r16);
+                        masm.cmp(64, reg1, opr2.asRegister());
                         break;
-                    }
-                    case Float: {
-                        Label continueLabel = new Label();
-                        Label lessThanLabel = new Label();
-                        // Clear NV flag from fflags.
-                        // Will get set to 1 by masm.fltd if one of the operands is NaN.
-                        masm.csrrci(RISCV64.x0, 0x001, 0b10000);
-                        // a > b
-                        masm.mov32BitConstant(scratchRegister, 1);
-                        masm.flts(RISCV64.x31, opr2.asRegister(), reg1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, continueLabel);
-                        // a == b
-                        masm.flts(RISCV64.x31, reg1, opr2.asRegister());
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, 0);
-                        masm.b(continueLabel);
-                        // a < b
-                        masm.bind(lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.bind(continueLabel);
+                    case Float:
+                        masm.ucomisd(32, reg1, opr2.asRegister(), opr1.kind, opr2.kind);
                         break;
-                    }
-                    case Double: {
-                        Label continueLabel = new Label();
-                        Label lessThanLabel = new Label();
-                        // Clear NV flag from fflags.
-                        // Will get set to 1 by masm.fltd if one of the operands is NaN.
-                        masm.csrrci(RISCV64.x0, 0x001, 0b10000);
-                        // a > b
-                        masm.mov32BitConstant(scratchRegister, 1);
-                        masm.fltd(RISCV64.x31, opr2.asRegister(), reg1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, continueLabel);
-                        // a == b
-                        masm.fltd(RISCV64.x31, reg1, opr2.asRegister());
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, 0);
-                        masm.b(continueLabel);
-                        // a < b
-                        masm.bind(lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.bind(continueLabel);
+                    case Double:
+                        masm.ucomisd(64, reg1, opr2.asRegister(), opr1.kind, opr2.kind);
                         break;
-                    }
                     default:
                         throw Util.shouldNotReachHere(opr1.kind.toString());
                 }
@@ -1098,44 +1016,38 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Char:
                     case Short:
                     case Int:
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
+                        //                        masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot));
+                        break;
                     case Long:
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
+                        masm.fmov(64, Aarch64.d30, Aarch64.r9);
+                        masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
+//                        masm.ldrd(ConditionFlag.Always, Aarch64.r17, Aarch64.r16, 0);
+//                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r17);
+                        masm.fmov(64, Aarch64.r9, Aarch64.d30);
+                        break;
                     case Object:
-                        masm.load(scratchRegister, frameMap.toStackAddress(opr2Slot), opr1.kind);
-                        masm.sub(RISCV64.x31, reg1, scratchRegister);
-                        break;
-                    case Float: {
-                        Label continueLabel = new Label();
-                        Label lessThanLabel = new Label();
-                        masm.mov32BitConstant(scratchRegister, 1);
-                        masm.load(RISCV64.f31, frameMap.toStackAddress(opr2Slot), opr1.kind);
-                        masm.flts(RISCV64.x31, RISCV64.f31, reg1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, continueLabel);
-                        masm.flts(RISCV64.x31, reg1, RISCV64.f31);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, 0);
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
 
-                        masm.bind(lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.bind(continueLabel);
+                        //                        masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot));
                         break;
-                    }
-                    case Double: {
-                        Label continueLabel = new Label();
-                        Label lessThanLabel = new Label();
-                        masm.mov32BitConstant(scratchRegister, 1);
-                        masm.load(RISCV64.f31, frameMap.toStackAddress(opr2Slot), opr1.kind);
-                        masm.fltd(RISCV64.x31, RISCV64.f31, reg1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, continueLabel);
-
-                        masm.fltd(RISCV64.x31, reg1, RISCV64.f31);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, 0);
-
-                        masm.bind(lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.bind(continueLabel);
+                    case Float:
+                        masm.load(Aarch64.d30, frameMap.toStackAddress(opr2Slot), opr1.kind);
+                        masm.ucomisd(32, reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
-                    }
+                    case Double:
+                        masm.load(Aarch64.d30, frameMap.toStackAddress(opr2Slot), opr1.kind);
+                        masm.ucomisd(64, reg1, Aarch64.d30, opr1.kind, CiKind.Double);
+                        break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
@@ -1147,50 +1059,36 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Byte:
                     case Char:
                     case Short:
-                    case Int: {
-                        masm.mov32BitConstant(scratchRegister, c.asInt());
-                        masm.sub(32, RISCV64.x31, reg1, scratchRegister);
+                    case Int:
+                        masm.cmp(32, reg1, c.asInt());
                         break;
-                    }
-                    case Object:
+                    case Float:
+                        assert false : "not tested";
+                        tasm.recordDataReferenceInCode(CiConstant.forFloat(c.asFloat()));
+                        masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                        masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+                        masm.ucomisd(32, reg1, Aarch64.d30, opr1.kind, CiKind.Float);
+                        break;
+                    case Double:
+                        assert false : "not tested";
+                        tasm.recordDataReferenceInCode(CiConstant.forDouble(c.asDouble()));
+                        masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                        masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+                        masm.fldr(64, Aarch64.d15, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister));
+                        masm.ucomisd(64, reg1, Aarch64.d15, opr1.kind, CiKind.Double);
+                        break;
                     case Long: {
-                        masm.mov64BitConstant(scratchRegister, c.asLong());
-                        masm.sub(64, RISCV64.x31, reg1, scratchRegister);
+                        masm.cmp(64, reg1, c.asLong());
                         break;
                     }
-                    case Float: {
-                        Label continueLabel = new Label();
-                        Label lessThanLabel = new Label();
-                        masm.mov64BitConstant(scratchRegister, Float.floatToRawIntBits(c.asFloat()));
-                        masm.fmvwx(RISCV64.f31, scratchRegister);
-                        masm.mov32BitConstant(scratchRegister, 1);
-                        masm.flts(RISCV64.x31, RISCV64.f31, reg1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, continueLabel);
-                        masm.flts(RISCV64.x31, reg1, RISCV64.f31);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, 0);
-
-                        masm.bind(lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.bind(continueLabel);
-                        break;
-                    }
-                    case Double: {
-                        Label continueLabel = new Label();
-                        Label lessThanLabel = new Label();
-                        masm.mov64BitConstant(scratchRegister, Double.doubleToRawLongBits(c.asDouble()));
-                        masm.fmvdx(RISCV64.f31, scratchRegister);
-                        masm.mov32BitConstant(scratchRegister, 1);
-                        masm.fltd(RISCV64.x31, RISCV64.f31, reg1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, continueLabel);
-
-                        masm.fltd(RISCV64.x31, reg1, RISCV64.f31);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, 0);
-
-                        masm.bind(lessThanLabel);
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.bind(continueLabel);
+                    case Object: {
+                        if (c.isNull()) {
+                            masm.cmp(64, reg1, 0);
+                        } else {
+                            movoop(scratchRegister, c);
+                            masm.cmp(64, reg1, scratchRegister);
+                        }
                         break;
                     }
                     default:
@@ -1232,49 +1130,23 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             assert left.kind.isFloat() || left.kind.isDouble();
             CiRegister lreg = left.asRegister();
             CiRegister rreg = right.asRegister();
+            masm.fcmp(left.kind.isFloat() ? 32 : 64, lreg, rreg);
 
             Label l = new Label();
             if (code == LIROpcode.Ucmpfd2i) {
-                // less than unsigned case
                 masm.mov(dest, -1);
-                if (left.kind.isFloat()) {
-                    masm.flts(scratchRegister1, left.asRegister(), right.asRegister());
-                } else {
-                    masm.fltd(scratchRegister1, left.asRegister(), right.asRegister());
-                }
-                masm.mov32BitConstant(scratchRegister, 1);
-                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister1, scratchRegister, l);
-
-                // equal case
+                masm.branchConditionally(ConditionFlag.VS, l);
+                masm.branchConditionally(ConditionFlag.LO, l);
                 masm.mov(dest, 0);
-                if (left.kind.isFloat()) {
-                    masm.fles(scratchRegister1, left.asRegister(), right.asRegister());
-                } else {
-                    masm.fled(scratchRegister1, left.asRegister(), right.asRegister());
-                }
-                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister1, scratchRegister, l);
-                //higher case
-                masm.mov(dest, 1);
+                masm.branchConditionally(ConditionFlag.EQ, l);
+                masm.add(64, dest, dest, (long) 1);
             } else { // unordered is greater
-                // higher than case
                 masm.mov(dest, 1);
-                if (left.kind.isFloat()) {
-                    masm.flts(scratchRegister1, right.asRegister(), left.asRegister());
-                } else {
-                    masm.fltd(scratchRegister1, right.asRegister(), left.asRegister());
-                }
-                masm.mov32BitConstant(scratchRegister, 1);
-                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister1, scratchRegister, l);
-
-                // equal case
+                masm.branchConditionally(ConditionFlag.VS, l);
+                masm.branchConditionally(ConditionFlag.HI, l);
                 masm.mov(dest, 0);
-                if (left.kind.isFloat()) {
-                    masm.fles(scratchRegister1, right.asRegister(), left.asRegister());
-                } else {
-                    masm.fled(scratchRegister1, right.asRegister(), left.asRegister());
-                }
-                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister1, scratchRegister, l);
-                masm.subi(dest, dest, 1);
+                masm.branchConditionally(ConditionFlag.EQ, l);
+                masm.sub(64, dest, dest, (long) 1);
             }
             masm.bind(l);
 
@@ -1283,8 +1155,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             Label high = new Label();
             Label done = new Label();
             Label isEqual = new Label();
-            masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, left.asRegister(), right.asRegister(), isEqual);
-            masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.GT, left.asRegister(), right.asRegister(), high);
+            masm.cmp(64, left.asRegister(), right.asRegister());
+            masm.branchConditionally(ConditionFlag.EQ, isEqual);
+            masm.branchConditionally(ConditionFlag.GT, high);
             masm.mov(dest, -1);
             masm.b(done);
             masm.bind(high);
@@ -1298,7 +1171,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitDirectCallAlignment() {
-        masm.alignForPatchableDirectCall(masm.codeBuffer.position());
+        masm.alignForPatchableDirectCall();
     }
 
     @Override
@@ -1350,44 +1223,23 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitShiftOp(LIROpcode code, CiValue left, CiValue count, CiValue dest, CiValue tmp) {
-        assert count.asRegister() == SHIFTCount : "count must be in s11/x27";
+        assert count.asRegister() == SHIFTCount : "count must be in r17";
         assert left == dest : "left and dest must be equal";
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
-        assert count.asRegister() != RISCV64.x28 : "count register must not be scratch";
+        assert count.asRegister() != Aarch64.r16 : "count register must not be scratch";
         CiRegister register = left.asRegister();
-        assert register != SHIFTCount : "left cannot be s11/x27";
-        if (left.kind.isInt()) {
-            masm.mov64BitConstant(scratchRegister, 0xFFFFFFFFL);
-        } else {
-            masm.mov64BitConstant(scratchRegister, 0xFFFFFFFFFFFFFFFFL);
-        }
+        assert register != SHIFTCount : "left cannot be r17";
+        int size = left.kind.isInt() ? 32 : 64;
         switch (code) {
-            case Shl: {
-                masm.and(scratchRegister1, count.asRegister(), scratchRegister);
-                if (left.kind.isInt()) {
-                    masm.sllw(register, register, scratchRegister1);
-                } else {
-                    masm.sll(register, register, scratchRegister1);
-                }
-            }
+            case Shl:
+                masm.shl(size, register, register, count.asRegister());
                 break;
-            case Shr: {
-                if (left.kind.isInt()) {
-                    masm.sraw(register, register, count.asRegister());
-                } else {
-                    masm.sra(register, register, count.asRegister());
-                }
-            }
+            case Shr:
+                masm.ashr(size, register, register, count.asRegister());
                 break;
-            case Ushr: {
-                masm.and(scratchRegister1, count.asRegister(), scratchRegister);
-                if (left.kind.isInt()) {
-                    masm.srlw(register, register, scratchRegister1);
-                } else {
-                    masm.srl(register, register, scratchRegister1);
-                }
-            }
+            case Ushr:
+                masm.lshr(size, register, register, count.asRegister());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -1399,31 +1251,17 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         assert left == dest : "left and dest must be equal";
         assert left.isRegister();
         CiRegister register = left.asRegister();
+        int size = left.kind.isInt() ? 32 : 64;
         switch (code) {
-            case Shl: {
-                if (left.kind.isInt()) {
-                    masm.slliw(register, register, count);
-                } else {
-                    masm.slli(register, register, count);
-                }
+            case Shl:
+                masm.shl(size, register, register, count);
                 break;
-            }
-            case Shr: {
-                if (left.kind.isInt()) {
-                    masm.sraiw(register, register, count);
-                } else {
-                    masm.srai(register, register, count);
-                }
+            case Shr:
+                masm.ashr(size, register, register, count);
                 break;
-            }
-            case Ushr: {
-                if (left.kind.isInt()) {
-                    masm.srliw(register, register, count);
-                } else {
-                    masm.srli(register, register, count);
-                }
+            case Ushr:
+                masm.lshr(size, register, register, count);
                 break;
-            }
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -1443,23 +1281,24 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         }
         assert value != result;
         // if zero return -1
-        masm.xori(result, RISCV64.zero, -1); // result = ~RISCV64.zero
+        masm.not(64, result, Aarch64.zr);
         Label end = new Label();
-        masm.cbz(src.asRegister(), end);
+        masm.cbz(64, src.asRegister(), end);
         // else find the bit
         if (most) {
             masm.clz(64, result, value);
             masm.mov64BitConstant(scratchRegister, 63);
             masm.sub(64, result, scratchRegister, result);
         } else {
-            masm.ctz(64, result, value);
+            masm.rbit(64, scratchRegister, value);
+            masm.clz(64, result, scratchRegister);
         }
         masm.bind(end);
     }
 
     @Override
     protected void emitAlignment() {
-        masm.align(16);
+        masm.align(8);
     }
 
     @Override
@@ -1500,13 +1339,12 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
-        assert false : "emitVolatileMove RSICV64LIRAssembler";
+        assert false : "emitVolatileMove Aarch64IRAssembler";
 
         if (src.kind.isDouble()) {
             assert dest.isAddress() || dest.isRegister() || dest.isStackSlot();
         } else {
             assert dest.kind.isDouble();
-            System.out.println("\"VOLATILE MOVE\" = " + "VOLATILE MOVE");
             if (src.isStackSlot()) {
                 masm.load(dest.asRegister(), frameMap.toStackAddress((CiStackSlot) src), CiKind.Double);
             } else {
@@ -1655,14 +1493,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     CiValue result = operands[inst.result.index];
                     CiRegister dst = result.asRegister();
                     int beforeLea = masm.codeBuffer.position();
-                    masm.auipc(dst, 0);
-                    masm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+                    masm.adr(dst, 0);
                     int afterLea = masm.codeBuffer.position();
-                    masm.codeBuffer.setPosition(beforeLea);
-                    masm.auipc(dst, 0);
-                    masm.mov64BitConstant(scratchRegister, beforeLea - afterLea);
-                    masm.add(dst, dst, scratchRegister);
-                    masm.codeBuffer.setPosition(afterLea);
+                    masm.adr(dst, beforeLea - afterLea, beforeLea);
                     break;
                 }
                 case LoadEffectiveAddress: {
@@ -1764,7 +1597,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     masm.crashme();
                     CiValue value = operands[inst.x().index];
                     if (value.kind == CiKind.Long) {
-                        masm.sub(64, value.asRegister(), value.asRegister(), value.asRegister());
+                        masm.decq(value.asRegister());
                     } else {
                         assert value.kind == CiKind.Int;
                     }
@@ -1772,37 +1605,37 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 }
                 case Jeq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    emitXirCompare(inst, Condition.EQ, RISCV64MacroAssembler.ConditionFlag.EQ, operands, label);
+                    emitXirCompare(inst, Condition.EQ, ConditionFlag.EQ, operands, label);
                     break;
                 }
                 case Jneq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    emitXirCompare(inst, Condition.NE, RISCV64MacroAssembler.ConditionFlag.NE, operands, label);
+                    emitXirCompare(inst, Condition.NE, ConditionFlag.NE, operands, label);
                     break;
                 }
                 case Jgt: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    emitXirCompare(inst, Condition.GT, RISCV64MacroAssembler.ConditionFlag.GT, operands, label);
+                    emitXirCompare(inst, Condition.GT, ConditionFlag.GT, operands, label);
                     break;
                 }
                 case Jgteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    emitXirCompare(inst, Condition.GE, RISCV64MacroAssembler.ConditionFlag.GE, operands, label);
+                    emitXirCompare(inst, Condition.GE, ConditionFlag.GE, operands, label);
                     break;
                 }
                 case Jugteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    emitXirCompare(inst, Condition.AE, RISCV64MacroAssembler.ConditionFlag.GEU, operands, label);
+                    emitXirCompare(inst, Condition.AE, ConditionFlag.HS, operands, label);
                     break;
                 }
                 case Jlt: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    emitXirCompare(inst, Condition.LT, RISCV64MacroAssembler.ConditionFlag.LT, operands, label);
+                    emitXirCompare(inst, Condition.LT, ConditionFlag.LT, operands, label);
                     break;
                 }
                 case Jlteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    emitXirCompare(inst, Condition.LE, RISCV64MacroAssembler.ConditionFlag.LE, operands, label);
+                    emitXirCompare(inst, Condition.LE, ConditionFlag.LE, operands, label);
                     break;
                 }
                 case Jbset: {
@@ -1812,8 +1645,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     assert offset.isConstant() && bit.isConstant();
                     assert false;
                     masm.crashme();
-                    masm.mov32BitConstant(scratchRegister, 0);
-                    masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.GE, RISCV64.x31, scratchRegister, label);
+                    masm.branchConditionally(ConditionFlag.GE, label);
                     break;
                 }
                 case Bind: {
@@ -1856,17 +1688,15 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.nop(4);
                     }
 
-                    masm.push(64, RISCV64.ra);
+                    masm.push(Aarch64.linkRegister);
 
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         masm.mov(scratchRegister, 0xC1C1C1C1_C1C1C1C1L);
                         for (int i = 0; i < frameSize / (2 * Word.size()); ++i) {
-                            masm.str(Word.width(), scratchRegister, RISCV64Address.createPreIndexedImmediateAddress(RISCV64.sp, -Word.size()));
-                            masm.str(Word.width(), scratchRegister, RISCV64Address.createPreIndexedImmediateAddress(RISCV64.sp, -Word.size()));
+                            masm.stp(Word.width(), scratchRegister, scratchRegister, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -2 * Word.size()));
                         }
                     } else {
-                        masm.mov64BitConstant(scratchRegister, frameSize);
-                        masm.sub(64, RISCV64.sp, RISCV64.sp, scratchRegister);
+                        masm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
                     }
 
                     CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
@@ -1877,7 +1707,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     }
 
                     if (C1XOptions.DebugMethods) {
-                        masm.mov64BitConstant(masm.scratchRegister, methodID);
+                        masm.mov32BitConstant(masm.scratchRegister, methodID);
                         debugMethodWriter.appendDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
                     }
                     break;
@@ -1892,29 +1722,28 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csl, frameToCSA);
                     }
-                    masm.mov64BitConstant(scratchRegister, frameSize);
-                    masm.add(64, RISCV64.sp, RISCV64.sp, scratchRegister);
+                    masm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
                     break;
                 }
                 case Push: {
                     CiRegisterValue value = assureInRegister(operands[inst.x().index]);
-                    if (value.asRegister().isCpu()) {
-                        masm.push(64, value.asRegister());
+                    if (value.asRegister().number <= Aarch64.zr.number) {
+                        masm.push(value.asRegister());
                     } else {
-                        masm.fpush(64, value.asRegister());
+                        masm.fpush(value.asRegister());
                     }
                     break;
                 }
                 case Pop: {
                     CiValue result = operands[inst.result.index];
                     if (result.isRegister()) {
-                        if (result.asRegister().isCpu()) {
-                            masm.pop(64, result.asRegister());
+                        if (result.asRegister().number <= Aarch64.zr.number) {
+                            masm.pop(result.asRegister());
                         } else {
-                            masm.fpop(64, result.asRegister());
+                            masm.fpop(result.asRegister());
                         }
                     } else {
-                        masm.pop(64, scratchRegister);
+                        masm.pop(scratchRegister);
                         moveOp(scratchRegister.asValue(), result, result.kind, null, true);
                     }
                     break;
@@ -1966,12 +1795,11 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         return (CiRegisterValue) pointer;
     }
 
-    private void emitXirCompare(XirInstruction inst, Condition condition, RISCV64MacroAssembler.ConditionFlag cflag, CiValue[] ops, Label label) {
+    private void emitXirCompare(XirInstruction inst, Condition condition, ConditionFlag cflag, CiValue[] ops, Label label) {
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
-        masm.mov32BitConstant(scratchRegister, 0);
-        masm.branchConditionally(cflag, RISCV64.x31, scratchRegister, new Label(label.getPatchPositions(), label.positionCopy()));
+        masm.branchConditionally(cflag, new Label(label.getPatchPositions(), label.positionCopy()));
         masm.nop(3);
     }
 
@@ -2016,8 +1844,10 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 CiStackSlot inArg = stub.inArgs[i];
                 CiStackSlot outArg = inArg.asOutArg();
                 CiAddress dst = compilation.frameMap().toStackAddress(outArg);
-                masm.mov32BitConstant(scratchRegister, 0);
-                masm.store(scratchRegister, dst, CiKind.Long);
+                if (true) {
+                    throw Util.unimplemented();
+                }
+                //                masm.movptr(dst, 0);
             }
         }
     }
@@ -2053,11 +1883,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 assert false : "Object inlining not supported";
             } else {
                 tasm.recordDataReferenceInCode(obj);
-                masm.mov32BitConstant(scratchRegister, 0); // this gets patched by RISCV64InstructionDecoder.patchRelativeInstruction
-                masm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
-                masm.auipc(scratchRegister1, 0);
-                masm.add(scratchRegister, scratchRegister1, scratchRegister);
-                masm.load(dst, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister), obj.kind);
+                masm.adr(scratchRegister, 0); // this gets patched by Aarch64InstructionDecoder.patchRelativeInstruction
+                masm.nop(Aarch64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+                masm.load(dst, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), obj.kind);
             }
         }
     }
@@ -2074,8 +1902,12 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
     }
 
     public void directJmp(Object target) {
+        if (true) {
+            throw Util.unimplemented();
+        }
+
         int before = masm.codeBuffer.position();
-        masm.b(0);
+//        masm.jmp(0, true);
         int after = masm.codeBuffer.position();
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();
@@ -2097,7 +1929,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
     protected void stop(String msg) {
         if (C1XOptions.GenAssertionCode) {
             directCall(CiRuntimeCall.Debug, null);
-            masm.ebreak();
+            masm.hlt();
         }
     }
 

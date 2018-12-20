@@ -46,101 +46,40 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         super(target, registerConfig);
     }
 
-    /**
-     * Checks if the given branch instruction is a branch immediate or branch register.
-     *
-     * @param instruction the machine code of the original instruction
-     * @return the instruction type
-     */
-    public static boolean isBimmInstruction(int instruction) {
-        return (instruction & NumUtil.getNbitNumberInt(7)) == B_IMM_OPCODE;
-    }
-
-    /**
-     * Return the displacement of the target of a branch immediate instruction.
-     * @param instruction
-     * @return
-     */
-    public static int bImmExtractDisplacement(int instruction) {
-        assert (instruction & NumUtil.getNbitNumberInt(7)) == B_IMM_OPCODE :
-                "Not a branch immediat instruction: 0x" + Integer.toHexString(instruction);
-        int displacement = (((instruction >>> 21) & 0x3FF) << 1) | (((instruction >>> 20) & 1) << 11) |
-                            (((instruction >>> 12) & 0xFF) << 12) | (((instruction >>> 31) & 1) << 20);
-
-        // check the sign bit
-        if (((1 << 20) & displacement) == 0) {
-            return displacement >>> 1;
-        }
-        // negative number -- sign extend.
-        return (displacement >>> 1) | (0xFFF << 20);
-    }
-
-    /**
-     * Patch the address part of a branch immediate instruction. Returns the
-     * patched instruction.
-     * @param oldInstruction -- the instruction to be patched
-     * @param displacement -- the targets displacement
-     * @return
-     */
-    public static int bImmPatch(int oldInstruction, int displacement) {
-        assert (oldInstruction & NumUtil.getNbitNumberInt(7)) == B_IMM_OPCODE :
-                "Not a branch immediat instruction: 0x" + Integer.toHexString(oldInstruction);
-        assert NumUtil.isSignedNbit(19, displacement)
-                : "Immediate has to be 19 bit signed number: " + Integer.toHexString(displacement);
-
-        int instruction = oldInstruction & ~B_IMM_ADDRESS_MASK;
-        instruction |= ((displacement >> 20) & 1) << 31; // This places bit 20 of imm32 in bit 31 of instruction
-        instruction |= ((displacement >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm32 in bits 30:21 of instruction
-        instruction |= ((displacement >> 11) & 1) << 20; // This places bit 11 of imm32 in bit20 of instruction
-        instruction |= ((displacement >> 12) & 0xFF) << 12; // This places bits 19:12 of imm32 in bits 19:12 of instruction
-
-        return instruction;
-    }
-
     @Override
     protected void patchJumpTarget(int branch, int target) {
         int branchOffset = target - branch;
         PatchLabelKind type = PatchLabelKind.fromEncoding(codeBuffer.getByte(branch));
         switch (type) {
-            case BRANCH_CONDITIONALLY: {
-                ConditionFlag cf = ConditionFlag.fromEncoding(codeBuffer.getByte(branch + 1));
-                CiRegister rs1 = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 2) & 0b11111];
-                CiRegister rs2 = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 3) & 0b11111];
-                emitConditionalBranch(cf, rs1, rs2, branchOffset, branch);
-                break;
-            }
+            case BRANCH_CONDITIONALLY:
+                throw new UnsupportedOperationException("Unimplemented");
+//                assert codeBuffer.getShort(branch + 2) == 0;
+//                ConditionFlag cf = ConditionFlag.fromEncoding(codeBuffer.getByte(branch + 1));
+//                b(cf, branchOffset, branch);
+//                break;
             case TABLE_SWITCH:
-            case BRANCH_UNCONDITIONALLY: {
+            case BRANCH_UNCONDITIONALLY:
                 assert codeBuffer.getByte(branch + 1) == 0;
                 assert codeBuffer.getShort(branch + 2) == 0;
                 jal(RISCV64.zero, branchOffset, branch);
                 break;
-            }
             case BRANCH_NONZERO:
             case BRANCH_ZERO:
-                switch (type) {
-                    case BRANCH_NONZERO: {
-                        CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
-                        emitConditionalBranch(ConditionFlag.NE, cmp, scratchRegister1, branchOffset, branch);
-                        break;
-                    }
-                    case BRANCH_ZERO: {
-                        assert codeBuffer.getShort(branch + 2) == 0;
-                        CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
-                        emitConditionalBranch(ConditionFlag.EQ, cmp, scratchRegister1, branchOffset, branch);
-                        break;
-                    }
-                }
-                break;
+                throw new UnsupportedOperationException("Unimplemented");
+//                int size = codeBuffer.getByte(branch + 1);
+//                int regEncoding = codeBuffer.getShort(branch + 2);
+//                CiRegister reg = Aarch64.cpuRegisters[regEncoding];
+//                switch (type) {
+//                    case BRANCH_NONZERO:
+//                        cbnz(size, reg, branchOffset, branch);
+//                        break;
+//                    case BRANCH_ZERO:
+//                        cbz(size, reg, branchOffset, branch);
+//                        break;
+//                }
+//                break;
             default:
                 throw new IllegalArgumentException();
-        }
-    }
-
-    public void align(int modulus) {
-        if (codeBuffer.position() % modulus != 0) {
-            assert modulus % 4 == 0;
-            nop((modulus - (codeBuffer.position() % modulus)) / 4);
         }
     }
 
@@ -274,7 +213,23 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void movByte(CiRegister rd, int imm) {
+        int val = imm & 0xFF;
+        if (val >>> 7 == 1) {
+            val = ~0xFF | val;
+        }
 
+        mov64BitConstant(rd, imm);
+    }
+
+    public void movShort(CiRegister rd, int imm) {
+        int val = imm & 0xFFFF;
+        if (val >>> 15 == 1) {
+            val = ~0xFFFF | val;
+        }
+
+        mov64BitConstant(rd, imm);
+    }
 
     public void nop() {
         addi(RISCV64.x0, RISCV64.x0, 0);
@@ -543,11 +498,13 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void b(int offset) {
-        jal(RISCV64.zero, offset);
-    }
-
-    public void b(int offset, int pos) {
-        jal(RISCV64.zero, offset, pos);
+//        The  unconditional  jump  instructions  all  use  PC-relative  addressing  to  help  support  position-
+//        independent  code.   The  JALR  instruction  was  defined  to  enable  a  two-instruction  sequence  to
+//        jump anywhere in a 32-bit absolute address range.  A LUI instruction can first load rs1 with the
+//        upper 20 bits of a target address, then JALR can add in the lower bits.  Similarly, AUIPC then
+//        JALR can jump anywhere in a 32-bit pc-relative address range.
+        auipc(scratchRegister, offset);
+        jalr(RISCV64.zero, scratchRegister, offset);
     }
 
     /**
@@ -818,7 +775,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     ld(r, frameRegister, displacement);
                 } else {
                     mov(scratchRegister, displacement);
-                    add(scratchRegister, frameRegister, scratchRegister);
+                    add (scratchRegister, frameRegister, scratchRegister);
                     ld(r, scratchRegister, 0);
                 }
             } else if (r.isFpu()) {
