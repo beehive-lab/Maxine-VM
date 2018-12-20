@@ -22,9 +22,14 @@ package com.sun.max.vm.profilers.allocation;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.heap.Heap;
 
+/**
+ * A class that implements Heap.GCCallback for Allocation Profiler.
+ * This mechanism enables the profiler callbacks BEFORE and AFTER a gc.
+ * As every GCCallback implementation, it needs to be registered during BOOTSTRAPPING phase.
+ */
 public class ProfilerGCCallback implements Heap.GCCallback {
 
-    static {
+    public static void init() {
         Heap.registerGCCallback(new ProfilerGCCallback());
     }
 
