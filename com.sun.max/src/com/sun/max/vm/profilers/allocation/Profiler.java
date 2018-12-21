@@ -34,11 +34,6 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-
 import static com.sun.max.vm.MaxineVM.isHosted;
 
 public class Profiler {
@@ -64,10 +59,6 @@ public class Profiler {
 
     public static ProfiledObjects objects;
     public static HeapConfiguration heapConfig;
-
-    public static String fileName = "profilerout.txt";
-    public static FileWriter fileWriter;
-    public static PrintWriter printWriter;
 
     private static boolean AllocationProfilerPrintHistogram;
     private static boolean AllocationProfilerAll;
@@ -95,13 +86,6 @@ public class Profiler {
         Log.println(heapConfig.vSpacesEndAddr[1]);
 
         objects = new ProfiledObjects();
-
-        try {
-            fileWriter = new FileWriter(fileName);
-            printWriter = new PrintWriter(fileWriter);
-        } catch (IOException ioe) {
-            Log.print("exception at initialization");
-        }
 
         profilingCycle = 0;
     }
@@ -169,16 +153,9 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
-    public int cycle = 0;
-
     public void printCycle() {
         final boolean lockDisabledSafepoints = lock();
-        if (AllocationProfilerDump) {
-            objects.print(printWriter, cycle);
-        } else {
-            objects.print(null, cycle);
-        }
-        cycle++;
+        objects.print(profilingCycle);
         unlock(lockDisabledSafepoints);
     }
 
@@ -256,7 +233,7 @@ public class Profiler {
     }
 
     public void terminate() {
-        printWriter.close();
+        
     }
 
     private static VmThread lockOwner;
