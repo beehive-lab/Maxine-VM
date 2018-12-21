@@ -42,7 +42,7 @@ public class ProfilerGCCallback implements Heap.GCCallback {
         } else if (gcCallbackPhase == Heap.GCCallbackPhase.AFTER) {
             if (MaxineVM.isRunning() && MaxineVM.isAllocationProfilerInitialized) {
                 //any POST gc action must be placed here
-                //MaxineVM.allocationProfiler.postGCActions();
+                MaxineVM.allocationProfiler.postGCActions();
             }
         }
     }
