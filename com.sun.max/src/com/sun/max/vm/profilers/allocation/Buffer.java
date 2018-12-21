@@ -25,7 +25,7 @@ import com.sun.max.vm.Log;
 
 import java.io.PrintWriter;
 
-public class ProfiledObjects {
+public class Buffer {
 
     /**
      * Each profiling cycle is predefined to track 10000 objects.
@@ -48,7 +48,7 @@ public class ProfiledObjects {
 
     public int currentIndex;
 
-    public ProfiledObjects() {
+    public Buffer() {
         index = new int[SIZE];
         type = new String[SIZE];
         size = new int[SIZE];
