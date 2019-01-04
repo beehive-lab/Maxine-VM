@@ -57,7 +57,7 @@ public class Profiler {
 
     public static int currentIndex = 0;
 
-    public static Buffer objects;
+    public static ProfilerBuffer objects;
     public static HeapConfiguration heapConfig;
 
     private static boolean AllocationProfilerPrintHistogram;
@@ -85,7 +85,7 @@ public class Profiler {
         Log.print("vs1 e =");
         Log.println(heapConfig.vSpacesEndAddr[1]);
 
-        objects = new Buffer();
+        objects = new ProfilerBuffer();
 
         profilingCycle = 0;
     }
