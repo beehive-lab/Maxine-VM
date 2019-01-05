@@ -170,9 +170,17 @@ final class JDK_java_lang_Class {
     @SUBSTITUTE
     ClassLoader getClassLoader0() {
         final ClassLoader classLoader = thisClassActor().classLoader;
+        /**
+         * IMPORTANT: For the time being the following security and system sustainability check has been disabled.
+         * Disabling that check means that a Maxine internal class is able to be called by an application class with various consequences.
+         * This is just a temporary hack in the context of figuring out why Maxine is unable to load a class from a library jar during run-time.
+         * It will be reverted back as soon as possible.
+         */
+        /*
         if (classLoader == BootClassLoader.BOOT_CLASS_LOADER) {
             return null;
         }
+        */
         return classLoader;
     }
 
