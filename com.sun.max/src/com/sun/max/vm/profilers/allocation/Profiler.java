@@ -34,6 +34,8 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
 
+import uk.ac.manchester.jnumautils.JNumaUtils;
+
 import static com.sun.max.vm.MaxineVM.isHosted;
 
 public class Profiler {
@@ -136,6 +138,7 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
+        int node = JNumaUtils.findNode(address);
         objects.record(currentIndex, type, size, address);
         currentIndex++;
         unlock(lockDisabledSafepoints);
