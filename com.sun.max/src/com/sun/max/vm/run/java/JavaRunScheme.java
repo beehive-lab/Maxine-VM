@@ -50,6 +50,7 @@ import com.sun.max.vm.type.SignatureDescriptor;
 import com.sun.max.vm.type.VMClassLoader;
 import sun.misc.Launcher;
 import sun.misc.Signal;
+import uk.ac.manchester.jnumautils.JNumaUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -252,8 +253,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     final String heapProfOptionPrefix = hprofOption.toString();
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
-                // The same for the Dynamic Profiler
+                // The same for the Allocation Profiler
                 if (CompilationBroker.AllocationProfilerEntryPoint != null || Profiler.profileAll()) {
+                    // Initialize jnumautils
+                    JNumaUtils.findNode(0);
+                    // Initialize Allocation Profiler
                     MaxineVM.allocationProfiler = new Profiler();
                     MaxineVM.isAllocationProfilerInitialized = true;
                 }
