@@ -102,7 +102,7 @@ suite = {
         },
 
         "JNUMAUTILS": {
-            "sha1": "1a9259933e4ca74a116a44b69742a27ef052b894",
+            "sha1": "79b2c12dedd0cd3a3db0420fd79eab1b2cbc0e7d",
             "path": "lib/jnumautils-0.1-SNAPSHOT.jar",
         },
 
