@@ -138,8 +138,8 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        int node = JNumaUtils.findNode(address);
-        objects.record(currentIndex, type, size, address);
+        int numaNode = JNumaUtils.findNode(address);
+        objects.record(currentIndex, type, size, address, numaNode);
         currentIndex++;
         unlock(lockDisabledSafepoints);
     }

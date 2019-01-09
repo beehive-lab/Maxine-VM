@@ -45,6 +45,7 @@ public class ProfilerBuffer {
     public String[] type;
     public int[] size;
     public long[] address;
+    public int[] numaNode;
 
     public int currentIndex;
 
@@ -53,12 +54,14 @@ public class ProfilerBuffer {
         type = new String[SIZE];
         size = new int[SIZE];
         address = new long[SIZE];
+        numaNode = new int[SIZE];
 
         for (int i = 0; i < SIZE; i++) {
             index[i] = 0;
             type[i] = "null";
             size[i] = 0;
             address[i] = 0;
+            numaNode[i] = -1;
         }
 
         currentIndex = 0;
@@ -66,7 +69,7 @@ public class ProfilerBuffer {
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int index, String type, int size, long address) {
+    public void record(int index, String type, int size, long address, int numaNode) {
         /*if( !(currentIndex < SIZE) ) {
             int newSIZE = SIZE+1000;
             int[] newIndex = new int[newSIZE];
@@ -97,6 +100,7 @@ public class ProfilerBuffer {
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
         this.address[currentIndex] = address;
+        this.numaNode[currentIndex] = numaNode;
         currentIndex++;
     }
 
@@ -111,7 +115,9 @@ public class ProfilerBuffer {
             Log.print(" ");
             Log.print(size[i]);
             Log.print(" ");
-            Log.println(address[i]);
+            Log.print(address[i]);
+            Log.print(" ");
+            Log.println(numaNode[i]);
         }
         Log.print("Buffer usage = ");
         Log.print(currentIndex);
