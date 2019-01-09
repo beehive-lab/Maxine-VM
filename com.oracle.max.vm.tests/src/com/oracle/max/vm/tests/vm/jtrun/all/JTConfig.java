@@ -754,6 +754,7 @@ public class JTConfig {
         jtt.reflect.Method_getParameterTypes01.class,
         jtt.reflect.Method_getReturnType01.class,
         jtt.reflect.Reflection_getCallerClass01.class,
+        jtt.reflect.Reflection_getCallerClass02.class,
         jtt.threads.Monitor_contended01.class,
         jtt.threads.Monitor_notowner01.class,
         jtt.threads.Monitorenter01.class,
