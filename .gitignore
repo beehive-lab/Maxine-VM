@@ -64,10 +64,11 @@ codebuffer.c
 *_output
 
 # Libraries
-/lib
+/lib/*
 !/lib/asm-6.0-maxine.jar
 !/lib/asm-util-6.0-maxine.jar
 !/lib/okra-1.9.jar
+!/lib/jnumautils-0.1-SNAPSHOT.jar
 
 .metadata/*
 .recommenders/*
