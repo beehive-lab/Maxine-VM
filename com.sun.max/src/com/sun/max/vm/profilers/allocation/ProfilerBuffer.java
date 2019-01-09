@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,8 +22,6 @@ package com.sun.max.vm.profilers.allocation;
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.vm.Log;
-
-import java.io.PrintWriter;
 
 public class ProfilerBuffer {
 
@@ -70,32 +68,6 @@ public class ProfilerBuffer {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int index, String type, int size, long address, int numaNode) {
-        /*if( !(currentIndex < SIZE) ) {
-            int newSIZE = SIZE+1000;
-            int[] newIndex = new int[newSIZE];
-            String[] newType = new String[newSIZE];
-            int[] newSize = new int[newSIZE];
-            long[] newAddress = new long[newSIZE];
-
-            for (int i = 0; i < SIZE; i++) {
-                newIndex[i] = this.index[i];
-                newType[i] = this.type[i];
-                newSize[i] = this.size[i];
-                newAddress[i] = this.address[i];
-            }
-            for (int i = SIZE; i < newSIZE; i++) {
-                newIndex[i] = 0;
-                newType[i] = "null";
-                newSize[i] = 0;
-                newAddress[i] = 0;
-            }
-            this.index = newIndex;
-            this.type = newType;
-            this.size = newSize;
-            this.address = newAddress;
-            SIZE = newSIZE;
-
-        }*/
         this.index[currentIndex] = index;
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
