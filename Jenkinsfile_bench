@@ -1,0 +1,113 @@
+pipeline {
+    agent any
+    options {
+        timestamps()
+        timeout(time: 5, unit: 'HOURS')
+    }
+    tools {
+        jdk 'openJDK8'
+    }
+    environment {
+        //Change the first three variables
+        USER_HOME="/localhome/regression"
+        DJANGO="$USER_HOME/benchvisualizer/BenchVisualizer"
+        DACAPO="$USER_HOME"
+        SPECJVM2008="$USER_HOME/SPECjvm2008"
+
+        MAXINE_HOME="$WORKSPACE/maxine"
+        MX_HOME="$WORKSPACE/mx"
+        MX="$MX_HOME/mx"
+        LD_LIBRARY_PATH="$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/"
+    }
+
+    stages {
+        stage('clone') {
+            steps {
+                // Clean up workspace
+                step([$class: 'WsCleanup'])
+                dir(env.MAXINE_HOME) {
+                    checkout scm
+                }
+                dir(env.MX_HOME) {
+                    checkout([$class: 'GitSCM', branches: [[name: '5.190.3']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/beehive-lab/mx.git']]])
+                }
+                // Trigger fetch of dependencies
+                dir(env.MAXINE_HOME) {
+                    sh '$MX help > /dev/null'
+                }
+            }
+        }
+        stage('build') {
+            steps {
+                dir(env.MAXINE_HOME) {
+                        sh '$MX build'
+                    }
+            }
+        }
+        stage('image') {
+            steps {
+                dir(env.MAXINE_HOME) {
+                        sh '$MX image'
+                    }
+            }
+        }
+        stage('setup benchmarks') {
+            steps {
+                dir(env.MAXINE_HOME) {
+                    sh 'cp $DACAPO/dacapo-9.12-MR1-bach.jar .'
+                    sh 'cp -r $SPECJVM2008 .'
+                }
+            }
+        }
+        stage('DACAPO benchmarks') {
+            steps {
+                dir(env.MAXINE_HOME) {
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 avrora || true'
+                    // sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 batik || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 eclipse || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 fop || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 h2 || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 jython || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 luindex || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 lusearch || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 pmd || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 sunflow || true'
+                    // sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 tomcat || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 tradebeans || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 tradesoap || true'
+                    sh '$MX vm -jar dacapo-9.12-MR1-bach.jar -C --variance 1 xalan || true'
+                }
+            }
+        }
+        stage('SPECJVM benchmarks') {
+            steps {
+                dir(env.MAXINE_HOME) {
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 startup || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 compiler || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 compress || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 crypto || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 derby || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 mpegaudio || true'
+                    sh 'timeout -s SIGINT 90m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 scimark || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 serial || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 sunflow || true'
+                    sh 'timeout -s SIGINT 30m $MX vm -cwd SPECjvm2008 -jar SPECjvm2008.jar -ikv -bt 4 xml || true'
+                }
+            }
+        }
+        stage('db_update') {
+            steps {
+                sh 'python $DJANGO/manage.py addBenchToJob $JOB_NAME --get_jenkins_latest'
+            }
+        }
+    }
+
+    post {
+        success {
+            slackSend color: '#00CC00', message: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL}) check the results at http://apt-supermicro1.cs.man.ac.uk:8090/visualizer/MaxineBenchmarks/"
+        }
+        failure {
+            slackSend color: '#CC0000', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})"
+        }
+    }
+}
