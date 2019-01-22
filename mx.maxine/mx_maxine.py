@@ -441,7 +441,7 @@ def jnigen(args):
 
     The exit code is non-zero if a Java source file was modified."""
 
-    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'com.sun.max.vm.jni.JniFunctionsGenerator'])
+    return mx.run_java(['-cp', mx.classpath('com.sun.max'), 'com.sun.max.vm.jni.JniFunctionsGenerator'])
 
 
 def optionsgen(args):
