@@ -340,7 +340,7 @@ public class JniFunctionsGenerator {
     }
 
     public static boolean generate(boolean checkOnly, Class source, Class target) throws Exception {
-        return generate(checkOnly, "com.oracle.max.vm", source, target, new JniCustomizer());
+        return generate(checkOnly, "com.sun.max", source, target, new JniCustomizer());
     }
 
     /**
@@ -507,7 +507,7 @@ public class JniFunctionsGenerator {
             System.out.println("Source for " + JmmFunctions.class + " was updated");
             updated = true;
         }
-        if (generate(false, "com.oracle.max.vm", VMFunctionsSource.class, VMFunctions.class, new VMCustomizer(false))) {
+        if (generate(false, "com.sun.max", VMFunctionsSource.class, VMFunctions.class, new VMCustomizer(false))) {
             System.out.println("Source for " + VMFunctions.class + " was updated");
             updated = true;
         }
