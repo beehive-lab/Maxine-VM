@@ -255,8 +255,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 }
                 // The same for the Allocation Profiler
                 if (CompilationBroker.AllocationProfilerEntryPoint != null || Profiler.profileAll()) {
-                    // Initialize jnumautils
-                    JNumaUtils.findNode(0);
                     // Initialize Allocation Profiler
                     MaxineVM.allocationProfiler = new Profiler();
                     MaxineVM.isAllocationProfilerInitialized = true;

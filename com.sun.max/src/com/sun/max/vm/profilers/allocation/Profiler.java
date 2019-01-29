@@ -62,6 +62,8 @@ public class Profiler {
     public static ProfilerBuffer objects;
     public static HeapConfiguration heapConfig;
 
+    public JNumaUtils utilsObject;
+
     private static boolean AllocationProfilerPrintHistogram;
     private static boolean AllocationProfilerAll;
     private static boolean AllocationProfilerDump;
@@ -77,19 +79,16 @@ public class Profiler {
     }
 
     public Profiler() {
-        heapConfig = new HeapConfiguration();
-        Log.print("vs0 s =");
-        Log.println(heapConfig.vSpacesStartAddr[0]);
-        Log.print("vs0 e =");
-        Log.println(heapConfig.vSpacesEndAddr[0]);
-        Log.print("vs1 s =");
-        Log.println(heapConfig.vSpacesStartAddr[1]);
-        Log.print("vs1 e =");
-        Log.println(heapConfig.vSpacesEndAddr[1]);
-
         objects = new ProfilerBuffer();
 
+        // Initialize a JNumaUtils object. We need to allocate it early because it is going to be used inside safepoints.
+        utilsObject = new JNumaUtils();
+
         profilingCycle = 0;
+    }
+
+    public int getProfilingCycle() {
+        return profilingCycle;
     }
 
     public static boolean profileAll() {
@@ -138,8 +137,8 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        int numaNode = JNumaUtils.findNode(address);
-        objects.record(currentIndex, type, size, address, numaNode);
+        //int numaNode = JNumaUtils.findNode(address);
+        objects.record(currentIndex, type, size, address, 0);
         currentIndex++;
         unlock(lockDisabledSafepoints);
     }
@@ -193,6 +192,14 @@ public class Profiler {
         }
         */
         unlock(lockDisabledSafepoints);
+    }
+
+    /**
+     * This method is called by ProfilerGCCallbacks in every pre-gc callback phase.
+     * We create the numa virtual memory map using the createNumaMap native function.
+     */
+    public void preGCActions() {
+        utilsObject.test();
     }
 
     /**
