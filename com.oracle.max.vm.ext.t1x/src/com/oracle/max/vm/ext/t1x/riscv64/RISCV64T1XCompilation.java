@@ -1062,7 +1062,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         decStack(2);
         peekDouble(RISCV64.f1, 0);
         decStack(2);
-        asm.fadd(RISCV64.f0, RISCV64.f0, RISCV64.f1);
+        asm.fadd(64, RISCV64.f0, RISCV64.f0, RISCV64.f1);
         incStack(2);
         pokeDouble(RISCV64.f0, 0);
     }
