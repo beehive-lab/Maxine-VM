@@ -634,7 +634,77 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs2
      */
     public void mul(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MUL, rd, 0, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void mulw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         rtype(MULW, rd, 0, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void div(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MUL, rd, 4, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void divw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MULW, rd, 4, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void divu(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MUL, rd, 5, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void divuw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MULW, rd, 5, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void rem(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MUL, rd, 6, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void remw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32M, rd, 6, rs1, rs2, 1);
     }
 
     /**
@@ -850,18 +920,34 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     // Floating point instructions double precision
-    public void fadd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+    public void faddd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0000001);
+    }
+
+    public void fsubd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0000101);
+    }
+
+    public void fmuld(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0001001);
+    }
+
+    public void fdivd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0001101);
+    }
+
+    public void fdivdRTZ(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 1, rs1, rs2, 0b0001101);
     }
 
     public void fmvxd(CiRegister rd, CiRegister rs) {
         assert rd.isGeneral() && rs.isFpu();
-        itype(FMV, rd, 0, rs, 0b111000100000);
+        itype(RV32D, rd, 0, rs, 0b111000100000);
     }
 
     public void fmvdx(CiRegister rd, CiRegister rs) {
         assert rd.isFpu() && rs.isGeneral();
-        itype(FMV, rd, 0, rs, 0b111100100000);
+        itype(RV32D, rd, 0, rs, 0b111100100000);
     }
 
     public void fld(CiRegister dst, CiRegister base, int offset) {
@@ -872,8 +958,71 @@ public class RISCV64Assembler extends AbstractAssembler {
         stype(STORE_FP, 3, dst, base, offset);
     }
 
+    public void fcvtsd(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b010000000001);
+    }
+
+    public void fcvtds(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b010000100000);
+    }
+
+    public void fcvtdw(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b110100100000);
+    }
+
+    public void fcvtwd(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rs, 0, rs, 0b110000100000);
+    }
+
+    public void fcvtdl(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b110100100010);
+    }
+
+    public void fcvtld(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b110000100010);
+    }
+
+    public void fsgnjxd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 2, rs1, rs2, 0b0010001);
+    }
+
+    public void fsgnjnd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 1, rs1, rs2, 0b0010001);
+    }
+
+    public void fsqrtd(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b010110100000);
+    }
+
+    public void fltd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 1, rs1, rs2, 0b1010001);
+    }
+
+    public void fled(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b1010001);
+    }
 
     // Floating point instructions single precision
+    public void fadds(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0000000);
+    }
+
+    public void fsubs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0000100);
+    }
+
+    public void fmuls(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0001000);
+    }
+
+    public void fdivs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0001100);
+    }
+
+    public void fdivsRTZ(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 1, rs1, rs2, 0b0001100);
+    }
+
     public void flw(CiRegister dst, CiRegister base, int offset) {
         itype(LOAD_FP, dst, 2, base, offset);
     }
@@ -883,31 +1032,55 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fcvtls(CiRegister rd, CiRegister rs) {
-        itype(FCVTLS, rd, 0, rs, 0b110000000010);
+        itype(RV32F, rd, 0, rs, 0b110000000010);
     }
 
     public void fcvtws(CiRegister rd, CiRegister rs) {
-        itype(FCVTWS, rd, 0, rs, 0b110000000000);
+        itype(RV32F, rd, 0, rs, 0b110000000000);
     }
 
     public void fcvtwus(CiRegister rd, CiRegister rs) {
-        itype(FCVTWS, rd, 0, rs, 0b110000000001);
+        itype(RV32F, rd, 0, rs, 0b110000000001);
     }
 
     public void fcvtsw(CiRegister rd, CiRegister rs) {
-        itype(FCVTSW, rd, 0, rs, 0b110100000000);
+        itype(RV32F, rd, 0, rs, 0b110100000000);
     }
 
     public void fcvtswu(CiRegister rd, CiRegister rs) {
-        itype(FCVTSW, rd, 0, rs, 0b110100000001);
+        itype(RV32F, rd, 0, rs, 0b110100000001);
     }
 
     public void fmvxw(CiRegister rd, CiRegister rs) {
-        itype(FMV, rd, 0, rs, 0b111000000000);
+        itype(RV32F, rd, 0, rs, 0b111000000000);
     }
 
     public void fmvwx(CiRegister rd, CiRegister rs) {
-        itype(FMV, rd, 0, rs, 0b111100000000);
+        itype(RV32F, rd, 0, rs, 0b111100000000);
+    }
+
+    public void fcvtsl(CiRegister rd, CiRegister rs) {
+        itype(RV32F, rd, 0, rs, 0b110100000010);
+    }
+
+    public void fsgnjxs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 2, rs1, rs2, 0b0010000);
+    }
+
+    public void fsgnjns(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 1, rs1, rs2, 0b0010000);
+    }
+
+    public void fsqrts(CiRegister rd, CiRegister rs) {
+        itype(RV32F, rd, 0, rs, 0b010110000000);
+    }
+
+    public void flts(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 1, rs1, rs2, 0b1010000);
+    }
+
+    public void fles(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b1010000);
     }
 
     public enum ExtendType {
