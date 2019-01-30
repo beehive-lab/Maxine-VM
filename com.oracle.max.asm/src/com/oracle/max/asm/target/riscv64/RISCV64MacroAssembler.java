@@ -74,6 +74,13 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void align(int modulus) {
+        if (codeBuffer.position() % modulus != 0) {
+            assert modulus % 4 == 0;
+            nop((modulus - (codeBuffer.position() % modulus)) / 4);
+        }
+    }
+
     /**
      * When patching up Labels we have to know what kind of code to generate.
      */
@@ -194,6 +201,150 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
 
         mov64BitConstant(rd, imm);
+    }
+
+    public void add(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.addw(rd, rs1, rs2);
+        } else {
+            super.add(rd, rs1, rs2);
+        }
+    }
+
+    public void sub(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.subw(rd, rs1, rs2);
+        } else {
+            super.sub(rd, rs1, rs2);
+        }
+    }
+
+    public void mul(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.mulw(rd, rs1, rs2);
+        } else {
+            super.mul(rd, rs1, rs2);
+        }
+    }
+
+    public void div(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.divw(rd, rs1, rs2);
+        } else {
+            super.div(rd, rs1, rs2);
+        }
+    }
+
+    public void divu(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.divuw(rd, rs1, rs2);
+        } else {
+            super.divu(rd, rs1, rs2);
+        }
+    }
+
+    public void rem(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.remw(rd, rs1, rs2);
+        } else {
+            super.rem(rd, rs1, rs2);
+        }
+    }
+
+
+    public void fadd(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fadds(rd, rs1, rs2);
+        } else {
+            super.faddd(rd, rs1, rs2);
+        }
+    }
+
+    public void fsub(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fsubs(rd, rs1, rs2);
+        } else {
+            super.fsubd(rd, rs1, rs2);
+        }
+    }
+
+    public void fmul(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fmuls(rd, rs1, rs2);
+        } else {
+            super.fmuld(rd, rs1, rs2);
+        }
+    }
+
+    public void fdiv(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fdivs(rd, rs1, rs2);
+        } else {
+            super.fdivd(rd, rs1, rs2);
+        }
+    }
+
+    public void fdivRTZ(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fdivsRTZ(rd, rs1, rs2);
+        } else {
+            super.fdivdRTZ(rd, rs1, rs2);
+        }
+    }
+
+    public void frem(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        // There is no frem instruction, instead we compute the remainder using the relation:
+        // rem = n - Truncating(n / d) * d
+        this.fdivRTZ(size, scratchRegister, rs1, rs2);
+        this.fmul(size, scratchRegister, scratchRegister, rs2);
+        this.fsub(size, rd, rs1, scratchRegister);
+    }
+
+    public void fabs(int size, CiRegister rd, CiRegister rs1) {
+        if (size == 32) {
+            super.fsgnjxs(rd, rs1, rs1);
+        } else {
+            super.fsgnjxd(rd, rs1, rs1);
+        }
+    }
+
+    public void fsqrt(int size, CiRegister rd, CiRegister rs) {
+        if (size == 32) {
+            super.fsqrts(rd, rs);
+        } else {
+            super.fsqrtd(rd, rs);
+        }
+    }
+
+    /**
+     * dst = -src1.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or stackpointer.
+     * @param src general purpose register. May not be null or stackpointer.
+     */
+    public void neg(int size, CiRegister dst, CiRegister src) {
+        sub(size, dst, RISCV64.zr, src);
+    }
+
+    /**
+     * dst = -src1.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or stackpointer.
+     * @param src general purpose register. May not be null or stackpointer.
+     */
+    public void fneg(int size, CiRegister dst, CiRegister src) {
+        if (size == 32) {
+            fsgnjns(dst, src, src);
+        } else {
+            fsgnjnd(dst, src, src);
+        }
+    }
+
+    public int insertDivByZeroCheck(int size, CiRegister denominator) {
+        //TODO implement division by zero check. Generate a SIGSEGV if denominator is zero.
+        throw new UnsupportedOperationException("Unimplemented");
     }
 
     public void nop() {
@@ -356,28 +507,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     /**
-     * Compare register and branch if zero.
-     *
-     * @param cmp general purpose register. May not be null, zero-register or stackpointer.
-     * @param label Can only handle 32-bit word-aligned offsets for now. May be unbound. Non null.
-     */
-    public void cbz(CiRegister cmp, Label label) {
-        // TODO Handle case where offset is too large for a single jump instruction
-        if (label.isBound()) {
-            mov32BitConstant(scratchRegister1, 0);
-            int offset = label.position() - codeBuffer.position();
-            emitConditionalBranch(RISCV64MacroAssembler.ConditionFlag.EQ, cmp, scratchRegister1, offset);
-        } else {
-            label.addPatchAt(codeBuffer.position());
-            int regEncoding = cmp.getEncoding();
-            emitInt(0);
-            emitByte(PatchLabelKind.BRANCH_ZERO.encoding);
-            emitByte(regEncoding);
-            emitShort(0);
-        }
-    }
-
-    /**
      * Checks whether immediate can be encoded as an arithmetic immediate.
      *
      * @param imm Immediate has to be either an unsigned 12bit value or an unsigned 24bit value with
@@ -479,19 +608,19 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         /**
          * signed less than or equal | less than, equal or unordered.
          */
-        LE(0x5),
+        LE,
         /** unsigned greater than or equal.
          */
-        GEU(0x6),
+        GEU,
         /** unsigned less than.
          */
-        LTU(0x7),
+        LTU,
         /** unsigned greater than.
          */
-        GTU(0x8),
+        GTU,
         /** unsigned less than or equal.
          */
-        LEU(0x9),
+        LEU,
         /**
          * always | always.
          */
@@ -565,7 +694,42 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         // TODO Handle case where offset is too large for a single jump instruction
         if (label.isBound()) {
             int offset = label.position() - codeBuffer.position();
-            emitConditionalBranch(condition, rs1, rs2, offset);
+
+            switch (condition) {
+                case EQ:
+                    beq(rs1, rs2, offset);
+                    break;
+                case NE:
+                    bne(rs1, rs2, offset);
+                    break;
+                case GE:
+                    bge(rs1, rs2, offset);
+                    break;
+                case LT:
+                    blt(rs1, rs2, offset);
+                    break;
+                case GT:
+                    bgt(rs1, rs2, offset);
+                    break;
+                case LE:
+                    ble(rs1, rs2, offset);
+                    break;
+                case GEU:
+                    bgeu(rs1, rs2, offset);
+                    break;
+                case LTU:
+                    bltu(rs1, rs2, offset);
+                    break;
+                case GTU:
+                    bltu(rs2, rs1, offset);
+                    break;
+                case LEU:
+                    bgeu(rs2, rs1, offset);
+                    break;
+                case AL:
+                    b(offset);
+                    break;
+            }
         } else {
             label.addPatchAt(codeBuffer.position());
             emitByte(PatchLabelKind.BRANCH_CONDITIONALLY.encoding);
@@ -668,7 +832,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     ld(r, frameRegister, displacement);
                 } else {
                     mov(scratchRegister, displacement);
-                    add (scratchRegister, frameRegister, scratchRegister);
+                    add(scratchRegister, frameRegister, scratchRegister);
                     ld(r, scratchRegister, 0);
                 }
             } else if (r.isFpu()) {
