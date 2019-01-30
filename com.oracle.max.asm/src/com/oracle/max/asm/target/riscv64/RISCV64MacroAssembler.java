@@ -74,6 +74,13 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void align(int modulus) {
+        if (codeBuffer.position() % modulus != 0) {
+            assert modulus % 4 == 0;
+            nop((modulus - (codeBuffer.position() % modulus)) / 4);
+        }
+    }
+
     /**
      * When patching up Labels we have to know what kind of code to generate.
      */
@@ -196,6 +203,150 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         mov64BitConstant(rd, imm);
     }
 
+    public void add(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.addw(rd, rs1, rs2);
+        } else {
+            super.add(rd, rs1, rs2);
+        }
+    }
+
+    public void sub(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.subw(rd, rs1, rs2);
+        } else {
+            super.sub(rd, rs1, rs2);
+        }
+    }
+
+    public void mul(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.mulw(rd, rs1, rs2);
+        } else {
+            super.mul(rd, rs1, rs2);
+        }
+    }
+
+    public void div(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.divw(rd, rs1, rs2);
+        } else {
+            super.div(rd, rs1, rs2);
+        }
+    }
+
+    public void divu(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.divuw(rd, rs1, rs2);
+        } else {
+            super.divu(rd, rs1, rs2);
+        }
+    }
+
+    public void rem(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.remw(rd, rs1, rs2);
+        } else {
+            super.rem(rd, rs1, rs2);
+        }
+    }
+
+
+    public void fadd(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fadds(rd, rs1, rs2);
+        } else {
+            super.faddd(rd, rs1, rs2);
+        }
+    }
+
+    public void fsub(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fsubs(rd, rs1, rs2);
+        } else {
+            super.fsubd(rd, rs1, rs2);
+        }
+    }
+
+    public void fmul(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fmuls(rd, rs1, rs2);
+        } else {
+            super.fmuld(rd, rs1, rs2);
+        }
+    }
+
+    public void fdiv(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fdivs(rd, rs1, rs2);
+        } else {
+            super.fdivd(rd, rs1, rs2);
+        }
+    }
+
+    public void fdivRTZ(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fdivsRTZ(rd, rs1, rs2);
+        } else {
+            super.fdivdRTZ(rd, rs1, rs2);
+        }
+    }
+
+    public void frem(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        // There is no frem instruction, instead we compute the remainder using the relation:
+        // rem = n - Truncating(n / d) * d
+        this.fdivRTZ(size, scratchRegister, rs1, rs2);
+        this.fmul(size, scratchRegister, scratchRegister, rs2);
+        this.fsub(size, rd, rs1, scratchRegister);
+    }
+
+    public void fabs(int size, CiRegister rd, CiRegister rs1) {
+        if (size == 32) {
+            super.fsgnjxs(rd, rs1, rs1);
+        } else {
+            super.fsgnjxd(rd, rs1, rs1);
+        }
+    }
+
+    public void fsqrt(int size, CiRegister rd, CiRegister rs) {
+        if (size == 32) {
+            super.fsqrts(rd, rs);
+        } else {
+            super.fsqrtd(rd, rs);
+        }
+    }
+
+    /**
+     * dst = -src1.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or stackpointer.
+     * @param src general purpose register. May not be null or stackpointer.
+     */
+    public void neg(int size, CiRegister dst, CiRegister src) {
+        sub(size, dst, RISCV64.zr, src);
+    }
+
+    /**
+     * dst = -src1.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or stackpointer.
+     * @param src general purpose register. May not be null or stackpointer.
+     */
+    public void fneg(int size, CiRegister dst, CiRegister src) {
+        if (size == 32) {
+            fsgnjns(dst, src, src);
+        } else {
+            fsgnjnd(dst, src, src);
+        }
+    }
+
+    public int insertDivByZeroCheck(int size, CiRegister denominator) {
+        //TODO implement division by zero check. Generate a SIGSEGV if denominator is zero.
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
     public void nop() {
         addi(RISCV64.x0, RISCV64.x0, 0);
     }
@@ -217,6 +368,32 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             sd(RISCV64.sp, reg, 0);
         } else {
             sw(RISCV64.sp, reg, 0);
+        }
+    }
+
+    public void fpush(CiRegister... registers) {
+        fpush(getRegisterList(registers));
+    }
+
+    public void fpush(int registerList) {
+        for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
+            if (registerList % 2 == 1) {
+                fstr(64, RISCV64.fpuRegisters[regNumber], RISCV64Address.createPreIndexedImmediateAddress(RISCV64.sp, -16));
+            }
+
+            registerList = registerList >> 1;
+        }
+    }
+
+    public void fpop(CiRegister... registers) {
+        fpop(getRegisterList(registers));
+    }
+
+    public void fpop(int registerList) {
+        for (int regNumber = Integer.SIZE - 1; regNumber >= 0; regNumber--) {
+            if ((registerList >> regNumber) % 2 == 1) {
+                fldr(64, RISCV64.fpuRegisters[regNumber], RISCV64Address.createPostIndexedImmediateAddress(RISCV64.sp, 16));
+            }
         }
     }
 
@@ -258,6 +435,75 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 pop(size, RISCV64.cpuRegisters[regNumber]);
             }
         }
+    }
+
+    private int getRegisterList(CiRegister... registers) {
+        int regList = 0;
+        for (CiRegister reg : registers) {
+            regList |= 1 << reg.getEncoding();
+        }
+        return regList;
+    }
+
+    public void membar(int barriers) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     * Compare and swap implementation.
+     *
+     * @param size
+     * @param newValue
+     * @param cmpValue
+     * @param address
+     */
+    public void cas(int size, CiRegister newValue, CiRegister cmpValue, RISCV64Address address) {
+        //TODO At the moment we don't know how to implement memory barriers in RISC-V.
+        // This implementation must be changed to be atmoic and use a memory barrier.
+        // See Aarch64MacroAssembler.cas() for example of implementation
+
+        assert scratchRegister != cmpValue;
+        assert newValue != cmpValue;
+
+        Label notEqualTocmpValue = new Label();
+
+        ldr(size, scratchRegister, address);
+        branchConditionally(ConditionFlag.NE, cmpValue, scratchRegister, notEqualTocmpValue);
+        str(size, newValue, address);
+
+        bind(notEqualTocmpValue);
+    }
+
+    /**
+     * Count Leading Zeros implementation.
+     * RISC-V lacks this instruction
+     *
+     * @param size
+     * @param dst
+     * @param src
+     */
+    public void clz(int size, CiRegister dst, CiRegister src) {
+        Label end = new Label();
+        Label continuel = new Label();
+
+        mov32BitConstant(scratchRegister1, 0b1);
+        mov32BitConstant(dst, 0);
+        if (size == 32) {
+            slli(scratchRegister1, scratchRegister1, 31);
+        } else {
+            slli(scratchRegister1, scratchRegister1, 63);
+        }
+        this.bind(continuel);
+        push(64, scratchRegister1);
+        and(scratchRegister1, src, scratchRegister1);
+        branchConditionally(ConditionFlag.NE, scratchRegister1, RISCV64.zero, end);
+        add(dst, dst, 1);
+        pop(64, scratchRegister1);
+        srli(scratchRegister1, scratchRegister1, 1);
+        b(continuel);
+
+        this.bind(end);
+        pop(64, scratchRegister1);
     }
 
     /**
@@ -363,6 +609,18 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
          * signed less than or equal | less than, equal or unordered.
          */
         LE,
+        /** unsigned greater than or equal.
+         */
+        GEU,
+        /** unsigned less than.
+         */
+        LTU,
+        /** unsigned greater than.
+         */
+        GTU,
+        /** unsigned less than or equal.
+         */
+        LEU,
         /**
          * always | always.
          */
@@ -382,6 +640,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     return LE;
                 case LE:
                     return GT;
+                case GEU:
+                    return LTU;
+                case LTU:
+                    return GEU;
+                case GTU:
+                    return LEU;
+                case LEU:
+                    return GTU;
                 case AL:
                 default:
                     throw new Error("should not reach here");
@@ -416,7 +682,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     bne(rs1, rs2, offset);
                     break;
                 case GE:
-                    bne(rs1, rs2, offset);
+                    bge(rs1, rs2, offset);
                     break;
                 case LT:
                     blt(rs1, rs2, offset);
@@ -427,6 +693,18 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 case LE:
                     ble(rs1, rs2, offset);
                     break;
+                case GEU:
+                    bgeu(rs1, rs2, offset);
+                    break;
+                case LTU:
+                    bltu(rs1, rs2, offset);
+                    break;
+                case GTU:
+                    bltu(rs2, rs1, offset);
+                    break;
+                case LEU:
+                    bgeu(rs2, rs1, offset);
+                    break;
                 case AL:
                     b(offset);
                     break;
@@ -434,6 +712,20 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         } else {
             throw new UnsupportedOperationException("Unimplemented");
         }
+    }
+
+    /**
+     * Conditional move. dst = src1 if condition else src2.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param result general purpose register. May not be null or the stackpointer.
+     * @param trueValue general purpose register. May not be null or the stackpointer.
+     * @param falseValue general purpose register. May not be null or the stackpointer.
+     * @param cond any condition flag. May not be null.
+     */
+    public void cmov(int size, CiRegister result, CiRegister trueValue, CiRegister falseValue, ConditionFlag cond) {
+        //TODO implement conditional move. RISC-V does not have conditional moves...
+        throw new UnsupportedOperationException("Unimplemented");
     }
 
     public void save(CiCalleeSaveLayout csl, int frameToCSA) {
@@ -473,7 +765,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     ld(r, frameRegister, displacement);
                 } else {
                     mov(scratchRegister, displacement);
-                    add (scratchRegister, frameRegister, scratchRegister);
+                    add(scratchRegister, frameRegister, scratchRegister);
                     ld(r, scratchRegister, 0);
                 }
             } else if (r.isFpu()) {
