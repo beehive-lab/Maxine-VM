@@ -56,10 +56,9 @@ public enum RISCV64opCodes {
     // Floating-point
     LOAD_FP((byte) 0b0000111),
     STORE_FP((byte) 0b0100111),
-    FCVTWS((byte) 0b1010011),
-    FCVTSW((byte) 0b1010011),
-    FMV((byte) 0b1010011),
-    FCVTLS((byte) 0b1010011),
+    FCVT((byte) 0b1010011),
+    RV32F((byte) 0b1010011),
+    RV32D((byte) 0b1010011),
 
     MUL((byte) 0b0110011),
     MULW((byte) 0b0111011),

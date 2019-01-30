@@ -1092,7 +1092,7 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fcvtls(CiRegister rd, CiRegister rs) {
-        itype(FCVTLS, rd, 0, rs, 0b110000000010);
+        itype(RV32F, rd, 0, rs, 0b110000000010);
     }
 
     public void fcvtws(CiRegister rd, CiRegister rs) {
