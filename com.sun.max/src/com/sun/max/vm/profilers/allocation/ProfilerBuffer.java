@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -43,7 +43,6 @@ public class ProfilerBuffer {
     public String[] type;
     public int[] size;
     public long[] address;
-    public int[] numaNode;
 
     public int currentIndex;
 
@@ -52,14 +51,12 @@ public class ProfilerBuffer {
         type = new String[SIZE];
         size = new int[SIZE];
         address = new long[SIZE];
-        numaNode = new int[SIZE];
 
         for (int i = 0; i < SIZE; i++) {
             index[i] = 0;
             type[i] = "null";
             size[i] = 0;
             address[i] = 0;
-            numaNode[i] = -1;
         }
 
         currentIndex = 0;
@@ -67,12 +64,11 @@ public class ProfilerBuffer {
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int index, String type, int size, long address, int numaNode) {
+    public void record(int index, String type, int size, long address) {
         this.index[currentIndex] = index;
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
         this.address[currentIndex] = address;
-        this.numaNode[currentIndex] = numaNode;
         currentIndex++;
     }
 
@@ -82,15 +78,14 @@ public class ProfilerBuffer {
         Log.println(" Start ====");
         for (int i = 0; i < currentIndex; i++) {
             Log.print(index[i]);
-            Log.print(" ");
+            Log.print(";");
             Log.print(type[i]);
-            Log.print(" ");
+            //Log.print(";");
             Log.print(size[i]);
-            Log.print(" ");
+            Log.print(";");
             Log.print(address[i]);
-            Log.print(" ");
-            Log.println(numaNode[i]);
         }
+
         if (Profiler.VerboseAllocationProfiler) {
             Log.print("(verbose msg): Buffer usage = ");
             Log.print(currentIndex);

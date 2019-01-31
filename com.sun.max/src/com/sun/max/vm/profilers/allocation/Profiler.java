@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -46,22 +46,10 @@ public class Profiler {
     @C_FUNCTION
     static native void allocationProfiler_unlock();
 
-    /**
-     * The profiling outcome is stored in histograms.
-     * Size Histogram: stores the allocated objects sizes for the profiling method chain.
-     * Type Histogram: stores the allocated objects sizes in relation with their object type for the profiling method chain.
-     *
-     */
-    public static int initialSize = 6;
-    public static int currentSize = initialSize;
-    public static int growStep = 10;
     public static int profilingCycle;
-
     public static int currentIndex = 0;
-
     public static ProfilerBuffer objects;
     public static HeapConfiguration heapConfig;
-
     public JNumaUtils utilsObject;
 
     private static boolean AllocationProfilerPrintHistogram;
@@ -73,7 +61,7 @@ public class Profiler {
      * Use -XX:+AllocationProfilerPrintHistogram flag to accompany the profiler stats with a complete histogram view.
      * Use -XX:+AllocationProfilerAll to profile all application objects unconditionally.
      * Use -XX:+AllocationProfilerDump
-     * Use -XX:+VerboseAllocationProfiler
+     * Use -XX:+VerboseAllocationProfiler to verbose profiler actions. For understanding or debugging purposes.
      */
     static {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerPrintHistogram", Profiler.class, "Print Dynamic Profiler's Histogram after every GC. (default: false)", MaxineVM.Phase.PRISTINE);
@@ -119,37 +107,6 @@ public class Profiler {
     }
 
     /**
-     * Grow the histogram array after GC.
-     *
-     */
-    public void growHistograms(Heap.GCCallbackPhase when) {
-        final boolean lockDisabledSafepoints = lock();
-/*
-        final int newSize =  currentSize + growStep;
-
-        HistogramCell[] newHistogram = new HistogramCell[newSize];
-        TypeHistogramCell[] newTypeHistogram = new TypeHistogramCell[newSize];
-
-        //copy the contents of the old to the new histogram
-        for (int i = 0; i < currentSize - 1; i++) {
-            newHistogram[i] = sizeHistogram[i];
-            newTypeHistogram[i] = typeHistogram[i];
-        }
-
-        //allocate new cells in the histogram
-        for (int i = currentSize - 1; i < newSize; i++) {
-            newHistogram[i] = new HistogramCell();
-            newTypeHistogram[i] = new TypeHistogramCell(heapConfig.virtSpaces, 1);
-        }
-
-        currentSize = newSize;
-        sizeHistogram = newHistogram;
-        typeHistogram = newTypeHistogram;
-*/
-        unlock(lockDisabledSafepoints);
-    }
-
-    /**
      * This method is called when a profiled object is allocated.
      */
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
@@ -160,7 +117,7 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        objects.record(currentIndex, type, size, address, 0);
+        objects.record(currentIndex, type, size, address);
         currentIndex++;
         unlock(lockDisabledSafepoints);
     }
@@ -168,6 +125,7 @@ public class Profiler {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void profileGC(int size, String type) {
+        //TODO: How are we gonna profile this?
         /* PROFILER_TLA is currently a thread local that has it's value maintained
          * only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA. That
          * said if we lock and disable safepoints it is no longer accessible, thus
@@ -270,16 +228,11 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Clean-up Profiler Buffer. [post-GC phase]");
         }
-        objects.resetCycle();
-        //ProfiledObjects tmp = new ProfiledObjects();
-        //objects = tmp;
 
-        //if we need more space, grow histograms
-        if ((profilingCycle + 1) == currentSize) {
-            growHistograms(Heap.GCCallbackPhase.AFTER);
-        }
+        objects.resetCycle();
 
         profilingCycle++;
+
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Leaving Post-GC Phase.");
             Log.print("(verbose msg): Start Profiling. [Cycle ");
