@@ -79,3 +79,6 @@ maxine-tester/junit-tests/ZipFileReader.input
 com.sun.max.ins/NB3B.jar.sha1
 test/jasmin_classes.jar.sha1
 javafilelist.txt
+
+# Allocation Profiler Generated
+*.csv
