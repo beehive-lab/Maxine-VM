@@ -67,27 +67,47 @@ public class Profiler {
     private static boolean AllocationProfilerPrintHistogram;
     private static boolean AllocationProfilerAll;
     private static boolean AllocationProfilerDump;
+    public static boolean VerboseAllocationProfiler;
 
     /**
      * Use -XX:+AllocationProfilerPrintHistogram flag to accompany the profiler stats with a complete histogram view.
      * Use -XX:+AllocationProfilerAll to profile all application objects unconditionally.
+     * Use -XX:+AllocationProfilerDump
+     * Use -XX:+VerboseAllocationProfiler
      */
     static {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerPrintHistogram", Profiler.class, "Print Dynamic Profiler's Histogram after every GC. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", Profiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AllocationProfilerDump", Profiler.class, "Dump profiled objects to a file. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output . (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
     public Profiler() {
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Profiler Initialization.");
+        }
         objects = new ProfilerBuffer();
 
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): JNumaUtils Initialization.");
+        }
         // Initialize a JNumaUtils object. We need to allocate it early because it is going to be used when allocation is disabled.
         utilsObject = new JNumaUtils();
 
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Resolve createNumaMaps Native Method.");
+        }
         // A call to force method's resolution when allocation is still enabled.
-        utilsObject.createNumaMaps(100);
+        utilsObject.createNumaMaps(0);
 
         profilingCycle = 0;
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Initialization Complete.");
+
+            Log.print("(verbose msg): Start Profiling. [Cycle ");
+            Log.print(getProfilingCycle());
+            Log.println("]");
+        }
     }
 
     public int getProfilingCycle() {
@@ -157,7 +177,10 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
-    public void printCycle() {
+    /**
+     * Dump Profiler Buffer to Maxine's Log output.
+     */
+    public void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
         objects.print(profilingCycle);
         unlock(lockDisabledSafepoints);
@@ -202,6 +225,14 @@ public class Profiler {
      */
     public void preGCActions() {
 
+        if (VerboseAllocationProfiler) {
+            Log.print("(verbose msg): Cycle ");
+            Log.print(getProfilingCycle());
+            Log.println(" Profiling Is Now Complete. [pre-GC phase]");
+
+            Log.println("(verbose msg): Create NUMA Maps. [pre-GC phase]");
+        }
+
         utilsObject.createNumaMaps(getProfilingCycle());
 
     }
@@ -231,7 +262,14 @@ public class Profiler {
         Log.println(" MBs\n");
         */
 
-        printCycle();
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Dump Profiler Buffer. [post-GC phase]");
+        }
+        dumpBuffer();
+
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Clean-up Profiler Buffer. [post-GC phase]");
+        }
         objects.resetCycle();
         //ProfiledObjects tmp = new ProfiledObjects();
         //objects = tmp;
@@ -242,6 +280,12 @@ public class Profiler {
         }
 
         profilingCycle++;
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Leaving Post-GC Phase.");
+            Log.print("(verbose msg): Start Profiling. [Cycle ");
+            Log.print(getProfilingCycle());
+            Log.println("]");
+        }
 
         unlock(lockDisabledSafepoints);
     }

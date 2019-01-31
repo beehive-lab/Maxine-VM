@@ -91,10 +91,12 @@ public class ProfilerBuffer {
             Log.print(" ");
             Log.println(numaNode[i]);
         }
-        Log.print("Buffer usage = ");
-        Log.print(currentIndex);
-        Log.print(" / ");
-        Log.println(address.length);
+        if (Profiler.VerboseAllocationProfiler) {
+            Log.print("(verbose msg): Buffer usage = ");
+            Log.print(currentIndex);
+            Log.print(" / ");
+            Log.println(address.length);
+        }
     }
 
     public void print(int cycle) {
