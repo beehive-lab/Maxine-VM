@@ -21,10 +21,8 @@
 package com.sun.c1x.target.riscv64;
 
 import com.oracle.max.asm.Label;
-import com.oracle.max.asm.target.aarch64.Aarch64;
-import com.oracle.max.asm.target.aarch64.Aarch64Address;
-import com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler;
 import com.oracle.max.asm.target.riscv64.RISCV64;
+import com.oracle.max.asm.target.riscv64.RISCV64Address;
 import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler;
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.C1XOptions;
@@ -191,7 +189,7 @@ public class RISCV64CompilerStubEmitter extends CompilerStubEmitter {
         for (int i = 0; i < cc.locations.length; ++i) {
             CiValue location = cc.locations[i];
             asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[i]));
-            asm.load(location.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), inArgs[i].kind);
+            asm.load(location.asRegister(), RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister), inArgs[i].kind);
         }
 
         if (C1XOptions.AlignDirectCallsForPatching) {
@@ -209,7 +207,7 @@ public class RISCV64CompilerStubEmitter extends CompilerStubEmitter {
         if (call.resultKind != CiKind.Void) {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
             asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
-            asm.store(returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(scratchRegister), call.resultKind);
+            asm.store(returnRegister, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister), call.resultKind);
         }
     }
 }
