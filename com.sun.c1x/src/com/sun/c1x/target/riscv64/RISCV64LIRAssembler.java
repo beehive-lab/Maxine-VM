@@ -23,8 +23,6 @@ package com.sun.c1x.target.riscv64;
 import com.oracle.max.asm.Buffer;
 import com.oracle.max.asm.Label;
 import com.oracle.max.asm.NumUtil;
-import com.oracle.max.asm.target.aarch64.Aarch64;
-import com.oracle.max.asm.target.aarch64.Aarch64Assembler;
 import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.oracle.max.asm.target.riscv64.RISCV64Address;
 import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler;
@@ -49,7 +47,6 @@ import com.sun.cri.xir.XirTemplate;
 import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.Word;
 import com.sun.max.vm.compiler.CompilationBroker;
-import com.sun.max.vm.type.Kind;
 
 import java.util.Map;
 
@@ -123,7 +120,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitMonitorAddress(int monitor, CiValue dst) {
         CiStackSlot slot = frameMap.toMonitorBaseStackAddress(monitor);
-        masm.leaq(dst.asRegister(), new CiAddress(slot.kind, Aarch64.sp.asValue(), slot.index() * target.arch.wordSize));
+        masm.leaq(dst.asRegister(), new CiAddress(slot.kind, RISCV64.sp.asValue(), slot.index() * target.arch.wordSize));
     }
 
     @Override
@@ -1311,7 +1308,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         assert left == dest : "left and dest must be equal";
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
-        assert count.asRegister() != Aarch64.r16 : "count register must not be scratch";
+        assert count.asRegister() != RISCV64.x28 : "count register must not be scratch";
         CiRegister register = left.asRegister();
         assert register != SHIFTCount : "left cannot be s11/x27";
         if (left.kind.isInt()) {
@@ -1824,7 +1821,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         }
                     } else {
                         masm.mov64BitConstant(scratchRegister, frameSize);
-                        masm.sub(64, Aarch64.sp, Aarch64.sp, scratchRegister);
+                        masm.sub(64, RISCV64.sp, RISCV64.sp, scratchRegister);
                     }
 
                     CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
