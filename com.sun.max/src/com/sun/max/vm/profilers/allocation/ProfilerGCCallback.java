@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,6 +35,7 @@ public class ProfilerGCCallback implements Heap.GCCallback {
 
     @Override
     public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
+
         if (gcCallbackPhase == Heap.GCCallbackPhase.BEFORE) {
             if (MaxineVM.isRunning() && MaxineVM.isAllocationProfilerInitialized) {
                 //any PRE gc action must be placed here
@@ -46,5 +47,8 @@ public class ProfilerGCCallback implements Heap.GCCallback {
                 MaxineVM.allocationProfiler.postGCActions();
             }
         }
+
     }
+
+
 }
