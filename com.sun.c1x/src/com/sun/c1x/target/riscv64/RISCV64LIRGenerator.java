@@ -21,7 +21,7 @@
 package com.sun.c1x.target.riscv64;
 
 import com.oracle.max.asm.NumUtil;
-import com.oracle.max.asm.target.aarch64.Aarch64;
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.alloc.OperandPool.VariableFlag;
 import com.sun.c1x.gen.LIRGenerator;
@@ -39,18 +39,18 @@ import static com.sun.cri.bytecode.Bytecodes.*;
 public class RISCV64LIRGenerator extends LIRGenerator {
 
     // TODO: (ck) We have to change those to ARM register terminology
-    private static final CiRegisterValue RAX_I = Aarch64.r0.asValue(CiKind.Int);
-    private static final CiRegisterValue RAX_L = Aarch64.r0.asValue(CiKind.Long);
-    private static final CiRegisterValue RDX_I = Aarch64.r1.asValue(CiKind.Int);
-    private static final CiRegisterValue RDX_L = Aarch64.r1.asValue(CiKind.Long);
-    private static final CiRegisterValue RETURNREG_L = Aarch64.r0.asValue(CiKind.Long);
-    private static final CiRegisterValue RETURNREG_I = Aarch64.r0.asValue(CiKind.Int);
+    private static final CiRegisterValue RAX_I = RISCV64.a0.asValue(CiKind.Int);
+    private static final CiRegisterValue RAX_L = RISCV64.a0.asValue(CiKind.Long);
+    private static final CiRegisterValue RDX_I = RISCV64.a3.asValue(CiKind.Int);
+    private static final CiRegisterValue RDX_L = RISCV64.a3.asValue(CiKind.Long);
+    private static final CiRegisterValue RETURNREG_L = RISCV64.a0.asValue(CiKind.Long);
+    private static final CiRegisterValue RETURNREG_I = RISCV64.a0.asValue(CiKind.Int);
 
     private static final CiRegisterValue LDIV_TMP = RDX_L;
 
     private static final CiRegisterValue LMUL_OUT = RAX_L;
 
-    private static final CiRegisterValue SHIFT_COUNT_IN = Aarch64.r1.asValue(CiKind.Int);
+    private static final CiRegisterValue SHIFT_COUNT_IN = RISCV64.a2.asValue(CiKind.Int);
 
     protected static final CiValue ILLEGAL = CiValue.IllegalValue;
 
