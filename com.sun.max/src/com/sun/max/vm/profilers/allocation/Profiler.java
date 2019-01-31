@@ -81,8 +81,11 @@ public class Profiler {
     public Profiler() {
         objects = new ProfilerBuffer();
 
-        // Initialize a JNumaUtils object. We need to allocate it early because it is going to be used inside safepoints.
+        // Initialize a JNumaUtils object. We need to allocate it early because it is going to be used when allocation is disabled.
         utilsObject = new JNumaUtils();
+
+        // A call to force method's resolution when allocation is still enabled.
+        utilsObject.createNumaMaps(100);
 
         profilingCycle = 0;
     }
@@ -137,7 +140,6 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        //int numaNode = JNumaUtils.findNode(address);
         objects.record(currentIndex, type, size, address, 0);
         currentIndex++;
         unlock(lockDisabledSafepoints);
@@ -199,7 +201,9 @@ public class Profiler {
      * We create the numa virtual memory map using the createNumaMap native function.
      */
     public void preGCActions() {
-        utilsObject.test();
+
+        utilsObject.createNumaMaps(getProfilingCycle());
+
     }
 
     /**
