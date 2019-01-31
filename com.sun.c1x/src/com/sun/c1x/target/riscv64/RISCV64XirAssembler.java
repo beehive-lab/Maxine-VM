@@ -20,7 +20,7 @@
  */
 package com.sun.c1x.target.riscv64;
 
-import com.oracle.max.asm.target.aarch64.Aarch64;
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.c1x.util.Util;
 import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiTarget;
@@ -53,11 +53,11 @@ public class RISCV64XirAssembler extends CiXirAssembler {
 
         List<XirInstruction> currentList = fastPath;
 
-        XirOperand fixedRDX = null; // r2
-        XirOperand fixedRAX = null; // r0
-        XirOperand fixedRCX = null; // r1
-        XirOperand fixedRSI = null; // r6
-        XirOperand fixedRDI = null; // r7
+        XirOperand fixedRDX = null; // a3
+        XirOperand fixedRAX = null; // a0
+        XirOperand fixedRCX = null; // a2
+        XirOperand fixedRSI = null; // s2
+        XirOperand fixedRDI = null; // s3
         HashSet<XirLabel> boundLabels = new HashSet<XirLabel>();
 
         for (XirInstruction i : instructions) {
@@ -79,11 +79,11 @@ public class RISCV64XirAssembler extends CiXirAssembler {
                     XirOperand xOp = i.x();
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
                         if (fixedRDX == null) {
-                            fixedRDX = createRegisterTemp("divModTemp", CiKind.Int, Aarch64.r2);
+                            fixedRDX = createRegisterTemp("divModTemp", CiKind.Int, RISCV64.a3);
                         }
                         // Special treatment to make sure that the left input of % and / is in RAX
                         if (fixedRAX == null) {
-                            fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, Aarch64.r0);
+                            fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, RISCV64.a0);
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, fixedRAX, i.x()));
                         xOp = fixedRAX;
@@ -98,7 +98,7 @@ public class RISCV64XirAssembler extends CiXirAssembler {
                     if ((i.op == XirOp.Shl || i.op == XirOp.Shr) && (!(i.y() instanceof XirConstantOperand))) {
                         // Special treatment to make sure that the shift count is always in RCX
                         if (fixedRCX == null) {
-                            fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, Aarch64.r1);
+                            fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, RISCV64.a2);
                         }
                         currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedRCX, i.y()));
                         yOp = fixedRCX;
@@ -117,13 +117,13 @@ public class RISCV64XirAssembler extends CiXirAssembler {
                 case RepeatMoveWords:
                 case RepeatMoveBytes:
                     if (fixedRSI == null) {
-                        fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, Aarch64.r6);
+                        fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, RISCV64.s2);
                     }
                     if (fixedRDI == null) {
-                        fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, Aarch64.r7);
+                        fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, RISCV64.s3);
                     }
                     if (fixedRCX == null) {
-                        fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, Aarch64.r1);
+                        fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, RISCV64.a2);
                     }
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRSI, i.x()));
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRDI, i.y()));
@@ -141,7 +141,7 @@ public class RISCV64XirAssembler extends CiXirAssembler {
                     break;
                 case PointerCAS:
                     if (fixedRAX == null) {
-                        fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, Aarch64.r0);
+                        fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, RISCV64.a0);
                     }
                     // x = source of cmpxch
                     // y = new value
