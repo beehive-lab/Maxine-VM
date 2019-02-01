@@ -121,7 +121,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs1
      * @param imm32
      */
-    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
+    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.number >> 5 == 0;
         assert rs1.number >> 5 == 0;
@@ -131,7 +131,15 @@ public class RISCV64Assembler extends AbstractAssembler {
         instruction |= rs1.number << 15;
         instruction |= imm32 << 20;
 
-        emitInt(instruction);
+        if (pos == -1) {
+            emitInt(instruction);
+        } else {
+            emitInt(instruction, pos);
+        }
+    }
+
+    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
+        itype(opcode, rd, funct3, rs1, imm32, -1);
     }
 
     /**
@@ -194,7 +202,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs2
      * @param imm32
      */
-    private void btype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+    private void btype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0;
         assert ((byte) funct3) >> 3 == 0;
         assert rs1.number >> 5 == 0;
@@ -207,7 +215,16 @@ public class RISCV64Assembler extends AbstractAssembler {
         instruction |= rs2.number << 20;
         instruction |= ((imm32 >> 5) & 0x3F) << 25;
         instruction |= ((imm32 >> 12) & 1) << 31;
-        emitInt(instruction);
+
+        if (pos == -1) {
+            emitInt(instruction);
+        } else {
+            emitInt(instruction, pos);
+        }
+    }
+
+    private void btype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+        btype(opcode, funct3, rs1, rs2, imm32, -1);
     }
 
     /**
@@ -297,6 +314,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         itype(JALR, rd, 0, rs, imm32);
     }
 
+    public void jalr(CiRegister rd, CiRegister rs, int imm32, int pos) {
+        itype(JALR, rd, 0, rs, imm32);
+    }
+
     /**
      *
      * @param rs1
@@ -305,6 +326,10 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     public void beq(CiRegister rs1, CiRegister rs2, int imm32) {
         btype(BRNC, 0, rs1, rs2, imm32);
+    }
+
+    public void beq(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 0, rs1, rs2, imm32, pos);
     }
 
     /**
@@ -317,6 +342,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         btype(BRNC, 1, rs1, rs2, imm32);
     }
 
+    public void bne(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 1, rs1, rs2, imm32, pos);
+    }
+
     /**
      *
      * @param rs1
@@ -325,6 +354,10 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     public void blt(CiRegister rs1, CiRegister rs2, int imm32) {
         btype(BRNC, 4, rs1, rs2, imm32);
+    }
+
+    public void blt(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 4, rs1, rs2, imm32, pos);
     }
 
     /**
@@ -337,6 +370,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         btype(BRNC, 5, rs1, rs2, imm32);
     }
 
+    public void bge(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 5, rs1, rs2, imm32, pos);
+    }
+
     /**
      *
      * @param rs1
@@ -347,6 +384,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         btype(BRNC, 6, rs1, rs2, imm32);
     }
 
+    public void bltu(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 6, rs1, rs2, imm32, pos);
+    }
+
     /**
      *
      * @param rs1
@@ -355,6 +396,10 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     public void bgeu(CiRegister rs1, CiRegister rs2, int imm32) {
         btype(BRNC, 7, rs1, rs2, imm32);
+    }
+
+    public void bgeu(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 7, rs1, rs2, imm32, pos);
     }
 
     /**
