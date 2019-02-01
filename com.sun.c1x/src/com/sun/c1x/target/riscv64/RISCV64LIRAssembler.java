@@ -900,7 +900,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, denominator, scratchRegister, continuation);
                 masm.bind(normalCase);
             }
-            int offset = masm.insertDivByZeroCheck(size, denominator);
+            int offset = masm.insertDivByZeroCheck(denominator);
             tasm.recordImplicitException(offset, info);
             if (code == LIROpcode.Irem || code == LIROpcode.Lrem) {
                 if (quotient == numerator || quotient == denominator) {
@@ -926,7 +926,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         CiRegister quotient    = result.asRegister();
         CiRegister denominator = right.asRegister();
 
-        int offset = masm.insertDivByZeroCheck(size, denominator);
+        int offset = masm.insertDivByZeroCheck(denominator);
         tasm.recordImplicitException(offset, info);
         if (code == LIROpcode.Iurem || code == LIROpcode.Lurem) {
             if (quotient == numerator || quotient == denominator) {
@@ -1024,8 +1024,8 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.bind(lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, -1);
                         masm.bind(continueLabel);
-                    }
                         break;
+                    }
                     case Double: {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
@@ -1039,8 +1039,8 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.bind(lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, -1);
                         masm.bind(continueLabel);
-                }
                         break;
+                    }
                     default:
                         throw Util.shouldNotReachHere(opr1.kind.toString());
                 }
@@ -1072,8 +1072,8 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.bind(lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, -1);
                         masm.bind(continueLabel);
-                    }
                         break;
+                    }
                     case Double: {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
@@ -1088,8 +1088,8 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.bind(lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, -1);
                         masm.bind(continueLabel);
-                }
                         break;
+                    }
                     default:
                         throw Util.shouldNotReachHere();
                 }
@@ -1101,10 +1101,11 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Byte:
                     case Char:
                     case Short:
-                    case Int:
+                    case Int: {
                         masm.mov32BitConstant(scratchRegister, c.asInt());
                         masm.sub(32, RISCV64.x31, reg1, scratchRegister);
                         break;
+                    }
                     case Object:
                     case Long: {
                         masm.mov64BitConstant(scratchRegister, c.asLong());
@@ -1126,8 +1127,8 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.bind(lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, -1);
                         masm.bind(continueLabel);
-                    }
                         break;
+                    }
                     case Double: {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
@@ -1143,8 +1144,8 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.bind(lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, -1);
                         masm.bind(continueLabel);
-                    }
                         break;
+                    }
                     default:
                         throw Util.shouldNotReachHere();
                 }
@@ -1360,24 +1361,24 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 } else {
                     masm.slli(register, register, count);
                 }
-            }
                 break;
+            }
             case Shr: {
                 if (left.kind.isInt()) {
                     masm.sraiw(register, register, count);
                 } else {
                     masm.srai(register, register, count);
                 }
-            }
                 break;
+            }
             case Ushr: {
                 if (left.kind.isInt()) {
                     masm.srliw(register, register, count);
                 } else {
                     masm.srli(register, register, count);
                 }
-            }
                 break;
+            }
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -1399,8 +1400,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         // if zero return -1
         masm.xori(result, RISCV64.zero, -1); // result = ~RISCV64.zero
         Label end = new Label();
-        masm.mov32BitConstant(scratchRegister1, 0);
-        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, src.asRegister(), scratchRegister1, end);
+        masm.cbz(src.asRegister(), end);
         // else find the bit
         if (most) {
             masm.clz(64, result, value);

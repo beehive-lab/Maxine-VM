@@ -51,33 +51,43 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         int branchOffset = target - branch;
         PatchLabelKind type = PatchLabelKind.fromEncoding(codeBuffer.getByte(branch));
         switch (type) {
-            case BRANCH_CONDITIONALLY:
-                throw new UnsupportedOperationException("Unimplemented");
-//                assert codeBuffer.getShort(branch + 2) == 0;
-//                ConditionFlag cf = ConditionFlag.fromEncoding(codeBuffer.getByte(branch + 1));
-//                b(cf, branchOffset, branch);
-//                break;
+            case BRANCH_CONDITIONALLY: {
+                ConditionFlag cf = ConditionFlag.fromEncoding(codeBuffer.getByte(branch + 1));
+                CiRegister rs1 = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 2) & 0b11111];
+                CiRegister rs2 = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 3) & 0b11111];
+                emitConditionalBranch(cf, rs1, rs2, branchOffset, branch);
+                break;
+            }
             case TABLE_SWITCH:
-            case BRANCH_UNCONDITIONALLY:
+            case BRANCH_UNCONDITIONALLY: {
                 assert codeBuffer.getByte(branch + 1) == 0;
                 assert codeBuffer.getShort(branch + 2) == 0;
                 jal(RISCV64.zero, branchOffset, branch);
                 break;
+            }
             case BRANCH_NONZERO:
             case BRANCH_ZERO:
-                throw new UnsupportedOperationException("Unimplemented");
-//                int size = codeBuffer.getByte(branch + 1);
-//                int regEncoding = codeBuffer.getShort(branch + 2);
-//                CiRegister reg = Aarch64.cpuRegisters[regEncoding];
-//                switch (type) {
-//                    case BRANCH_NONZERO:
-//                        cbnz(size, reg, branchOffset, branch);
-//                        break;
-//                    case BRANCH_ZERO:
-//                        cbz(size, reg, branchOffset, branch);
-//                        break;
-//                }
-//                break;
+                switch (type) {
+                    case BRANCH_NONZERO: {
+                        int oldPos = codeBuffer.position();
+                        codeBuffer.setPosition(branch - INSTRUCTION_SIZE);
+                        mov32BitConstant(scratchRegister1, 0);
+                        CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
+                        emitConditionalBranch(ConditionFlag.NE, cmp, scratchRegister1, branchOffset);
+                        codeBuffer.setPosition(oldPos);
+                        break;
+                    }
+                    case BRANCH_ZERO: {
+                        int oldPos = codeBuffer.position();
+                        codeBuffer.setPosition(branch - INSTRUCTION_SIZE);
+                        mov32BitConstant(scratchRegister1, 0);
+                        CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
+                        emitConditionalBranch(ConditionFlag.EQ, cmp, scratchRegister1, branchOffset);
+                        codeBuffer.setPosition(oldPos);
+                        break;
+                    }
+                }
+                break;
             default:
                 throw new IllegalArgumentException();
         }
@@ -377,9 +387,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
-    public int insertDivByZeroCheck(int size, CiRegister denominator) {
-        //TODO implement division by zero check. Generate a SIGSEGV if denominator is zero.
-        throw new UnsupportedOperationException("Unimplemented");
+    public int insertDivByZeroCheck(CiRegister denominator) {
+        Label jumpLabel = new Label();
+        mov32BitConstant(scratchRegister1, 0);
+        branchConditionally(ConditionFlag.NE, denominator, scratchRegister1, jumpLabel);
+        int offset = codeBuffer.position();
+        ldr(64, RISCV64.zero, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister1));
+        bind(jumpLabel);
+        return offset;
     }
 
     public void nop() {
@@ -572,6 +587,28 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     /**
+     * Compare register and branch if zero.
+     *
+     * @param cmp general purpose register. May not be null, zero-register or stackpointer.
+     * @param label Can only handle 32-bit word-aligned offsets for now. May be unbound. Non null.
+     */
+    public void cbz(CiRegister cmp, Label label) {
+        // TODO Handle case where offset is too large for a single jump instruction
+        if (label.isBound()) {
+            mov32BitConstant(scratchRegister1, 0);
+            int offset = label.position() - codeBuffer.position();
+            emitConditionalBranch(RISCV64MacroAssembler.ConditionFlag.EQ, cmp, scratchRegister1, offset);
+        } else {
+            label.addPatchAt(codeBuffer.position());
+            int regEncoding = cmp.getEncoding();
+            emitInt(0);
+            emitByte(PatchLabelKind.BRANCH_ZERO.encoding);
+            emitByte(regEncoding);
+            emitShort(0);
+        }
+    }
+
+    /**
      * Checks whether immediate can be encoded as an arithmetic immediate.
      *
      * @param imm Immediate has to be either an unsigned 12bit value or an unsigned 24bit value with
@@ -629,6 +666,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         jalr(RISCV64.zero, scratchRegister, offset);
     }
 
+    public void b(int offset, int pos) {
+        auipc(scratchRegister, offset, pos);
+        jalr(RISCV64.zero, scratchRegister, offset, pos + INSTRUCTION_SIZE);
+    }
+
     /**
      * Branch unconditionally to a label.
      *
@@ -676,19 +718,19 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         /**
          * signed less than or equal | less than, equal or unordered.
          */
-        LE,
+        LE(0x5),
         /** unsigned greater than or equal.
          */
-        GEU,
+        GEU(0x6),
         /** unsigned less than.
          */
-        LTU,
+        LTU(0x7),
         /** unsigned greater than.
          */
-        GTU,
+        GTU(0x8),
         /** unsigned less than or equal.
          */
-        LEU,
+        LEU(0x9),
         /**
          * always | always.
          */
@@ -762,42 +804,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         // TODO Handle case where offset is too large for a single jump instruction
         if (label.isBound()) {
             int offset = label.position() - codeBuffer.position();
-
-            switch (condition) {
-                case EQ:
-                    beq(rs1, rs2, offset);
-                    break;
-                case NE:
-                    bne(rs1, rs2, offset);
-                    break;
-                case GE:
-                    bge(rs1, rs2, offset);
-                    break;
-                case LT:
-                    blt(rs1, rs2, offset);
-                    break;
-                case GT:
-                    bgt(rs1, rs2, offset);
-                    break;
-                case LE:
-                    ble(rs1, rs2, offset);
-                    break;
-                case GEU:
-                    bgeu(rs1, rs2, offset);
-                    break;
-                case LTU:
-                    bltu(rs1, rs2, offset);
-                    break;
-                case GTU:
-                    bltu(rs2, rs1, offset);
-                    break;
-                case LEU:
-                    bgeu(rs2, rs1, offset);
-                    break;
-                case AL:
-                    b(offset);
-                    break;
-            }
+            emitConditionalBranch(condition, rs1, rs2, offset);
         } else {
             label.addPatchAt(codeBuffer.position());
             emitByte(PatchLabelKind.BRANCH_CONDITIONALLY.encoding);
