@@ -66,6 +66,10 @@ public class ProfilerBuffer {
     @NEVER_INLINE
     public void record(int index, String type, int size, long address) {
         this.index[currentIndex] = index;
+        // append a semicolon to primitive types
+        if (type.charAt(type.length() - 1) != ';') {
+            type = type.concat(";");
+        }
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
         this.address[currentIndex] = address;
@@ -80,10 +84,9 @@ public class ProfilerBuffer {
             Log.print(index[i]);
             Log.print(";");
             Log.print(type[i]);
-            //Log.print(";");
             Log.print(size[i]);
             Log.print(";");
-            Log.print(address[i]);
+            Log.println(address[i]);
         }
 
         if (Profiler.VerboseAllocationProfiler) {
