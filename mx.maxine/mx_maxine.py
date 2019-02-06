@@ -24,7 +24,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
-import os, shutil, fnmatch, subprocess, platform, itertools
+import os, shutil, fnmatch, subprocess, platform, itertools, datetime, sys, csv, re
 from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
 from argparse import ArgumentParser
@@ -626,6 +626,143 @@ def olc(args):
     mx.run_java(['-ea', '-esa', '-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
 
 
+def profile(args):
+    a=1
+
+
+def composeprofileroutput(args):
+    """
+    composes profiler final output from numa maps and profiled objects
+
+    This is a post-execution profiler operation aiming to:
+        a) collect profiler's intermediate output (maxine's log), and numa map files
+        b) place them in a new directory
+        c) produce profiler final output by composing the intermediate output with map files
+
+    Final profiler out is a .csv file with the following format:
+        <ObjId>;<ObjType>;<ObjSize>;<NumaNode>
+
+    This file can be used to produce the plots and pivot tables
+
+    """
+
+    # create a new directory under ProfilingResults
+    folder = str(datetime.datetime.now().strftime('%Y%m%d_%H%M'))
+    src_dir = os.getenv('MAXINE_HOME', '')
+    dst_dir = src_dir+'/ProfilingResults/'+folder
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
+    print 'Results path = $MAXINE_HOME/ProfilingResults/'+folder
+
+    # move numa map files
+    numamaps_dst_dir = dst_dir+'/numa_maps/'
+    print 'Moving numa maps to', folder+'/numa_maps...'
+    if not os.path.exists(numamaps_dst_dir):
+        os.makedirs(numamaps_dst_dir)
+    numa_maps_files = []
+    files = os.listdir(os.getenv('MAXINE_HOME', ''))
+    for f in files:
+        if f.endswith('.csv'):
+            numa_maps_files.append(f)
+            #shutil.move(f, dst_dir)
+            shutil.copy(f, numamaps_dst_dir)
+    numa_maps_files.sort()
+    #print numa_maps_files
+
+    # move maxine log output
+    maxinelog = os.getenv('MAXINE_LOG_FILE')
+    print 'Moving ' + os.path.basename(maxinelog) + '...'
+    #print maxinelog
+    if not maxinelog:
+        print 'Profiler Intermediate Output not found. You need to run \'mx <run profiler extension>\' first'
+        sys.exit()
+    new = shutil.copy(maxinelog, dst_dir)
+
+    #produce intermediate output csv files from maxine's log output
+    intermediate_dst_dir = dst_dir+'/intermediate/'
+    print 'Generating intermediate output from ' + os.path.basename(maxinelog) + '...'
+    if not os.path.exists(intermediate_dst_dir):
+        os.makedirs(intermediate_dst_dir)
+    profilerintermediateout = dst_dir + '/' + os.path.basename(maxinelog)
+    intermediate_files = []
+    intermediate = open(profilerintermediateout)
+    for line in intermediate.readlines():
+        searchObj = re.match( r'==== Profiling Cycle ([0-9]+) Start ====', line)
+        if searchObj:
+            cycle = searchObj.group(1)
+            newcsv = 'cycle_'+cycle
+            if (int(cycle) == 0):
+                f = intermediate_dst_dir + '/' + newcsv
+                file = open(f, 'w')
+                intermediate_files.append(f)
+            elif(int(cycle)>0):
+                file.close()
+                f = intermediate_dst_dir + '/' + newcsv
+                file = open(intermediate_dst_dir + '/' + newcsv, 'w')
+                intermediate_files.append(f)
+        else:
+            file.write(line)
+    file.close()
+
+    # number of profiling cycles
+    cycles = int(cycle)+1
+
+    # compose
+    print 'Composing Intermediate Profiler Output with Numa Maps:'
+    for cycle in range(0,cycles):
+        if (cycle > 0):
+            finaloutfile.close()
+
+        notfound = 0
+        total = 0
+
+        # create final output csv
+        filename = dst_dir+'/'+'final_output_cycle_'+str(cycle)+'.csv'
+        finaloutfile = open(filename,'w')
+
+        print '=>[' + str(cycle+1) + '/' + str(cycles) + '] to ' + os.path.basename(filename) + '...'
+
+        # load intermediate
+        if (cycle > 0):
+            inter.close()
+        with open(intermediate_files[cycle], 'r') as inter:
+            interreader = csv.reader(inter, delimiter=';')
+
+            # iterate for each object
+            for row in interreader:
+                objid = row[0]
+                objtype = row[1]
+                objsize = row[2]
+                numanode = -9
+
+                addr = int(row[3])
+                total += 1
+
+                # for each obj's addr iterate in numa maps to find the coresponding numa node
+                found = False
+                if (cycle > 0):
+                    numamap.close()
+                with open(numa_maps_files[cycle] , 'r') as numamap:
+                    numamapreader = csv.reader(numamap, delimiter=';')
+                    for mapsrow in numamapreader:
+                        start = int(mapsrow[0], 10)
+                        end = int (mapsrow[1], 10)
+                        #debug
+                        #print 'addr=', addr, '['+str(start)+'-'+str(end)+']', addr >= start and addr <= end
+                        if addr >= start and addr <= end:
+                            numanode = mapsrow[2]
+                            found = True
+                            #print 'found'
+                            break
+                    if not found:
+                        notfound += 1
+
+                    finaloutfile.write(objid+';'+objtype+';'+objsize+';'+str(numanode)+'\n')
+        print '(', notfound, 'out of', total, 'addreses not found )'
+
+
+
+
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
 
@@ -834,6 +971,7 @@ def mx_init(suite):
         'nm': [nm, '[options] [boot image file]', _vm_image],
         'objecttree': [objecttree, '[options]'],
         'olc': [olc, '[options] patterns...', _patternHelp],
+        'composeprofileroutput': [composeprofileroutput, '[options]'],
         'site': [site, '[options]'],
         't1x': [t1x, '[options] patterns...'],
         't1xgen': [t1xgen, ''],
