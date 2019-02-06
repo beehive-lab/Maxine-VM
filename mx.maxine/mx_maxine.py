@@ -24,7 +24,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
-import os, shutil, fnmatch, subprocess, platform, itertools, datetime, sys, csv, re
+import os, shutil, fnmatch, subprocess, platform, itertools, datetime, sys, csv, re, multiprocessing
 from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
 from argparse import ArgumentParser
@@ -626,10 +626,6 @@ def olc(args):
     mx.run_java(['-ea', '-esa', '-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
 
 
-def profile(args):
-    a=1
-
-
 def composeprofileroutput(args):
     """
     composes profiler final output from numa maps and profiled objects
@@ -704,63 +700,75 @@ def composeprofileroutput(args):
             file.write(line)
     file.close()
 
-    # number of profiling cycles
+    # Number of profiling cycles
     cycles = int(cycle)+1
 
-    # compose
-    print 'Composing Intermediate Profiler Output with Numa Maps:'
-    for cycle in range(0,cycles):
-        if (cycle > 0):
-            finaloutfile.close()
+    print 'Composing Intermediate Profiler Output with Numa Maps exploiting ' + str(cycles) + ' threads'
 
-        notfound = 0
-        total = 0
+    # Create a list of jobs and then iterate through
+    # the number of processes appending each process to
+    # the job list
+    jobs = []
 
-        # create final output csv
-        filename = dst_dir+'/'+'final_output_cycle_'+str(cycle)+'.csv'
-        finaloutfile = open(filename,'w')
+    for i in range(0, cycles):
+        process = multiprocessing.Process(target=compose,
+                                          args=(dst_dir, cycles, i, intermediate_files[i], numa_maps_files[i]))
+        jobs.append(process)
 
-        print '=>[' + str(cycle+1) + '/' + str(cycles) + '] to ' + os.path.basename(filename) + '...'
+    # Start the processes
+    for j in jobs:
+        j.start()
 
-        # load intermediate
-        if (cycle > 0):
-            inter.close()
-        with open(intermediate_files[cycle], 'r') as inter:
-            interreader = csv.reader(inter, delimiter=';')
+    # Ensure all of the processes have finished
+    for j in jobs:
+        j.join()
 
-            # iterate for each object
-            for row in interreader:
-                objid = row[0]
-                objtype = row[1]
-                objsize = row[2]
-                numanode = -9
-
-                addr = int(row[3])
-                total += 1
-
-                # for each obj's addr iterate in numa maps to find the coresponding numa node
-                found = False
-                if (cycle > 0):
-                    numamap.close()
-                with open(numa_maps_files[cycle] , 'r') as numamap:
-                    numamapreader = csv.reader(numamap, delimiter=';')
-                    for mapsrow in numamapreader:
-                        start = int(mapsrow[0], 10)
-                        end = int (mapsrow[1], 10)
-                        #debug
-                        #print 'addr=', addr, '['+str(start)+'-'+str(end)+']', addr >= start and addr <= end
-                        if addr >= start and addr <= end:
-                            numanode = mapsrow[2]
-                            found = True
-                            #print 'found'
-                            break
-                    if not found:
-                        notfound += 1
-
-                    finaloutfile.write(objid+';'+objtype+';'+objsize+';'+str(numanode)+'\n')
-        print '(', notfound, 'out of', total, 'addreses not found )'
+    print "Profiler Output Composing Complete!"
 
 
+def compose(dst_dir, cycles, cycle, intermediate_file, numa_maps_file):
+    notfound = 0
+    total = 0
+
+    # create final output csv
+    filename = dst_dir+'/'+'final_output_cycle_'+str(cycle)+'.csv'
+    finaloutfile = open(filename,'w')
+
+    # load intermediate
+    with open(intermediate_file, 'r') as inter:
+        interreader = csv.reader(inter, delimiter=';')
+
+        # iterate for each object
+        for row in interreader:
+            objid = row[0]
+            objtype = row[1]
+            objsize = row[2]
+            numanode = -9
+
+            addr = int(row[3])
+            total += 1
+
+            # for each obj's addr iterate in numa maps to find the coresponding numa node
+            found = False
+            with open(numa_maps_file , 'r') as numamap:
+                numamapreader = csv.reader(numamap, delimiter=';')
+                for mapsrow in numamapreader:
+                    start = int(mapsrow[0], 10)
+                    end = int (mapsrow[1], 10)
+                    #debug
+                    #print 'addr=', addr, '['+str(start)+'-'+str(end)+']', addr >= start and addr <= end
+                    if addr >= start and addr <= end:
+                        numanode = mapsrow[2]
+                        found = True
+                        #print 'found'
+                        break
+                if not found:
+                    notfound += 1
+
+                finaloutfile.write(objid+';'+objtype+';'+objsize+';'+str(numanode)+'\n')
+
+    print '=> Profiler Output for Cycle ' + str(cycle+1) + ' completed to ' + os.path.basename(filename)
+    print '(', notfound, 'out of', total, 'addreses not found )'
 
 
 def site(args):
