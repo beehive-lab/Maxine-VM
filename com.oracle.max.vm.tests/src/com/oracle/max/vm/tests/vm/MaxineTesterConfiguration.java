@@ -179,6 +179,8 @@ public class MaxineTesterConfiguration {
         junit("com.sun.max.asm.test.sparc.RawDisassemblerTest", FAIL_ALL);
         junit("com.sun.max.asm.test.sparc.RawExternalTest", FAIL_ALL);
 
+        // temporary ClassLoader test exclusion
+        jtt(jtt.lang.JDK_ClassLoaders01.class, FAIL_ALL);
         jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class, FAIL_ALL);
         if (Platform.target().arch.is32bit()) {
