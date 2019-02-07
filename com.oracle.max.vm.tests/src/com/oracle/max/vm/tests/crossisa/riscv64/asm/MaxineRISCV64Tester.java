@@ -164,6 +164,8 @@ public class MaxineRISCV64Tester extends CrossISATester {
      */
     @Override
     protected float parseFloatRegister(String line) {
+        //TODO For some reason GDB will either show the wrong number of -nan instead of the actual floating value
+        // eg: 5.4189638607169796e-315, -nan(0xfffff40000000)
         throw FatalError.unimplemented();
     }
 
@@ -185,6 +187,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
     public void runSimulation() throws Exception {
         super.runSimulation();
         parseLongRegisters("ra ", "pc");
+        //parseFloatRegisters("f0", "f31");
     }
 
     public static void main(String[] args) throws Exception {

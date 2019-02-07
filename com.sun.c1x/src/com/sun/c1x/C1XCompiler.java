@@ -36,6 +36,7 @@ import com.sun.cri.xir.RiXirGenerator;
 import com.sun.cri.xir.XirTemplate;
 import com.sun.max.platform.*;
 
+import java.lang.management.PlatformManagedObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,6 +163,9 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             return true;
         }
         if (Platform.target().arch.isAarch64() && (id == CompilerStub.Id.fneg || id == CompilerStub.Id.dneg)) {
+            return true;
+        }
+        if (Platform.target().arch.isRISCV64() && (id == CompilerStub.Id.fneg || id == CompilerStub.Id.dneg)) {
             return true;
         }
 
