@@ -165,20 +165,9 @@ public class MaxineRISCV64Tester extends CrossISATester {
      */
     @Override
     protected float parseFloatRegister(String line) {
-        try {
-            if (line.contains("nan")) {
-                String number = line.split("\\s+-nan\\(0xfffff")[1];
-                number = number.split("\\)")[0];
-                return Float.intBitsToFloat(Integer.parseUnsignedInt(number, 16));
-            } else {
-                double number = Double.parseDouble(line.split("\\s+")[1]);
-                return Float.intBitsToFloat((int) Double.doubleToRawLongBits(number));
-            }
-        } catch (Exception e) {
-            System.out.println("Float: GDB output line could not be parse: " + line);
-        }
-
-        return 0;
+        //TODO For some reason GDB will either show the wrong number of -nan instead of the actual floating value
+        // eg: 5.4189638607169796e-315, -nan(0xfffff40000000)
+        throw FatalError.unimplemented();
     }
 
     /**
@@ -212,8 +201,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
     public void runSimulation() throws Exception {
         super.runSimulation();
         parseLongRegisters("ra ", "pc");
-        parseFloatRegisters("ft0 ", "ustatus");
-        parseDoubleRegisters("ft0 ", "ustatus");
+        //parseFloatRegisters("f0", "f31");
     }
 
     public static void main(String[] args) throws Exception {

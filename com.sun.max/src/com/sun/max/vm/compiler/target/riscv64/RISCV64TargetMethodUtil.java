@@ -33,7 +33,8 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.StackFrameCursor;
 import com.sun.max.vm.stack.StackFrameWalker;
 
-import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.*;
+import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.CALL_BRANCH_OFFSET;
+import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.isBimmInstruction;
 
 public final class RISCV64TargetMethodUtil {
 
@@ -234,14 +235,13 @@ public final class RISCV64TargetMethodUtil {
             System.out.println("code[] " + i + " " + String.format("%8s", Integer.toBinaryString(code[i] & 0xFF)).replace(' ', '0'));
         }
 
-        return 0;
-    }
-
-    private static void writeInstruction(byte[] code, int offset, int instruction) {
-        code[offset + 0] = (byte) (instruction       & 0xFF);
-        code[offset + 1] = (byte) (instruction >> 8  & 0xFF);
-        code[offset + 2] = (byte) (instruction >> 16 & 0xFF);
-        code[offset + 3] = (byte) (instruction >> 24 & 0xFF);
+        int oldDisplacement = RISCV64MacroAssembler.bImmExtractDisplacement(instruction);
+        instruction = RISCV64MacroAssembler.bImmPatch(instruction, displacement);
+        code[callOffset + 0] = (byte) (instruction       & 0xFF);
+        code[callOffset + 1] = (byte) (instruction >> 8  & 0xFF);
+        code[callOffset + 2] = (byte) (instruction >> 16 & 0xFF);
+        code[callOffset + 3] = (byte) (instruction >> 24 & 0xFF);
+        return oldDisplacement;
     }
 
     /**

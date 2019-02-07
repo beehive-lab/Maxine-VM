@@ -989,12 +989,12 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fmvxd(CiRegister rd, CiRegister rs) {
-        assert rd.isGeneral() && rs.isFpu();
+        assert rd.isGeneral() || rs.isFpu();
         itype(RV32D, rd, 0, rs, 0b111000100000);
     }
 
     public void fmvdx(CiRegister rd, CiRegister rs) {
-        assert rd.isFpu() && rs.isGeneral();
+        assert rd.isFpu() || rs.isGeneral();
         itype(RV32D, rd, 0, rs, 0b111100100000);
     }
 
