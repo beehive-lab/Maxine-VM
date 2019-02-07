@@ -29,12 +29,72 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 15;
     public static final int INSTRUCTION_SIZE = 4;
 
+    public static final int CALL_TRAMPOLINE_INSTRUCTIONS = 5;
+    public static final int RIP_CALL_INSTRUCTION_SIZE = ((2 * CALL_TRAMPOLINE_INSTRUCTIONS) + 1) * INSTRUCTION_SIZE;
+    public static final int CALL_TRAMPOLINE1_OFFSET = INSTRUCTION_SIZE;
+    public static final int CALL_TRAMPOLINE2_OFFSET = INSTRUCTION_SIZE * (CALL_TRAMPOLINE_INSTRUCTIONS + 1);
+    public static final int CALL_BRANCH_OFFSET = RIP_CALL_INSTRUCTION_SIZE - INSTRUCTION_SIZE;
+
+    private static final int B_IMM_OPCODE = 0b1101111;
+    private static  final int B_IMM_ADDRESS_MASK = 0xFFFFF000;
+
     public RISCV64MacroAssembler(CiTarget target) {
         super(target);
     }
 
     public RISCV64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
+    }
+
+    /**
+     * Checks if the given branch instruction is a branch immediate or branch register.
+     *
+     * @param instruction the machine code of the original instruction
+     * @return the instruction type
+     */
+    public static boolean isBimmInstruction(int instruction) {
+        return (instruction & NumUtil.getNbitNumberInt(7)) == B_IMM_OPCODE;
+    }
+
+    /**
+     * Return the displacement of the target of a branch immediate instruction.
+     * @param instruction
+     * @return
+     */
+    public static int bImmExtractDisplacement(int instruction) {
+        assert (instruction & NumUtil.getNbitNumberInt(7)) == B_IMM_OPCODE :
+                "Not a branch immediat instruction: 0x" + Integer.toHexString(instruction);
+        int displacement = (((instruction >>> 21) & 0x3FF) << 1) | (((instruction >>> 20) & 1) << 11) |
+                            (((instruction >>> 12) & 0xFF) << 12) | (((instruction >>> 31) & 1) << 20);
+
+        // check the sign bit
+        if (((1 << 20) & displacement) == 0) {
+            return displacement >>> 1;
+        }
+        // negative number -- sign extend.
+        return (displacement >>> 1) | (0xFFF << 20);
+    }
+
+    /**
+     * Patch the address part of a branch immediate instruction. Returns the
+     * patched instruction.
+     * @param oldInstruction -- the instruction to be patched
+     * @param displacement -- the targets displacement
+     * @return
+     */
+    public static int bImmPatch(int oldInstruction, int displacement) {
+        assert (oldInstruction & NumUtil.getNbitNumberInt(7)) == B_IMM_OPCODE :
+                "Not a branch immediat instruction: 0x" + Integer.toHexString(oldInstruction);
+        assert NumUtil.isSignedNbit(19, displacement)
+                : "Immediate has to be 19 bit signed number: " + Integer.toHexString(displacement);
+
+        int instruction = oldInstruction & ~B_IMM_ADDRESS_MASK;;
+        instruction |= ((displacement >> 20) & 1) << 31; // This places bit 20 of imm32 in bit 31 of instruction
+        instruction |= ((displacement >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm32 in bits 30:21 of instruction
+        instruction |= ((displacement >> 11) & 1) << 20; // This places bit 11 of imm32 in bit20 of instruction
+        instruction |= ((displacement >> 12) & 0xFF) << 12; // This places bits 19:12 of imm32 in bits 19:12 of instruction
+
+        return instruction;
     }
 
     @Override
@@ -386,32 +446,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
-    public void fpush(CiRegister... registers) {
-        fpush(getRegisterList(registers));
-    }
-
-    public void fpush(int registerList) {
-        for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
-            if (registerList % 2 == 1) {
-                fstr(64, RISCV64.fpuRegisters[regNumber], RISCV64Address.createPreIndexedImmediateAddress(RISCV64.sp, -16));
-            }
-
-            registerList = registerList >> 1;
-        }
-    }
-
-    public void fpop(CiRegister... registers) {
-        fpop(getRegisterList(registers));
-    }
-
-    public void fpop(int registerList) {
-        for (int regNumber = Integer.SIZE - 1; regNumber >= 0; regNumber--) {
-            if ((registerList >> regNumber) % 2 == 1) {
-                fldr(64, RISCV64.fpuRegisters[regNumber], RISCV64Address.createPostIndexedImmediateAddress(RISCV64.sp, 16));
-            }
-        }
-    }
-
     public void pop(int size, CiRegister reg) {
         assert size == 32 || size == 64 : "Unimplemented pop for size: " + size;
         if (size == 64) {
@@ -422,15 +456,45 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         addi(RISCV64.sp, RISCV64.sp, 16);
     }
 
-    public void push(int size, CiRegister... registers) {
+    public void fpush(int size, CiRegister reg) {
+        assert size == 32 || size == 64 : "Unimplemented push for size: " + size;
+        subi(RISCV64.sp, RISCV64.sp, 16);
+        fstr(size, RISCV64.sp, reg, 0);
+    }
+
+    public void fpop(int size, CiRegister reg) {
+        assert size == 32 || size == 64 : "Unimplemented pop for size: " + size;
+        fldr(size, reg, RISCV64.sp, 0);
+        addi(RISCV64.sp, RISCV64.sp, 16);
+    }
+
+    public void fpush(int size, CiRegister... registers) {
         for (CiRegister register : registers) {
-            push(size, register);
+            fpush(size, register);
         }
     }
 
-    public void pop(int size, CiRegister... registers) {
+    public void fpop(int size, CiRegister... registers) {
         for (CiRegister register : registers) {
-            pop(size, register);
+            fpop(size, register);
+        }
+    }
+
+    public void fpush(int size, int registerList) {
+        for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
+            if (registerList % 2 == 1) {
+                fpush(size, RISCV64.fpuRegisters[regNumber]);
+            }
+
+            registerList = registerList >> 1;
+        }
+    }
+
+    public void fpop(int size, int registerList) {
+        for (int regNumber = Integer.SIZE - 1; regNumber >= 0; regNumber--) {
+            if ((registerList >> regNumber) % 2 == 1) {
+                fpop(size, RISCV64.fpuRegisters[regNumber]);
+            }
         }
     }
 
@@ -452,12 +516,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
-    private int getRegisterList(CiRegister... registers) {
-        int regList = 0;
-        for (CiRegister reg : registers) {
-            regList |= 1 << reg.getEncoding();
+    public void push(int size, CiRegister... registers) {
+        for (CiRegister register : registers) {
+            push(size, register);
         }
-        return regList;
+    }
+
+    public void pop(int size, CiRegister... registers) {
+        for (CiRegister register : registers) {
+            pop(size, register);
+        }
     }
 
     public void membar(int barriers) {
@@ -926,6 +994,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case IMMEDIATE_UNSCALED:
                 ldr(srcSize, rt, a.getBase(), a.getImmediateRaw());
                 break;
+            case IMMEDIATE_PRE_INDEXED: {
+                addi(a.getBase(), a.getBase(), a.getImmediate());
+                ldr(srcSize, a.getBase(), rt, 0);
+                break;
+            }
+            case IMMEDIATE_POST_INDEXED: {
+                ldr(srcSize, a.getBase(), rt, 0);
+                addi(a.getBase(), a.getBase(), a.getImmediate());
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unimplemented");
         }
@@ -939,6 +1017,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case IMMEDIATE_UNSCALED:
                 fldr(srcSize, rt, a.getBase(), a.getImmediateRaw());
                 break;
+            case IMMEDIATE_PRE_INDEXED: {
+                addi(a.getBase(), a.getBase(), a.getImmediate());
+                fldr(srcSize, a.getBase(), rt, 0);
+                break;
+            }
+            case IMMEDIATE_POST_INDEXED: {
+                fldr(srcSize, a.getBase(), rt, 0);
+                addi(a.getBase(), a.getBase(), a.getImmediate());
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unimplemented");
         }
@@ -952,6 +1040,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case IMMEDIATE_UNSCALED:
                 str(srcSize, a.getBase(), rt, a.getImmediateRaw());
                 break;
+            case IMMEDIATE_PRE_INDEXED: {
+                addi(a.getBase(), a.getBase(), a.getImmediate());
+                str(srcSize, a.getBase(), rt, 0);
+                break;
+            }
+            case IMMEDIATE_POST_INDEXED: {
+                str(srcSize, a.getBase(), rt, 0);
+                addi(a.getBase(), a.getBase(), a.getImmediate());
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unimplemented");
         }
@@ -965,6 +1063,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case IMMEDIATE_UNSCALED:
                 fstr(srcSize, a.getBase(), rt, a.getImmediateRaw());
                 break;
+            case IMMEDIATE_PRE_INDEXED: {
+                addi(a.getBase(), a.getBase(), a.getImmediate());
+                fstr(srcSize, a.getBase(), rt, 0);
+                break;
+            }
+            case IMMEDIATE_POST_INDEXED: {
+                fstr(srcSize, a.getBase(), rt, 0);
+                addi(a.getBase(), a.getBase(), a.getImmediate());
+                break;
+            }
             default:
                 throw new UnsupportedOperationException("Unimplemented");
         }
@@ -1030,11 +1138,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
 
         if (addr.index.isLegal()) {
-            throw new UnsupportedOperationException("Unimplemented");
+            mov32BitConstant(scratchRegister, scale.log2);
+            sll(scratchRegister, index, scratchRegister);
+            add(scratchRegister, base, scratchRegister);
+            base = scratchRegister;
         }
 
         if (disp != 0) {
-            if (NumUtil.isSignedNbit(11, disp)) {
+            if (NumUtil.isSignedNbit(12, disp)) {
                 return RISCV64Address.createUnscaledImmediateAddress(base, disp);
             } else {
                 throw new UnsupportedOperationException("Offset is larger than 12 bit signed "

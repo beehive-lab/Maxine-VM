@@ -221,6 +221,11 @@ public class RISCV64 extends CiArchitecture {
         return true;
     }
 
+    @Override
+    public boolean twoOperandMode() {
+        return true;
+    }
+
     public RISCV64() {
         super("RISCV64",                        //architecture name
               8,                                //word size (8 bytes)
@@ -229,7 +234,7 @@ public class RISCV64 extends CiArchitecture {
               0, /*LOAD_STORE | STORE_STORE*/   //implicitMemoryBarriers (no implicit barriers)
               -1,                               //nativeCallDisplacementOffset (ignore)
               32,                               //registerReferenceMapBitCount
-              8);                               //returnAddressSize (8 bytes)
+              16);                               //returnAddressSize (16 bytes for alignment)
     }
 
     /**
