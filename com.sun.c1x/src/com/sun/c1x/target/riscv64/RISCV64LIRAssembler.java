@@ -56,7 +56,7 @@ import static com.sun.cri.ci.CiValue.IllegalValue;
 public final class RISCV64LIRAssembler extends LIRAssembler {
 
     private static final Object[] NO_PARAMS = new Object[0];
-    private static final CiRegister SHIFTCount = RISCV64.s11;
+    private static final CiRegister SHIFTCount = RISCV64.a2;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
 
@@ -773,6 +773,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.fmul(size, dest.asRegister(), lreg, rreg);
                         break;
                     case Div:
+                        System.out.println("\"fdiv\" = " + "fdiv");
                         masm.fdiv(size, dest.asRegister(), lreg, rreg);
                         break;
                     case Rem:
@@ -1816,7 +1817,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         masm.mov(scratchRegister, 0xC1C1C1C1_C1C1C1C1L);
                         for (int i = 0; i < frameSize / (2 * Word.size()); ++i) {
-                            masm.str(Word.width(), scratchRegister, RISCV64Address.createPreIndexedImmediateAddress(RISCV64.sp, -2 * Word.size()));
+                            masm.str(Word.width(), scratchRegister, RISCV64Address.createPreIndexedImmediateAddress(RISCV64.sp, -Word.size()));
                             masm.str(Word.width(), scratchRegister, RISCV64Address.createPreIndexedImmediateAddress(RISCV64.sp, -Word.size()));
                         }
                     } else {
@@ -1856,7 +1857,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     if (value.asRegister().isCpu()) {
                         masm.push(64, value.asRegister());
                     } else {
-                        masm.fpush(value.asRegister());
+                        masm.fpush(64, value.asRegister());
                     }
                     break;
                 }
@@ -1866,7 +1867,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         if (result.asRegister().isCpu()) {
                             masm.pop(64, result.asRegister());
                         } else {
-                            masm.fpop(result.asRegister());
+                            masm.fpop(64, result.asRegister());
                         }
                     } else {
                         masm.pop(64, scratchRegister);

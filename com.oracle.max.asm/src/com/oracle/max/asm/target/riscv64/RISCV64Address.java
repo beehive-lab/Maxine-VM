@@ -191,7 +191,7 @@ public final class RISCV64Address extends CiAddress {
                 assert !base.equals(zr);
                 assert offset.equals(zr);
                 assert extendType == null;
-                assert NumUtil.isSignedNbit(9, immediate);
+                assert NumUtil.isSignedNbit(12, immediate);
                 break;
             case BASE_REGISTER_ONLY:
                 assert !base.equals(zr);
