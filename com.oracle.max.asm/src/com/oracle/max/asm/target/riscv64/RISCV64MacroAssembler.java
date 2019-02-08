@@ -88,7 +88,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         assert NumUtil.isSignedNbit(19, displacement)
                 : "Immediate has to be 19 bit signed number: " + Integer.toHexString(displacement);
 
-        int instruction = oldInstruction & ~B_IMM_ADDRESS_MASK;;
+        int instruction = oldInstruction & ~B_IMM_ADDRESS_MASK;
         instruction |= ((displacement >> 20) & 1) << 31; // This places bit 20 of imm32 in bit 31 of instruction
         instruction |= ((displacement >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm32 in bits 30:21 of instruction
         instruction |= ((displacement >> 11) & 1) << 20; // This places bit 11 of imm32 in bit20 of instruction
