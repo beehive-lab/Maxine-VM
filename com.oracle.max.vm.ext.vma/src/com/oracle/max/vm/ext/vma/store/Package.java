@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,7 +34,7 @@ public class Package extends BootImagePackage {
     public boolean isPartOfMaxineVM(VMConfiguration vmConfig) {
         if (vmConfig.runPackage.name().equals("com.oracle.max.vm.ext.vma.run.java")) {
             String handlerClassName = VMAJavaRunScheme.getHandlerClassName();
-            return handlerClassName == null ? false : handlerClassName.contains(this.getClass().getPackage().getName());
+            return handlerClassName != null && handlerClassName.contains(this.getClass().getPackage().getName());
         } else {
             return false;
         }

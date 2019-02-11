@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -185,7 +187,7 @@ public final class JDK_java_lang_Thread {
     @SUBSTITUTE
     private boolean isInterrupted(boolean clearInterrupted) throws InterruptedException {
         VmThread vmThread = thisVMThread();
-        return vmThread == null ? false : vmThread.isInterrupted(clearInterrupted);
+        return vmThread != null && vmThread.isInterrupted(clearInterrupted);
     }
 
     /**
