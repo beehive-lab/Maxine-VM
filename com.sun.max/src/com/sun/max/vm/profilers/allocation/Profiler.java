@@ -85,8 +85,8 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Resolve createNumaMaps Native Method.");
         }
-        // A call to force method's resolution when allocation is still enabled.
-        utilsObject.createNumaMaps(0);
+
+        resolveNativeMethods();
 
         profilingCycle = 0;
         if (VerboseAllocationProfiler) {
@@ -96,6 +96,16 @@ public class Profiler {
             Log.print(getProfilingCycle());
             Log.println("]");
         }
+    }
+
+    /**
+     * This method forces each native method's resolution.
+     * It is used during profiler's initialization, when allocation is still enabled.
+     */
+    public void resolveNativeMethods() {
+
+        //all methods that will be called when allocation is disabled need to have already been resolved.
+        utilsObject.findNode(0L);
     }
 
     public int getProfilingCycle() {
@@ -177,6 +187,14 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
+    public void findNumaNodes() {
+
+        for (int i = 0; i < objects.currentIndex; i++) {
+            int node = utilsObject.findNode(objects.address[i]);
+            objects.setNodeOf(i, node);
+        }
+    }
+
     /**
      * This method is called by ProfilerGCCallbacks in every pre-gc callback phase.
      * We create the numa virtual memory map using the createNumaMap native function.
@@ -191,7 +209,8 @@ public class Profiler {
             Log.println("(verbose msg): Create NUMA Maps. [pre-GC phase]");
         }
 
-        utilsObject.createNumaMaps(getProfilingCycle());
+        //utilsObject.createNumaMaps(getProfilingCycle());
+        findNumaNodes();
 
     }
 

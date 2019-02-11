@@ -43,6 +43,7 @@ public class ProfilerBuffer {
     public String[] type;
     public int[] size;
     public long[] address;
+    public int[] node;
 
     public int currentIndex;
 
@@ -51,12 +52,14 @@ public class ProfilerBuffer {
         type = new String[SIZE];
         size = new int[SIZE];
         address = new long[SIZE];
+        node = new int[SIZE];
 
         for (int i = 0; i < SIZE; i++) {
             index[i] = 0;
             type[i] = "null";
             size[i] = 0;
             address[i] = 0;
+            node[i] = -1;
         }
 
         currentIndex = 0;
@@ -76,6 +79,10 @@ public class ProfilerBuffer {
         currentIndex++;
     }
 
+    public void setNodeOf(int index, int node) {
+        this.node[index] = node;
+    }
+
     public void dumpToStdOut(int cycle) {
         Log.print("==== Profiling Cycle ");
         Log.print(cycle);
@@ -86,7 +93,9 @@ public class ProfilerBuffer {
             Log.print(type[i]);
             Log.print(size[i]);
             Log.print(";");
-            Log.println(address[i]);
+            Log.print(address[i]);
+            Log.print(";");
+            Log.println(node[i]);
         }
 
         if (Profiler.VerboseAllocationProfiler) {
