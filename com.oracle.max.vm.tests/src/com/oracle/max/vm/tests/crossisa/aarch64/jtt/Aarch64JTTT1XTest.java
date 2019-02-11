@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -167,7 +167,7 @@ public class Aarch64JTTT1XTest {
                 RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
 
             }
-            if (initialised == false) {
+            if (!initialised) {
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);
