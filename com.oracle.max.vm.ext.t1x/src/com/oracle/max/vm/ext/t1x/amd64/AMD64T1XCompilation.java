@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
@@ -694,7 +694,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         } else {
             do_safepointAtBackwardBranch(bci);
         }
-        asm.jmp(relativeOffset, isForwardBranch ? true : false);
+        asm.jmp(relativeOffset, isForwardBranch);
         assert !isForwardBranch || bciToPos[targetBCI] == 0;
 
         // Start of "fall through" code
@@ -732,7 +732,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         } else {
             do_safepointAtBackwardBranch(bci);
         }
-        asm.jmp(relativeOffset, isForwardBranch ? true : false);
+        asm.jmp(relativeOffset, isForwardBranch);
         assert !isForwardBranch || bciToPos[targetBCI] == 0;
 
         if (isConditionalBranch) {

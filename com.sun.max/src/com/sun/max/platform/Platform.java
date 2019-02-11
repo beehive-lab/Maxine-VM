@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -457,7 +457,7 @@ public final class Platform {
     private static boolean hasIDiv() {
         Prototype.loadHostedLibrary();
         final int hasIDiv = getInteger(IDIV_PROPERTY) == null ? nativeHasIDiv() : getInteger(IDIV_PROPERTY);
-        return hasIDiv > 0 ? true : false;
+        return hasIDiv > 0;
     }
 
     private static native int nativeHasIDiv();

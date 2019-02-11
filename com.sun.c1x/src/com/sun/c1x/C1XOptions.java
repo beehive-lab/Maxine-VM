@@ -175,14 +175,14 @@ public final class C1XOptions {
         if (value == null || value.isEmpty()) {
             PrintCFGToFile = false;
         } else {
-            PrintCFGToFile = Integer.parseInt(value) == 1 ? true : false;
+            PrintCFGToFile = Integer.parseInt(value) == 1;
             OmmitAssembly = true;
         }
         value = System.getenv("PRINT_HIR");
         if (value == null || value.isEmpty()) {
             PrintHIR = false;
         } else {
-            PrintHIR = Integer.parseInt(value) == 1 ? true : false;
+            PrintHIR = Integer.parseInt(value) == 1;
         }
         value = System.getenv("PRINT_FILTER");
         if (value == null || value.isEmpty()) {
