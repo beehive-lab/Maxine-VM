@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -90,7 +92,7 @@ public class JVMTIHeapFunctions {
                  * we check the field in classActor directly and observe that such
                  * an object cannot have been tagged, otherwise its class mirror would be set.
                  */
-                Class objectClass = proxyClassActor.javaClass == null ? null : proxyClassActor.javaClass;
+                Class objectClass = proxyClassActor.javaClass;
 
                 if (klass != null && objectClass != klass)  {
                     return true;

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -56,8 +58,8 @@ public class MaxSlowpathRewriterPhase extends Phase {
                 ValueNode[] args = new ValueNode[callTarget.arguments().size()];
                 ForeignCallNode foreignCallNode = new ForeignCallNode(runtime, call, callTarget.arguments().toArray(args));
                 SNIPPET_SLOWPATH runTimeEntry = call.getMethodActor().getAnnotation(SNIPPET_SLOWPATH.class);
-                boolean exactType = runTimeEntry == null ? false : runTimeEntry.exactType();
-                boolean nonNull = runTimeEntry == null ? false : runTimeEntry.nonNull();
+                boolean exactType = runTimeEntry != null && runTimeEntry.exactType();
+                boolean nonNull = runTimeEntry != null && runTimeEntry.nonNull();
                 foreignCallNode.setStamp(stampFor(runtime.lookupJavaType(call.getResultType()), exactType, nonNull));
                 invoke.intrinsify(callTarget.graph().add(foreignCallNode));
             }

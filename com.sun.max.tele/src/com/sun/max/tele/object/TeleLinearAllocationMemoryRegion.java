@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -142,7 +144,7 @@ public class TeleLinearAllocationMemoryRegion extends TeleMemoryRegion {
      */
     @Override
     public boolean containsInAllocated(Address address) {
-        return isAllocated() ? address.greaterEqual(getRegionStart()) && address.lessThan(markCache) : false;
+        return isAllocated() && (address.greaterEqual(getRegionStart()) && address.lessThan(markCache));
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -320,12 +320,12 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
                     throw ProgramError.unexpected("refKind=" + refKind);
                 }
                 Trace.line(1, "Resolved => " + ma);
-                init_method_MemberName(o, ma, ma.canBeStaticallyBound() ? false : doDispatch, clazz);
+                init_method_MemberName(o, ma, !ma.canBeStaticallyBound() && doDispatch, clazz);
                 break;
             case IS_CONSTRUCTOR:
                 Trace.line(1, "Got constructor.");
                 ma = MaxMethodHandles.resolveMethod(classActor, name, type, klass, true);
-                init_method_MemberName(o, ma, ma.canBeStaticallyBound() ? false : doDispatch, clazz);
+                init_method_MemberName(o, ma, !ma.canBeStaticallyBound() && doDispatch, clazz);
                 break;
             case IS_FIELD:
                 Trace.line(1, "Got field.");

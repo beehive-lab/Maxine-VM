@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -2159,13 +2159,13 @@ public class Stubs {
                     case Char:
                     case Int:
                     case Object:
-                        assert args[4].isRegister() == false;
+                        assert !args[4].isRegister();
                         arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.str(ConditionFlag.Always, returnRegister, asm.scratchRegister, 0);
                         break;
                     case Long:
-                        assert args[4].isRegister() == false;
+                        assert !args[4].isRegister();
                         arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.strd(ConditionFlag.Always, returnRegister, asm.scratchRegister, 0);
@@ -2551,7 +2551,7 @@ public class Stubs {
                     case Object:
                     case Float:
                         if (kind != CiKind.Float) {
-                            assert args[4].isRegister() == false;
+                            assert !args[4].isRegister();
                         }
                         ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
                         assert ss.index() == 1 : "compiler stub return value slot index has changed?";
@@ -2572,7 +2572,7 @@ public class Stubs {
                     case Long:
                     case Double:
                         if (kind != CiKind.Double) {
-                            assert args[4].isRegister() == false;
+                            assert !args[4].isRegister();
                         }
                         ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
                         src = new CiAddress(kind, ARMV7.RSP, cfo + ss.index() * 4);

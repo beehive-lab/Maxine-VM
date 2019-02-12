@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -1612,7 +1612,7 @@ public final class ClassfileReader {
     private static AgentTransformResult checkAgentTransform(String name, ClassLoader classLoader, byte[] bytes, ProtectionDomain protectionDomain,
                     int offset, int length) {
         final Instrumentation instrumentation = InstrumentationManager.getInstrumentation();
-        boolean vmtiAgents = MaxineVM.isHosted() ? false : VMTI.handler().classFileLoadHookHandled();
+        boolean vmtiAgents = !MaxineVM.isHosted() && VMTI.handler().classFileLoadHookHandled();
 
         /*
          * When we have (Java) agents active that might transform the bytecode there are additional concurrency considerations.

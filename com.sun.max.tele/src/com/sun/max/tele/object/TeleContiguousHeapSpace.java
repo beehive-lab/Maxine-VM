@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -125,7 +127,7 @@ public class TeleContiguousHeapSpace extends TeleMemoryRegion {
      */
     @Override
     public boolean containsInAllocated(Address address) {
-        return isAllocated() ? address.greaterEqual(getRegionStart()) && address.lessThan(committedEndCache) : false;
+        return isAllocated() && (address.greaterEqual(getRegionStart()) && address.lessThan(committedEndCache));
     }
 
     public Address committedEnd() {

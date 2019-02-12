@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -330,7 +332,7 @@ public class VMLogger {
             String logInclude = logIncludeOption.getValue();
             String logExclude = logExcludeOption.getValue();
             // If include option given, the default is everything disabled, otherwise enabled
-            setDefaultLogOptionsState(logInclude == null ? true : false);
+            setDefaultLogOptionsState(logInclude == null);
             if (logInclude != null) {
                 Pattern inclusionPattern = Pattern.compile(logInclude);
                 for (int i = 0; i < numOps; i++) {

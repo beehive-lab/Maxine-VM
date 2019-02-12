@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -54,7 +56,7 @@ public abstract class UnixTeleProcessAdaptor extends TeleProcess {
         super(teleVM, platform, ProcessState.STOPPED);
         protocol = TeleVM.teleChannelProtocol();
         dataAccess = new PageDataAccess(teleVM, this, platform.dataModel);
-        protocol.initialize(teleVM.bootImage().header.tlaSize, platform().endianness() == Endianness.BIG ? true : false);
+        protocol.initialize(teleVM.bootImage().header.tlaSize, platform().endianness() == Endianness.BIG);
         if (commandLineArguments != null) {
             final long processHandle = protocol.create(programFile.getAbsolutePath(), commandLineArguments);
             if (processHandle < 0) {

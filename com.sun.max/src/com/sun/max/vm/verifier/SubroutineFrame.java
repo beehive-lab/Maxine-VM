@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -59,7 +61,7 @@ public class SubroutineFrame {
         if (subroutine == this.subroutine) {
             return true;
         }
-        return parent == null ? false : parent.contains(subroutine);
+        return parent != null && parent.contains(subroutine);
     }
 
     public SubroutineFrame parent() {

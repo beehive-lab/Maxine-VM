@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -79,7 +81,7 @@ public class RiRegisterAttributes {
                 CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
                 RiRegisterAttributes attr = new RiRegisterAttributes(
                                 Arrays.asList(registerConfig.getCallerSaveRegisters()).contains(reg),
-                                csl == null ? false : Arrays.asList(csl.registers).contains(reg),
+                        csl != null && Arrays.asList(csl.registers).contains(reg),
                                 Arrays.asList(registerConfig.getAllocatableRegisters()).contains(reg));
                 if (map.length <= reg.number) {
                     map = Arrays.copyOf(map, reg.number + 1);
