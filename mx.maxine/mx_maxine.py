@@ -625,6 +625,50 @@ def olc(args):
 
     mx.run_java(['-ea', '-esa', '-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
 
+def getEntryOrExitPoint(option, vmArgs):
+    index = vmArgs.index(option)
+    value = vmArgs[index+1]
+    del vmArgs[index+1]
+    del vmArgs[index]
+    value = '"'+value.split('(')[0]+'"'
+    if option is 'entry':
+        return ['-XX:AllocationProfilerEntryPoint='+value]
+    else:
+        return ['-XX:AllocationProfilerExitPoint='+value]
+
+def allocprofiler(args):
+    """launch Maxine VM with Allocation Profiler
+
+    Run the Maxine VM with the Allocation Profiler and the given options and arguments.
+    
+    where options include:
+        entry <entry point method> [ | exit <exit point method> ]
+    
+    If no option given will run with the -XX:+AllocationProfilerAll option. This will profile all objects.
+
+    Use "mx allocprofiler -help" to see what other options this command accepts."""
+    
+    cwdArgs = check_cwd_change(args)
+    cwd = cwdArgs[0]
+    vmArgs = cwdArgs[1]
+
+    nativeLib = 'jnumautils-0.1-SNAPSHOT.jar'
+    jnumautils = ['-Xbootclasspath/p:lib/'+nativeLib]
+    
+    entryPoint = []
+    entryPointOption = 'entry'
+    exitPoint = []
+    exitPointOption = 'exit'
+    profileAll = []
+    if entryPointOption in vmArgs:
+        entryPoint = getEntryOrExitPoint(entryPointOption, vmArgs)
+        if exitPointOption in vmArgs:
+            exitPoint = getEntryOrExitPoint(exitPointOption, vmArgs)
+    else:
+        profileAll = ['-XX:+AllocationProfilerAll']
+    
+    print [join(_vmdir, 'maxvm')] + jnumautils + entryPoint + exitPoint + profileAll + vmArgs
+    mx.run([join(_vmdir, 'maxvm')] + jnumautils + entryPoint + exitPoint + profileAll + vmArgs, cwd=cwd, env=ldenv)
 
 def composeprofileroutput(args):
     """
@@ -955,6 +999,7 @@ def mx_init(suite):
                     help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
 
     commands = {
+        'allocprofiler': [allocprofiler, ''],
         'build': [build, '"for help run mx :build -h"'],
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],
