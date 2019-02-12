@@ -19,6 +19,12 @@
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
+# Print verbose output only when MX_VERBOSE is set to y (i.e. mx -V command is used)
+ifneq ($(MX_VERBOSE), y)
+    AT := @
+    MAKE := $(MAKE) -s
+endif
+
 # Currently all Maxine target implementations are 64 bit.
 # This is where you might change that for the native code; TARGET_WORD_SIZE is interpreted in word.h
 # N.B. There are no doubt still assumptions in the code that host and target word size are the same.

@@ -1,4 +1,6 @@
 #
+# Copyright (c) 2019, APT Group, School of Computer Science,
+# The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
@@ -33,7 +35,7 @@ include $(PROJECT)/platform/platform.mk
 include $(PROJECT)/share/share.mk
 
 all : $(MAIN)
-	mkdir -p $(PROJECT)/generated/$(OS)
-	cp -f $(PROJECT)/build/$(OS)/launch/$(MAIN) $(PROJECT)/generated/$(OS)
-	# The command below was needed for JDK 1.6.0_17 on Mac OS X:
-	# if [ $(OS) = "darwin" ]; then $(PROJECT)/../bin/mod-macosx-javalib.sh $(PROJECT)/generated/$(OS) $(JAVA_HOME); fi
+	$(AT) mkdir -p $(PROJECT)/generated/$(OS)
+	$(AT) cp -f $(PROJECT)/build/$(OS)/launch/$(MAIN) $(PROJECT)/generated/$(OS)
+	$(AT) # The command below was needed for JDK 1.6.0_17 on Mac OS X:
+	$(AT) # if [ $(OS) = "darwin" ]; then $(PROJECT)/../bin/mod-macosx-javalib.sh $(PROJECT)/generated/$(OS) $(JAVA_HOME); fi
