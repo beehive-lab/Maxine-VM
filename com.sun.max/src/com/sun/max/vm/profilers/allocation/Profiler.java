@@ -203,6 +203,16 @@ public class Profiler {
         }
     }
 
+    public void removeCollected() {
+        for (int i = 0; i < objects.currentIndex; i++) {
+            if (!Heap.isInHeap(objects.address[i])){
+                //object is dead
+            } else {
+                //object is alive -> update it's address
+            }
+        }
+    }
+
     /**
      * This method is called by ProfilerGCCallbacks in every pre-gc callback phase.
      * We create the numa virtual memory map using the createNumaMap native function.
@@ -280,7 +290,7 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Remove Collected Objects From Profiler Buffer. [pre-mutation phase]");
         }
-        
+        removeCollected();
 
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Clean-up Profiler Buffer. [pre-mutation phase]");
