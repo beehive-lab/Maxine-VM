@@ -37,6 +37,7 @@ import com.sun.max.vm.thread.VmThread;
 import uk.ac.manchester.jnumautils.JNumaUtils;
 
 import static com.sun.max.vm.MaxineVM.isHosted;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
 
 public class Profiler {
 
@@ -51,6 +52,7 @@ public class Profiler {
     public static ProfilerBuffer objects;
     public static HeapConfiguration heapConfig;
     public JNumaUtils utilsObject;
+    public static boolean preMutation = false;
 
     private static boolean AllocationProfilerPrintHistogram;
     private static boolean AllocationProfilerAll;
@@ -127,6 +129,12 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
+        /*
+         * A pre-Mutation "pseudo" callback.
+         */
+        if (preMutation) {
+            preMutationActions();
+        }
         objects.record(currentIndex, type, size, address);
         currentIndex++;
         unlock(lockDisabledSafepoints);
@@ -205,12 +213,13 @@ public class Profiler {
             Log.print("(verbose msg): Cycle ");
             Log.print(getProfilingCycle());
             Log.println(" Profiling Is Now Complete. [pre-GC phase]");
-
-            Log.println("(verbose msg): Create NUMA Maps. [pre-GC phase]");
         }
-
-        //utilsObject.createNumaMaps(getProfilingCycle());
         findNumaNodes();
+
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Dump Profiler Buffer. [pre-GC phase]");
+        }
+        dumpBuffer();
 
     }
 
@@ -240,11 +249,6 @@ public class Profiler {
         */
 
         if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Dump Profiler Buffer. [post-GC phase]");
-        }
-        dumpBuffer();
-
-        if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Clean-up Profiler Buffer. [post-GC phase]");
         }
 
@@ -254,11 +258,31 @@ public class Profiler {
 
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Leaving Post-GC Phase.");
-            Log.print("(verbose msg): Start Profiling. [Cycle ");
-            Log.print(getProfilingCycle());
-            Log.println("]");
         }
 
+        // Enable the pre-Mutation flag before leaving post-GC phase
+        preMutation = true;
+
+        unlock(lockDisabledSafepoints);
+    }
+
+    /**
+     * This method is called when the pre-Mutation "pseudo" callback is triggered.
+     * Pre-Mutation phase: The moment we leave safepoint after a GC cycle and before execution,
+     * where allocation is enabled again.
+     */
+    public void preMutationActions() {
+        final boolean lockDisabledSafepoints = lock();
+        if (VerboseAllocationProfiler) {
+            Log.print("(verbose msg): Start Profiling. [Cycle ");
+            Log.print(getProfilingCycle());
+            Log.println("] [pre-Mutation phase]");
+        }
+
+        // all pre-Mutation actions take place here
+
+        // Disable the pre-Mutation flag after all pre-Mutation actions are complete.
+        preMutation = false;
         unlock(lockDisabledSafepoints);
     }
 
