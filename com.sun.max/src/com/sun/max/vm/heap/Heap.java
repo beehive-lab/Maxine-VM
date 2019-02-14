@@ -641,6 +641,21 @@ public final class Heap {
         }
     }
 
+    /**
+     * Determines if an object under the address is in the Heap
+     * @param address
+     * @return true if the object is in the Heap
+     */
+    public static boolean isInHeap(long address) {
+        Pointer objPtr = Address.fromLong(address).asPointer();
+
+        final Reference forwardRef = Layout.readForwardRef(objPtr);
+        if (!forwardRef.isZero()) {
+            return false;
+        }
+        return true;
+    }
+
     /*
      * Support for callbacks on GC start and end
      */

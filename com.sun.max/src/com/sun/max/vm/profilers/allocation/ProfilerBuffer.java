@@ -83,6 +83,18 @@ public class ProfilerBuffer {
         this.node[index] = node;
     }
 
+    public void updateAddress(int index, long newAddress) {
+        this.address[index] = newAddress;
+    }
+
+    public void killObject(int index) {
+        this.index[index] = 0;
+        this.type[index] = "null";
+        this.size[index] = 0;
+        this.address[index] = 0;
+        this.node[index] = -1;
+    }
+
     public void dumpToStdOut(int cycle) {
         Log.print("==== Profiling Cycle ");
         Log.print(cycle);
