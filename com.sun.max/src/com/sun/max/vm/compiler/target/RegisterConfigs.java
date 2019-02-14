@@ -387,8 +387,11 @@ public class RegisterConfigs {
         } else if (platform().isa == ISA.RISCV64) {
             if (os == OS.LINUX) {
                 allocatable = new CiRegister[] {
-                    RISCV64.x1,  RISCV64.x2,  RISCV64.x3,  RISCV64.x4,  RISCV64.x5,  RISCV64.x6,  RISCV64.x7,
-                    RISCV64.x8,  RISCV64.x9,  RISCV64.x10, RISCV64.x11, RISCV64.x12, RISCV64.x13, RISCV64.x14, RISCV64.x15,
+                    /* RISCV64.x1 returnAddress,  RISCV64.x2 stackPointer,  RISCV64.x3 globalPointer,
+                    RISCV64.x4 threadPointer */
+                    RISCV64.x5,  RISCV64.x6,  RISCV64.x7,
+                    /* RISCV64.x8 framePointer, */
+                    RISCV64.x9, RISCV64.x10, RISCV64.x11, RISCV64.x12, RISCV64.x13, RISCV64.x14, RISCV64.x15,
                     RISCV64.x16, RISCV64.x17, RISCV64.x18, RISCV64.x19, RISCV64.x20, RISCV64.x21, RISCV64.x22, RISCV64.x23,
                     RISCV64.x24, RISCV64.x25, RISCV64.x26, RISCV64.x27,
 
@@ -466,7 +469,9 @@ public class RegisterConfigs {
                         RISCV64.f14, RISCV64.f15, RISCV64.f16, RISCV64.f17  // parameters
                 ));
 
-                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, calleeSavedRegisters));
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8,
+                        RISCV64.sp, RISCV64.x8, RISCV64.x9, RISCV64.s2, RISCV64.s3, RISCV64.s4, RISCV64.s5, RISCV64.s6, RISCV64.s7, RISCV64.s8,
+                        RISCV64.s9, RISCV64.s10, RISCV64.s11));
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FP, RISCV64.fp);
