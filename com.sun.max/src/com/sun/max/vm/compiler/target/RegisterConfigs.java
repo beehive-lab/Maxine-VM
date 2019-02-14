@@ -472,9 +472,7 @@ public class RegisterConfigs {
 
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8,
                         RISCV64.sp, RISCV64.x8, RISCV64.x9, RISCV64.s2, RISCV64.s3, RISCV64.s4, RISCV64.s5, RISCV64.s6, RISCV64.s7, RISCV64.s8,
-                        RISCV64.s9, RISCV64.s10, RISCV64.s11,
-                        RISCV64.fs0, RISCV64.fs1, RISCV64.fs2, RISCV64.fs3, RISCV64.fs4, RISCV64.fs5, RISCV64.fs6,
-                        RISCV64.fs7, RISCV64.fs8, RISCV64.fs9, RISCV64.fs10, RISCV64.fs11));
+                        RISCV64.s9, RISCV64.s10, RISCV64.s11));
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FP, RISCV64.fp);
