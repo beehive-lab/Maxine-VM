@@ -642,7 +642,7 @@ public final class Heap {
     }
 
     /**
-     * Determines if an object under the address is in the Heap
+     * Determines if an object under the address is in the Heap.
      * @param address
      * @return true if the object is in the Heap
      */

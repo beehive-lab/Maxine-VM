@@ -205,7 +205,7 @@ public class Profiler {
 
     public void removeCollected() {
         for (int i = 0; i < objects.currentIndex; i++) {
-            if (!Heap.isInHeap(objects.address[i])){
+            if (!Heap.isInHeap(objects.address[i])) {
                 //object is dead
             } else {
                 //object is alive -> update it's address
