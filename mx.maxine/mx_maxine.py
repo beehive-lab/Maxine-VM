@@ -667,7 +667,18 @@ def allocprofiler(args):
     else:
         profileAll = ['-XX:+AllocationProfilerAll']
     
-    print [join(_vmdir, 'maxvm')] + jnumautils + entryPoint + exitPoint + profileAll + vmArgs
+    #print [join(_vmdir, 'maxvm')] + jnumautils + entryPoint + exitPoint + profileAll + vmArgs
+    
+    print '== Launching Maxine VM with Allocation Profiler =='
+    print 'Profiling Options:'
+    if entryPoint:
+        print '\t', entryPoint[0]
+        if exitPoint:
+            print '\t', exitPoint[0]
+    else:
+        print '\t', profileAll[0]
+    print 'VM Args:\n\t', vmArgs
+
     mx.run([join(_vmdir, 'maxvm')] + jnumautils + entryPoint + exitPoint + profileAll + vmArgs, cwd=cwd, env=ldenv)
 
 def composeprofileroutput(args):
