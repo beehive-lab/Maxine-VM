@@ -210,6 +210,7 @@ public class Profiler {
     public void preGCActions() {
 
         if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Entering Pre-GC Phase.");
             Log.print("(verbose msg): Cycle ");
             Log.print(getProfilingCycle());
             Log.println(" Profiling Is Now Complete. [pre-GC phase]");
@@ -220,6 +221,9 @@ public class Profiler {
             Log.println("(verbose msg): Dump Profiler Buffer. [pre-GC phase]");
         }
         dumpBuffer();
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Leaving Pre-GC Phase.");
+        }
 
     }
 
@@ -247,14 +251,9 @@ public class Profiler {
         Log.print(reportCollectedHeapHistogramInMbs);
         Log.println(" MBs\n");
         */
-
         if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Clean-up Profiler Buffer. [post-GC phase]");
+            Log.println("(verbose msg): Entering Post-GC Phase.");
         }
-
-        objects.resetCycle();
-
-        profilingCycle++;
 
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Leaving Post-GC Phase.");
@@ -274,12 +273,29 @@ public class Profiler {
     public void preMutationActions() {
         final boolean lockDisabledSafepoints = lock();
         if (VerboseAllocationProfiler) {
-            Log.print("(verbose msg): Start Profiling. [Cycle ");
-            Log.print(getProfilingCycle());
-            Log.println("] [pre-Mutation phase]");
+            Log.println("(verbose msg): Entering Pre-Mutation Phase.");
         }
 
         // all pre-Mutation actions take place here
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Remove Collected Objects From Profiler Buffer. [pre-mutation phase]");
+        }
+        
+
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Clean-up Profiler Buffer. [pre-mutation phase]");
+        }
+
+        objects.resetCycle();
+
+        profilingCycle++;
+
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Leaving Pre-Mutation Phase. ");
+            Log.print("(verbose msg): Start Profiling. [Cycle ");
+            Log.print(getProfilingCycle());
+            Log.println("]");
+        }
 
         // Disable the pre-Mutation flag after all pre-Mutation actions are complete.
         preMutation = false;
