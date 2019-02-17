@@ -47,6 +47,7 @@ import com.sun.cri.xir.XirTemplate;
 import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.Word;
 import com.sun.max.vm.compiler.CompilationBroker;
+import com.sun.max.vm.runtime.FatalError;
 
 import java.util.Map;
 
@@ -161,12 +162,12 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
     private void const2reg(CiRegister dst, float constant) {
         masm.mov64BitConstant(scratchRegister, Float.floatToRawIntBits(constant));
-        masm.fmvwx(dst, scratchRegister);
+        masm.fmov(32, dst, scratchRegister);
     }
 
     private void const2reg(CiRegister dst, double constant) {
         masm.mov64BitConstant(scratchRegister, Double.doubleToRawLongBits(constant));
-        masm.fmvdx(dst, scratchRegister);
+        masm.fmov(64, dst, scratchRegister);
     }
 
     @Override
@@ -269,9 +270,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         assert src.isRegister();
         assert dest.isRegister();
         if (dest.kind.isFloat()) {
-            masm.fmvwx(dest.asRegister(), src.asRegister());
+            masm.fmov(32, dest.asRegister(), src.asRegister());
         } else if (dest.kind.isDouble()) {
-            masm.fmvdx(dest.asRegister(), src.asRegister());
+            masm.fmov(64, dest.asRegister(), src.asRegister());
         } else {
             moveRegs(src.asRegister(), dest.asRegister());
         }
@@ -482,8 +483,24 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             } else {
                 acond = convertCondition(op.cond());
             }
+
+            // TODO check for NaN case
+//            Label jumpCondition = new Label();
+//            masm.nop(1);
+//            masm.csrrs(scratchRegister, 0x001, RISCV64.x0);
+//            masm.nop(1);
+//            masm.andi(scratchRegister, scratchRegister, 0b10000);
+//
+//            if (acond == RISCV64MacroAssembler.ConditionFlag.LT || acond == RISCV64MacroAssembler.ConditionFlag.GT) {
+//                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.NE, scratchRegister, RISCV64.zero, op.label());
+//            } else {
+//                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.NE, scratchRegister, RISCV64.zero, jumpCondition);
+//            }
+
             masm.mov64BitConstant(scratchRegister, 0);
             masm.branchConditionally(acond, RISCV64.x31, scratchRegister, op.label());
+
+//            masm.bind(jumpCondition);
         }
     }
 
@@ -1021,6 +1038,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.flts(RISCV64.x31, reg1, opr2.asRegister());
                         masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, 0);
+                        masm.b(continueLabel);
 
                         masm.bind(lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, -1);
@@ -1030,13 +1048,22 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Double: {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
+
+                        // TODO check for NaN case
+//                        masm.mov32BitConstant(scratchRegister, 0b10000);
+//                        masm.csrrc(RISCV64.x0, 0x001, scratchRegister);
+//                        masm.nop(1);
+
+                        // a > b
                         masm.mov32BitConstant(scratchRegister, 1);
                         masm.fltd(RISCV64.x31, opr2.asRegister(), reg1);
                         masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, continueLabel);
+                        // a == b
                         masm.fltd(RISCV64.x31, reg1, opr2.asRegister());
                         masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, 0);
-
+                        masm.b(continueLabel);
+                        // a < b
                         masm.bind(lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, -1);
                         masm.bind(continueLabel);

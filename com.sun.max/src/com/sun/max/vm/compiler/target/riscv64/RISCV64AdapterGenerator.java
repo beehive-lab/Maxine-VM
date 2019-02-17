@@ -19,6 +19,8 @@
  */
 package com.sun.max.vm.compiler.target.riscv64;
 
+import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.INSTRUCTION_SIZE;
+import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.RIP_CALL_INSTRUCTION_SIZE;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;

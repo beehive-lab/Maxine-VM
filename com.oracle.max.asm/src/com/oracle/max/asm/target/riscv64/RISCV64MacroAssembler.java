@@ -184,6 +184,32 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         and(dst, src, src);
     }
 
+    public void fmov(int size, CiRegister dst, CiRegister src) {
+        assert !(RISCV64.isIntReg(dst) && RISCV64.isIntReg(src)) : "src and dst cannot both be integer registers.";
+        if (dst.equals(src)) {
+            return;
+        }
+        if (RISCV64.isIntReg(dst)) {
+            if (size == 32) {
+                fmvxw(dst, src);
+            } else {
+                fmvxd(dst, src);
+            }
+        } else if (RISCV64.isIntReg(src)) {
+            if (size == 32) {
+                fmvwx(dst, src);
+            } else {
+                fmvdx(dst, src);
+            }
+        } else {
+            if (size == 32) {
+                fsgnjs(dst, src, src);
+            } else {
+                fsgnjd(dst, src, src);
+            }
+        }
+    }
+
     public void mov64BitConstant(CiRegister dst, long imm64) {
         //TODO improve this to get rid of scratchRegister1
 
@@ -346,6 +372,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void fmulRTZ(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fmulsRTZ(rd, rs1, rs2);
+        } else {
+            super.fmuldRTZ(rd, rs1, rs2);
+        }
+    }
+
     public void fdiv(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
         if (size == 32) {
             super.fdivs(rd, rs1, rs2);
@@ -365,9 +399,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public void frem(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
         // There is no frem instruction, instead we compute the remainder using the relation:
         // rem = n - Truncating(n / d) * d
-        this.fdivRTZ(size, scratchRegister, rs1, rs2);
-        this.fmul(size, scratchRegister, scratchRegister, rs2);
-        this.fsub(size, rd, rs1, scratchRegister);
+        this.fdiv(size, RISCV64.f31, rs1, rs2);
+        if (size == 64) {
+            fcvtld(scratchRegister, RISCV64.f31);
+            fcvtdl(RISCV64.f31, scratchRegister);
+        } else {
+            fcvtsw(scratchRegister, RISCV64.f31);
+            fcvtws(RISCV64.f31, scratchRegister);
+        }
+        this.fmul(size, RISCV64.f31, RISCV64.f31, rs2);
+        this.fsub(size, rd, rs1, RISCV64.f31);
     }
 
     public void fabs(int size, CiRegister rd, CiRegister rs1) {
@@ -686,7 +727,10 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             int offset = label.position() - codeBuffer.position();
             b(offset);
         } else {
-            throw new UnsupportedOperationException("Unimplemented");
+            label.addPatchAt(codeBuffer.position());
+            emitByte(PatchLabelKind.BRANCH_UNCONDITIONALLY.encoding);
+            emitByte(0);
+            emitShort(0);
         }
     }
 
@@ -898,6 +942,38 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         nop(4);
         jal(RISCV64.ra, 0);
     }
+
+//    public final void call() {
+//        int before = codeBuffer.position();
+////        b(INSTRUCTION_SIZE); // Jump to Trampoline 1
+//        jal(RISCV64.zero, INSTRUCTION_SIZE);
+//        // Trampoline 1
+////        adr(r17, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE1_OFFSET);
+//        auipc(scratchRegister1, 0);
+//        addi(scratchRegister1, scratchRegister1, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE1_OFFSET);
+////        movz(64, scratchRegister, 0, 0);
+////        movk(64, scratchRegister, 0, 0);
+//        nop(4); // mov32BitConstant(scratchRegister, 0);
+//        add(64, scratchRegister, scratchRegister1, scratchRegister);
+//        Label branchLabel = new Label();
+////        b(branchLabel);      Jump to last branch
+//        jal(RISCV64.zero, CALL_TRAMPOLINE_INSTRUCTIONS);
+//        // Trampoline 2
+////        adr(r17, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE2_OFFSET);
+//        auipc(scratchRegister1, 0);
+//        addi(scratchRegister1, scratchRegister1, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE2_OFFSET);
+////        movz(64, scratchRegister, 0, 0);
+////        movk(64, scratchRegister, 0, 0);
+//        nop(4); // mov32BitConstant(scratchRegister, 0);
+//        add(64, scratchRegister, scratchRegister1, scratchRegister);
+//        int after = codeBuffer.position();
+////        assert CALL_BRANCH_OFFSET == after - before : after - before;
+//        bind(branchLabel);
+////        bl(0);
+//        jal(RISCV64.ra, 0);
+//        after = codeBuffer.position();
+////        assert RIP_CALL_INSTRUCTION_SIZE == after - before : after - before;
+//    }
 
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
         for (CiRegister r : csl.registers) {
