@@ -25,6 +25,7 @@ import com.sun.max.vm.runtime.FatalError;
 
 import static com.oracle.max.vm.tests.crossisa.CrossISATester.BitsFlag.All64Bits;
 import static com.oracle.max.vm.tests.crossisa.CrossISATester.BitsFlag.Lower32Bits;
+import static java.lang.Enum.valueOf;
 
 public class MaxineRISCV64Tester extends CrossISATester {
     public static final int NUM_REGS = 32;
@@ -133,7 +134,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
      */
     @Override
     public void setExpectedValue(CiRegister fpuRegister, float expectedValue) {
-        final int index = fpuRegister.getEncoding() - 1; // -1 to compensate for the zero register
+        final int index = fpuRegister.getEncoding();
         expectedFloatRegisters[index] = expectedValue;
         testFloatRegisters[index] = true;
     }
@@ -146,7 +147,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
      */
     @Override
     public void setExpectedValue(CiRegister fpuRegister, double expectedValue) {
-        final int index = fpuRegister.getEncoding() - 1; // -1 to compensate for the zero register
+        final int index = fpuRegister.getEncoding();
         expectedDoubleRegisters[index] = expectedValue;
         testDoubleRegisters[index] = true;
     }
@@ -164,8 +165,13 @@ public class MaxineRISCV64Tester extends CrossISATester {
      */
     @Override
     protected float parseFloatRegister(String line) {
-        //TODO For some reason GDB will either show the wrong number of -nan instead of the actual floating value
+        //TODO I think GDB interprets FPU register as doubles showing the wrong number of -nan instead of the actual floating value
         // eg: 5.4189638607169796e-315, -nan(0xfffff40000000)
+        // However when moving the bits from the nan register to an integer register, we git the right interpretation.
+
+//        String value = line.split("\\s+")[1];
+//        System.out.println("Float.parseFloat(value) = " + Float.parseFloat(value));
+//        return Float.parseFloat(value);
         throw FatalError.unimplemented();
     }
 
@@ -181,13 +187,21 @@ public class MaxineRISCV64Tester extends CrossISATester {
      * @return The parsed double value of the register
      */
     protected double parseDoubleRegister(String line) {
-        throw FatalError.unimplemented();
+        try {
+            String value = line.split("\\s+")[1];
+            return Double.parseDouble(value);
+        } catch (Exception e) {
+            System.out.println("GDB output line could not be parsed: " + line);
+        }
+
+        return 0.0;
     }
 
     public void runSimulation() throws Exception {
         super.runSimulation();
         parseLongRegisters("ra ", "pc");
-        //parseFloatRegisters("f0", "f31");
+//        parseFloatRegisters("f0 ", "f31");
+        parseDoubleRegisters("f0 ", "f31");
     }
 
     public static void main(String[] args) throws Exception {
