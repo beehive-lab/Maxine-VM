@@ -372,6 +372,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void fmulRTZ(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        if (size == 32) {
+            super.fmulsRTZ(rd, rs1, rs2);
+        } else {
+            super.fmuldRTZ(rd, rs1, rs2);
+        }
+    }
+
     public void fdiv(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
         if (size == 32) {
             super.fdivs(rd, rs1, rs2);
@@ -391,9 +399,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public void frem(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
         // There is no frem instruction, instead we compute the remainder using the relation:
         // rem = n - Truncating(n / d) * d
-        this.fdivRTZ(size, scratchRegister, rs1, rs2);
-        this.fmul(size, scratchRegister, scratchRegister, rs2);
-        this.fsub(size, rd, rs1, scratchRegister);
+        this.fdiv(size, RISCV64.f31, rs1, rs2);
+        if (size == 64) {
+            fcvtld(scratchRegister, RISCV64.f31);
+            fcvtdl(RISCV64.f31, scratchRegister);
+        } else {
+            fcvtsw(scratchRegister, RISCV64.f31);
+            fcvtws(RISCV64.f31, scratchRegister);
+        }
+        this.fmul(size, RISCV64.f31, RISCV64.f31, rs2);
+        this.fsub(size, rd, rs1, RISCV64.f31);
     }
 
     public void fabs(int size, CiRegister rd, CiRegister rs1) {

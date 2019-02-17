@@ -980,6 +980,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         rtype(RV32D, rd, 0, rs1, rs2, 0b0001001);
     }
 
+    public void fmuldRTZ(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 1, rs1, rs2, 0b0001001);
+    }
+
     public void fdivd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         rtype(RV32D, rd, 0, rs1, rs2, 0b0001101);
     }
@@ -1042,6 +1046,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         itype(RV32D, rd, 0, rs, 0b110000100010);
     }
 
+    public void fsgnjd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0010001);
+    }
+
     public void fsgnjxd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         rtype(RV32D, rd, 2, rs1, rs2, 0b0010001);
     }
@@ -1073,6 +1081,10 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     public void fmuls(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         rtype(RV32F, rd, 0, rs1, rs2, 0b0001000);
+    }
+
+    public void fmulsRTZ(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 1, rs1, rs2, 0b0001000);
     }
 
     public void fdivs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
@@ -1121,6 +1133,10 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     public void fcvtsl(CiRegister rd, CiRegister rs) {
         itype(RV32F, rd, 0, rs, 0b110100000010);
+    }
+
+    public void fsgnjs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0010000);
     }
 
     public void fsgnjxs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
