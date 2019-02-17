@@ -1134,7 +1134,7 @@ public class Stubs {
             // callSite will be the last command executed before jumping in the trampoline. As a result, we can get the
             // callsite by subtracting the size of a single instruction from the link register.
             CiRegister callSite = registerConfig.getScratchRegister();
-            asm.sub(callSite, RISCV64.ra, RISCV64TargetMethodUtil.INSTRUCTION_SIZE);
+            asm.sub(callSite, RISCV64.ra, RISCV64MacroAssembler.RIP_CALL_INSTRUCTION_SIZE);
 
             // Push the link register
             asm.push(64, RISCV64.ra);
@@ -1169,7 +1169,7 @@ public class Stubs {
 
             // re-execute the static call. Now that the call has been patched we need to return to the beginning of the
             // patched call site, thus we need to subtract from the link register the size of the segment preparing the call
-            asm.sub(callSite, RISCV64.ra, 5 * RISCV64TargetMethodUtil.INSTRUCTION_SIZE);
+            asm.sub(callSite, RISCV64.ra, RISCV64MacroAssembler.RIP_CALL_INSTRUCTION_SIZE);
             asm.ret(callSite);
 
             String stubName = "strampoline";

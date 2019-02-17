@@ -33,8 +33,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.StackFrameCursor;
 import com.sun.max.vm.stack.StackFrameWalker;
 
-import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.CALL_BRANCH_OFFSET;
-import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.isBimmInstruction;
+import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.*;
 
 public final class RISCV64TargetMethodUtil {
 
@@ -43,9 +42,6 @@ public final class RISCV64TargetMethodUtil {
      */
     private static final Object PatchingLock = new Object();
 
-    public static final int INSTRUCTION_SIZE = 4;
-    public static final int NUMBER_OF_NOPS = 4;
-    public static final int RIP_CALL_INSTRUCTION_SIZE = INSTRUCTION_SIZE;
     public static final int RET = 0xD65F_0000;
 
     /**
@@ -102,9 +98,32 @@ public final class RISCV64TargetMethodUtil {
      * @return the absolute target address of the CALL
      */
     public static CodePointer readCall32Target(CodePointer callSite) {
-        final Pointer callSitePointer = callSite.toPointer();
-        final int disp32 = getOldDisplacement(callSitePointer);
-        return callSite.plus(disp32);
+        Pointer callSitePointer = callSite.toPointer();
+        int instruction = callSitePointer.readInt(0);
+        assert isBimmInstruction(instruction) : instruction;
+        final int offset = bImmExtractDisplacement(instruction);
+        assert offset == CALL_TRAMPOLINE1_OFFSET || offset == CALL_TRAMPOLINE2_OFFSET : offset;
+        callSitePointer = callSitePointer.plus(offset);
+        int displacement = getDisplacementFromTrampoline(callSitePointer);
+        final CodePointer branchSite = callSite.plus(CALL_BRANCH_OFFSET);
+        return branchSite.plus(displacement);
+    }
+
+    private static int getDisplacementFromTrampoline(Pointer callSitePointer) {
+        int displacement;
+        int movzInstruction   = callSitePointer.readInt(4);
+        int movkInstruction   = callSitePointer.readInt(8);
+        int addSubInstruction = callSitePointer.readInt(12);
+
+        return 0;
+
+//        short low  = movExtractImmediate(movzInstruction);
+//        short high = movExtractImmediate(movkInstruction);
+//        displacement = high << 16 | low & 0xFFFF;
+//        if (!isAddInstruction(addSubInstruction)) {
+//            displacement = -displacement;
+//        }
+//        return displacement;
     }
 
     /**
@@ -215,13 +234,14 @@ public final class RISCV64TargetMethodUtil {
             System.out.println("code[] " + i + " " + String.format("%8s", Integer.toBinaryString(code[i] & 0xFF)).replace(' ', '0'));
         }
 
-        int oldDisplacement = RISCV64MacroAssembler.bImmExtractDisplacement(instruction);
-        instruction = RISCV64MacroAssembler.bImmPatch(instruction, displacement);
-        code[callOffset + 0] = (byte) (instruction       & 0xFF);
-        code[callOffset + 1] = (byte) (instruction >> 8  & 0xFF);
-        code[callOffset + 2] = (byte) (instruction >> 16 & 0xFF);
-        code[callOffset + 3] = (byte) (instruction >> 24 & 0xFF);
-        return oldDisplacement;
+        return 0;
+    }
+
+    private static void writeInstruction(byte[] code, int offset, int instruction) {
+        code[offset + 0] = (byte) (instruction       & 0xFF);
+        code[offset + 1] = (byte) (instruction >> 8  & 0xFF);
+        code[offset + 2] = (byte) (instruction >> 16 & 0xFF);
+        code[offset + 3] = (byte) (instruction >> 24 & 0xFF);
     }
 
     /**
@@ -236,7 +256,7 @@ public final class RISCV64TargetMethodUtil {
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
         CodePointer callSite = tm.codeAt(callOffset);
         if (MaxineVM.isHosted()) {
-            long disp64 = target.toLong() - callSite.toLong();
+            long disp64 = target.toLong() - callSite.plus(CALL_BRANCH_OFFSET).toLong();
             int disp32 = (int) disp64;
             FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
             assert NumUtil.isSignedNbit(28, disp32);
