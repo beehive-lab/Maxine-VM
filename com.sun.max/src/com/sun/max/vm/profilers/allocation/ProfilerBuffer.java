@@ -26,12 +26,6 @@ import com.sun.max.vm.Log;
 public class ProfilerBuffer {
 
     /**
-     * Each profiling cycle is predefined to track 10000 objects.
-     * TODO: auto-configurable
-     */
-    public int SIZE = 500000;
-
-    /**
      * The following 4 variables compose the stored information for each object.
      *
      * Index: unique for each object to make it distinguishable. [1-inf] index = 0 for empty cells
@@ -47,14 +41,14 @@ public class ProfilerBuffer {
 
     public int currentIndex;
 
-    public ProfilerBuffer() {
-        index = new int[SIZE];
-        type = new String[SIZE];
-        size = new int[SIZE];
-        address = new long[SIZE];
-        node = new int[SIZE];
+    public ProfilerBuffer(int bufSize) {
+        index = new int[bufSize];
+        type = new String[bufSize];
+        size = new int[bufSize];
+        address = new long[bufSize];
+        node = new int[bufSize];
 
-        for (int i = 0; i < SIZE; i++) {
+        for (int i = 0; i < bufSize; i++) {
             index[i] = 0;
             type[i] = "null";
             size[i] = 0;
