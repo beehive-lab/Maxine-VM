@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -642,18 +642,30 @@ public final class Heap {
     }
 
     /**
-     * Determines if an object under the address is in the Heap.
+     * Determines if the object under this address is in the Heap.
      * @param address
      * @return true if the object is in the Heap
      */
-    public static boolean isInHeap(long address) {
+    public static boolean stillExists(long address) {
         Pointer objPtr = Address.fromLong(address).asPointer();
 
         final Reference forwardRef = Layout.readForwardRef(objPtr);
-        if (!forwardRef.isZero()) {
+        if (forwardRef.isZero()) {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Returns the address of a survived object after GC using the forwarding pointer.
+     * @param address
+     * @return
+     */
+    public static long getUpdatedAddress(long address) {
+        Pointer cell = Address.fromLong(address).asPointer();
+        //Pointer cell2 = Pointer.fromLong(address);
+        final Reference forwardRef = Layout.readForwardRef(cell);
+        return forwardRef.toOrigin().toLong();
     }
 
     /*

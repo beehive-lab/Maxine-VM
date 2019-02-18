@@ -50,14 +50,22 @@ public class Profiler {
     public static int profilingCycle;
     public static int currentIndex = 0;
     public static ProfilerBuffer objects;
+    public static ProfilerBuffer survivors;
     public static HeapConfiguration heapConfig;
     public JNumaUtils utilsObject;
     public static boolean preMutation = false;
+    public static int survivedObjNum = 0;
 
     private static boolean AllocationProfilerPrintHistogram;
     private static boolean AllocationProfilerAll;
     private static boolean AllocationProfilerDump;
     public static boolean VerboseAllocationProfiler;
+
+    /**
+     * The size of the Allocation Profiling Buffer
+     * TODO: auto-configurable
+     */
+    public final int ALLOCBUFFERSIZE = 500000;
 
     /**
      * Use -XX:+AllocationProfilerPrintHistogram flag to accompany the profiler stats with a complete histogram view.
@@ -76,7 +84,7 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Profiler Initialization.");
         }
-        objects = new ProfilerBuffer();
+        objects = new ProfilerBuffer(ALLOCBUFFERSIZE);
 
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): JNumaUtils Initialization.");
@@ -203,14 +211,44 @@ public class Profiler {
         }
     }
 
+    /**
+     * If an object must be considered as dead, we mark its index with a negative number.
+     * @param index
+     */
+    public void markAsDead(int index) {
+        objects.index[index] = -1;
+    }
+
     public void removeCollected() {
         for (int i = 0; i < objects.currentIndex; i++) {
-            if (!Heap.isInHeap(objects.address[i])) {
-                //object is dead
-            } else {
+            long address = objects.address[i];
+            if (Heap.stillExists(address)) {
                 //object is alive -> update it's address
+                long newAddr = Heap.getUpdatedAddress(address);
+                objects.address[i] = newAddr;
+                survivedObjNum++;
+            } else {
+                //object is dead
+                markAsDead(i);
             }
         }
+    }
+
+    public ProfilerBuffer createSurvivorBuffer(int survivedObjNum) {
+        ProfilerBuffer s = new ProfilerBuffer(survivedObjNum);
+        int j = 0;
+        for(int i = 0; i < objects.currentIndex; i++) {
+            if (objects.index[i] > 0) {
+                s.index[j] = objects.index[i];
+                s.type[j] = objects.type[i];
+                s.size[j] = objects.size[i];
+                s.address[j] = objects.address[i];
+                s.node[j] = objects.node[i];
+                j++;
+            }
+        }
+        assert j == survivedObjNum;
+        return s;
     }
 
     /**
@@ -291,6 +329,12 @@ public class Profiler {
             Log.println("(verbose msg): Remove Collected Objects From Profiler Buffer. [pre-mutation phase]");
         }
         removeCollected();
+
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Create Survivor Buffer. [pre-mutation phase]");
+        }
+        survivors = createSurvivorBuffer(survivedObjNum);
+        //TODO: Make removeCollected() and createSurvivorBuffer() an one-step process
 
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Clean-up Profiler Buffer. [pre-mutation phase]");
