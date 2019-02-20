@@ -1,24 +1,24 @@
 pipeline {
-    agent any
+    agent {
+        dockerfile {
+            filename 'Dockerfile'
+            dir 'docker'
+            args '--mount src="$HOME/.mx",target="/.mx",type=bind'
+        }
+    }
     options {
         timestamps()
         timeout(time: 1, unit: 'HOURS')
-    }
-    tools {
-        jdk 'openJDK8'
     }
     environment {
         MAXINE_HOME="$WORKSPACE/maxine"
         MX_HOME="$WORKSPACE/mx"
         MX="$MX_HOME/mx"
-        PATH="/localhome/regression/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin:/localhome/regression/gcc-arm-none-eabi-7-2017-q4-major/bin:/localhome/regression/qemu-2.10.1/build/aarch64-softmmu:/localhome/regression/qemu-2.10.1/build/arm-softmmu:/localhome/regression/riscv/bin:$PATH"
     }
 
     stages {
         stage('clone') {
             steps {
-                // Clean up workspace
-                step([$class: 'WsCleanup'])
                 dir(env.MAXINE_HOME) {
                     checkout scm
                 }
