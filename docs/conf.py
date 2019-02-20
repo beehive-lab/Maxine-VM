@@ -46,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Maxine-VM'
-copyright = u'2018, The Maxine Team of the University of Manchester'
+copyright = u'2018-2019, The Maxine Team of the University of Manchester'
 author = u'The Maxine Team of the University of Manchester'
 
 # The version info for the project you're documenting, acts as replacement for
