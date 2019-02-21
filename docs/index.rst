@@ -77,9 +77,11 @@ Table of Contents
 .. toctree::
    :maxdepth: 2
 
-   Status
    build
+   Status
    IDEs
+   Publications
+   People
    Debugging
    FAQ
    Glossary
@@ -99,9 +101,6 @@ Table of Contents
    VM-Operations
    VM-Tooling-Interface
    Inspector
-   Inspector-VM-Interaction
-   Publications
-   People
 
 Indices and tables
 ==================

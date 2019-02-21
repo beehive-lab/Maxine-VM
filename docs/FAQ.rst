@@ -1,5 +1,5 @@
-The Maxine Project: Frequently Asked Questions
-==============================================
+Frequently Asked Questions
+==========================
 
 Here are some of the most frequently asked questions, along with answers
 that have been updated as the project evolves.
