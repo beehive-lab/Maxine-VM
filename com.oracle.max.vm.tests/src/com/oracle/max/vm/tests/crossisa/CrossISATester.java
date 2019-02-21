@@ -708,7 +708,12 @@ public abstract class CrossISATester {
 
     protected abstract ProcessBuilder getQEMUProcessBuilder();
 
-    protected abstract ProcessBuilder getGDBProcessBuilder();
+    protected ProcessBuilder getGDBProcessBuilder() {
+        if (gdbProcessBuilder != null) {
+            return gdbProcessBuilder;
+        }
+        return new ProcessBuilder("gdb-multiarch", "-q", "-x", gdbInput);
+    }
 
     public void run() throws Exception {
         compile();

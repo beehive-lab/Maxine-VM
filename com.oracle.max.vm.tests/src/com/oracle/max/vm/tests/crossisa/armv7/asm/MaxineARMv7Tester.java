@@ -47,13 +47,6 @@ public class MaxineARMv7Tester extends CrossISATester {
         return new ProcessBuilder("true");
     }
 
-    protected ProcessBuilder getGDBProcessBuilder() {
-        if (gdbProcessBuilder != null) {
-            return gdbProcessBuilder;
-        }
-        return new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
-    }
-
     protected ProcessBuilder getQEMUProcessBuilder() {
         if (qemuProcessBuilder != null) {
             return qemuProcessBuilder;

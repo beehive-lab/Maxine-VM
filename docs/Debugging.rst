@@ -95,72 +95,56 @@ Cross-ISA tests
 ^^^^^^^^^^^^^^^
 
 When porting Maxine VM's compilers to a new Instruction Set Architecture `QEMU <https://www.qemu.org/>`__ is utilized to virtually run unit tests and regress the correctness of the generated code.
-To be able to run cross-ISA tests Maxine VM relies on the gcc linaro toolchain and qemu.
-Assuming an Ubuntu 16.04 LTS installation, the following will install the required packages.
+To be able to run cross-ISA tests Maxine VM relies on gcc cross-compilers, gdb-multilib and qemu.
+The easiest way to run the cross-ISA tests is by using the ``beehivelab/maxine-dev`` `docker image <https://hub.docker.com/r/beehivelab/maxine-dev>`__.
 
-ARMv7
-'''''
+If you insist on running natively, assuming an Ubuntu 18.04 LTS installation, the following will install the required packages.
 
-::
-
-    sudo apt-get install qemu-system-arm gcc-arm-none-eabi gdb-arm-none-eabi
-
-Aarch64
-'''''''
-
-Unfortunately for aarch64 the packages provided by ubuntu are not
-suitable. Qemu version is 2.5 while we need 2.10 and
-``gcc-aarch64-linux-gnu`` although available in the Ubuntu repositories
-it does not include ``aarch64-linux-gnu-gdb``, so we need to manually
-download both Qemu and the linaro toolchain.
-
-For qemu:
+ARMv7 and AArch64
+'''''''''''''''''
 
 ::
 
-    wget https://download.qemu.org/qemu-2.10.1.tar.bz2
-    bunzip2 qemu-2.10.1.tar.bz2
-    tar xvf qemu-2.10.1.tar
-    cd qemu-2.10.1
-    mkdir build
-    cd build
-    ../configure --target-list=aarch64-linux-user,aarch64-softmmu
-    make -j
-    sudo make install
-
-For gcc toolchain:
-
-::
-
-    wget https://releases.linaro.org/components/toolchain/binaries/7.1-2017.08/aarch64-linux-gnu/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu.tar.xz
-    tar xf gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu.tar.xz
-    export PATH=$PATH:$(pwd)/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin
+    sudo apt-get install \
+        gdb-multilib qemu-system-arm \
+        gcc-aarch64-linux-gnu gcc-arm-none-eabi
 
 RISC-V
 ''''''
+
+GCC:
+
+::
+
+    sudo apt-get install gcc-riscv64-linux-gnu
+
+GDB:
+
+::
+
+    sudo apt-get install wget texinfo
+    mkdir /tmp/riscv
+    cd /tmp/riscv/
+    wget https://ftp.gnu.org/gnu/gdb/gdb-8.2.1.tar.xz
+    tar xf gdb-8.2.1.tar.xz
+    cd /tmp/riscv/gdb-8.2.1
+    ./configure --target=riscv32-elf,riscv64-elf --disable-multilib --prefix=/opt/riscv
+    make -j
+    sudo make install
 
 QEMU:
 
 ::
 
-    git clone https://github.com/riscv/riscv-qemu
-    mkdir build
-    cd build
-    ../configure --target-list=riscv32-softmmu,riscv64-softmmu,riscv32-linux-user,riscv64-linux-user --prefix=/opt/riscv
+    sudo apt-get install libglib2.0-dev libpixman-1-dev flex bison
+    wget https://download.qemu.org/qemu-3.1.0.tar.xz
+    tar xf qemu-3.1.0.tar.xz
+    cd /tmp/riscv/qemu-3.1.0
+    ./configure --target-list=riscv64-softmmu,riscv32-softmmu,riscv64-linux-user,riscv32-linux-user --prefix=/opt/riscv
     make -j
     sudo make install
-    export
-    PATH=$PATH:/opt/riscv/bin
 
-For the GCC toolchain please follow the instructions from
-https://github.com/riscv/riscv-gnu-toolchain
-
-**NOTE**: When debugging RISC-V to make breakpoints work run the
-following in gdb
-
-::
-
-    #set riscv use_compressed_breakpoint off
+Don't forget to add ``/opt/riscv`` to ``PATH``.
 
 .. _logging-tracing-label:
 
