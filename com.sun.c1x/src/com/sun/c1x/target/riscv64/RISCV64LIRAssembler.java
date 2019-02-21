@@ -300,6 +300,13 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         assert src.isStackSlot();
         assert dest.isRegister();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
+
+//        System.out.println("\"Stack2Reg\" = " + "Stack2Reg");
+//        System.out.println("src = " + src);
+//        System.out.println("dest = " + dest);
+//        System.out.println("kind = " + kind);
+//        System.out.println();
+
         masm.load(dest.asRegister(), addr, dest.kind.stackKind());
     }
 
@@ -325,8 +332,16 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         assert src.isAddress();
         assert dest.isRegister() : "dest=" + dest;
 
+//        throw FatalError.unimplemented();
+
+        System.out.println("\"mem2reg\" = " + "mem2reg");
+        System.out.println("src = " + src);
+        System.out.println("dest = " + dest);
+        System.out.println("kind = " + kind);
+
         CiAddress addr = (CiAddress) src;
-        masm.load(dest.asRegister(), addr, kind);
+
+//        masm.load(dest.asRegister(), addr, kind);
         if (info != null) {
             tasm.recordImplicitException(codePos() - 4, info);
         }
@@ -536,10 +551,10 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 masm.addiw(dest.asRegister(), dest.asRegister(), 0);
                 break;
             case F2D:
-                masm.fcvtsd(dest.asRegister(), src.asRegister());
+                masm.fcvtds(dest.asRegister(), src.asRegister());
                 break;
             case D2F:
-                masm.fcvtds(dest.asRegister(), src.asRegister());
+                masm.fcvtsd(dest.asRegister(), src.asRegister());
                 break;
             case I2F:
                 masm.fcvtsw(dest.asRegister(), src.asRegister());
@@ -1022,13 +1037,35 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Byte:
                     case Char:
                     case Short:
-                    case Int:
+                    case Int: {
+                        Label continueLabel = new Label();
+                        // reg1 - Integer.MIN_VALUE results into integer overflow. We need a special case for this comparison.
+                        masm.mov64BitConstant(scratchRegister, Integer.MIN_VALUE);
+                        masm.mov32BitConstant(RISCV64.x31, 1);
+                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, opr2.asRegister(), continueLabel);
+                        // Integer.MIN_VALUE - opr2 results into integer overflow. We need a special case for this comparison.
+                        masm.mov32BitConstant(RISCV64.x31, -1);
+                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, reg1, continueLabel);
+
                         masm.sub(32, RISCV64.x31, reg1, opr2.asRegister());
+                        masm.bind(continueLabel);
                         break;
+                    }
                     case Object:
-                    case Long:
+                    case Long: {
+                        Label continueLabel = new Label();
+                        // reg1 - Long.MIN_VALUE results into long overflow. We need a special case for this comparison.
+                        masm.mov64BitConstant(scratchRegister, Long.MIN_VALUE);
+                        masm.mov32BitConstant(RISCV64.x31, 1);
+                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, opr2.asRegister(), continueLabel);
+                        // Long.MIN_VALUE - opr2 results into long overflow. We need a special case for this comparison.
+                        masm.mov32BitConstant(RISCV64.x31, -1);
+                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, reg1, continueLabel);
+
                         masm.sub(64, RISCV64.x31, reg1, opr2.asRegister());
+                        masm.bind(continueLabel);
                         break;
+                    }
                     case Float: {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
@@ -1109,6 +1146,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.load(RISCV64.f31, frameMap.toStackAddress(opr2Slot), opr1.kind);
                         masm.fltd(RISCV64.x31, RISCV64.f31, reg1);
                         masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, continueLabel);
+
                         masm.fltd(RISCV64.x31, reg1, RISCV64.f31);
                         masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, 0);
@@ -1165,6 +1203,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.mov32BitConstant(scratchRegister, 1);
                         masm.fltd(RISCV64.x31, RISCV64.f31, reg1);
                         masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, continueLabel);
+
                         masm.fltd(RISCV64.x31, reg1, RISCV64.f31);
                         masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, RISCV64.x31, scratchRegister, lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, 0);
@@ -1435,8 +1474,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             masm.mov64BitConstant(scratchRegister, 63);
             masm.sub(64, result, scratchRegister, result);
         } else {
-            masm.xori(scratchRegister, value, -1); // value = ~RISCV64.zero
-            masm.clz(64, result, scratchRegister);
+            masm.ctz(64, result, value);
         }
         masm.bind(end);
     }
@@ -1490,6 +1528,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             assert dest.isAddress() || dest.isRegister() || dest.isStackSlot();
         } else {
             assert dest.kind.isDouble();
+            System.out.println("\"VOLATILE MOVE\" = " + "VOLATILE MOVE");
             if (src.isStackSlot()) {
                 masm.load(dest.asRegister(), frameMap.toStackAddress((CiStackSlot) src), CiKind.Double);
             } else {

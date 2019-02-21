@@ -120,21 +120,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BRANCH_ZERO:
                 switch (type) {
                     case BRANCH_NONZERO: {
-                        int oldPos = codeBuffer.position();
-                        codeBuffer.setPosition(branch - INSTRUCTION_SIZE);
-                        mov32BitConstant(scratchRegister1, 0);
                         CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
-                        emitConditionalBranch(ConditionFlag.NE, cmp, scratchRegister1, branchOffset);
-                        codeBuffer.setPosition(oldPos);
+                        emitConditionalBranch(ConditionFlag.NE, cmp, scratchRegister1, branchOffset, branch);
                         break;
                     }
                     case BRANCH_ZERO: {
-                        int oldPos = codeBuffer.position();
-                        codeBuffer.setPosition(branch - INSTRUCTION_SIZE);
-                        mov32BitConstant(scratchRegister1, 0);
+                        assert codeBuffer.getShort(branch + 2) == 0;
                         CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
-                        emitConditionalBranch(ConditionFlag.EQ, cmp, scratchRegister1, branchOffset);
-                        codeBuffer.setPosition(oldPos);
+                        emitConditionalBranch(ConditionFlag.EQ, cmp, scratchRegister1, branchOffset, branch);
                         break;
                     }
                 }
@@ -404,8 +397,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             fcvtld(scratchRegister, RISCV64.f31);
             fcvtdl(RISCV64.f31, scratchRegister);
         } else {
-            fcvtsw(scratchRegister, RISCV64.f31);
-            fcvtws(RISCV64.f31, scratchRegister);
+            fcvtws(scratchRegister, RISCV64.f31);
+            fcvtsw(RISCV64.f31, scratchRegister);
         }
         this.fmul(size, RISCV64.f31, RISCV64.f31, rs2);
         this.fsub(size, rd, rs1, RISCV64.f31);
@@ -599,6 +592,34 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     /**
+     * Count Trailing Zeros implementation.
+     * RISC-V lacks this instruction
+     *
+     * @param size
+     * @param dst
+     * @param src
+     */
+    public void ctz(int size, CiRegister dst, CiRegister src) {
+        Label end = new Label();
+        Label continuel = new Label();
+
+        mov32BitConstant(scratchRegister1, 0b1);
+        mov32BitConstant(dst, 0);
+
+        this.bind(continuel);
+        push(64, scratchRegister1);
+        and(scratchRegister1, src, scratchRegister1);
+        branchConditionally(ConditionFlag.NE, scratchRegister1, RISCV64.zero, end);
+        add(dst, dst, 1);
+        pop(64, scratchRegister1);
+        slli(scratchRegister1, scratchRegister1, 1);
+        b(continuel);
+
+        this.bind(end);
+        pop(64, scratchRegister1);
+    }
+
+    /**
      * Count Leading Zeros implementation.
      * RISC-V lacks this instruction
      *
@@ -638,14 +659,15 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      */
     public void cbz(CiRegister cmp, Label label) {
         // TODO Handle case where offset is too large for a single jump instruction
+
+        mov32BitConstant(scratchRegister1, 0);
         if (label.isBound()) {
-            mov32BitConstant(scratchRegister1, 0);
             int offset = label.position() - codeBuffer.position();
             emitConditionalBranch(RISCV64MacroAssembler.ConditionFlag.EQ, cmp, scratchRegister1, offset);
         } else {
+            System.out.println("\"LABEL UNBOUND\" = " + "LABEL UNBOUND");
             label.addPatchAt(codeBuffer.position());
             int regEncoding = cmp.getEncoding();
-            emitInt(0);
             emitByte(PatchLabelKind.BRANCH_ZERO.encoding);
             emitByte(regEncoding);
             emitShort(0);
@@ -701,18 +723,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void b(int offset) {
-//        The  unconditional  jump  instructions  all  use  PC-relative  addressing  to  help  support  position-
-//        independent  code.   The  JALR  instruction  was  defined  to  enable  a  two-instruction  sequence  to
-//        jump anywhere in a 32-bit absolute address range.  A LUI instruction can first load rs1 with the
-//        upper 20 bits of a target address, then JALR can add in the lower bits.  Similarly, AUIPC then
-//        JALR can jump anywhere in a 32-bit pc-relative address range.
-        auipc(scratchRegister, offset);
-        jalr(RISCV64.zero, scratchRegister, offset);
+        jal(RISCV64.zero, offset);
     }
 
     public void b(int offset, int pos) {
-        auipc(scratchRegister, offset, pos);
-        jalr(RISCV64.zero, scratchRegister, offset, pos + INSTRUCTION_SIZE);
+        jal(RISCV64.zero, offset, pos);
     }
 
     /**
