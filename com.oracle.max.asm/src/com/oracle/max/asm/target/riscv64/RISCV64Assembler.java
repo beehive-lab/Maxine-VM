@@ -1022,20 +1022,8 @@ public class RISCV64Assembler extends AbstractAssembler {
         itype(RV32D, rd, 0, rs, 0b110100100000);
     }
 
-    public void fcvtsd(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b010000000001);
-    }
-
-    public void fcvtds(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b010000100000);
-    }
-
-    public void fcvtdw(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b110100100000);
-    }
-
     public void fcvtwd(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rs, 0, rs, 0b110000100000);
+        itype(RV32D, rd, 0, rs, 0b110000100000);
     }
 
     public void fcvtdl(CiRegister rd, CiRegister rs) {
