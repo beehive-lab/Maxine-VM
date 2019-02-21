@@ -169,10 +169,20 @@ public class MaxineRISCV64Tester extends CrossISATester {
         // eg: 5.4189638607169796e-315, -nan(0xfffff40000000)
         // However when moving the bits from the nan register to an integer register, we git the right interpretation.
 
-//        String value = line.split("\\s+")[1];
-//        System.out.println("Float.parseFloat(value) = " + Float.parseFloat(value));
-//        return Float.parseFloat(value);
-        throw FatalError.unimplemented();
+        try {
+            if (line.contains("nan")) {
+                String number = line.split("\\s+-nan\\(0xfffff")[1];
+                number = number.substring(0, number.length() - 1);
+                return Float.intBitsToFloat(Integer.parseUnsignedInt(number, 16));
+            } else {
+                double number = Double.parseDouble(line.split("\\s+")[1]);
+                return Float.intBitsToFloat((int) Double.doubleToRawLongBits(number));
+            }
+        } catch (Exception e) {
+            System.out.println("Float: GDB output line could not be parse: " + line);
+        }
+
+        return 0;
     }
 
     /**
@@ -189,9 +199,15 @@ public class MaxineRISCV64Tester extends CrossISATester {
     protected double parseDoubleRegister(String line) {
         try {
             String value = line.split("\\s+")[1];
-            return Double.parseDouble(value);
+            if ("inf".equals(value)) {
+                return Double.POSITIVE_INFINITY;
+            } else if ("-inf".equals(value)) {
+                return Double.NEGATIVE_INFINITY;
+            } else {
+                return Double.parseDouble(value);
+            }
         } catch (Exception e) {
-            System.out.println("GDB output line could not be parsed: " + line);
+            System.out.println("Double: GDB output line could not be parsed: " + line);
         }
 
         return 0.0;
@@ -200,7 +216,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
     public void runSimulation() throws Exception {
         super.runSimulation();
         parseLongRegisters("ra ", "pc");
-//        parseFloatRegisters("f0 ", "f31");
+        parseFloatRegisters("f0 ", "f31");
         parseDoubleRegisters("f0 ", "f31");
     }
 
