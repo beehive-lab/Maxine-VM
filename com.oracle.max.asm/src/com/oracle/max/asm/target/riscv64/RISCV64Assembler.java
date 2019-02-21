@@ -65,9 +65,9 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     private void utype(RISCV64opCodes opcode, CiRegister rd, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0 : opcode.getValue();
-        assert rd.number >> 5 == 0 : rd.number;
+        assert rd.getEncoding() >> 5 == 0 : rd.getEncoding();
         int instruction = opcode.getValue();
-        instruction |= rd.number << 7;
+        instruction |= rd.getEncoding() << 7;
         instruction |= imm32 & 0xFFFFF000;
 
         if (pos == -1) {
@@ -98,14 +98,14 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     private void rtype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
         assert opcode.getValue() >> 7 == 0;
-        assert rd.number >> 5 == 0;
-        assert rs1.number >> 5 == 0;
-        assert rs2.number >> 5 == 0;
+        assert rd.getEncoding() >> 5 == 0;
+        assert rs1.getEncoding() >> 5 == 0;
+        assert rs2.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
-        instruction |= rd.number << 7;
+        instruction |= rd.getEncoding() << 7;
         instruction |= funct3 << 12;
-        instruction |= rs1.number << 15;
-        instruction |= rs2.number << 20;
+        instruction |= rs1.getEncoding() << 15;
+        instruction |= rs2.getEncoding() << 20;
         instruction |= funct7 << 25;
         emitInt(instruction);
     }
@@ -126,12 +126,12 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0;
-        assert rd.number >> 5 == 0;
-        assert rs1.number >> 5 == 0;
+        assert rd.getEncoding() >> 5 == 0;
+        assert rs1.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
-        instruction |= rd.number << 7;
+        instruction |= rd.getEncoding() << 7;
         instruction |= funct3 << 12;
-        instruction |= rs1.number << 15;
+        instruction |= rs1.getEncoding() << 15;
         instruction |= imm32 << 20;
 
         if (pos == -1) {
@@ -180,13 +180,13 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     private void stype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
         assert opcode.getValue() >> 7 == 0;
-        assert rs1.number >> 5 == 0;
-        assert rs2.number >> 5 == 0;
+        assert rs1.getEncoding() >> 5 == 0;
+        assert rs2.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
         instruction |= (imm32 & 0x1F) << 7;
         instruction |= funct3 << 12;
-        instruction |= rs1.number << 15;
-        instruction |= rs2.number << 20;
+        instruction |= rs1.getEncoding() << 15;
+        instruction |= rs2.getEncoding() << 20;
         instruction |= ((imm32 >> 5) & 0x7F) << 25;
         emitInt(instruction);
     }
@@ -208,14 +208,14 @@ public class RISCV64Assembler extends AbstractAssembler {
     private void btype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0;
         assert ((byte) funct3) >> 3 == 0;
-        assert rs1.number >> 5 == 0;
-        assert rs2.number >> 5 == 0;
+        assert rs1.getEncoding() >> 5 == 0;
+        assert rs2.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
         instruction |= ((imm32 >> 11) & 1) << 7;
         instruction |= ((imm32 >> 1) & 0xF) << 8;
         instruction |= funct3 << 12;
-        instruction |= rs1.number << 15;
-        instruction |= rs2.number << 20;
+        instruction |= rs1.getEncoding() << 15;
+        instruction |= rs2.getEncoding() << 20;
         instruction |= ((imm32 >> 5) & 0x3F) << 25;
         instruction |= ((imm32 >> 12) & 1) << 31;
 
@@ -245,9 +245,9 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0;
-        assert rd.number >> 5 == 0;
+        assert rd.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
-        instruction |= rd.number << 7;
+        instruction |= rd.getEncoding() << 7;
         instruction |= ((imm32 >> 20) & 1) << 31; // This places bit 20 of imm32 in bit 31 of instruction
         instruction |= ((imm32 >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm32 in bits 30:21 of instruction
         instruction |= ((imm32 >> 11) & 1) << 20; // This places bit 11 of imm32 in bit20 of instruction
@@ -1006,8 +1006,8 @@ public class RISCV64Assembler extends AbstractAssembler {
         itype(LOAD_FP, dst, 3, base, offset);
     }
 
-    public void fsd(CiRegister dst, CiRegister base, int offset) {
-        stype(STORE_FP, 3, dst, base, offset);
+    public void fsd(CiRegister rd, CiRegister rs, int offset) {
+        stype(STORE_FP, 3, rd, rs, offset);
     }
 
     public void fcvtsd(CiRegister rd, CiRegister rs) {
@@ -1023,7 +1023,7 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fcvtwd(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rs, 0, rs, 0b110000100000);
+        itype(RV32D, rd, 0, rs, 0b110000100000);
     }
 
     public void fcvtdl(CiRegister rd, CiRegister rs) {

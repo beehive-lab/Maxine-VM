@@ -334,7 +334,6 @@ public class RISCV64JTTC1XTest {
             generateAndTest(functionPrototype, entryPoint, codeBytes);
         }
     }
-
     @Test
     public void c1x_jtt_BC_dadd() throws Exception {
         double[] argsOne = {0.0D, 1.0D, 253.11d};
@@ -848,6 +847,11 @@ public class RISCV64JTTC1XTest {
         initializeCodeBuffers(methods, "MostSignificantBit64.java", "int test(long)");
         for (int i = 0; i < input.length; i++) {
             int    expectedValue     = jtt.max.MostSignificantBit64.test(input[i]);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("input[i] = " + input[i]);
+            System.out.println();
+
             String functionPrototype = RISCV64CodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
             tester.setExpectedValue(RISCV64.x10, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
@@ -862,6 +866,11 @@ public class RISCV64JTTC1XTest {
         initializeCodeBuffers(methods, "LeastSignificantBit64.java", "int test(long)");
         for (int i = 0; i < input.length; i++) {
             int    expectedValue     = jtt.max.LeastSignificantBit64.test(input[i]);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("input[i] = " + input[i]);
+            System.out.println();
+
             String functionPrototype = RISCV64CodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
             tester.setExpectedValue(RISCV64.x10, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
@@ -1475,6 +1484,11 @@ public class RISCV64JTTC1XTest {
         initializeCodeBuffers(methods, "BC_dsub2.java", "double test(double)");
         for (int i = 0; i < argsOne.length; i++) {
             double expectedValue = BC_dsub2.test(argsOne[i]);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("argsOne = " + argsOne[i]);
+            System.out.println();
+
             String functionPrototype = RISCV64CodeWriter.preAmble("double", "double ", Double.toString(argsOne[i]));
             tester.setExpectedValue(RISCV64.fa0, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
@@ -1491,6 +1505,11 @@ public class RISCV64JTTC1XTest {
 
         for (int i = 0; i < argsOne.length; i++) {
             float expectedValue = BC_fneg.test(argsOne[i]);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("argsOne = " + argsOne[i]);
+            System.out.println();
+
             String functionPrototype = RISCV64CodeWriter.preAmble("float", "float ", Float.toString(argsOne[i]));
             tester.setExpectedValue(RISCV64.fa0, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
@@ -1507,6 +1526,11 @@ public class RISCV64JTTC1XTest {
 
         for (int i = 0; i < argsOne.length; i++) {
             double expectedValue = BC_dneg2.test(argsOne[i]);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("argsOne = " + argsOne[i]);
+            System.out.println();
+
             String functionPrototype = RISCV64CodeWriter.preAmble("double", " double ", Double.toString(argsOne[i]));
             tester.setExpectedValue(RISCV64.fa0, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
@@ -1851,6 +1875,11 @@ public class RISCV64JTTC1XTest {
 
         for (Args pair : pairs) {
             boolean expectedValue            = jtt.loop.Loop02.test(pair.first);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("pair.first = " + pair.first);
+            System.out.println();
+
             String  functionPrototype = RISCV64CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
             tester.setExpectedValue(RISCV64.x10, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
@@ -2046,6 +2075,11 @@ public class RISCV64JTTC1XTest {
 
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.le(pair.lfirst, pair.lsecond);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("pair = " + pair.lfirst + "<=" + pair.lsecond);
+            System.out.println();
+
             String  functionPrototype = RISCV64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             tester.setExpectedValue(RISCV64.x10, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
@@ -2067,6 +2101,11 @@ public class RISCV64JTTC1XTest {
 
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.ge(pair.lfirst, pair.lsecond);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("pair = " + pair.lfirst + "<=" + pair.lsecond);
+            System.out.println();
+
             String  functionPrototype = RISCV64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             tester.setExpectedValue(RISCV64.x10, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
@@ -2130,6 +2169,11 @@ public class RISCV64JTTC1XTest {
 
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.gt(pair.lfirst, pair.lsecond);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("pair = " + pair.lfirst + "<=" + pair.lsecond);
+            System.out.println();
+
             String  functionPrototype = RISCV64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             tester.setExpectedValue(RISCV64.x10, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
@@ -2151,6 +2195,11 @@ public class RISCV64JTTC1XTest {
 
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.lt(pair.lfirst, pair.lsecond);
+
+            System.out.println("expectedValue = " + expectedValue);
+            System.out.println("pair = " + pair.lfirst + "<" + pair.lsecond);
+            System.out.println();
+
             String  functionPrototype = RISCV64CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             tester.setExpectedValue(RISCV64.x10, expectedValue);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
