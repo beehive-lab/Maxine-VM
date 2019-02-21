@@ -27,6 +27,8 @@ From the directory `maxine-src` (created in [Prerequisites](#prerequisites)) run
 docker create -u=$(id -u):$(id -g) \
     --mount src="$(pwd)",target="/maxine-src",type=bind \
     --mount src="$HOME/.mx",target="/.mx",type=bind \
+    --mount src="/tmp/.X11-unix",target="/tmp/.X11-unix",type=bind \
+    -e DISPLAY=unix$DISPLAY --cap-add=SYS_PTRACE \
     --name maxine-dev -ti beehivelab/maxine-dev
 ```
 
@@ -36,6 +38,9 @@ This will create a container named `maxine-dev`.
 - `--mount src="$(pwd)",target="/maxine-src",type=bind` essentially mounts the current directory to the docker container under the `/maxine-src` directory.
   Similarly, `--mount src="$HOME/.mx",target="/.mx",type=bind` does the same for the `~/.mx` directory.
   Any changes performed to mounted folders outside the docker container are visible in the container and vice versa.
+- `--mount src="/tmp/.X11-unix",target="/tmp/.X11-unix",type=bind` mounts the host X11 socket to the container socket.
+- `-e DISPLAY=unix$DISPLAY` passes in the `DISPLAY` environment variable.
+- `--cap-add=SYS_PTRACE` enables `ptrace` capability for the container.
 - `--name maxine-dev` names the new image so that it can later be referenced (to start it, stop it, attach to it etc.).
 - `-ti` instructs docker to create an interactive session with a pseudo-tty, to allow us to interact with the container.
 
