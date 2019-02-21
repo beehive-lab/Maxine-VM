@@ -240,7 +240,7 @@ public class MaxRuntime implements RiRuntime {
         } else if (platform.isa == ISA.Aarch64) {
             fp = Aarch64.sp;
             refMapToFPOffset = 0;
-        } else if(platform.isa == ISA.RISCV64) {
+        } else if (platform.isa == ISA.RISCV64) {
             fp = RISCV64.sp;
             refMapToFPOffset = 0;
         } else {
