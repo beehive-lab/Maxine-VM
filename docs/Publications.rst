@@ -4,6 +4,43 @@ Papers and Presentations
 This page lists some of the papers, presentations, articles and demos
 that have resulted from the Maxine project and its predecessors.
 
+-  Po-An Tsai and Daniel Sanchez.
+   **Compress Objects, Not Cache Lines: An Object-Based Compressed Memory Hierarchy.**
+   In the 24th International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS), 2019.
+
+-  Po-An Tsai, Yee Ling Gan, and Daniel Sanchez.
+   **Rethinking the Memory Hierarchy for Modern Languages.**
+   In 51st Annual IEEE/ACM International Symposium on Microarchitecture (MICRO), 2018.
+
+-  Yee Ling Gan.
+   **Redesigning the Memory Hierarchy for Memory-Safe Programming Languages.**
+   Masters Thesis, Massachusetts Institute of Technology, 2018.
+
+-  Thomas Shull, Jian Huang, and Josep Torrellas.
+   **Defining a high-level programming model for emerging NVRAM technologies.**
+   In Proceedings of the 15th International Conference on Managed Languages & Runtimes (ManLang) 2018.
+
+-  Foivos S. Zakkak, Andrew Nisbet, John Mawer, Timothy Hartley, Nikolaos Foutris, Orion Papadakis, Andreas Andronikakis, Iain Apreotesei, Christos Kotselidis.
+   **On the Future of Research VMs: A Hardware/Software Perspective.**
+   In  Workshop on Modern Language Runtimes, Ecosystems, and VMs (MoreVMs), 2018.
+
+-  Foivos S. Zakkak, Juan Fumero, Christos Kotselidis.
+   **Enabling RISC-V support on MaxineVM (poster session).**
+   In the 2018 RISC-V Workshop, May 2018.
+
+-  Christos Kotselidis, Andy Nisbet, Foivos S. Zakkak, and Nikos Foutris.
+   **Cross-ISA debugging in meta-circular VMs.**
+   In the 9th International Workshop on Virtual Machines and Intermediate Languages (VMIL '17), October 2017.
+
+-  Andrey Rodchenko, Christos Kotselidis, Andy Nisbet, Antoniu Pop, Mikel Luján.
+   **MaxSim: A Simulator Platform for Managed Applications.**
+   In 2017 IEEE International Symposium on Performance Analysis of Systems and Software (ISPASS), 2017.
+   **Best paper award**.
+
+-  Andrey Rodchenko, Christos Kotselidis, Andy Nisbet, Antoniu Pop, Mikel Luján.
+   **Type Information Elimination from Objects on Architectures with Tagged Pointers Support.**
+   In IEEE Transactions on Computers (TOC), 2017.
+
 -  Christos Kotselidis, Andy Nisbet, Foivos S. Zakkak, Nikos Foutris.
    **Cross-ISA debugging in meta-circular VMs.**
    In 9th ACM SIGPLAN International Workshop on Virtual Machines and Intermediate Languages (VMIL), 2017.
