@@ -8,15 +8,18 @@ For code contribution statistics see `github contributions <https://github.com/b
 The University of Manchester
 ----------------------------
 
+-  `Andreas Andronikakis <https://github.com/aandronikakis>`__
 -  `Andrey Rodchenko <https://github.com/arodchen>`__
 -  `Andy Nisbet <https://github.com/drandynisbet>`__
--  Mikel Lujan
+-  `Benjamin Bell <https://github.com/brcb20>`__
 -  `Christos Kotselidis <https://github.com/kotselidis>`__
--  `Foivos Zakkak <https://github.com/zakkak>`__
--  `Tim Hartley <https://github.com/timhartley>`__
--  `Iain Apreotesei <https://github.com/ibriq>`__
--  `Andreas Andronikakis <https://github.com/aandronikakis>`__
 -  `Costas Lebesis <https://github.com/lebco>`__
+-  `Florin Blanaru <https://github.com/gigiblender>`__
+-  `Foivos Zakkak <https://github.com/zakkak>`__
+-  `Iain Apreotesei <https://github.com/ibriq>`__
+-  Mikel Lujan
+-  `Orion Papadakis <https://github.com/orionpapadakis>`__
+-  `Tim Hartley <https://github.com/timhartley>`__
 
 Oracle Labs
 -----------

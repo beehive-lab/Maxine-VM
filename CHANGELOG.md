@@ -8,10 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- Allocation Profiler (-XX:+AllocationProfilerAll -XX:+AllocationProfilerPrintHistogram) gathers stats about object 
-allocations
+- Allocation Profiler (-XX:+AllocationProfilerAll -XX:+AllocationProfilerPrintHistogram) gathers stats about object allocations
 - Fine grain allocation profiling with -XX:AllocationProfilerEntryPoint -XX:AllocationProfilerExitPoint
 - -XX:+LogCompiledMethods to print all runtime compiled methods in the application
+- New Jenkinsfile for running benchmarks
+- Dockerfile to create docker images for running and developing Maxine VM
+
+### Fixed
+
+- Reflection.getCallerClass()
+- mx gen and jni code generation
+- Reduced output of mx build
+- Simplified conditional and boolean expressions (refactoring)
+- Update Cross-ISA infrastructure to use newer tools
+- Documentation refactoring and update
 
 ## [2.6.0] - 2018-12-05
 

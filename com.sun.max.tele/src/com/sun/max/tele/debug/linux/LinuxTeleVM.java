@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -83,7 +85,7 @@ public final class LinuxTeleVM extends TeleVM {
 
         @Override
         public boolean isHeldByCurrentThread() {
-            return (effectiveOwner != null && effectiveOwner == Thread.currentThread()) ? true : lock.isHeldByCurrentThread();
+            return (effectiveOwner != null && effectiveOwner == Thread.currentThread()) || lock.isHeldByCurrentThread();
         }
 
         void handOverToSingleThread() {

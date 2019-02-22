@@ -113,6 +113,11 @@ public class HostedHeapScheme extends HeapSchemeAdaptor {
         throw ProgramError.unexpected();
     }
 
+    @Override
+    public void scanAndProfile() {
+        throw ProgramError.unexpected();
+    }
+
     public Pointer gcAllocate(MemoryRegion region, Size size) {
         return Pointer.zero();
     }

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -197,7 +199,7 @@ public class TeleMemoryRegion extends TeleTupleObject {
      * specific subclasses may have more refined information available.
      */
     public boolean containsInAllocated(Address address) {
-        return isAllocated() ? contains(address) : false;
+        return isAllocated() && contains(address);
     }
 
     /**

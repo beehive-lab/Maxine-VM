@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -62,7 +64,7 @@ public class Field_set02 {
             return object.doubleField == 17;
         } else if (arg == 7) {
             Field_set02.class.getField("booleanField").set(object, true);
-            return object.booleanField == true;
+            return object.booleanField;
         }
         return false;
     }

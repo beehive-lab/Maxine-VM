@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -276,7 +278,7 @@ public abstract class SamplingProfiler extends Thread {
             }
         }
         // the default value is true unless dump is non-zero, as the sorting incurs both CPU and allocation overhead.
-        if (sortedOutputOptionSet == false && dumpPeriod != 0) {
+        if (!sortedOutputOptionSet && dumpPeriod != 0) {
             sortedOutput = false;
         }
         if (flat) {
