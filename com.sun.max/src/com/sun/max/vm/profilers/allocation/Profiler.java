@@ -48,9 +48,8 @@ public class Profiler {
     public static int uniqueId = 0;
     /**
      * The Profiler Buffer for newly allocated objects.
-     * TODO: rename to newObjects
      */
-    public static ProfilerBuffer objects;
+    public static ProfilerBuffer newObjects;
     /**
      * The Profiler Buffers for survivor objects.
      */
@@ -92,7 +91,7 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Profiler Initialization.");
         }
-        objects = new ProfilerBuffer(ALLOCBUFFERSIZE);
+        newObjects = new ProfilerBuffer(ALLOCBUFFERSIZE);
 
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): JNumaUtils Initialization.");
@@ -149,7 +148,7 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        objects.record(uniqueId, type, size, address);
+        newObjects.record(uniqueId, type, size, address);
         uniqueId++;
         unlock(lockDisabledSafepoints);
     }
@@ -163,7 +162,7 @@ public class Profiler {
         Log.print("==== Profiling Cycle ");
         Log.print(profilingCycle);
         Log.println(" ====");
-        objects.print(profilingCycle);
+        newObjects.print(profilingCycle);
         unlock(lockDisabledSafepoints);
     }
 
@@ -181,9 +180,9 @@ public class Profiler {
     }
 
     public void findNumaNodes() {
-        for (int i = 0; i < objects.currentIndex; i++) {
-            int node = utilsObject.findNode(objects.address[i]);
-            objects.setNodeOf(i, node);
+        for (int i = 0; i < newObjects.currentIndex; i++) {
+            int node = utilsObject.findNode(newObjects.address[i]);
+            newObjects.setNodeOf(i, node);
         }
     }
 
@@ -226,7 +225,7 @@ public class Profiler {
             if (VerboseAllocationProfiler) {
                 Log.println("(verbose msg): Remove Collected from Objects to Survivors2.");
             }
-            removeCollected(objects, survivors2);
+            removeCollected(newObjects, survivors2);
         } else {
             //odd
             if (VerboseAllocationProfiler) {
@@ -236,7 +235,7 @@ public class Profiler {
             if (VerboseAllocationProfiler) {
                 Log.println("(verbose msg): Remove Collected from Objects to Survivors1.");
             }
-            removeCollected(objects, survivors1);
+            removeCollected(newObjects, survivors1);
         }
     }
 
@@ -289,14 +288,14 @@ public class Profiler {
                 Log.println("(verbose msg): Clean-up Survivor1 Buffer. [post-gc phase]");
             }
             //TODO: rename resetCycle
-            objects.resetCycle();
+            newObjects.resetCycle();
             survivors1.resetCycle();
         } else {
             if (VerboseAllocationProfiler) {
                 Log.println("(verbose msg): Clean-up Profiler Buffer. [post-gc phase]");
                 Log.println("(verbose msg): Clean-up Survivor2 Buffer. [post-gc phase]");
             }
-            objects.resetCycle();
+            newObjects.resetCycle();
             survivors2.resetCycle();
         }
 
