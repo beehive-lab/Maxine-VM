@@ -625,10 +625,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         return cell.plus(Layout.size(origin));
     }
 
-    /**
-     * This method traverses the heap and profiles the currently existing objects.
-     */
-    public void profilerScan() {
+    public void scanAndProfile() {
         Pointer cell = toSpace.start().asPointer();
 
         while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {

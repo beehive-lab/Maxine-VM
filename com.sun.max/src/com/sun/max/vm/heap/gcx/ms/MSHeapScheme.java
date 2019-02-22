@@ -180,6 +180,11 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         return objectSpace.usedSpace();
     }
 
+    @Override
+    public void scanAndProfile() {
+        throw FatalError.unimplemented("MSHeapScheme.scanAndProfile");
+    }
+
     @INLINE
     public boolean pin(Object object) {
         // Objects never relocate. So this is always safe.

@@ -388,6 +388,11 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     }
 
     @Override
+    public void scanAndProfile() {
+        throw FatalError.unimplemented("GenMSEHeapScheme.scanAndProfile");
+    }
+
+    @Override
     public boolean pin(Object object) {
         return false;
     }
