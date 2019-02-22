@@ -26,10 +26,8 @@ import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.program.ProgramError;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.VMConfiguration;
 import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
@@ -37,7 +35,6 @@ import com.sun.max.vm.thread.VmThread;
 import uk.ac.manchester.jnumautils.JNumaUtils;
 
 import static com.sun.max.vm.MaxineVM.isHosted;
-import static com.sun.max.vm.VMConfiguration.vmConfig;
 
 public class Profiler {
 
@@ -113,7 +110,6 @@ public class Profiler {
      * It is used during profiler's initialization, when allocation is still enabled.
      */
     public void resolveNativeMethods() {
-
         //all methods that will be called when allocation is disabled need to have already been resolved.
         utilsObject.findNode(0L);
     }
@@ -148,19 +144,6 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
-    @NEVER_INLINE
-    public void profileGC(int size, String type) {
-        //TODO: How are we gonna profile this?
-        /* PROFILER_TLA is currently a thread local that has it's value maintained
-         * only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA. That
-         * said if we lock and disable safepoints it is no longer accessible, thus
-         * we read it before locking. */
-        final boolean lockDisabledSafepoints = lock();
-
-        unlock(lockDisabledSafepoints);
-    }
-
     /**
      * Dump Profiler Buffer to Maxine's Log output.
      */
@@ -182,53 +165,11 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
-    /**
-     * Dump Profiler findings/stats to Maxine's Log output (for validation purposes).
-     * TODO: create a -XX option for that functionality
-     */
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
-    @NEVER_INLINE
-    public void printStats() {
-        final boolean lockDisabledSafepoints = lock();
-        /*
-        final float reportInMbs = (float) Heap.reportUsedSpace() / 1048576;
-        final float histogramInMbs = (float) sizeHistogram[profilingCycle].totalObjectsize / 1048576;
-
-        Log.print("Reported heap used space = ");
-        Log.print(reportInMbs);
-        Log.println(" MB");
-
-        Log.print("Histogram total object size = ");
-        Log.print(histogramInMbs);
-        Log.println(" MB");
-
-        //padding = reportInMbs - histogramInMbs;
-        //Log.print("TLAB Padding = ");
-        //Log.print(padding);
-        //Log.println(" MB\n");
-
-        if (AllocationProfilerPrintHistogram) {
-            //printHistogram();
-            printTypeHistogram();
-        }
-        */
-        unlock(lockDisabledSafepoints);
-    }
-
     public void findNumaNodes() {
-
         for (int i = 0; i < objects.currentIndex; i++) {
             int node = utilsObject.findNode(objects.address[i]);
             objects.setNodeOf(i, node);
         }
-    }
-
-    /**
-     * If an object must be considered as dead, we mark its index with a negative number.
-     * @param index
-     */
-    public void markAsDead(int index) {
-        objects.index[index] = -1;
     }
 
     public void removeCollected() {
@@ -241,7 +182,7 @@ public class Profiler {
                 survivedObjNum++;
             } else {
                 //object is dead
-                markAsDead(i);
+                objects.markAsDead(i);
             }
         }
     }
@@ -296,21 +237,7 @@ public class Profiler {
     @NEVER_INLINE
     public void postGCActions() {
         final boolean lockDisabledSafepoints = lock();
-        /*
-        // for validation purposes
-        Log.print("Collected heap used space = ");
-        final float reportCollectedHeapInMbs = (float) Heap.reportUsedSpace() / 1048576;
-        Log.print(reportCollectedHeapInMbs);
-        Log.println(" MBs");
 
-        //scan the recently collected heap and profile the survived objects
-        VMConfiguration.vmConfig().heapScheme().scanAndProfile();
-
-        Log.print("HistogramGC heap used space = ");
-        final float reportCollectedHeapHistogramInMbs = (float) sizeHistogram[profilingCycle].totalObjectsizeGC / 1048576;
-        Log.print(reportCollectedHeapHistogramInMbs);
-        Log.println(" MBs\n");
-        */
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Entering Post-GC Phase.");
         }
