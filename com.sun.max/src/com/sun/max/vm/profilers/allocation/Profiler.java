@@ -222,14 +222,6 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
-    public void scanAndProfile(Heap.GCCallbackPhase when) {
-        final HeapScheme heapScheme = VMConfiguration.vmConfig().heapScheme();
-        assert heapScheme instanceof SemiSpaceHeapScheme;
-        SemiSpaceHeapScheme semiSpaceHeapScheme = (SemiSpaceHeapScheme) heapScheme;
-        semiSpaceHeapScheme.profilerScan();
-    }
-
     /**
      *  This method is called every time a GC has been completed.
      *  At this point the profiler has completed a full profiling cycle.
@@ -247,7 +239,7 @@ public class Profiler {
         Log.println(" MBs");
 
         //scan the recently collected heap and profile the survived objects
-        scanAndProfile(Heap.GCCallbackPhase.AFTER);
+        VMConfiguration.vmConfig().heapScheme().scanAndProfile();
 
         Log.print("HistogramGC heap used space = ");
         final float reportCollectedHeapHistogramInMbs = (float) sizeHistogram[profilingCycle].totalObjectsizeGC / 1048576;

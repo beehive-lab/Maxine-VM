@@ -856,6 +856,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     @Override
+    public void scanAndProfile() {
+        throw FatalError.unimplemented("GenSSHeapScheme.scanAndProfile");
+    }
+
+    @Override
     public void walkHeap(CallbackCellVisitor visitor) {
         ImmortalHeap.visitCells(visitor);
         Heap.bootHeapRegion.visitCells(visitor);
