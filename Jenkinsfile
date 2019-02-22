@@ -20,12 +20,19 @@ pipeline {
     stages {
         stage('clone') {
             steps {
-                dir(env.MAXINE_HOME) {
-                    checkout scm
+                parallel 'maxine': {
+                    dir(env.MAXINE_HOME) {
+                        checkout scm
+                    }
+                }, 'mx': {
+                    dir(env.MX_HOME) {
+                        checkout([$class: 'GitSCM', branches: [[name: '5.190.3']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/beehive-lab/mx.git']]])
+                    }
                 }
-                dir(env.MX_HOME) {
-                    checkout([$class: 'GitSCM', branches: [[name: '5.190.3']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/beehive-lab/mx.git']]])
-                }
+            }
+        }
+        stage('fetch dependencies') {
+            steps {
                 // Trigger fetch of dependencies
                 dir(env.MAXINE_HOME) {
                     sh '$MX help'
