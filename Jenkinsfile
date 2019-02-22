@@ -14,6 +14,7 @@ pipeline {
         MAXINE_HOME="$WORKSPACE/maxine"
         MX_HOME="$WORKSPACE/mx"
         MX="$MX_HOME/mx"
+        MX_GIT_CACHE="refcache"
     }
 
     stages {
