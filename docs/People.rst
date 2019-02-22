@@ -19,6 +19,7 @@ The University of Manchester
 -  `Costas Lebesis <https://github.com/lebco>`__
 -  `Florin Blanaru <https://github.com/gigiblender>`__
 -  `Benjamin Bell <https://github.com/brcb20>`__
+-  `Orion Papadakis <https://github.com/orionpapadakis>`__
 
 Oracle Labs
 -----------
