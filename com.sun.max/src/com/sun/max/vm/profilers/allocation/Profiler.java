@@ -95,7 +95,7 @@ public class Profiler {
 
         resolveNativeMethods();
 
-        profilingCycle = 0;
+        profilingCycle = 1;
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Initialization Complete.");
 
