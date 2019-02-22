@@ -633,25 +633,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         return cell.plus(Layout.size(origin));
     }
 
-    public void scanAndProfile() {
-        Pointer cell = toSpace.start().asPointer();
-
-        while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {
-            final Pointer origin = Layout.cellToOrigin(cell);
-            final Hub hub = Layout.getHub(origin);
-            final String objectType = hub.classActor.name();
-            if (hub.specificLayout.isTupleLayout()) {
-                final int size = hub.tupleSize.toInt();
-                allocationProfiler.profileGC(size, objectType);
-                cell = cell.plus(Layout.size(origin));
-            } else {
-                final Size size = Layout.size(origin);
-                allocationProfiler.profileGC(size.toInt(), objectType);
-                cell = cell.plus(size);
-            }
-        }
-    }
-
     void moveReachableObjects(Pointer start) {
         Pointer cell = start;
         while (cell.lessThan(allocationMark())) {

@@ -243,11 +243,6 @@ public interface HeapScheme extends VMScheme {
     Size reportUsedSpace();
 
     /**
-     * Traverses the heap and profiles the currently existing objects.
-     */
-    void scanAndProfile();
-
-    /**
      * Returns the maximum <em>object-inspection age</em>, which is the number
      * of real-time milliseconds that have elapsed since the
      * least-recently-inspected heap object was last inspected by the garbage

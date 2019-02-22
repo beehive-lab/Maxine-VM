@@ -241,11 +241,6 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
         return markSweepSpace.usedSpace();
     }
 
-    @Override
-    public void scanAndProfile() {
-        throw FatalError.unimplemented("MSEHeapScheme.scanAndProfile");
-    }
-
     @INLINE
     public boolean pin(Object object) {
         // Objects never relocate. So this is always safe.
@@ -517,4 +512,3 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     }
 
 }
-
