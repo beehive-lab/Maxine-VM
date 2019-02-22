@@ -127,11 +127,6 @@ To launch the VM (or any other command for that matter) without using ``mx``, th
 
     mx -v helloworld
 
-Debugging
----------
-
-Please see :doc:`Debugging <./Debugging>`.
-
 Profiling
 ---------
 
@@ -185,78 +180,11 @@ However, the stack trace will likely show the closest caller that contains a loo
 
 The data is output using the Maxine log mechanism, so can be captured in a file by setting the ``MAXINE_LOG_FILE`` environment variable.
 
-.. _platform-label:
-
-Platform
-========
-
-Maxine is being developed and tested on the following configurations:
-
-+----------------+----------------------+--------------------------+--------------------+
-| Architecture   | OS                   | Java                     | MaxineVM Version   |
-+================+======================+==========================+====================+
-| X86            | Ubuntu 18.04         | OpenJDK 8 (u191)         | 2.6.0              |
-+----------------+----------------------+--------------------------+--------------------+
-| Aarch64        | Ubuntu 16.04/18.04   | OpenJDK 8 (u181)         | 2.6.0              |
-+----------------+----------------------+--------------------------+--------------------+
-| ARMv7          | Ubuntu 16.04         | OpenJDK 7 u151           | 2.4.0              |
-+----------------+----------------------+--------------------------+--------------------+
-
-MaxineVM - JDK version compatibility table
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The table below shows the JDK version required to build each version of
-MaxineVM.
-
-+--------------------+------------------------+
-| MaxineVM Version   | Java Version           |
-+====================+========================+
-| >=                 | Open JDK 8 u191        |
-+--------------------+------------------------+
-| 2.5.1 - 2.6.0      | Open JDK 8 u181        |
-+--------------------+------------------------+
-| 2.4.0 - 2.5.0      | Open JDK 7 or 8 u151   |
-+--------------------+------------------------+
-| 2.2 - 2.3.0        | Open JDK 7 or 8 u151   |
-+--------------------+------------------------+
-| 2.1.1              | Open JDK 7 u131        |
-+--------------------+------------------------+
-| 2.0 - 2.1.0        | Oracle JDK 7 u25       |
-+--------------------+------------------------+
-| < 2.0              | Oracle JDK 7 u6        |
-+--------------------+------------------------+
-
-To get OpenJDK 7 u151 in Ubuntu 16.04 on x86 you can use the following
-debian packages:
-
-.. code-block:: shell
-
-    cd /tmp
-
-    export ARCH=amd64                      # or arm64
-    export JAVA_VERSION=7u151-2.6.11-3     # or 8u151-b12-1
-    export JAVA=openjdk-7                  # or openjdk-8
-    export FCONFIG_VERSION=2.12.3-0.2
-    export BASE_URL=http://snapshot.debian.org/archive/debian/20171124T100538Z
-
-    for package in jre jre-headless jdk dbg; do
-    wget ${BASE_URL}/pool/main/o/${JAVA}/${JAVA}-${package}_${JAVA_VERSION}_${ARCH}.deb
-    done
-
-    for package in fontconfig-config libfontconfig1; do
-    wget ${BASE_URL}/pool/main/f/fontconfig/${package}_${FCONFIG_VERSION}_all.deb
-    done
-
-    wget http://ftp.uk.debian.org/debian/pool/main/libj/libjpeg-turbo/libjpeg62-turbo_1.5.1-2_${ARCH}.deb
-
-    sudo dpkg -i ${JAVA}-jdk_${JAVA_VERSION}_${ARCH}.deb ${JAVA}-jre_${JAVA_VERSION}_${ARCH}.deb ${JAVA}-jre-headless_${JAVA_VERSION}_${ARCH}.deb ${JAVA}-dbg_${JAVA_VERSION}_${ARCH}.deb libjpeg62-turbo_1.5.1-2_${ARCH}.deb fontconfig-config_${FCONFIG_VERSION}_all.deb libfontconfig1_${FCONFIG_VERSION}_all.deb
-    sudo apt-get install -f
-
 Building Maxine without docker
-==============================
+------------------------------
 
 Environment variables
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 To build maxine natively we first need to define a number of environment variables:
 
@@ -283,7 +211,7 @@ To build maxine natively we first need to define a number of environment variabl
      export LD_LIBRARY_PATH=$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/
 
 Dependencies
-------------
+~~~~~~~~~~~~
 
 Maxine depends on the `MX tool <https://github.com/graalvm/mx>`__ for its build process.
 To get it and add it to your ``PATH`` execute::
@@ -304,7 +232,7 @@ Since Maxine is hosted in a git repository we need to install ``git`` as well::
  sudo apt-get install git
 
 Get the source code
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 #. Make sure the project directory exists and enter it::
 

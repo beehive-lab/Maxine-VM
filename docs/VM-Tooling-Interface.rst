@@ -1,3 +1,6 @@
+VM Tooling interface
+====================
+
 As a research VM, Maxine should make it is easy as possible to analyze
 the behavior of applications and Maxine itself.
 Since Maxine is meta-circular, many of the
