@@ -91,7 +91,7 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Profiler Initialization.");
         }
-        newObjects = new ProfilerBuffer(ALLOCBUFFERSIZE);
+        newObjects = new ProfilerBuffer(ALLOCBUFFERSIZE, "New Objects Buffer");
 
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): JNumaUtils Initialization.");
@@ -100,15 +100,15 @@ public class Profiler {
         utilsObject = new JNumaUtils();
 
         if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Resolve createNumaMaps Native Method.");
+            Log.println("(verbose msg): Force Native Methods's resolution.");
         }
         resolveNativeMethods();
 
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Initialize the Survivor Objects Profiler Buffers.");
         }
-        survivors1 = new ProfilerBuffer(SURVBUFFERSIZE);
-        survivors2 = new ProfilerBuffer(SURVBUFFERSIZE);
+        survivors1 = new ProfilerBuffer(SURVBUFFERSIZE, "Survivors Buffer No1");
+        survivors2 = new ProfilerBuffer(SURVBUFFERSIZE, "Survivors Buffer No2");
 
         profilingCycle = 1;
         if (VerboseAllocationProfiler) {
@@ -122,10 +122,9 @@ public class Profiler {
 
     /**
      * This method forces each native method's resolution.
-     * It is used during profiler's initialization, when allocation is still enabled.
+     * All methods that will be called when allocation is disabled need to have already been resolved.
      */
     public void resolveNativeMethods() {
-        //all methods that will be called when allocation is disabled need to have already been resolved.
         utilsObject.findNode(0L);
     }
 
@@ -156,7 +155,6 @@ public class Profiler {
     /**
      * Dump Profiler Buffer to Maxine's Log output.
      */
-    //TODO: make it more general
     public void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
         Log.print("==== Profiling Cycle ");
@@ -186,13 +184,12 @@ public class Profiler {
         }
     }
 
-    public void removeCollected(ProfilerBuffer from, ProfilerBuffer to) {
+    public void copySurvivors(ProfilerBuffer from, ProfilerBuffer to) {
         if (VerboseAllocationProfiler) {
-            //TODO: Add and print buffer names
-            //TODO: proper comments
-            Log.print("(verbose msg): Buffer usage = ");
-            Log.print(from.currentIndex);
-            Log.print(". This number helps to tune your Buffers.");
+            Log.print("(verbose msg): Copy Survived Objects from ");
+            Log.print(from.buffersName);
+            Log.print(" to ");
+            Log.println(to.buffersName);
         }
         for (int i = 0; i < from.currentIndex; i++) {
             long address = from.address[i];
@@ -200,10 +197,9 @@ public class Profiler {
                 //object is alive -> update it's address -> copy it to to buffer
                 long newAddr = Heap.getUpdatedAddress(address);
                 to.record(from.index[i], from.type[i], from.size[i], newAddr, from.node[i]);
-                //survivedObjNum++;
-
             }
             //clean up cell
+            //maybe useless
             from.cleanBufferCell(i);
         }
     }
@@ -213,35 +209,20 @@ public class Profiler {
      * In odd profiling cycle we store surviving objects to survivor1.
      * TODO: write proper comments
      */
-    public void removeCollected() {
-        //remove collected from survivors and copy to fresh survivors
-        //remove collected from new objects and copy to fresh survivors
+    public void findSurvivors() {
         if ((profilingCycle % 2) == 0) {
             //even
-            if (VerboseAllocationProfiler) {
-                Log.println("(verbose msg): Remove Collected from Survivors1 to Survivors2.");
-            }
-            removeCollected(survivors1, survivors2);
-            if (VerboseAllocationProfiler) {
-                Log.println("(verbose msg): Remove Collected from Objects to Survivors2.");
-            }
-            removeCollected(newObjects, survivors2);
+            copySurvivors(survivors1, survivors2);
+            copySurvivors(newObjects, survivors2);
         } else {
             //odd
-            if (VerboseAllocationProfiler) {
-                Log.println("(verbose msg): Remove Collected from Survivors2 to Survivors1.");
-            }
-            removeCollected(survivors2, survivors1);
-            if (VerboseAllocationProfiler) {
-                Log.println("(verbose msg): Remove Collected from Objects to Survivors1.");
-            }
-            removeCollected(newObjects, survivors1);
+            copySurvivors(survivors2, survivors1);
+            copySurvivors(newObjects, survivors1);
         }
     }
 
     /**
      * This method is called by ProfilerGCCallbacks in every pre-gc callback phase.
-     * We create the numa virtual memory map using the createNumaMap native function.
      */
     public void preGCActions() {
 
@@ -265,8 +246,7 @@ public class Profiler {
 
     /**
      *  This method is called every time a GC has been completed.
-     *  At this point the profiler has completed a full profiling cycle.
-     *  We check if the Histogram needs more space for a potential next profiling cycle and we increase the cycle counter.
+     *  We search for survivor objects among recently allocated and older survived objects.
      */
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
@@ -277,26 +257,22 @@ public class Profiler {
             Log.println("(verbose msg): Entering Post-GC Phase.");
         }
 
-        if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Remove Collected Objects From Profiler Buffer. [post-gc phase]");
-        }
-        removeCollected();
+        findSurvivors();
 
         if ((profilingCycle % 2) == 0) {
             if (VerboseAllocationProfiler) {
                 Log.println("(verbose msg): Clean-up Profiler Buffer. [post-gc phase]");
                 Log.println("(verbose msg): Clean-up Survivor1 Buffer. [post-gc phase]");
             }
-            //TODO: rename resetCycle
-            newObjects.resetCycle();
-            survivors1.resetCycle();
+            newObjects.resetBuffer();
+            survivors1.resetBuffer();
         } else {
             if (VerboseAllocationProfiler) {
                 Log.println("(verbose msg): Clean-up Profiler Buffer. [post-gc phase]");
                 Log.println("(verbose msg): Clean-up Survivor2 Buffer. [post-gc phase]");
             }
-            newObjects.resetCycle();
-            survivors2.resetCycle();
+            newObjects.resetBuffer();
+            survivors2.resetBuffer();
         }
 
         dumpSurvivors();
@@ -305,17 +281,19 @@ public class Profiler {
 
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Leaving Post-GC Phase.");
+            Log.print("(verbose msg): Start Profiling. [Cycle ");
+            Log.print(getProfilingCycle());
+            Log.println("]");
         }
-
-        Log.print("(verbose msg): Start Profiling. [Cycle ");
-        Log.print(getProfilingCycle());
-        Log.println("]");
 
         unlock(lockDisabledSafepoints);
     }
 
     public void terminate() {
         //TODO: dump last run's objects and terminate
+        preGCActions();
+        //no objects have left in the heap when this is called
+        postGCActions();
     }
 
     private static VmThread lockOwner;

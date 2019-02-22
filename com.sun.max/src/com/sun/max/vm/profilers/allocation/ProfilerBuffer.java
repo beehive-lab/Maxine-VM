@@ -39,9 +39,11 @@ public class ProfilerBuffer {
     public long[] address;
     public int[] node;
 
+    public String buffersName;
     public int currentIndex;
 
-    public ProfilerBuffer(int bufSize) {
+    public ProfilerBuffer(int bufSize, String name) {
+        this.buffersName = name;
         index = new int[bufSize];
         type = new String[bufSize];
         size = new int[bufSize];
@@ -117,10 +119,13 @@ public class ProfilerBuffer {
         }
 
         if (Profiler.VerboseAllocationProfiler) {
-            Log.print("(verbose msg): Buffer usage = ");
+            Log.print("(verbose msg): ");
+            Log.print(buffersName);
+            Log.print(" usage = ");
             Log.print(currentIndex);
             Log.print(" / ");
-            Log.println(address.length);
+            Log.print(address.length);
+            Log.println(". (This number helps in tuning Buffer's size).");
         }
     }
 
@@ -136,7 +141,7 @@ public class ProfilerBuffer {
         this.node[i] = -1;
     }
 
-    public void resetCycle() {
+    public void resetBuffer() {
         currentIndex = 0;
     }
 }
