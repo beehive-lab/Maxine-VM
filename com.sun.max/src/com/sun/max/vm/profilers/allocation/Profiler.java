@@ -243,6 +243,11 @@ public class Profiler {
         }
 
         if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Remove Collected Objects From Profiler Buffer. [post-gc phase]");
+        }
+        removeCollected();
+
+        if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Leaving Post-GC Phase.");
         }
 
@@ -264,11 +269,6 @@ public class Profiler {
         }
 
         // all pre-Mutation actions take place here
-        if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Remove Collected Objects From Profiler Buffer. [pre-mutation phase]");
-        }
-        removeCollected();
-
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Create Survivor Buffer. [pre-mutation phase]");
         }
