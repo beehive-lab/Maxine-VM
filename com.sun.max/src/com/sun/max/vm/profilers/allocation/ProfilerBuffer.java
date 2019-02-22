@@ -73,6 +73,21 @@ public class ProfilerBuffer {
         currentIndex++;
     }
 
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NEVER_INLINE
+    public void record(int index, String type, int size, long address, int node) {
+        this.index[currentIndex] = index;
+        // append a semicolon to primitive types
+        if (type.charAt(type.length() - 1) != ';') {
+            type = type.concat(";");
+        }
+        this.type[currentIndex] = type;
+        this.size[currentIndex] = size;
+        this.address[currentIndex] = address;
+        this.node[currentIndex] = node;
+        currentIndex++;
+    }
+
     public void setNodeOf(int index, int node) {
         this.node[index] = node;
     }
@@ -111,6 +126,14 @@ public class ProfilerBuffer {
 
     public void print(int cycle) {
         dumpToStdOut(cycle);
+    }
+
+    public void cleanBufferCell(int i) {
+        this.index[i] = 0;
+        this.type[i] = "null";
+        this.size[i] = 0;
+        this.address[i] = 0;
+        this.node[i] = -1;
     }
 
     public void resetCycle() {

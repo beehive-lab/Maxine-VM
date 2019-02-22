@@ -45,13 +45,19 @@ public class Profiler {
     static native void allocationProfiler_unlock();
 
     public static int profilingCycle;
-    public static int currentIndex = 0;
+    public static int uniqueId = 0;
+    /**
+     * The Profiler Buffer for newly allocated objects.
+     * TODO: rename to newObjects
+     */
     public static ProfilerBuffer objects;
-    public static ProfilerBuffer survivors;
+    /**
+     * The Profiler Buffers for survivor objects.
+     */
+    public static ProfilerBuffer survivors1;
+    public static ProfilerBuffer survivors2;
     public static HeapConfiguration heapConfig;
     public JNumaUtils utilsObject;
-    public static boolean preMutation = false;
-    public static int survivedObjNum = 0;
 
     private static boolean AllocationProfilerPrintHistogram;
     private static boolean AllocationProfilerAll;
@@ -59,10 +65,15 @@ public class Profiler {
     public static boolean VerboseAllocationProfiler;
 
     /**
-     * The size of the Allocation Profiling Buffer
+     * The size of the Allocation Profiling Buffer.
      * TODO: auto-configurable
      */
     public final int ALLOCBUFFERSIZE = 500000;
+
+    /**
+     * The size of each Survivors Profiling Buffer.
+     */
+    public final int SURVBUFFERSIZE = 500000;
 
     /**
      * Use -XX:+AllocationProfilerPrintHistogram flag to accompany the profiler stats with a complete histogram view.
@@ -92,8 +103,13 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(verbose msg): Resolve createNumaMaps Native Method.");
         }
-
         resolveNativeMethods();
+
+        if (VerboseAllocationProfiler) {
+            Log.println("(verbose msg): Initialize the Survivor Objects Profiler Buffers.");
+        }
+        survivors1 = new ProfilerBuffer(SURVBUFFERSIZE);
+        survivors2 = new ProfilerBuffer(SURVBUFFERSIZE);
 
         profilingCycle = 1;
         if (VerboseAllocationProfiler) {
@@ -133,20 +149,15 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        /*
-         * A pre-Mutation "pseudo" callback.
-         */
-        if (preMutation) {
-            preMutationActions();
-        }
-        objects.record(currentIndex, type, size, address);
-        currentIndex++;
+        objects.record(uniqueId, type, size, address);
+        uniqueId++;
         unlock(lockDisabledSafepoints);
     }
 
     /**
      * Dump Profiler Buffer to Maxine's Log output.
      */
+    //TODO: make it more general
     public void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
         Log.print("==== Profiling Cycle ");
@@ -161,7 +172,11 @@ public class Profiler {
         Log.print("==== Survivors Cycle ");
         Log.print(profilingCycle);
         Log.println(" ====");
-        survivors.print(profilingCycle);
+        if ((profilingCycle % 2) == 0) {
+            survivors2.print(profilingCycle);
+        } else {
+            survivors1.print(profilingCycle);
+        }
         unlock(lockDisabledSafepoints);
     }
 
@@ -172,36 +187,57 @@ public class Profiler {
         }
     }
 
-    public void removeCollected() {
-        for (int i = 0; i < objects.currentIndex; i++) {
-            long address = objects.address[i];
+    public void removeCollected(ProfilerBuffer from, ProfilerBuffer to) {
+        if (VerboseAllocationProfiler) {
+            //TODO: Add and print buffer names
+            //TODO: proper comments
+            Log.print("(verbose msg): Buffer usage = ");
+            Log.print(from.currentIndex);
+            Log.print(". This number helps to tune your Buffers.");
+        }
+        for (int i = 0; i < from.currentIndex; i++) {
+            long address = from.address[i];
             if (Heap.stillExists(address)) {
-                //object is alive -> update it's address
+                //object is alive -> update it's address -> copy it to to buffer
                 long newAddr = Heap.getUpdatedAddress(address);
-                objects.address[i] = newAddr;
-                survivedObjNum++;
-            } else {
-                //object is dead
-                objects.markAsDead(i);
+                to.record(from.index[i], from.type[i], from.size[i], newAddr, from.node[i]);
+                //survivedObjNum++;
+
             }
+            //clean up cell
+            from.cleanBufferCell(i);
         }
     }
 
-    public ProfilerBuffer createSurvivorBuffer(int survivedObjNum) {
-        ProfilerBuffer s = new ProfilerBuffer(survivedObjNum);
-        int j = 0;
-        for(int i = 0; i < objects.currentIndex; i++) {
-            if (objects.index[i] > 0) {
-                s.index[j] = objects.index[i];
-                s.type[j] = objects.type[i];
-                s.size[j] = objects.size[i];
-                s.address[j] = objects.address[i];
-                s.node[j] = objects.node[i];
-                j++;
+    /**
+     * In even profiling cycle we store surviving objects to survivor2.
+     * In odd profiling cycle we store surviving objects to survivor1.
+     * TODO: write proper comments
+     */
+    public void removeCollected() {
+        //remove collected from survivors and copy to fresh survivors
+        //remove collected from new objects and copy to fresh survivors
+        if ((profilingCycle % 2) == 0) {
+            //even
+            if (VerboseAllocationProfiler) {
+                Log.println("(verbose msg): Remove Collected from Survivors1 to Survivors2.");
             }
+            removeCollected(survivors1, survivors2);
+            if (VerboseAllocationProfiler) {
+                Log.println("(verbose msg): Remove Collected from Objects to Survivors2.");
+            }
+            removeCollected(objects, survivors2);
+        } else {
+            //odd
+            if (VerboseAllocationProfiler) {
+                Log.println("(verbose msg): Remove Collected from Survivors2 to Survivors1.");
+            }
+            removeCollected(survivors2, survivors1);
+            if (VerboseAllocationProfiler) {
+                Log.println("(verbose msg): Remove Collected from Objects to Survivors1.");
+            }
+            removeCollected(objects, survivors1);
         }
-        assert j == survivedObjNum;
-        return s;
     }
 
     /**
@@ -247,56 +283,40 @@ public class Profiler {
         }
         removeCollected();
 
-        if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Leaving Post-GC Phase.");
+        if ((profilingCycle % 2) == 0) {
+            if (VerboseAllocationProfiler) {
+                Log.println("(verbose msg): Clean-up Profiler Buffer. [post-gc phase]");
+                Log.println("(verbose msg): Clean-up Survivor1 Buffer. [post-gc phase]");
+            }
+            //TODO: rename resetCycle
+            objects.resetCycle();
+            survivors1.resetCycle();
+        } else {
+            if (VerboseAllocationProfiler) {
+                Log.println("(verbose msg): Clean-up Profiler Buffer. [post-gc phase]");
+                Log.println("(verbose msg): Clean-up Survivor2 Buffer. [post-gc phase]");
+            }
+            objects.resetCycle();
+            survivors2.resetCycle();
         }
 
-        // Enable the pre-Mutation flag before leaving post-GC phase
-        preMutation = true;
-
-        unlock(lockDisabledSafepoints);
-    }
-
-    /**
-     * This method is called when the pre-Mutation "pseudo" callback is triggered.
-     * Pre-Mutation phase: The moment we leave safepoint after a GC cycle and before execution,
-     * where allocation is enabled again.
-     */
-    public void preMutationActions() {
-        final boolean lockDisabledSafepoints = lock();
-        if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Entering Pre-Mutation Phase.");
-        }
-
-        // all pre-Mutation actions take place here
-        if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Create Survivor Buffer. [pre-mutation phase]");
-        }
-        survivors = createSurvivorBuffer(survivedObjNum);
-        //TODO: Make removeCollected() and createSurvivorBuffer() an one-step process
-
-        if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Clean-up Profiler Buffer. [pre-mutation phase]");
-        }
-
-        objects.resetCycle();
+        dumpSurvivors();
 
         profilingCycle++;
 
         if (VerboseAllocationProfiler) {
-            Log.println("(verbose msg): Leaving Pre-Mutation Phase. ");
-            Log.print("(verbose msg): Start Profiling. [Cycle ");
-            Log.print(getProfilingCycle());
-            Log.println("]");
+            Log.println("(verbose msg): Leaving Post-GC Phase.");
         }
 
-        // Disable the pre-Mutation flag after all pre-Mutation actions are complete.
-        preMutation = false;
+        Log.print("(verbose msg): Start Profiling. [Cycle ");
+        Log.print(getProfilingCycle());
+        Log.println("]");
+
         unlock(lockDisabledSafepoints);
     }
 
     public void terminate() {
-
+        //TODO: dump last run's objects and terminate
     }
 
     private static VmThread lockOwner;
