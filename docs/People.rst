@@ -17,6 +17,8 @@ The University of Manchester
 -  `Iain Apreotesei <https://github.com/ibriq>`__
 -  `Andreas Andronikakis <https://github.com/aandronikakis>`__
 -  `Costas Lebesis <https://github.com/lebco>`__
+-  `Florin Blanaru <https://github.com/gigiblender>`__
+-  `Benjamin Bell <https://github.com/brcb20>`__
 
 Oracle Labs
 -----------
