@@ -81,18 +81,15 @@ public class ProfilerBuffer {
         this.address[index] = newAddress;
     }
 
-    public void killObject(int index) {
-        this.index[index] = 0;
-        this.type[index] = "null";
-        this.size[index] = 0;
-        this.address[index] = 0;
-        this.node[index] = -1;
+    /**
+     * If an object must be considered as dead, we mark its index with a negative number.
+     * @param index
+     */
+    public void markAsDead(int index) {
+        this.index[index] = -1;
     }
 
     public void dumpToStdOut(int cycle) {
-        Log.print("==== Profiling Cycle ");
-        Log.print(cycle);
-        Log.println(" Start ====");
         for (int i = 0; i < currentIndex; i++) {
             Log.print(index[i]);
             Log.print(";");
