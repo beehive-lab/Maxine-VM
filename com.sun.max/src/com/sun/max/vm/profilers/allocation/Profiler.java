@@ -166,7 +166,19 @@ public class Profiler {
      */
     public void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
+        Log.print("==== Profiling Cycle ");
+        Log.print(profilingCycle);
+        Log.println(" ====");
         objects.print(profilingCycle);
+        unlock(lockDisabledSafepoints);
+    }
+
+    public void dumpSurvivors() {
+        final boolean lockDisabledSafepoints = lock();
+        Log.print("==== Survivors Cycle ");
+        Log.print(profilingCycle);
+        Log.println(" ====");
+        survivors.print(profilingCycle);
         unlock(lockDisabledSafepoints);
     }
 
