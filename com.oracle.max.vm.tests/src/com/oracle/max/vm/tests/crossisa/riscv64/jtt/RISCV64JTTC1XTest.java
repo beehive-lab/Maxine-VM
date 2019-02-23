@@ -2513,6 +2513,8 @@ public class RISCV64JTTC1XTest {
                             Double.toString(argsFive[i]) + "," + Double.toString(argsSix[i]) + "," + Double.toString(argsSeven[i]) + "," + Double.toString(argsEight[i]) + "," +
                             Double.toString(argsNine[i]));
             tester.setExpectedValue(RISCV64.x10, expectedValue);
+
+            System.out.println("functionPrototype = " + functionPrototype);
             generateAndTest(functionPrototype, entryPoint, codeBytes);
         }
     }

@@ -434,7 +434,7 @@ public class RegisterConfigs {
                  * as inlining is expected to reduce the call overhead sufficiently.
                  */
                 standard = new CiRegisterConfig(
-                        RISCV64.fp,          // frame
+                        RISCV64.sp,          // frame
                         RISCV64.a0,          // integral return value
                         RISCV64.fa0,          // floating point return value
                         RISCV64.x28,         // scratch
