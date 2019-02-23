@@ -165,14 +165,10 @@ public class MaxineRISCV64Tester extends CrossISATester {
      */
     @Override
     protected float parseFloatRegister(String line) {
-        //TODO I think GDB interprets FPU register as doubles showing the wrong number of -nan instead of the actual floating value
-        // eg: 5.4189638607169796e-315, -nan(0xfffff40000000)
-        // However when moving the bits from the nan register to an integer register, we git the right interpretation.
-
         try {
             if (line.contains("nan")) {
                 String number = line.split("\\s+-nan\\(0xfffff")[1];
-                number = number.substring(0, number.length() - 1);
+                number = number.split("\\)")[0];
                 return Float.intBitsToFloat(Integer.parseUnsignedInt(number, 16));
             } else {
                 double number = Double.parseDouble(line.split("\\s+")[1]);
@@ -216,8 +212,8 @@ public class MaxineRISCV64Tester extends CrossISATester {
     public void runSimulation() throws Exception {
         super.runSimulation();
         parseLongRegisters("ra ", "pc");
-        parseFloatRegisters("f0 ", "f31");
-        parseDoubleRegisters("f0 ", "f31");
+        parseFloatRegisters("ft0 ", "ustatus");
+        parseDoubleRegisters("ft0 ", "ustatus");
     }
 
     public static void main(String[] args) throws Exception {
