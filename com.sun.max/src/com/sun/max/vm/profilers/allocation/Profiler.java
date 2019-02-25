@@ -55,7 +55,6 @@ public class Profiler {
      */
     public static ProfilerBuffer survivors1;
     public static ProfilerBuffer survivors2;
-    public static HeapConfiguration heapConfig;
     public JNumaUtils utilsObject;
 
     private static boolean AllocationProfilerPrintHistogram;
@@ -180,7 +179,7 @@ public class Profiler {
     public void findNumaNodes() {
         for (int i = 0; i < newObjects.currentIndex; i++) {
             int node = utilsObject.findNode(newObjects.address[i]);
-            newObjects.setNodeOf(i, node);
+            newObjects.setNode(i, node);
         }
     }
 

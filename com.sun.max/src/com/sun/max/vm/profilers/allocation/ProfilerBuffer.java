@@ -90,7 +90,7 @@ public class ProfilerBuffer {
         currentIndex++;
     }
 
-    public void setNodeOf(int index, int node) {
+    public void setNode(int index, int node) {
         this.node[index] = node;
     }
 
