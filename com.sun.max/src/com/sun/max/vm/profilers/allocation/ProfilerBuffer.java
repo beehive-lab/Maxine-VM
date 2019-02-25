@@ -30,7 +30,7 @@ public class ProfilerBuffer {
      *
      * Index: unique for each object to make it distinguishable. [1-inf] index = 0 for empty cells
      * Type: the object's type/class
-     * Size: the object's size. might exist objects with the same type but with different size.
+     * Size: the object's size. Same type-different size objects might exist.
      * Address: the object's address in the heap
      */
     public int[] index;
