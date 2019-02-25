@@ -288,11 +288,13 @@ public class Profiler {
         unlock(lockDisabledSafepoints);
     }
 
+    /**
+     * This method can be used for actions need to take place right before
+     * Allocation Profiler's termination. It is triggered when JavaRunScheme
+     * is being terminated. Currently empty.
+     */
     public void terminate() {
-        //TODO: dump last run's objects and terminate
-        preGCActions();
-        //no objects have left in the heap when this is called
-        postGCActions();
+
     }
 
     private static VmThread lockOwner;
