@@ -648,12 +648,9 @@ public final class Heap {
      */
     public static boolean stillExists(long address) {
         Pointer objPtr = Address.fromLong(address).asPointer();
-
         final Reference forwardRef = Layout.readForwardRef(objPtr);
-        if (forwardRef.isZero()) {
-            return false;
-        }
-        return true;
+        
+        return !forwardRef.isZero();
     }
 
     /**
