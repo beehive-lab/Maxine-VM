@@ -119,7 +119,7 @@ public class ProfilerBuffer {
         }
 
         if (Profiler.VerboseAllocationProfiler) {
-            Log.print("(verbose msg): ");
+            Log.print("(Allocation Profiler): ");
             Log.print(buffersName);
             Log.print(" usage = ");
             Log.print(currentIndex);
