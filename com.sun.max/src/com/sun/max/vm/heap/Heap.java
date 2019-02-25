@@ -647,9 +647,9 @@ public final class Heap {
      * @return true if the object is in the Heap
      */
     public static boolean stillExists(long address) {
-        Pointer objPtr = Address.fromLong(address).asPointer();
-        final Reference forwardRef = Layout.readForwardRef(objPtr);
-        
+        Pointer origin = Address.fromLong(address).asPointer();
+        final Reference forwardRef = Layout.readForwardRef(origin);
+
         return !forwardRef.isZero();
     }
 
@@ -660,7 +660,6 @@ public final class Heap {
      */
     public static long getUpdatedAddress(long address) {
         Pointer cell = Address.fromLong(address).asPointer();
-        //Pointer cell2 = Pointer.fromLong(address);
         final Reference forwardRef = Layout.readForwardRef(cell);
         return forwardRef.toOrigin().toLong();
     }
