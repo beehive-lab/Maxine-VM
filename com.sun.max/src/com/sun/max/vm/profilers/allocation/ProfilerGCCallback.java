@@ -23,9 +23,10 @@ import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.heap.Heap;
 
 /**
- * A class that implements Heap.GCCallback for Allocation Profiler.
+ * A class that implements {@link Heap.GCCallback} for {@link Profiler}.
  * This mechanism enables the profiler callbacks BEFORE and AFTER a gc.
- * As every GCCallback implementation, it needs to be registered during BOOTSTRAPPING phase.
+ * As every GCCallback implementation, it needs to be registered during
+ * the {@link MaxineVM.Phase#BOOTSTRAPPING} phase.
  */
 public class ProfilerGCCallback implements Heap.GCCallback {
 
@@ -36,19 +37,16 @@ public class ProfilerGCCallback implements Heap.GCCallback {
     @Override
     public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
 
+        if (!MaxineVM.isAllocationProfilerInitialized || !MaxineVM.isRunning()) {
+            return;
+        }
+
         if (gcCallbackPhase == Heap.GCCallbackPhase.BEFORE) {
-            if (MaxineVM.isRunning() && MaxineVM.isAllocationProfilerInitialized) {
-                //any PRE gc action must be placed here
-                MaxineVM.allocationProfiler.preGCActions();
-            }
+            MaxineVM.allocationProfiler.preGCActions();
         } else if (gcCallbackPhase == Heap.GCCallbackPhase.AFTER) {
-            if (MaxineVM.isRunning() && MaxineVM.isAllocationProfilerInitialized) {
-                //any POST gc action must be placed here
-                MaxineVM.allocationProfiler.postGCActions();
-            }
+            MaxineVM.allocationProfiler.postGCActions();
         }
 
     }
-
 
 }
