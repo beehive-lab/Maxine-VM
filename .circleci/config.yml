@@ -1,0 +1,208 @@
+version: 2.1
+
+defaults: &defaults
+  working_directory: /maxine-src/maxine
+  docker:
+    - image: beehivelab/maxine-dev:latest
+  environment:
+    MAXINE_HOME: /maxine-src/maxine
+    MX_HOME: /maxine-src/mx
+    MX: "/maxine-src/mx/mx --no-download-progress"
+    MX_GIT_CACHE: refcache
+
+jobs:
+  clone-and-build:
+    <<: *defaults
+    steps:
+      - add_ssh_keys:
+          fingerprints: 65:1e:22:7d:44:b1:ef:b3:a5:2a:b1:30:81:ca:6e:86
+      - run:
+          name: "Clone maxine"
+          command: |
+            mkdir -p /root/.ssh/
+            echo -e 'Host github.com\n\tStrictHostKeyChecking no\n' > ~/.ssh/config
+            git clone --depth 1 --branch $CIRCLE_BRANCH --single-branch --recursive $CIRCLE_REPOSITORY_URL $MAXINE_HOME
+      - run:
+          name: "Clone mx"
+          command: |
+            git clone --depth 1 --branch 5.194.3 --single-branch https://github.com/graalvm/mx.git $MX_HOME
+      - restore_cache:
+          keys:
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-gate
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-image
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-build
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}
+      - run:
+          name: "Checkstyle"
+          command: $MX --suite maxine checkstyle
+      - run:
+          name: "mx build"
+          command: $MX build
+      - run:
+          name: "mx jttgen && canonicalizeprojects"
+          command: |
+            $MX jttgen
+            $MX --suite maxine canonicalizeprojects
+      - save_cache:
+          key: v0-maxine-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - /maxine-src/maxine
+      - save_cache:
+          key: v0-maxine-graal-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - /maxine-src/Maxine-Graal
+      - save_cache:
+          key: v0-mx-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - /maxine-src/mx
+      - save_cache:
+          key: v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-build
+          paths:
+            - /root/.mx
+  crossisa-aarch64:
+    <<: *defaults
+    steps:
+      - restore_cache:
+          key: v0-maxine-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-maxine-graal-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-mx-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-gate
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-image
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-build
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}
+      - run:
+          name: "Cross-ISA testing"
+          no_output_timeout: 30m
+          command: $MX --J @"-Dmax.platform=linux-aarch64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:aarch64.asm+Aarch64T1XTest+Aarch64T1XpTest+Aarch64JTT
+      - store_artifacts:
+          path: /maxine-src/maxine/maxine-tester
+          destination: crossisa-aarch64
+  crossisa-armv7:
+    <<: *defaults
+    steps:
+      - restore_cache:
+          key: v0-maxine-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-maxine-graal-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-mx-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-gate
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-image
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-build
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}
+      - run:
+          name: "Cross-ISA testing"
+          no_output_timeout: 30m
+          command: $MX --J @"-Dmax.platform=linux-arm -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:armv7.asm+ARMV7T1XTest+ARMV7JTT
+      - store_artifacts:
+          path: /maxine-src/maxine/maxine-tester
+          destination: crossisa-armv7
+  crossisa-riscv:
+    <<: *defaults
+    steps:
+      - restore_cache:
+          key: v0-maxine-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-maxine-graal-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-mx-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-gate
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-image
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-build
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}
+      - run:
+          name: "Cross-ISA testing"
+          no_output_timeout: 30m
+          command: $MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x
+      - store_artifacts:
+          path: /maxine-src/maxine/maxine-tester
+          destination: crossisa-riscv
+  image:
+    <<: *defaults
+    steps:
+      - restore_cache:
+          key: v0-maxine-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-maxine-graal-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-mx-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-gate
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-image
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-build
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}
+      - run:
+          name: "build boot images"
+          command: |
+            $MX image @c1xgraal
+            $MX image -build=DEBUG -platform linux-aarch64 -isa Aarch64
+            $MX image -build=DEBUG -platform linux-arm -isa ARMV7
+            $MX -J-ea image
+      - save_cache:
+          key: v0-image-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - /maxine-src/maxine
+      - save_cache:
+          key: v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-image
+          paths:
+            - /root/.mx
+  gate:
+    <<: *defaults
+    steps:
+      - restore_cache:
+          key: v0-image-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-maxine-graal-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          key: v0-mx-{{ .Environment.CIRCLE_SHA1 }}
+      - restore_cache:
+          keys:
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-gate
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-image
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-build
+            - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}
+      - run:
+          name: "mx gate"
+          command: $MX -J-Xmx1g gate -maxvm-args=-Xmx1g -refvm-args=-Xmx1g
+      - save_cache:
+          key: v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-gate
+          paths:
+            - /root/.mx
+      - store_artifacts:
+          path: /maxine-src/maxine/maxine-tester
+          destination: gate
+
+workflows:
+  version: 2
+  build-and-test:
+    jobs:
+      - clone-and-build:
+          filters:
+            branches:
+              only:
+                - master
+                - develop
+      - crossisa-aarch64:
+          requires:
+            - clone-and-build
+      - crossisa-armv7:
+          requires:
+            - clone-and-build
+      - crossisa-riscv:
+          requires:
+            - clone-and-build
+      - image:
+          requires:
+            - clone-and-build
+      - gate:
+          requires:
+            - image
