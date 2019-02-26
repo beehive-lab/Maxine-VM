@@ -333,8 +333,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
             error = true;
             MaxineVM vm = vm();
-            vm.phase = Phase.RUNNING;
             vmConfig().initializeSchemes(MaxineVM.Phase.RUNNING);
+            vm.phase = Phase.RUNNING;
             mainClassName = getMainClassName();
             VMTI.handler().vmInitialized();
             VMTI.handler().threadStart(VmThread.current());
