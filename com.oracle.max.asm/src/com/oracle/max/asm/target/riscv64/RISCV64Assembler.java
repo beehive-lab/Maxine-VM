@@ -1058,6 +1058,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         rtype(RV32D, rd, 0, rs1, rs2, 0b1010001);
     }
 
+    public void feqd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0b010, rs1, rs2, 0b1010001);
+    }
+
     // Floating point instructions single precision
     public void fadds(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         rtype(RV32F, rd, 0, rs1, rs2, 0b0000000);
@@ -1144,7 +1148,11 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fles(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        rtype(RV32D, rd, 0, rs1, rs2, 0b1010000);
+        rtype(RV32F, rd, 0, rs1, rs2, 0b1010000);
+    }
+
+    public void feqs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0b010, rs1, rs2, 0b1010000);
     }
 
     public enum ExtendType {
