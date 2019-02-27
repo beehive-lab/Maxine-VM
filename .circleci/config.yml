@@ -7,7 +7,7 @@ defaults: &defaults
   environment:
     MAXINE_HOME: /maxine-src/maxine
     MX_HOME: /maxine-src/mx
-    MX: "/maxine-src/mx/mx --no-download-progress"
+    MX: "/maxine-src/mx/mx --no-download-progress --suite=maxine"
     MX_GIT_CACHE: refcache
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
             - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}
       - run:
           name: "Checkstyle"
-          command: $MX --suite maxine checkstyle
+          command: $MX checkstyle
       - run:
           name: "mx build"
           command: $MX build
@@ -42,7 +42,7 @@ jobs:
           name: "mx jttgen && canonicalizeprojects"
           command: |
             $MX jttgen
-            $MX --suite maxine canonicalizeprojects
+            $MX canonicalizeprojects
       - save_cache:
           key: v0-maxine-{{ .Environment.CIRCLE_SHA1 }}
           paths:
@@ -171,7 +171,7 @@ jobs:
             - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-build
             - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}
       - run:
-          name: "mx gate"
+          name: "mx gate -nocheck"
           command: $MX -J-Xmx1g gate -maxvm-args=-Xmx1g -refvm-args=-Xmx1g
       - save_cache:
           key: v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-gate
