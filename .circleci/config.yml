@@ -184,12 +184,7 @@ workflows:
   version: 2
   build-and-test:
     jobs:
-      - clone-and-build:
-          filters:
-            branches:
-              only:
-                - master
-                - develop
+      - clone-and-build
       - crossisa-aarch64:
           requires:
             - clone-and-build
