@@ -242,8 +242,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_dcmp02() throws Exception {
-//        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
-        double[] argOne = {-1.0d, 1.0d, 5.1d, -5.1d};
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp02.java", "boolean test(double)");
@@ -262,8 +261,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_dcmp04() throws Exception {
-//        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
-        double[] argOne = {-1.0d, 1.0d, 5.1d, -5.1d};
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp04.java", "boolean test(double)");
@@ -282,8 +280,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_dcmp07() throws Exception {
-//        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
-        double[] argOne = {-1.0d, 1.0d, 5.1d, -5.1d};
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp07");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp07.java", "boolean test(double)");
@@ -302,8 +299,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_dcmp09() throws Exception {
-//        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
-        double[] argOne = {-1.0d, 1.0d, 5.1d, -5.1d};
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp09");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp09.java", "boolean test(double)");
@@ -683,7 +679,6 @@ public class RISCV64JTTC1XTest {
     }
 
 
-    @Ignore
     @Test
     public void c1x_jtt_BC_i2f() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_i2f");
@@ -879,8 +874,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_dcmp03() throws Exception {
-//        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
-        double[] argOne = {-1.0d, 1.0d, 5.1d, -5.1d};
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp03.java", "boolean test(double)");
@@ -899,8 +893,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_dcmp05() throws Exception {
-//        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
-        double[] argOne = {-1.0d, 1.0d, 5.1d, -5.1d};
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp05");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp05.java", "boolean test(double)");
@@ -919,8 +912,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_dcmp06() throws Exception {
-//        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
-        double[] argOne = {-1.0d, 1.0d, 5.1d, -5.1d};
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp06");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp06.java", "boolean test(double)");
@@ -939,8 +931,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_dcmp08() throws Exception {
-//        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
-        double[] argOne = {-1.0d, 1.0d, 5.1d, -5.1d};
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp08");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dcmp08.java", "boolean test(double)");
@@ -957,7 +948,6 @@ public class RISCV64JTTC1XTest {
         }
     }
 
-    @Ignore
     @Test
     public void c1x_jtt_BC_dcmp10() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_dcmp10");
@@ -1002,8 +992,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_fcmp02() throws Exception {
-//        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
-        float[] argOne = {-1.0f, 1.0f, 5.1f, -5.1f};
+        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp02.java", "boolean test(float)");
@@ -1017,8 +1006,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_fcmp03() throws Exception {
-//        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
-        float[] argOne = {-1.0f, 1.0f, 5.1f, -5.1f};
+        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp03.java", "boolean test(float)");
@@ -1032,8 +1020,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_fcmp04() throws Exception {
-//        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
-        float[] argOne = {-1.0f, 1.0f, 5.1f, -5.1f};
+        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp04.java", "boolean test(float)");
@@ -1047,8 +1034,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_fcmp05() throws Exception {
-//        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
-        float[] argOne = {-1.0f, 1.0f, 5.1f, -5.1f};
+        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp05");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp05.java", "boolean test(float)");
@@ -1062,8 +1048,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_fcmp06() throws Exception {
-//        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
-        float[] argOne = {-1.0f, 1.0f, 5.1f, -5.1f};
+        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp06");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp06.java", "boolean test(float)");
@@ -1077,8 +1062,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_fcmp07() throws Exception {
-//        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
-        float[] argOne = {-1.0f, 1.0f, 5.1f, -5.1f};
+        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp07");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp07.java", "boolean test(float)");
@@ -1092,8 +1076,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_fcmp08() throws Exception {
-//        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
-        float[] argOne = {-1.0f, 1.0f, 5.1f, -5.1f};
+        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp08");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp08.java", "boolean test(float)");
@@ -1107,8 +1090,7 @@ public class RISCV64JTTC1XTest {
 
     @Test
     public void c1x_jtt_BC_fcmp09() throws Exception {
-//        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
-        float[] argOne = {-1.0f, 1.0f, 5.1f, -5.1f};
+        float[] argOne = {-1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp09");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_fcmp09.java", "boolean test(float)");
@@ -1120,7 +1102,6 @@ public class RISCV64JTTC1XTest {
         }
     }
 
-    @Ignore
     @Test
     public void c1x_jtt_BC_fcmp10() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_fcmp10");
@@ -2485,6 +2466,7 @@ public class RISCV64JTTC1XTest {
         }
     }
 
+
     @Test
     public void c1x_jtt_BC_dload_9() throws Exception {
         double[] argsOne = {0.0D, 1.1D};
@@ -2496,6 +2478,7 @@ public class RISCV64JTTC1XTest {
         double[] argsSeven = {17.1D, 2.5D};
         double[] argsEight = {17.1D, 2.5D};
         double[] argsNine = {0.0D, 1.0D};
+
         String klassName = getKlassName("jtt.bytecode.BC_dload_9");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_dload_9.java", "boolean test(double, double, double, double, double, double, double, double, double)");
