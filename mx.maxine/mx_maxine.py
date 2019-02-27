@@ -173,7 +173,8 @@ def gate(args):
 
     testme(['-image-configs=java',
             '-maxvm-configs=std,forceC1X,forceT1X',
-            '-tests=c1x,graal,junit:uk.ac+tests.unsafe+tests.vm+max.l+max.c+max.u+max.i+max.M+max.p,jsr292,output,javatester'] + testArgs)
+            '-jtt-image-configs=jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x',
+            '-tests=c1x,junit:uk.ac+tests.unsafe+tests.vm+max.l+max.c+max.u+max.i+max.M+max.p,jsr292,output,javatester'] + testArgs)
     testme(['-image-configs=ss', '-tests=output:Hello+Catch+GC+WeakRef+Final', '-fail-fast'] + testArgs)
 
 
