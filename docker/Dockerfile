@@ -59,6 +59,21 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends linux-tools-generic \
     && apt-get clean
 
+#Florin's stuff
+#Install tmux
+RUN apt-get update && \
+    apt-get install -y tmux \
+    && apt-get clean
+#Install nano
+RUN apt-get update && \
+    apt-get install -y nano \
+    && apt-get clean    
+#Install vim
+RUN apt-get update && \
+    apt-get install -y vim \
+    && apt-get clean
+
+
 ENV MAXINE_SRC=/maxine-src
 ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
 ENV MAXINE_HOME=$MAXINE_SRC/maxine
