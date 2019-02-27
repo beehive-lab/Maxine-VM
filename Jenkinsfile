@@ -72,7 +72,7 @@ pipeline {
             steps {
                 parallel 'gate': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX gate'
+                        sh '$MX gate -nocheck'
                     }
                 }, 'crossisa': {
                     dir(env.MAXINE_HOME) {

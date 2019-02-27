@@ -171,7 +171,7 @@ jobs:
             - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-build
             - v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}
       - run:
-          name: "mx gate"
+          name: "mx gate -nocheck"
           command: $MX -J-Xmx1g gate -maxvm-args=-Xmx1g -refvm-args=-Xmx1g
       - save_cache:
           key: v0-dot-mx-{{ checksum "/maxine-src/maxine/mx.maxine/suite.py"}}-gate
