@@ -13,7 +13,7 @@ pipeline {
     environment {
         MAXINE_HOME="$WORKSPACE/maxine"
         MX_HOME="$WORKSPACE/mx"
-        MX="$MX_HOME/mx"
+        MX="$MX_HOME/mx --suite=maxine"
         MX_GIT_CACHE="refcache"
     }
 
@@ -43,7 +43,7 @@ pipeline {
             steps {
                 parallel 'checkstyle': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX --suite maxine checkstyle'
+                        sh '$MX checkstyle'
                     }
                 }, 'build': {
                     dir(env.MAXINE_HOME) {
@@ -56,7 +56,6 @@ pipeline {
             steps {
                 parallel 'image': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX image @c1xgraal'
                         sh '$MX image -build=DEBUG -platform linux-aarch64 -isa Aarch64'
                         sh '$MX image -build=DEBUG -platform linux-arm -isa ARMV7'
                         sh '$MX -J-ea image'
@@ -64,7 +63,7 @@ pipeline {
                 }, 'test-init': {
                     dir(env.MAXINE_HOME) {
                         sh '$MX jttgen'
-                        sh '$MX --suite maxine canonicalizeprojects'
+                        sh '$MX canonicalizeprojects'
                     }
                 }
             }
