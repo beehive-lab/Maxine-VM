@@ -26,7 +26,7 @@ pipeline {
                     }
                 }, 'mx': {
                     dir(env.MX_HOME) {
-                        checkout([$class: 'GitSCM', branches: [[name: '5.190.3']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/beehive-lab/mx.git']]])
+                        checkout([$class: 'GitSCM', branches: [[name: '5.194.3']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/graalvm/mx.git']]])
                     }
                 }
             }
