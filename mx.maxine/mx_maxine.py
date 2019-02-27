@@ -3,7 +3,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 #
-# Copyright (c) 2017-2018, APT Group, School of Computer Science,
+# Copyright (c) 2017-2019, APT Group, School of Computer Science,
 # The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -24,7 +24,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
-import os, shutil, fnmatch, subprocess, platform
+import os, shutil, fnmatch, subprocess, platform, itertools
 from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
 from argparse import ArgumentParser
@@ -281,7 +281,7 @@ def image(args):
             imageArgs += [arg]
         i += 1
 
-    mx.run_java(['-Xbootclasspath/a:' + mx.distribution('GRAAL').path] + systemProps + ['-cp', sanitized_classpath(),
+    mx.run_java(['-Xbootclasspath/a:' + mx.distribution('GRAAL').path] + systemProps + ['-cp', suite_classpath(),
                                                                                         'com.sun.max.vm.hosted.BootImageGenerator',
                                                                                         '-trace=1',
                                                                                         '-run=java'] + imageArgs)
@@ -304,10 +304,12 @@ def check_cwd_change(args):
     return [cwd, vmArgs]
 
 
-# Graal classes are loaded from graal.jar by the extension class loader
-def sanitized_classpath():
-    """Remove Graal projects from the classpath"""
-    cp = mx.classpath()
+def suite_classpath():
+    """Get the classpath containing only the current suite's dependencies, removing Graal projects (if any) from it"""
+    dependencies = mx.dependencies(True)
+    dependencies = itertools.ifilter(lambda d: not d.isNativeProject(), dependencies)
+    dependencies = [ d.name for d in dependencies]
+    cp = mx.classpath(dependencies)
     cp_list = cp.split(os.pathsep)
     sanitized_list = []
     for entry in cp_list:
@@ -319,7 +321,6 @@ def sanitized_classpath():
             sanitized_list.append(entry)
     result = os.pathsep.join(sanitized_list)
     return result
-
 
 def inspect(args):
     """launch a given program under the Inspector
@@ -403,7 +404,7 @@ def inspect(args):
 
     cmd = [mx.get_jdk().java]
     cmd += mx.get_jdk().processArgs(
-        sysProps + ['-cp', sanitized_classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
+        sysProps + ['-cp', suite_classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
         insArgs + ['-a=' + ' '.join(vmArgs)])
 
     if mx.get_os() == 'darwin' and not remote:
@@ -680,7 +681,7 @@ def testme(args):
         tee = Tee(f)
         jdk = mx.get_jdk()
         mx.run_java(
-            ['-cp', sanitized_classpath(), 'com.oracle.max.vm.tests.vm.MaxineTester', '-output-dir=maxine-tester',
+            ['-cp', suite_classpath(), 'com.oracle.max.vm.tests.vm.MaxineTester', '-output-dir=maxine-tester',
              '-graal-jar=' + mx.distribution('GRAAL').path,
              '-refvm=' + jdk.java, '-refvm-args=' + ' '.join(jdk.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
 
