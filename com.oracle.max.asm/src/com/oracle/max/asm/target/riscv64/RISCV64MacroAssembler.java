@@ -446,6 +446,60 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public int insertFloatingDivByZeroCheck(CiRegister numerator, CiRegister denominator, boolean isDouble) {
+        Label jumpLabel = new Label();
+        Label crashLabel = new Label();
+        Label crashLabel1 = new Label();
+
+        // denominator
+        // Clear NV flag
+        csrrci(RISCV64.x0, 0x001, 0b10000);
+//        nop(1);
+        mov32BitConstant(scratchRegister1, 0);
+        if (isDouble) {
+            fcvtdl(RISCV64.f28, scratchRegister1);
+            feqd(scratchRegister1, denominator, RISCV64.f28);
+        } else {
+            fcvtsl(RISCV64.f28, scratchRegister1);
+            feqs(scratchRegister1, denominator, RISCV64.f28);
+        }
+        // check if comparison set the NV flag to 1. If it did, the denominator is NaN --> crash
+        csrrci(scratchRegister, 0x001, 0);
+        branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, crashLabel);
+        push(64, scratchRegister1);
+//        branchConditionally(ConditionFlag.EQ, scratchRegister1, RISCV64.zero, jumpLabel);
+
+        // numerator
+        csrrci(RISCV64.x0, 0x001, 0b10000);
+//        nop(1);
+        if (isDouble) {
+            feqd(scratchRegister1, numerator, RISCV64.f28);
+        } else {
+            feqs(scratchRegister1, numerator, RISCV64.f28);
+        }
+        // check if comparison set the NV flag to 1. If it did, the numerator is NaN --> crash
+        csrrci(scratchRegister, 0x001, 0);
+        branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, crashLabel);
+
+        //Check if numerator and denominator !=0. If both == 0 then crash
+        pop(64, scratchRegister);
+        branchConditionally(ConditionFlag.EQ, scratchRegister1, RISCV64.zero, jumpLabel);
+        branchConditionally(ConditionFlag.EQ, scratchRegister, RISCV64.zero, jumpLabel);
+        b(crashLabel1);
+
+        // crash
+        bind(crashLabel);
+        pop(64, scratchRegister);
+        bind(crashLabel1);
+        int offset = codeBuffer.position();
+        and(RISCV64.a0, RISCV64.zero, RISCV64.zero); // Return 0 (false)
+        emitInt(0xFFFFFFFF); // Generate SIGSEGV
+
+        // continue
+        bind(jumpLabel);
+        return offset;
+    }
+
     public int insertDivByZeroCheck(CiRegister denominator) {
         Label jumpLabel = new Label();
         mov32BitConstant(scratchRegister1, 0);
