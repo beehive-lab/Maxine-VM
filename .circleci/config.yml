@@ -143,7 +143,6 @@ jobs:
       - run:
           name: "build boot images"
           command: |
-            $MX image @c1xgraal
             $MX image -build=DEBUG -platform linux-aarch64 -isa Aarch64
             $MX image -build=DEBUG -platform linux-arm -isa ARMV7
             $MX -J-ea image
