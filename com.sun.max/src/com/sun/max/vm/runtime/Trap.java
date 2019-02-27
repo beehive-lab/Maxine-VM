@@ -221,6 +221,12 @@ public abstract class Trap {
             }
         }
 
+        if (Platform.target().arch.isRISCV64()
+            && pc.readInt(0) == 0xFFFFFFFF // emitInt(0xFFFFFFFF)
+            && pc.readInt(-4) == 0xf509) { // and(a0, x0, x0)
+            trapNumber = ARITHMETIC_EXCEPTION;
+        }
+
         // In Aarch64 zero divisions do not generate an exception and therefore we have
         // to check upon trapping the markers inserted by the compiler: Aarch64MacroAssembler.insertDivByZeroCheck()
         if (Platform.target().arch.isAarch64()
