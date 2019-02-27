@@ -454,7 +454,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         // denominator
         // Clear NV flag
         csrrci(RISCV64.x0, 0x001, 0b10000);
-//        nop(1);
         mov32BitConstant(scratchRegister1, 0);
         if (isDouble) {
             fcvtdl(RISCV64.f28, scratchRegister1);
@@ -467,11 +466,9 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         csrrci(scratchRegister, 0x001, 0);
         branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, crashLabel);
         push(64, scratchRegister1);
-//        branchConditionally(ConditionFlag.EQ, scratchRegister1, RISCV64.zero, jumpLabel);
 
         // numerator
         csrrci(RISCV64.x0, 0x001, 0b10000);
-//        nop(1);
         if (isDouble) {
             feqd(scratchRegister1, numerator, RISCV64.f28);
         } else {
