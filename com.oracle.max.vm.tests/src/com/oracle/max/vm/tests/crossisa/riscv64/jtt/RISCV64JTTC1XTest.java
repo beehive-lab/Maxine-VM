@@ -186,7 +186,11 @@ public class RISCV64JTTC1XTest {
         int offset;
         entryPoint = -1; // offset in the global array of the method we call from C.
         for (TargetMethod m : methods) {
-//            m.linkDirectCalls();
+            // TODO enable this once RISCV64MacroAssembler::call function has been changed to use two trampolines,
+            //  and patching has been implemented to it.
+            //  To check that linkDirectCalls is working see the following tests: c1x_jtt_BC_anewarray,
+            //  c1x_jtt_BC_new, infinite_c1x_jtt_loopPHI, c1x_jtt_loopInline, c1x_jtt_generic_compilation
+            // m.linkDirectCalls();
             if (!fileName.equals(m.classMethodActor.sourceFileName())) {
                 continue;
             }

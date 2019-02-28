@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -651,23 +651,31 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      * @param src
      */
     public void ctz(int size, CiRegister dst, CiRegister src) {
+        boolean scratchAlreadyUsed = src.number == scratchRegister.number;
         Label end = new Label();
         Label continuel = new Label();
-
         mov32BitConstant(scratchRegister1, 0b1);
         mov32BitConstant(dst, 0);
-
         this.bind(continuel);
-        push(64, scratchRegister1);
-        and(scratchRegister1, src, scratchRegister1);
-        branchConditionally(ConditionFlag.NE, scratchRegister1, RISCV64.zero, end);
+        if (scratchAlreadyUsed) {
+            push(64, scratchRegister1);
+            and(scratchRegister1, src, scratchRegister1);
+            branchConditionally(ConditionFlag.NE, scratchRegister1, RISCV64.zero, end);
+        } else {
+            and(scratchRegister, src, scratchRegister1);
+            branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, end);
+        }
         add(dst, dst, 1);
-        pop(64, scratchRegister1);
+        if (scratchAlreadyUsed) {
+            pop(64, scratchRegister1);
+        }
         slli(scratchRegister1, scratchRegister1, 1);
         b(continuel);
 
         this.bind(end);
-        pop(64, scratchRegister1);
+        if (scratchAlreadyUsed) {
+            pop(64, scratchRegister1);
+        }
     }
 
     /**
@@ -679,9 +687,9 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      * @param src
      */
     public void clz(int size, CiRegister dst, CiRegister src) {
+        boolean scratchAlreadyUsed = src.number == scratchRegister.number;
         Label end = new Label();
         Label continuel = new Label();
-
         mov32BitConstant(scratchRegister1, 0b1);
         mov32BitConstant(dst, 0);
         if (size == 32) {
@@ -690,16 +698,25 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             slli(scratchRegister1, scratchRegister1, 63);
         }
         this.bind(continuel);
-        push(64, scratchRegister1);
-        and(scratchRegister1, src, scratchRegister1);
-        branchConditionally(ConditionFlag.NE, scratchRegister1, RISCV64.zero, end);
+        if (scratchAlreadyUsed) {
+            push(64, scratchRegister1);
+            and(scratchRegister1, src, scratchRegister1);
+            branchConditionally(ConditionFlag.NE, scratchRegister1, RISCV64.zero, end);
+        } else {
+            and(scratchRegister, src, scratchRegister1);
+            branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, end);
+        }
         add(dst, dst, 1);
-        pop(64, scratchRegister1);
+        if (scratchAlreadyUsed) {
+            pop(64, scratchRegister1);
+        }
         srli(scratchRegister1, scratchRegister1, 1);
         b(continuel);
 
         this.bind(end);
-        pop(64, scratchRegister1);
+        if (scratchAlreadyUsed) {
+            pop(64, scratchRegister1);
+        }
     }
 
     /**
@@ -716,7 +733,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             int offset = label.position() - codeBuffer.position();
             emitConditionalBranch(RISCV64MacroAssembler.ConditionFlag.EQ, cmp, scratchRegister1, offset);
         } else {
-            System.out.println("\"LABEL UNBOUND\" = " + "LABEL UNBOUND");
             label.addPatchAt(codeBuffer.position());
             int regEncoding = cmp.getEncoding();
             emitByte(PatchLabelKind.BRANCH_ZERO.encoding);
@@ -773,6 +789,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         add(reg, reg, delta);
     }
 
+    // TODO Handle case where offset is too large for a single branch immediate instruction.
+    //  Also, when adding this case, make sure to fix patching as well.
     public void b(int offset) {
         jal(RISCV64.zero, offset);
     }
@@ -1009,6 +1027,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         jal(RISCV64.ra, 0);
     }
 
+    // TODO this is to replace the current call function. It must use two trampolines to avoid data races
+    //  between invokers and the compilation thread. Patching of this function is needed and it must be
+    //  done by RISCV64TargetMethodUtil::fixupCall32Site. As a reference, check AArch64MacroAssembler::call and
+    //  Aarch64TargetMethodUtil::fixupCall32Site.
+    //  Note: to test this, check the disabled tests in RISCV64JTTC1XTest.
 //    public final void call() {
 //        int before = codeBuffer.position();
 ////        b(INSTRUCTION_SIZE); // Jump to Trampoline 1

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -58,27 +58,6 @@ public final class RISCV64TargetMethodUtil {
                (code[idx + 0] & 0xFF);
     }
 
-    private static int getOldDisplacement(Pointer callSitePointer) {
-        final int instruction = callSitePointer.readInt(0);
-        throw new UnsupportedOperationException("Unimplemented");
-//        if (RISCV64Assembler.isBimmInstruction(instruction)) {
-//            return RISCV64Assembler.bImmExtractDisplacement(instruction);
-//        } else {
-//            final Pointer nopSite = callSitePointer.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
-//            int movzInstruction = nopSite.readInt(4);
-//            int movkInstruction = nopSite.readInt(8);
-//            int addSubInstruction = nopSite.readInt(12);
-//            short low = RISCV64Assembler.movExtractImmediate(movzInstruction);
-//            short high = RISCV64Assembler.movExtractImmediate(movkInstruction);
-//            int oldDisplacement = high << 16 | low & 0xFFFF;
-//            if (!RISCV64Assembler.isAddInstruction(addSubInstruction)) {
-//                oldDisplacement = -oldDisplacement;
-//            }
-//            oldDisplacement -= NUMBER_OF_NOPS * INSTRUCTION_SIZE;
-//            return oldDisplacement;
-//        }
-    }
-
     /**
      * Gets the target of a 32-bit relative CALL instruction.
      *
@@ -98,32 +77,7 @@ public final class RISCV64TargetMethodUtil {
      * @return the absolute target address of the CALL
      */
     public static CodePointer readCall32Target(CodePointer callSite) {
-        Pointer callSitePointer = callSite.toPointer();
-        int instruction = callSitePointer.readInt(0);
-        assert isBimmInstruction(instruction) : instruction;
-        final int offset = bImmExtractDisplacement(instruction);
-        assert offset == CALL_TRAMPOLINE1_OFFSET || offset == CALL_TRAMPOLINE2_OFFSET : offset;
-        callSitePointer = callSitePointer.plus(offset);
-        int displacement = getDisplacementFromTrampoline(callSitePointer);
-        final CodePointer branchSite = callSite.plus(CALL_BRANCH_OFFSET);
-        return branchSite.plus(displacement);
-    }
-
-    private static int getDisplacementFromTrampoline(Pointer callSitePointer) {
-        int displacement;
-        int movzInstruction   = callSitePointer.readInt(4);
-        int movkInstruction   = callSitePointer.readInt(8);
-        int addSubInstruction = callSitePointer.readInt(12);
-
-        return 0;
-
-//        short low  = movExtractImmediate(movzInstruction);
-//        short high = movExtractImmediate(movkInstruction);
-//        displacement = high << 16 | low & 0xFFFF;
-//        if (!isAddInstruction(addSubInstruction)) {
-//            displacement = -displacement;
-//        }
-//        return displacement;
+        throw new UnsupportedOperationException("Unimplemented");
     }
 
     /**
@@ -226,15 +180,7 @@ public final class RISCV64TargetMethodUtil {
      * @return the previous displacement
      */
     public static int fixupCall19Site(byte [] code, int callOffset, int displacement) {
-        int instruction = extractInstruction(code, callOffset);
-
-        System.out.println("code = " + code.length);
-        System.out.println("callOffset = " + callOffset);
-        for (int i = 100; i < 150; i++) {
-            System.out.println("code[] " + i + " " + String.format("%8s", Integer.toBinaryString(code[i] & 0xFF)).replace(' ', '0'));
-        }
-
-        return 0;
+        throw new UnsupportedOperationException("Unimplemented");
     }
 
     private static void writeInstruction(byte[] code, int offset, int instruction) {
@@ -270,22 +216,6 @@ public final class RISCV64TargetMethodUtil {
 
     private static CodePointer fixupCall32Site(CodePointer callSite, CodePointer target) {
         throw new UnsupportedOperationException("Unimplemented");
-//        final Pointer callSitePointer = callSite.toPointer();
-//        CodePointer oldTarget = readCall32Target(callSite);
-//        if (oldTarget.equals(target)) {
-//            return oldTarget;
-//        }
-//        assert isBimmInstruction(callSitePointer.readInt(0)) : callSitePointer.readInt(0);
-//        Pointer branchSitePointer = callSitePointer.plus(CALL_BRANCH_OFFSET);
-//        int instruction = branchSitePointer.readInt(0);
-//        final boolean isLinked = isBranchInstructionLinked(instruction);
-//
-//        long disp64 = target.toLong() - branchSitePointer.toLong();
-//        int disp32 = (int) disp64;
-//        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-//        patchCallTrampoline(callSitePointer, disp32, isLinked);
-//
-//        return oldTarget;
     }
 
     public static boolean isPatchableCallSite(CodePointer callSite) {

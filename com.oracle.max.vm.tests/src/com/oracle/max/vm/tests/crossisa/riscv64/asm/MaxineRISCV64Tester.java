@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -175,7 +175,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
                 return Float.intBitsToFloat((int) Double.doubleToRawLongBits(number));
             }
         } catch (Exception e) {
-            System.out.println("Float: GDB output line could not be parse: " + line);
+            System.out.println("Float: GDB output line could not be parsed: " + line);
         }
 
         return 0;

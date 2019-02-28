@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -300,13 +300,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         assert src.isStackSlot();
         assert dest.isRegister();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
-
-//        System.out.println("\"Stack2Reg\" = " + "Stack2Reg");
-//        System.out.println("src = " + src);
-//        System.out.println("dest = " + dest);
-//        System.out.println("kind = " + kind);
-//        System.out.println();
-
         masm.load(dest.asRegister(), addr, dest.kind.stackKind());
     }
 
@@ -1506,7 +1499,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             assert dest.isAddress() || dest.isRegister() || dest.isStackSlot();
         } else {
             assert dest.kind.isDouble();
-            System.out.println("\"VOLATILE MOVE\" = " + "VOLATILE MOVE");
             if (src.isStackSlot()) {
                 masm.load(dest.asRegister(), frameMap.toStackAddress((CiStackSlot) src), CiKind.Double);
             } else {
