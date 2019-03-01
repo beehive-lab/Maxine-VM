@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -87,38 +87,38 @@ public class RISCV64 extends CiArchitecture {
     public static final CiRegister x30 = new CiRegister(30, 30, 8, "x30", CPU, Byte);
     public static final CiRegister x31 = new CiRegister(31, 31, 8, "x31", CPU, Byte);
 
-    public static final CiRegister f0 = new CiRegister(0, 0, 8, "f0", FPU, FPU);
-    public static final CiRegister f1 = new CiRegister(1, 1, 8, "f1", FPU, FPU);
-    public static final CiRegister f2 = new CiRegister(2, 2, 8, "f2", FPU, FPU);
-    public static final CiRegister f3 = new CiRegister(3, 3, 8, "f3", FPU, FPU);
-    public static final CiRegister f4 = new CiRegister(4, 4, 8, "f4", FPU, FPU);
-    public static final CiRegister f5 = new CiRegister(5, 5, 8, "f5", FPU, FPU);
-    public static final CiRegister f6 = new CiRegister(6, 6, 8, "f6", FPU, FPU);
-    public static final CiRegister f7 = new CiRegister(7, 7, 8, "f7", FPU, FPU);
-    public static final CiRegister f8 = new CiRegister(8, 8, 8, "f8", FPU, FPU);
-    public static final CiRegister f9 = new CiRegister(9, 9, 8, "f9", FPU, FPU);
-    public static final CiRegister f10 = new CiRegister(10, 10, 8, "f10", FPU, FPU);
-    public static final CiRegister f11 = new CiRegister(11, 11, 8, "f11", FPU, FPU);
-    public static final CiRegister f12 = new CiRegister(12, 12, 8, "f12", FPU, FPU);
-    public static final CiRegister f13 = new CiRegister(13, 13, 8, "f13", FPU, FPU);
-    public static final CiRegister f14 = new CiRegister(14, 14, 8, "f14", FPU, FPU);
-    public static final CiRegister f15 = new CiRegister(15, 15, 8, "f15", FPU, FPU);
-    public static final CiRegister f16 = new CiRegister(16, 16, 8, "f16", FPU, FPU);
-    public static final CiRegister f17 = new CiRegister(17, 17, 8, "f17", FPU, FPU);
-    public static final CiRegister f18 = new CiRegister(18, 18, 8, "f18", FPU, FPU);
-    public static final CiRegister f19 = new CiRegister(19, 19, 8, "f19", FPU, FPU);
-    public static final CiRegister f20 = new CiRegister(20, 20, 8, "f20", FPU, FPU);
-    public static final CiRegister f21 = new CiRegister(21, 21, 8, "f21", FPU, FPU);
-    public static final CiRegister f22 = new CiRegister(22, 22, 8, "f22", FPU, FPU);
-    public static final CiRegister f23 = new CiRegister(23, 23, 8, "f23", FPU, FPU);
-    public static final CiRegister f24 = new CiRegister(24, 24, 8, "f24", FPU, FPU);
-    public static final CiRegister f25 = new CiRegister(25, 25, 8, "f25", FPU, FPU);
-    public static final CiRegister f26 = new CiRegister(26, 26, 8, "f26", FPU, FPU);
-    public static final CiRegister f27 = new CiRegister(27, 27, 8, "f27", FPU, FPU);
-    public static final CiRegister f28 = new CiRegister(28, 28, 8, "f28", FPU, FPU);
-    public static final CiRegister f29 = new CiRegister(29, 29, 8, "f29", FPU, FPU);
-    public static final CiRegister f30 = new CiRegister(30, 30, 8, "f30", FPU, FPU);
-    public static final CiRegister f31 = new CiRegister(31, 31, 8, "f31", FPU, FPU);
+    public static final CiRegister f0 = new CiRegister(32, 0, 8, "f0", FPU, FPU);
+    public static final CiRegister f1 = new CiRegister(33, 1, 8, "f1", FPU, FPU);
+    public static final CiRegister f2 = new CiRegister(34, 2, 8, "f2", FPU, FPU);
+    public static final CiRegister f3 = new CiRegister(35, 3, 8, "f3", FPU, FPU);
+    public static final CiRegister f4 = new CiRegister(36, 4, 8, "f4", FPU, FPU);
+    public static final CiRegister f5 = new CiRegister(37, 5, 8, "f5", FPU, FPU);
+    public static final CiRegister f6 = new CiRegister(38, 6, 8, "f6", FPU, FPU);
+    public static final CiRegister f7 = new CiRegister(39, 7, 8, "f7", FPU, FPU);
+    public static final CiRegister f8 = new CiRegister(40, 8, 8, "f8", FPU, FPU);
+    public static final CiRegister f9 = new CiRegister(41, 9, 8, "f9", FPU, FPU);
+    public static final CiRegister f10 = new CiRegister(42, 10, 8, "f10", FPU, FPU);
+    public static final CiRegister f11 = new CiRegister(43, 11, 8, "f11", FPU, FPU);
+    public static final CiRegister f12 = new CiRegister(44, 12, 8, "f12", FPU, FPU);
+    public static final CiRegister f13 = new CiRegister(45, 13, 8, "f13", FPU, FPU);
+    public static final CiRegister f14 = new CiRegister(46, 14, 8, "f14", FPU, FPU);
+    public static final CiRegister f15 = new CiRegister(47, 15, 8, "f15", FPU, FPU);
+    public static final CiRegister f16 = new CiRegister(48, 16, 8, "f16", FPU, FPU);
+    public static final CiRegister f17 = new CiRegister(49, 17, 8, "f17", FPU, FPU);
+    public static final CiRegister f18 = new CiRegister(50, 18, 8, "f18", FPU, FPU);
+    public static final CiRegister f19 = new CiRegister(51, 19, 8, "f19", FPU, FPU);
+    public static final CiRegister f20 = new CiRegister(52, 20, 8, "f20", FPU, FPU);
+    public static final CiRegister f21 = new CiRegister(53, 21, 8, "f21", FPU, FPU);
+    public static final CiRegister f22 = new CiRegister(54, 22, 8, "f22", FPU, FPU);
+    public static final CiRegister f23 = new CiRegister(55, 23, 8, "f23", FPU, FPU);
+    public static final CiRegister f24 = new CiRegister(56, 24, 8, "f24", FPU, FPU);
+    public static final CiRegister f25 = new CiRegister(57, 25, 8, "f25", FPU, FPU);
+    public static final CiRegister f26 = new CiRegister(58, 26, 8, "f26", FPU, FPU);
+    public static final CiRegister f27 = new CiRegister(59, 27, 8, "f27", FPU, FPU);
+    public static final CiRegister f28 = new CiRegister(60, 28, 8, "f28", FPU, FPU);
+    public static final CiRegister f29 = new CiRegister(61, 29, 8, "f29", FPU, FPU);
+    public static final CiRegister f30 = new CiRegister(62, 30, 8, "f30", FPU, FPU);
+    public static final CiRegister f31 = new CiRegister(63, 31, 8, "f31", FPU, FPU);
 
     public static final CiRegister zero = x0;
     public static final CiRegister zr = x0;
@@ -221,6 +221,11 @@ public class RISCV64 extends CiArchitecture {
         return true;
     }
 
+    @Override
+    public boolean twoOperandMode() {
+        return true;
+    }
+
     public RISCV64() {
         super("RISCV64",                        //architecture name
               8,                                //word size (8 bytes)
@@ -229,7 +234,7 @@ public class RISCV64 extends CiArchitecture {
               0, /*LOAD_STORE | STORE_STORE*/   //implicitMemoryBarriers (no implicit barriers)
               -1,                               //nativeCallDisplacementOffset (ignore)
               32,                               //registerReferenceMapBitCount
-              8);                               //returnAddressSize (8 bytes)
+              16);                               //returnAddressSize (16 bytes for alignment)
     }
 
     /**

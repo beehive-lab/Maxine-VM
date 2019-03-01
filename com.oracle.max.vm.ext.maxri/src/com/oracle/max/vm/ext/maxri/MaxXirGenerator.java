@@ -1068,7 +1068,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
             asm.bindInline(aligned);
         } else {
-            assert Platform.target().arch.isAarch64() || Platform.target().arch.isX86() : "Arch unimplemented!";
+            assert Platform.target().arch.isAarch64() || Platform.target().arch.isX86() || target().arch.isRISCV64() : "Arch unimplemented!";
             if (elemSize == vmConfig().heapScheme().objectAlignment()) {
                 // Assumed here that header size is already aligned.buildTLABAllocateArray
                 asm.mov(arraySize, asm.i(arrayLayout().headerSize()));

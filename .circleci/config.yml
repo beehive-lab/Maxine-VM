@@ -121,7 +121,7 @@ jobs:
       - run:
           name: "Cross-ISA testing"
           no_output_timeout: 30m
-          command: $MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x
+          command: $MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x+riscv64.jtt
       - store_artifacts:
           path: /maxine-src/maxine/maxine-tester
           destination: crossisa-riscv

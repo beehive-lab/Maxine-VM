@@ -259,7 +259,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
-        asm.mov32BitConstant(scratch, Float.floatToRawIntBits(value));
+        asm.mov64BitConstant(scratch, Float.floatToRawIntBits(value));
         asm.fmvwx(dst, scratch);
     }
 
@@ -868,10 +868,10 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : RISCV64.cpuRegisters) {
                 RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), null);
-                asm.mov(scratch, dispFromCodeStart - pos);
+                asm.mov32BitConstant(scratch, dispFromCodeStart - pos);
+                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 asm.auipc(scratch1, 0);
                 asm.add(scratch, scratch1, scratch);
-                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 asm.ldr(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
                 // pattern must be compatible with RISCV64InstructionDecoder.patchRelativeInstruction
                 byte[] pattern = asm.codeBuffer.close(true);
@@ -1062,7 +1062,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         decStack(2);
         peekDouble(RISCV64.f1, 0);
         decStack(2);
-        asm.fadd(RISCV64.f0, RISCV64.f0, RISCV64.f1);
+        asm.fadd(64, RISCV64.f0, RISCV64.f0, RISCV64.f1);
         incStack(2);
         pokeDouble(RISCV64.f0, 0);
     }

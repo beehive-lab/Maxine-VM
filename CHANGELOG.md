@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- Various new RISC-V instructions in assembler (mostly regarding floating points)
+- C1X for RISC-V
+- C1X test cases for RISC-V
 - Allocation Profiler (-XX:+AllocationProfilerAll -XX:+AllocationProfilerPrintHistogram) gathers stats about object allocations
 - Fine grain allocation profiling with -XX:AllocationProfilerEntryPoint -XX:AllocationProfilerExitPoint
 - -XX:+LogCompiledMethods to print all runtime compiled methods in the application

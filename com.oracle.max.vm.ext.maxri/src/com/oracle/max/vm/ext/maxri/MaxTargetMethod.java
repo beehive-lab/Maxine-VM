@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -30,6 +30,7 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.*;
 import com.sun.cri.ci.CiRegister.*;
@@ -52,6 +53,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -242,6 +244,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             return ARMTargetMethodUtil.isPatchableCallSite(callSite);
         } else if (platform().target.arch.isAarch64()) {
             return Aarch64TargetMethodUtil.isPatchableCallSite(callSite);
+        } else if (platform().target.arch.isRISCV64()) {
+            return RISCV64TargetMethodUtil.isPatchableCallSite(callSite);
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.isPatchableCallSite");
         }
@@ -255,6 +259,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else if (platform().target.arch.isAarch64()) {
             return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (platform().target.arch.isRISCV64()) {
+            return RISCV64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.fixupCallSite");
         }

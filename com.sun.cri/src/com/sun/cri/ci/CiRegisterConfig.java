@@ -220,7 +220,18 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     }
                     break;
                 case Float:
-                case Double:
+                case Double: {
+                    // ABI for RISCV specifies that in the case of running out of FPU parameter slots when passing
+                    // FPU values, you must use the available CPU registers, and only after that the stack slots.
+                    // https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md
+                    if (target.arch.isRISCV64() && currentFloat == fpuParameters.length
+                            && currentGeneral < cpuParameters.length) {
+                        CiRegister register = cpuParameters[currentGeneral];
+                        locations[i] = register.asValue(kind);
+                        currentGeneral++;
+                        break;
+                    }
+
                     if (!stackOnly && currentFloat < fpuParameters.length) {
                         if (kind.isDouble() && target.arch.is32bit()) {
                             if ((fpuParameters.length - currentFloat) < 2) {
@@ -240,6 +251,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                         }
                     }
                     break;
+                }
                 default:
                     throw new InternalError("Unexpected parameter kind: " + kind);
             }

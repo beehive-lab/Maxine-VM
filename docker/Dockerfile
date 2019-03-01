@@ -41,13 +41,17 @@ RUN mkdir -p /tmp/riscv \
 # gdb
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+    libncurses5-dev \
+    && apt-get clean
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     texinfo \
     && apt-get clean
 RUN cd /tmp/riscv/ && \
     wget https://ftp.gnu.org/gnu/gdb/gdb-8.2.1.tar.xz \
     && tar xf gdb-8.2.1.tar.xz \
     && cd /tmp/riscv/gdb-8.2.1 \
-    && ./configure --target=riscv64-elf --disable-multilib --prefix=/opt/riscv \
+    && ./configure --target=riscv64-elf --disable-multilib --enable-tui=yes --prefix=/opt/riscv \
     && make -j$(nproc) && make install && cd ~ && rm -rf /tmp/riscv
 
 # For perf support
