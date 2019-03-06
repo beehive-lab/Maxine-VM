@@ -272,19 +272,20 @@ public class Profiler {
 
         if ((profilingCycle % 2) == 0) {
             if (VerboseAllocationProfiler) {
-                Log.println("(Allocation Profiler): Clean-up Profiler Buffer. [post-gc phase]");
                 Log.println("(Allocation Profiler): Clean-up Survivor1 Buffer. [post-gc phase]");
             }
-            newObjects.resetBuffer();
             survivors1.resetBuffer();
         } else {
             if (VerboseAllocationProfiler) {
-                Log.println("(Allocation Profiler): Clean-up Profiler Buffer. [post-gc phase]");
                 Log.println("(Allocation Profiler): Clean-up Survivor2 Buffer. [post-gc phase]");
             }
-            newObjects.resetBuffer();
             survivors2.resetBuffer();
         }
+
+        if (VerboseAllocationProfiler) {
+            Log.println("(Allocation Profiler): Clean-up Profiler Buffer. [post-gc phase]");
+        }
+        newObjects.resetBuffer();
 
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Dump Survivors Buffer. [pre-GC phase]");
