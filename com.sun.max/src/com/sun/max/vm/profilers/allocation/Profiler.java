@@ -67,17 +67,18 @@ public class Profiler {
     private static boolean AllocationProfilerAll;
     private static boolean AllocationProfilerDump;
     public static boolean VerboseAllocationProfiler;
+    public static int BufferSize;
 
+    public final static int minimumBufferSize = 500000;
     /**
      * The size of the Allocation Profiling Buffer.
-     * TODO: auto-configurable
      */
-    public final int ALLOCBUFFERSIZE = 500000;
+    public  int ALLOCBUFFERSIZE = minimumBufferSize;
 
     /**
      * The size of each Survivors Profiling Buffer.
      */
-    public final int SURVBUFFERSIZE = 500000;
+    public int SURVBUFFERSIZE = minimumBufferSize;
 
     /**
      * Use -XX:+AllocationProfilerAll to profile all application objects unconditionally.
@@ -88,12 +89,27 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", Profiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AllocationProfilerDump", Profiler.class, "Dump profiled objects to a file. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output . (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class,"Allocation Buffer Size.");
     }
 
     public Profiler() {
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Profiler Initialization.");
         }
+
+        if (BufferSize != 0) {
+            if (BufferSize < minimumBufferSize) {
+                Log.print("WARNING: Small Buffer Size. Minimum Buffer Size applied! (=");
+                Log.print(minimumBufferSize);
+                Log.println(")");
+                ALLOCBUFFERSIZE = minimumBufferSize;
+                SURVBUFFERSIZE = minimumBufferSize;
+            } else {
+                ALLOCBUFFERSIZE = BufferSize;
+                SURVBUFFERSIZE = BufferSize;
+            }
+        }
+
         newObjects = new ProfilerBuffer(ALLOCBUFFERSIZE, "New Objects Buffer");
 
         if (VerboseAllocationProfiler) {
