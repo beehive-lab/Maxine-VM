@@ -82,26 +82,6 @@ If you are behind a firewall set the ``HTTP_PROXY`` environment variable appropr
 The ``mx image`` command is used to generate a boot image.
 This command runs Maxine on a host JVM to configure a prototype, then compiles its own code and data to create an executable program for the target platform.
 
-Choice of Optimizing Compiler
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Maxine provides two optimizing compilers, C1X and Graal.
-The former, an evolution of the Hostpot client compiler, is very stable but no longer under development.
-Graal is more akin to the Hotspot server compiler and is under active development and improvement.
-The default image build still uses C1X as the optimizing compiler, but it is possible to select Graal, both for runtime compilations and for compiling the VM boot image (the latter is currently unstable).
-To build a boot image with Graal as the runtime optimizing compiler, use the following command::
-
- mx image @c1xgraal
-
-In this case the optimizing compiler is actually a hybrid of C1X and Graal, with C1X being used as a fallback option if the Graal compilation fails.
-Note that the VM boot image is considerably larger (~100MB) with Graal included.
-
-To compile the boot image itself with Graal, do::
-
- mx image @c1xgraal-boot
-
-The Graal-compiled VM boot image will execute a few simple test programs but currently is not robust enough to be the default.
-
 Running
 -------
 
@@ -109,21 +89,15 @@ With the native substrate and a boot image built, the Maxine VM can now be execu
 
 The ``mx vm`` command handles the details of class and library paths and provides an interface similar to the standard java launcher command.
 
-The ``mx`` script includes a command to run a simple HelloWorld program to verify that the VM is working.
-
-::
+The ``mx`` script includes a command to run a simple HelloWorld program to verify that the VM is working::
 
     mx helloworld
 
-Now let's use Maxine to run a more substantial program.
+Now let's use Maxine to run a more substantial program::
 
-::
+    mx vm -cp test/bin test.output.GCTest2
 
-    mx vm -cp com.oracle.max.tests/bin test.output.GCTest2
-
-To launch the VM (or any other command for that matter) without using ``mx``, the ``-v`` option echoes the commands issued by the mx script.
-
-::
+To launch the VM (or any other command for that matter) without using ``mx``, the ``-v`` option echoes the commands issued by the mx script::
 
     mx -v helloworld
 
@@ -183,33 +157,6 @@ The data is output using the Maxine log mechanism, so can be captured in a file 
 Building Maxine without docker
 ------------------------------
 
-Environment variables
-~~~~~~~~~~~~~~~~~~~~~
-
-To build maxine natively we first need to define a number of environment variables:
-
-#. Define the directory you want to work in::
-
-    export WORKDIR=/path/to/workdir
-
-#. Define the JDK to be used::
-
-    export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-
-#. Define ``MAXINE_HOME``::
-
-    export MAXINE_HOME=$WORKDIR/maxine
-
-#. Optionally:
-
-  * Extend ``PATH`` to include the *to be generated* maxvm::
-
-     export PATH=$PATH:$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/
-
-  * Define ``LD_LIBRARY_PATH``::
-
-     export LD_LIBRARY_PATH=$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/
-
 Dependencies
 ~~~~~~~~~~~~
 
@@ -231,6 +178,33 @@ Since Maxine is hosted in a git repository we need to install ``git`` as well::
 
  sudo apt-get install git
 
+Environment variables
+~~~~~~~~~~~~~~~~~~~~~
+
+To build maxine natively we first need to define a number of environment variables:
+
+#. Define the directory you want to work in::
+
+    export WORKDIR=/path/to/workdir
+
+#. Define the JDK to be used::
+
+    export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+
+#. Define ``MAXINE_HOME``::
+
+    export MAXINE_HOME=$WORKDIR/maxine
+
+#. Optionally (needed to run ``maxvm`` binary directly):
+
+  * Extend ``PATH`` to include the *to be generated* ``maxvm``::
+
+     export PATH=$PATH:$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/
+
+  * Define ``LD_LIBRARY_PATH``::
+
+     export LD_LIBRARY_PATH=$MAXINE_HOME/com.oracle.max.vm.native/generated/linux/
+
 Get the source code
 ~~~~~~~~~~~~~~~~~~~
 
@@ -244,3 +218,23 @@ Get the source code
     git clone https://github.com/beehive-lab/Maxine-VM.git maxine
 
 This command will create a directory named ``maxine`` with the contents checked out from the git repository.
+
+Choice of Optimizing Compiler
+-----------------------------
+
+Maxine provides two optimizing compilers, C1X and Graal.
+The former, an evolution of the Hostpot client compiler, is very stable but no longer under development.
+Graal is more akin to the Hotspot server compiler and is under active development and improvement.
+The default image build still uses C1X as the optimizing compiler, but it is possible to select Graal, both for runtime compilations and for compiling the VM boot image (the latter is currently unstable).
+To build a boot image with Graal as the runtime optimizing compiler, use the following command::
+
+ mx image @c1xgraal
+
+In this case the optimizing compiler is actually a hybrid of C1X and Graal, with C1X being used as a fallback option if the Graal compilation fails.
+Note that the VM boot image is considerably larger (~100MB) with Graal included.
+
+To compile the boot image itself with Graal, do::
+
+ mx image @c1xgraal-boot
+
+The Graal-compiled VM boot image will execute a few simple test programs but currently is not robust enough to be the default.
