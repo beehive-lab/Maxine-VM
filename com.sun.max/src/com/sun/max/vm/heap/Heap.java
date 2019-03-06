@@ -646,7 +646,7 @@ public final class Heap {
      * @param address
      * @return true if the object is in the Heap
      */
-    public static boolean stillExists(long address) {
+    public static boolean isSurvivor(long address) {
         Pointer origin = Address.fromLong(address).asPointer();
         final Reference forwardRef = Layout.readForwardRef(origin);
 

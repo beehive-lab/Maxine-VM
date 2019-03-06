@@ -203,7 +203,7 @@ public class Profiler {
         }
         for (int i = 0; i < from.currentIndex; i++) {
             long address = from.address[i];
-            if (Heap.stillExists(address)) {
+            if (Heap.isSurvivor(address)) {
                 //object is alive -> update it's address -> copy it to to buffer
                 long newAddr = Heap.getUpdatedAddress(address);
                 to.record(from.index[i], from.type[i], from.size[i], newAddr, from.node[i]);
