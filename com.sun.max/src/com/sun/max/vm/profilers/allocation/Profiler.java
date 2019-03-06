@@ -80,13 +80,11 @@ public class Profiler {
     public final int SURVBUFFERSIZE = 500000;
 
     /**
-     * Use -XX:+AllocationProfilerPrintHistogram flag to accompany the profiler stats with a complete histogram view.
      * Use -XX:+AllocationProfilerAll to profile all application objects unconditionally.
      * Use -XX:+AllocationProfilerDump
      * Use -XX:+VerboseAllocationProfiler to verbose profiler actions. For understanding or debugging purposes.
      */
     static {
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerPrintHistogram", Profiler.class, "Print Dynamic Profiler's Histogram after every GC. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", Profiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AllocationProfilerDump", Profiler.class, "Dump profiled objects to a file. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output . (default: false)", MaxineVM.Phase.PRISTINE);
