@@ -658,7 +658,7 @@ public final class Heap {
      * @param address
      * @return
      */
-    public static long getUpdatedAddress(long address) {
+    public static long getForwardedAddress(long address) {
         Pointer cell = Address.fromLong(address).asPointer();
         final Reference forwardRef = Layout.readForwardRef(cell);
         return forwardRef.toOrigin().toLong();

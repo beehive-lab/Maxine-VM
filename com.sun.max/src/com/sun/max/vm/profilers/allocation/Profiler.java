@@ -205,11 +205,9 @@ public class Profiler {
             long address = from.address[i];
             if (Heap.isSurvivor(address)) {
                 //object is alive -> update it's address -> copy it to to buffer
-                long newAddr = Heap.getUpdatedAddress(address);
+                long newAddr = Heap.getForwardedAddress(address);
                 to.record(from.index[i], from.type[i], from.size[i], newAddr, from.node[i]);
             }
-            //clean up cell
-            //maybe useless
             from.cleanBufferCell(i);
         }
     }
@@ -252,6 +250,7 @@ public class Profiler {
             Log.println("(Allocation Profiler): Dump Profiler Buffer. [pre-GC phase]");
         }
         dumpBuffer();
+
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Leaving Pre-GC Phase.");
         }
@@ -269,7 +268,6 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Entering Post-GC Phase.");
         }
-
         profileSurvivors();
 
         if ((profilingCycle % 2) == 0) {
@@ -288,6 +286,9 @@ public class Profiler {
             survivors2.resetBuffer();
         }
 
+        if (VerboseAllocationProfiler) {
+            Log.println("(Allocation Profiler): Dump Survivors Buffer. [pre-GC phase]");
+        }
         dumpSurvivors();
 
         profilingCycle++;
