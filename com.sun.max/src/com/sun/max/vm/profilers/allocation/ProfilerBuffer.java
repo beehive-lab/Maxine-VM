@@ -26,12 +26,17 @@ import com.sun.max.vm.Log;
 public class ProfilerBuffer {
 
     /**
-     * The following 4 variables compose the stored information for each object.
+     * This class implements any buffer used by the Allocation Profiler to keep track of the objects.
      *
-     * Index: unique for each object to make it distinguishable. [1-inf] index = 0 for empty cells
-     * Type: the object's type/class
-     * Size: the object's size. Same type-different size objects might exist.
-     * Address: the object's address in the heap
+     * The following 5 variables compose the stored information for each object:
+     * -Index: unique for each object to make it distinguishable. [1-inf] index = 0 for empty cells.
+     * -Type: the object's type/class.
+     * -Size: the object's size. Same type-different size Objects might exist (eg. same type arrays with different length).
+     * -Address: the object's address in the Heap.
+     * -Node: the physical NUMA node where the object is placed.
+     *
+     * Notes:
+     * -The Unique id serves the purpose of following and tracking an object over the profiling cycles.
      */
     public int[] index;
     public String[] type;
@@ -92,18 +97,6 @@ public class ProfilerBuffer {
 
     public void setNode(int index, int node) {
         this.node[index] = node;
-    }
-
-    public void updateAddress(int index, long newAddress) {
-        this.address[index] = newAddress;
-    }
-
-    /**
-     * If an object must be considered as dead, we mark its index with a negative number.
-     * @param index
-     */
-    public void markAsDead(int index) {
-        this.index[index] = -1;
     }
 
     public void dumpToStdOut(int cycle) {
