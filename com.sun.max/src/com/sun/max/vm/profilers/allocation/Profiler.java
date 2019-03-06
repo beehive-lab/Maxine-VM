@@ -89,7 +89,7 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", Profiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AllocationProfilerDump", Profiler.class, "Dump profiled objects to a file. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output . (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class,"Allocation Buffer Size.");
+        VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class, "Allocation Buffer Size.");
     }
 
     public Profiler() {
