@@ -50,11 +50,17 @@ public class Profiler {
      * The Profiler Buffer for newly allocated objects.
      */
     public static ProfilerBuffer newObjects;
+
     /**
-     * The Profiler Buffers for survivor objects.
+     * The Profiler Buffers for survivor objects. We use two identical buffers because
+     * allocation is disabled at the point we need to move the data in a clean buffer.
      */
     public static ProfilerBuffer survivors1;
     public static ProfilerBuffer survivors2;
+
+    /**
+     * The external JNumaUtils library object.
+     */
     public JNumaUtils utilsObject;
 
     private static boolean AllocationProfilerPrintHistogram;
@@ -120,7 +126,7 @@ public class Profiler {
     }
 
     /**
-     * This method forces each native method's resolution.
+     * This method used to force resolution for native methods.
      * All methods that will be called when allocation is disabled need to have already been resolved.
      */
     public void resolveNativeMethods() {
@@ -183,7 +189,12 @@ public class Profiler {
         }
     }
 
-    public void copySurvivors(ProfilerBuffer from, ProfilerBuffer to) {
+    /**
+     * We search "from" buffer for survivor objects and store them into "to" buffer.
+     * @param from the source buffer in which we search for survivor objects.
+     * @param to the destination buffer in which we store the survivor objects.
+     */
+    public void storeSurvivors(ProfilerBuffer from, ProfilerBuffer to) {
         if (VerboseAllocationProfiler) {
             Log.print("(Allocation Profiler): Copy Survived Objects from ");
             Log.print(from.buffersName);
@@ -204,19 +215,23 @@ public class Profiler {
     }
 
     /**
-     * In even profiling cycle we store surviving objects to survivor2.
-     * In odd profiling cycle we store surviving objects to survivor1.
-     * TODO: write proper comments
+     * This method is called from postGC actions. Given the profiling cycle,
+     * it decides in which buffer should we search for survivor objects.
+     * Firstly we search in the so far survivor objects (survivors<num> buffer)
+     * and then in the recently allocated objects (newObjects buffer).
+     * The found survivor objects are stored in a clean survivor buffer.
+     * In even profiling cycles we use the survivor2 buffer.
+     * In odd profiling cycles we use the survivor1 buffer.
      */
-    public void findSurvivors() {
+    public void profileSurvivors() {
         if ((profilingCycle % 2) == 0) {
-            //even
-            copySurvivors(survivors1, survivors2);
-            copySurvivors(newObjects, survivors2);
+            //even cycles
+            storeSurvivors(survivors1, survivors2);
+            storeSurvivors(newObjects, survivors2);
         } else {
-            //odd
-            copySurvivors(survivors2, survivors1);
-            copySurvivors(newObjects, survivors1);
+            //odd cycles
+            storeSurvivors(survivors2, survivors1);
+            storeSurvivors(newObjects, survivors1);
         }
     }
 
@@ -245,7 +260,6 @@ public class Profiler {
 
     /**
      *  This method is called every time a GC has been completed.
-     *  We search for survivor objects among recently allocated and older survived objects.
      */
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
@@ -256,7 +270,7 @@ public class Profiler {
             Log.println("(Allocation Profiler): Entering Post-GC Phase.");
         }
 
-        findSurvivors();
+        profileSurvivors();
 
         if ((profilingCycle % 2) == 0) {
             if (VerboseAllocationProfiler) {
