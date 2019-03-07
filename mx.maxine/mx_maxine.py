@@ -632,9 +632,9 @@ def getEntryOrExitPoint(option, vmArgs):
     del vmArgs[index]
     value = '"'+value.split('(')[0]+'"'
     if option is 'entry':
-        return ['-XX:AllocationProfilerEntryPoint='+value]
+        return '-XX:AllocationProfilerEntryPoint='+value
     else:
-        return ['-XX:AllocationProfilerExitPoint='+value]
+        return '-XX:AllocationProfilerExitPoint='+value
 
 def allocprofiler(args):
     """launch Maxine VM with Allocation Profiler
@@ -642,7 +642,9 @@ def allocprofiler(args):
     Run the Maxine VM with the Allocation Profiler and the given options and arguments.
     
     where options include:
-        entry <entry point method> [ | exit <exit point method> ]
+        all                                                         profile objects allocated by any method
+        entry <entry point method> [ | exit <exit point method> ]   profile objects allocated by the method chain with that entry-exit point. If no exitpoint given profile until the end.
+        verbose                                                     enable allocation profiler's verbosity
     
     If no option given will run with the -XX:+AllocationProfilerAll option. This will profile all objects.
 
@@ -652,34 +654,39 @@ def allocprofiler(args):
     cwd = cwdArgs[0]
     vmArgs = cwdArgs[1]
 
-    nativeLib = 'jnumautils-0.1-SNAPSHOT.jar'
-    jnumautils = ['-Xbootclasspath/p:lib/'+nativeLib]
-    
-    entryPoint = []
-    entryPointOption = 'entry'
-    exitPoint = []
-    exitPointOption = 'exit'
-    profileAll = []
-    if entryPointOption in vmArgs:
-        entryPoint = getEntryOrExitPoint(entryPointOption, vmArgs)
-        if exitPointOption in vmArgs:
-            exitPoint = getEntryOrExitPoint(exitPointOption, vmArgs)
-    else:
-        profileAll = ['-XX:+AllocationProfilerAll']
-    
-    #print [join(_vmdir, 'maxvm')] + jnumautils + entryPoint + exitPoint + profileAll + vmArgs
-    
-    print '== Launching Maxine VM with Allocation Profiler =='
-    print 'Profiling Options:'
-    if entryPoint:
-        print '\t', entryPoint[0]
-        if exitPoint:
-            print '\t', exitPoint[0]
-    else:
-        print '\t', profileAll[0]
-    print 'VM Args:\n\t', vmArgs
+    profilerArgs = []
 
-    mx.run([join(_vmdir, 'maxvm')] + jnumautils + entryPoint + exitPoint + profileAll + vmArgs, cwd=cwd, env=ldenv)
+    nativeLib = 'jnumautils-0.1-SNAPSHOT.jar'
+    jnumautils = join('-Xbootclasspath/p:lib/', nativeLib)
+    profilerArgs.append(jnumautils)
+    
+    # all | entry | entry exit | none
+    if 'all' in vmArgs:
+        #if the all option is present, ignore the rest
+        del vmArgs[vmArgs.index('all')]
+        profilerArgs.append('-XX:+AllocationProfilerAll')
+    elif 'entry' in vmArgs:
+        profilerArgs.append(getEntryOrExitPoint('entry', vmArgs))
+        if 'exit' in vmArgs:
+            profilerArgs.append(getEntryOrExitPoint('exit', vmArgs))
+    else:
+        #if none option is present, use the all option
+        profilerArgs.append('-XX:+AllocationProfilerAll')
+
+    #enable/disable verbosity
+    if 'verbose' in vmArgs:
+        del vmArgs[vmArgs.index('verbose')]
+        profilerArgs.append('-XX:+VerboseAllocationProfiler')
+    
+    print '=================================================='
+    print '== Launching Maxine VM with Allocation Profiler =='
+    print '=================================================='
+    print '== Profiler Args:'
+    for args in profilerArgs:
+        print '\t', args
+    print '=================================================='
+
+    mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
 
 def composeprofileroutput(args):
     """
