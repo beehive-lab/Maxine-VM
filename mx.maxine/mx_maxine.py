@@ -636,14 +636,23 @@ def getEntryOrExitPoint(option, vmArgs):
     else:
         return '-XX:AllocationProfilerExitPoint='+value
 
+def ignoreTheRestOptions(vmArgs, profilerOptions):
+    for arg in reversed(vmArgs):
+        if arg in profilerOptions:
+            if arg == 'entry' or arg == 'exit':
+                del vmArgs[vmArgs.index(arg)+1]
+            del vmArgs[vmArgs.index(arg)]
+
+
 def allocprofiler(args):
     """launch Maxine VM with Allocation Profiler
 
     Run the Maxine VM with the Allocation Profiler and the given options and arguments.
     
     where options include:
-        all                                                         profile objects allocated by any method
-        entry <entry point method> [ | exit <exit point method> ]   profile objects allocated by the method chain with that entry-exit point. If no exitpoint given profile until the end.
+        all                                                         profile the allocated objects by any method. 1st priority (after log) if present.
+        entry <entry point method> [ | exit <exit point method> ]   profile the allocated objects from the entry until the exit method. If no exitpoint given profiles until the end.
+        log                                                         execute the application and log the compiled methods by C1X and T1X. 1st priority if present.
         verbose                                                     enable allocation profiler's verbosity
     
     If no option given will run with the -XX:+AllocationProfilerAll option. This will profile all objects.
@@ -659,24 +668,32 @@ def allocprofiler(args):
     nativeLib = 'jnumautils-0.1-SNAPSHOT.jar'
     jnumautils = join('-Xbootclasspath/p:lib/', nativeLib)
     profilerArgs.append(jnumautils)
-    
-    # all | entry | entry exit | none
-    if 'all' in vmArgs:
-        #if the all option is present, ignore the rest
-        del vmArgs[vmArgs.index('all')]
-        profilerArgs.append('-XX:+AllocationProfilerAll')
-    elif 'entry' in vmArgs:
-        profilerArgs.append(getEntryOrExitPoint('entry', vmArgs))
-        if 'exit' in vmArgs:
-            profilerArgs.append(getEntryOrExitPoint('exit', vmArgs))
-    else:
-        #if none option is present, use the all option
-        profilerArgs.append('-XX:+AllocationProfilerAll')
 
-    #enable/disable verbosity
-    if 'verbose' in vmArgs:
-        del vmArgs[vmArgs.index('verbose')]
-        profilerArgs.append('-XX:+VerboseAllocationProfiler')
+    profilerOptions = ['all', 'entry', 'exit', 'log', 'verbose']
+    
+    if 'log' in vmArgs:
+        profilerArgs.append('-XX:+LogCompiledMethods')
+        print vmArgs
+        #ignore the rest profiler options
+        ignoreTheRestOptions(vmArgs, profilerOptions)
+    else:
+        # all | entry | entry exit | none
+        if 'all' in vmArgs:
+            #if the all option is present, ignore the rest
+            profilerArgs.append('-XX:+AllocationProfilerAll')
+            ignoreTheRestOptions(vmArgs, profilerOptions)
+        elif 'entry' in vmArgs:
+            profilerArgs.append(getEntryOrExitPoint('entry', vmArgs))
+            if 'exit' in vmArgs:
+                profilerArgs.append(getEntryOrExitPoint('exit', vmArgs))
+        else:
+            #if none option is present, use the all option
+            profilerArgs.append('-XX:+AllocationProfilerAll')
+
+        #enable/disable verbosity
+        if 'verbose' in vmArgs:
+            del vmArgs[vmArgs.index('verbose')]
+            profilerArgs.append('-XX:+VerboseAllocationProfiler')
     
     print '=================================================='
     print '== Launching Maxine VM with Allocation Profiler =='
