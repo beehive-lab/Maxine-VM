@@ -913,7 +913,6 @@ def mx_init(suite):
         'nm': [nm, '[options] [boot image file]', _vm_image],
         'objecttree': [objecttree, '[options]'],
         'olc': [olc, '[options] patterns...', _patternHelp],
-        'composeprofileroutput': [composeprofileroutput, '[options]'],
         'site': [site, '[options]'],
         't1x': [t1x, '[options] patterns...'],
         't1xgen': [t1xgen, ''],
