@@ -648,17 +648,17 @@ def allocprofiler(args):
     """launch Maxine VM with Allocation Profiler
 
     Run the Maxine VM with the Allocation Profiler and the given options and arguments.
-    
+
     where options include:
         all                                                         profile the allocated objects by any method. 1st priority (after log) if present.
         entry <entry point method> [ | exit <exit point method> ]   profile the allocated objects from the entry until the exit method. If no exitpoint given profiles until the end.
         log                                                         execute the application and log the compiled methods by C1X and T1X. 1st priority if present.
         verbose                                                     enable allocation profiler's verbosity
-    
+
     If no option given will run with the -XX:+AllocationProfilerAll option. This will profile all objects.
 
     Use "mx allocprofiler -help" to see what other options this command accepts."""
-    
+
     cwdArgs = check_cwd_change(args)
     cwd = cwdArgs[0]
     vmArgs = cwdArgs[1]
@@ -670,10 +670,9 @@ def allocprofiler(args):
     profilerArgs.append(jnumautils)
 
     profilerOptions = ['all', 'entry', 'exit', 'log', 'verbose']
-    
+
     if 'log' in vmArgs:
         profilerArgs.append('-XX:+LogCompiledMethods')
-        print vmArgs
         #ignore the rest profiler options
         ignoreTheRestOptions(vmArgs, profilerOptions)
     else:
@@ -694,7 +693,7 @@ def allocprofiler(args):
         if 'verbose' in vmArgs:
             del vmArgs[vmArgs.index('verbose')]
             profilerArgs.append('-XX:+VerboseAllocationProfiler')
-    
+
     print '=================================================='
     print '== Launching Maxine VM with Allocation Profiler =='
     print '=================================================='
@@ -704,151 +703,6 @@ def allocprofiler(args):
     print '=================================================='
 
     mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
-
-def composeprofileroutput(args):
-    """
-    composes profiler final output from numa maps and profiled objects
-
-    This is a post-execution profiler operation aiming to:
-        a) collect profiler's intermediate output (maxine's log), and numa map files
-        b) place them in a new directory
-        c) produce profiler final output by composing the intermediate output with map files
-
-    Final profiler out is a .csv file with the following format:
-        <ObjId>;<ObjType>;<ObjSize>;<NumaNode>
-
-    This file can be used to produce the plots and pivot tables
-
-    """
-
-    # create a new directory under ProfilingResults
-    folder = str(datetime.datetime.now().strftime('%Y%m%d_%H%M'))
-    src_dir = os.getenv('MAXINE_HOME', '')
-    dst_dir = src_dir+'/ProfilingResults/'+folder
-    if not os.path.exists(dst_dir):
-        os.makedirs(dst_dir)
-    print 'Results path = $MAXINE_HOME/ProfilingResults/'+folder
-
-    # move numa map files
-    numamaps_dst_dir = dst_dir+'/numa_maps/'
-    print 'Moving numa maps to', folder+'/numa_maps...'
-    if not os.path.exists(numamaps_dst_dir):
-        os.makedirs(numamaps_dst_dir)
-    numa_maps_files = []
-    files = os.listdir(os.getenv('MAXINE_HOME', ''))
-    for f in files:
-        if f.endswith('.csv'):
-            numa_maps_files.append(f)
-            #shutil.move(f, dst_dir)
-            shutil.copy(f, numamaps_dst_dir)
-    numa_maps_files.sort()
-    #print numa_maps_files
-
-    # move maxine log output
-    maxinelog = os.getenv('MAXINE_LOG_FILE')
-    print 'Moving ' + os.path.basename(maxinelog) + '...'
-    #print maxinelog
-    if not maxinelog:
-        print 'Profiler Intermediate Output not found. You need to run \'mx <run profiler extension>\' first'
-        sys.exit()
-    new = shutil.copy(maxinelog, dst_dir)
-
-    #produce intermediate output csv files from maxine's log output
-    intermediate_dst_dir = dst_dir+'/intermediate/'
-    print 'Generating intermediate output from ' + os.path.basename(maxinelog) + '...'
-    if not os.path.exists(intermediate_dst_dir):
-        os.makedirs(intermediate_dst_dir)
-    profilerintermediateout = dst_dir + '/' + os.path.basename(maxinelog)
-    intermediate_files = []
-    intermediate = open(profilerintermediateout)
-    for line in intermediate.readlines():
-        searchObj = re.match( r'==== Profiling Cycle ([0-9]+) Start ====', line)
-        if searchObj:
-            cycle = searchObj.group(1)
-            newcsv = 'cycle_'+cycle
-            if (int(cycle) == 0):
-                f = intermediate_dst_dir + '/' + newcsv
-                file = open(f, 'w')
-                intermediate_files.append(f)
-            elif(int(cycle)>0):
-                file.close()
-                f = intermediate_dst_dir + '/' + newcsv
-                file = open(intermediate_dst_dir + '/' + newcsv, 'w')
-                intermediate_files.append(f)
-        else:
-            file.write(line)
-    file.close()
-
-    # Number of profiling cycles
-    cycles = int(cycle)+1
-
-    print 'Composing Intermediate Profiler Output with Numa Maps exploiting ' + str(cycles) + ' threads'
-
-    # Create a list of jobs and then iterate through
-    # the number of processes appending each process to
-    # the job list
-    jobs = []
-
-    for i in range(0, cycles):
-        process = multiprocessing.Process(target=compose,
-                                          args=(dst_dir, cycles, i, intermediate_files[i], numa_maps_files[i]))
-        jobs.append(process)
-
-    # Start the processes
-    for j in jobs:
-        j.start()
-
-    # Ensure all of the processes have finished
-    for j in jobs:
-        j.join()
-
-    print "Profiler Output Composing Complete!"
-
-
-def compose(dst_dir, cycles, cycle, intermediate_file, numa_maps_file):
-    notfound = 0
-    total = 0
-
-    # create final output csv
-    filename = dst_dir+'/'+'final_output_cycle_'+str(cycle)+'.csv'
-    finaloutfile = open(filename,'w')
-
-    # load intermediate
-    with open(intermediate_file, 'r') as inter:
-        interreader = csv.reader(inter, delimiter=';')
-
-        # iterate for each object
-        for row in interreader:
-            objid = row[0]
-            objtype = row[1]
-            objsize = row[2]
-            numanode = -9
-
-            addr = int(row[3])
-            total += 1
-
-            # for each obj's addr iterate in numa maps to find the coresponding numa node
-            found = False
-            with open(numa_maps_file , 'r') as numamap:
-                numamapreader = csv.reader(numamap, delimiter=';')
-                for mapsrow in numamapreader:
-                    start = int(mapsrow[0], 10)
-                    end = int (mapsrow[1], 10)
-                    #debug
-                    #print 'addr=', addr, '['+str(start)+'-'+str(end)+']', addr >= start and addr <= end
-                    if addr >= start and addr <= end:
-                        numanode = mapsrow[2]
-                        found = True
-                        #print 'found'
-                        break
-                if not found:
-                    notfound += 1
-
-                finaloutfile.write(objid+';'+objtype+';'+objsize+';'+str(numanode)+'\n')
-
-    print '=> Profiler Output for Cycle ' + str(cycle+1) + ' completed to ' + os.path.basename(filename)
-    print '(', notfound, 'out of', total, 'addreses not found )'
-
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
