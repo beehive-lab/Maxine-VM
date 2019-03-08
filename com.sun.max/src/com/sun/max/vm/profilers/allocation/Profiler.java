@@ -82,21 +82,19 @@ public class Profiler {
     public static int WarmupThreshold;
     public static int iteration = 0;
 
-    public final static int minimumBufferSize = 500000;
+    public final static int MINIMUMBUFFERSIZE = 500000;
     /**
      * The size of the Allocation Profiling Buffer.
      */
-    public  int ALLOCBUFFERSIZE = minimumBufferSize;
+    public int allocBufferSize = MINIMUMBUFFERSIZE;
 
     /**
      * The size of each Survivors Profiling Buffer.
      */
-    public int SURVBUFFERSIZE = minimumBufferSize;
+    public int survBufferSize = MINIMUMBUFFERSIZE;
 
     /**
-     * Use -XX:+AllocationProfilerAll to profile all application objects unconditionally.
-     * Use -XX:+AllocationProfilerDump
-     * Use -XX:+VerboseAllocationProfiler to verbose profiler actions. For understanding or debugging purposes.
+     * The options a user can pass to the Allocation Profiler.
      */
     static {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", Profiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
@@ -112,19 +110,19 @@ public class Profiler {
         }
 
         if (BufferSize != 0) {
-            if (BufferSize < minimumBufferSize) {
+            if (BufferSize < MINIMUMBUFFERSIZE) {
                 Log.print("WARNING: Small Buffer Size. Minimum Buffer Size applied! (=");
-                Log.print(minimumBufferSize);
+                Log.print(MINIMUMBUFFERSIZE);
                 Log.println(")");
-                ALLOCBUFFERSIZE = minimumBufferSize;
-                SURVBUFFERSIZE = minimumBufferSize;
+                allocBufferSize = MINIMUMBUFFERSIZE;
+                survBufferSize = MINIMUMBUFFERSIZE;
             } else {
-                ALLOCBUFFERSIZE = BufferSize;
-                SURVBUFFERSIZE = BufferSize;
+                allocBufferSize = BufferSize;
+                survBufferSize = BufferSize;
             }
         }
 
-        newObjects = new ProfilerBuffer(ALLOCBUFFERSIZE, "New Objects Buffer");
+        newObjects = new ProfilerBuffer(allocBufferSize, "New Objects Buffer");
 
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): JNumaUtils Initialization.");
@@ -140,8 +138,8 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Initialize the Survivor Objects Profiler Buffers.");
         }
-        survivors1 = new ProfilerBuffer(SURVBUFFERSIZE, "Survivors Buffer No1");
-        survivors2 = new ProfilerBuffer(SURVBUFFERSIZE, "Survivors Buffer No2");
+        survivors1 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No1");
+        survivors2 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No2");
 
         profilingCycle = 1;
         if (VerboseAllocationProfiler) {
