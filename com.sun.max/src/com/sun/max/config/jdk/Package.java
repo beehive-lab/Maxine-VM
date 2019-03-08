@@ -238,6 +238,7 @@ public class Package extends BootImagePackage {
             // Classes in these packages break compilation
             CompiledPrototype.addCompilationBlacklist("java.time");
             CompiledPrototype.addCompilationBlacklist("java.io.ObjectStreamClass");
+            CompiledPrototype.addCompilationBlacklist("sun.nio.fs.MacOSXFileSystem");
         }
 
         // Exceptions from the above blacklisted packages
