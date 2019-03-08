@@ -489,7 +489,7 @@ public class CompilationBroker {
                     }
                     if (MaxineVM.isRunning() && LogCompiledMethods) {
                         Log.println("TargetMethod(" + tmCounter++ + ")(" +
-                                selectRetryCompiler(cma, nature, selectCompiler(cma, nature, isDeopt)) + "): " + tm);
+                                 selectCompiler(cma, nature, isDeopt) + "): " + tm);
                     }
                     return tm;
                 } else {
