@@ -25,6 +25,7 @@ import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.HeapScheme.GCRequest;
+import com.sun.max.vm.profilers.allocation.Profiler;
 
 /**
  * Implements method substitutions for {@link java.lang.Runtime java.lang.Runtime}.
@@ -77,6 +78,7 @@ public final class JDK_java_lang_Runtime {
     @SUBSTITUTE
     private void gc() {
         if (!Heap.gcDisabled()) {
+            Profiler.iteration++;
             final GCRequest gcRequest = GCRequest.clearedGCRequest();
             gcRequest.explicit = true;
             Heap.collectGarbage();

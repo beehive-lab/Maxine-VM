@@ -653,7 +653,8 @@ def allocprofiler(args):
         all                                                         profile the allocated objects by any method. 1st priority (after log) if present.
         entry <entry point method> [ | exit <exit point method> ]   profile the allocated objects from the entry until the exit method. If no exitpoint given profiles until the end.
         log                                                         execute the application and log the compiled methods by C1X and T1X. 1st priority if present.
-        verbose                                                     enable allocation profiler's verbosity
+        verbose                                                     enable allocation profiler's verbosity.
+        warmup <num>                                                num of iterations to be considered as warmup and consequently to be ignored.
 
     If no option given will run with the -XX:+AllocationProfilerAll option. This will profile all objects.
 
@@ -693,6 +694,13 @@ def allocprofiler(args):
         if 'verbose' in vmArgs:
             del vmArgs[vmArgs.index('verbose')]
             profilerArgs.append('-XX:+VerboseAllocationProfiler')
+
+        if 'warmup' in vmArgs:
+            index = vmArgs.index('warmup')
+            num = vmArgs[index+1]
+            del vmArgs[index+1]
+            del vmArgs[index]
+            profilerArgs.append('-XX:WarmupThreshold='+num)
 
     print '=================================================='
     print '== Launching Maxine VM with Allocation Profiler =='

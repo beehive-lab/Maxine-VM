@@ -69,6 +69,19 @@ public class Profiler {
     public static boolean VerboseAllocationProfiler;
     public static int BufferSize;
 
+    /**
+     * The following two variables are used to help us ignore the application's
+     * warmup iterations in order to profile only the effective part. The iteration
+     * is calculated by the number of System.gc() calls. The MaxineVM.profileThatObject()
+     * method returns false as long as the iteration is below the WarmupThreshold, which
+     * is given by the user, ignoring any object allocation by that point.
+     *
+     * NOTE: This technique is applicable only for dacapo benchmarks, since the iterations
+     * are margined with explicit System.gc() calls and might not be working for any benchmark suite.
+     */
+    public static int WarmupThreshold;
+    public static int iteration = 0;
+
     public final static int minimumBufferSize = 500000;
     /**
      * The size of the Allocation Profiling Buffer.
@@ -88,8 +101,9 @@ public class Profiler {
     static {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", Profiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AllocationProfilerDump", Profiler.class, "Dump profiled objects to a file. (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output . (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class, "Allocation Buffer Size.");
+        VMOptions.addFieldOption("-XX:", "WarmupThreshold", Profiler.class, "Warmup Threshold. If 0, do not ignore. (default: 0)");
     }
 
     public Profiler() {
@@ -153,6 +167,10 @@ public class Profiler {
 
     public static boolean profileAll() {
         return AllocationProfilerAll;
+    }
+
+    public static boolean warmupFinished() {
+        return iteration >= WarmupThreshold;
     }
 
     /**
