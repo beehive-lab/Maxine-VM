@@ -700,6 +700,9 @@ def allocprofiler(args):
     print '== Profiler Args:'
     for args in profilerArgs:
         print '\t', args
+    print '== VM and Application Args:'
+    for args in vmArgs:
+        print '\t', args
     print '=================================================='
 
     mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
