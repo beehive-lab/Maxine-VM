@@ -651,6 +651,7 @@ def allocprofiler(args):
 
     where options include:
         all                                                         profile the allocated objects by any method. 1st priority (after log) if present.
+        bufferSize                                                  the profiler's buffer size.
         entry <entry point method> [ | exit <exit point method> ]   profile the allocated objects from the entry until the exit method. If no exitpoint given profiles until the end.
         log                                                         execute the application and log the compiled methods by C1X and T1X. 1st priority if present.
         verbose                                                     enable allocation profiler's verbosity.
@@ -701,6 +702,13 @@ def allocprofiler(args):
             del vmArgs[index+1]
             del vmArgs[index]
             profilerArgs.append('-XX:WarmupThreshold='+num)
+
+        if 'bufferSize' in vmArgs:
+            index = vmArgs.index('bufferSize')
+            num = vmArgs[index+1]
+            del vmArgs[index+1]
+            del vmArgs[index]
+            profilerArgs.append('-XX:BufferSize='+num)
 
     print '=================================================='
     print '== Launching Maxine VM with Allocation Profiler =='
