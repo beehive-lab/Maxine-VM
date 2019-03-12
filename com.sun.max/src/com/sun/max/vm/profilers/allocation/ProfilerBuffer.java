@@ -23,19 +23,19 @@ import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.vm.Log;
 
+/**
+ * This class implements any buffer used by the Allocation Profiler to keep track of the objects.
+ *
+ * The following 5 variables compose the stored information for each object:
+ * -Index: unique for each object to make it distinguishable. [1-inf] index = 0 for empty cells. The Unique id
+ * serves the purpose of following and tracing an object over the profiling cycles.
+ * -Type: the object's type/class.
+ * -Size: the object's size. Same type-different size Objects might exist (eg. same type arrays with different length).
+ * -Address: the object's address in the Heap.
+ * -Node: the physical NUMA node where the object is placed.
+ */
 public class ProfilerBuffer {
 
-    /**
-     * This class implements any buffer used by the Allocation Profiler to keep track of the objects.
-     *
-     * The following 5 variables compose the stored information for each object:
-     * -Index: unique for each object to make it distinguishable. [1-inf] index = 0 for empty cells. The Unique id
-     * serves the purpose of following and tracing an object over the profiling cycles.
-     * -Type: the object's type/class.
-     * -Size: the object's size. Same type-different size Objects might exist (eg. same type arrays with different length).
-     * -Address: the object's address in the Heap.
-     * -Node: the physical NUMA node where the object is placed.
-     */
     public int[] index;
     public String[] type;
     public int[] size;
