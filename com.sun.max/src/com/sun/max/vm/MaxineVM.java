@@ -141,7 +141,7 @@ public final class MaxineVM {
      *
      *  the -XX:ProfileAll option has been used
      *
-     *  In any case we ingore the warmup phase of the application (applicable for dacapo benchmarks).
+     *  In any case we ignore the warmup phase of the application (see {@link Profiler#warmupFinished}).
      *
      * @return true if all the above conditions are true.
      */
