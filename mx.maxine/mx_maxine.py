@@ -309,6 +309,7 @@ def suite_classpath():
     """Get the classpath containing only the current suite's dependencies, removing Graal projects (if any) from it"""
     dependencies = mx.dependencies(True)
     dependencies = itertools.ifilter(lambda d: not d.isNativeProject(), dependencies)
+    dependencies = itertools.ifilter(lambda d: not d.isPackedResourceLibrary(), dependencies)
     dependencies = [ d.name for d in dependencies]
     cp = mx.classpath(dependencies)
     cp_list = cp.split(os.pathsep)
