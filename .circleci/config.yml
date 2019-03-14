@@ -145,6 +145,7 @@ jobs:
           command: |
             $MX image -build=DEBUG -platform linux-aarch64 -isa Aarch64
             $MX image -build=DEBUG -platform linux-arm -isa ARMV7
+            $MX image -build=DEBUG -platform linux-riscv64 -isa RISCV64
             $MX -J-ea image
       - save_cache:
           key: v0-image-{{ .Environment.CIRCLE_SHA1 }}
