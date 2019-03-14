@@ -58,6 +58,7 @@ pipeline {
                     dir(env.MAXINE_HOME) {
                         sh '$MX image -build=DEBUG -platform linux-aarch64 -isa Aarch64'
                         sh '$MX image -build=DEBUG -platform linux-arm -isa ARMV7'
+                        sh '$MX image -build=DEBUG -platform linux-riscv64 -isa RISCV64'
                         sh '$MX -J-ea image'
                     }
                 }, 'test-init': {
