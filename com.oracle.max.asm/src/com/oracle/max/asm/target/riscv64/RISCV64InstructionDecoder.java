@@ -34,15 +34,14 @@ public final class RISCV64InstructionDecoder {
         assert pos + RISCV64MacroAssembler.INSTRUCTION_SIZE *
                 RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS <= code.length;
 
-        int[] instructions = RISCV64MacroAssembler.mov32BitConstantHelper(RISCV64.x28, offset);
+        int instruction = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x28, RISCV64.x28,  offset);
 
-        for (int i = 0; i < instructions.length; i++) {
-            code[pos] = (byte) (instructions[i] & 0xFF);
-            code[pos + 1] = (byte) ((instructions[i] >> 8) & 0xFF);
-            code[pos + 2] = (byte) ((instructions[i] >> 16) & 0xFF);
-            code[pos + 3] = (byte) ((instructions[i] >> 24) & 0xFF);
-            pos += 4;
-        }
+        pos += 4; //skip asm.auipc(scratch, 0);
+
+        code[pos] = (byte) (instruction & 0xFF);
+        code[pos + 1] = (byte) ((instruction >> 8) & 0xFF);
+        code[pos + 2] = (byte) ((instruction >> 16) & 0xFF);
+        code[pos + 3] = (byte) ((instruction >> 24) & 0xFF);
     }
 }
 

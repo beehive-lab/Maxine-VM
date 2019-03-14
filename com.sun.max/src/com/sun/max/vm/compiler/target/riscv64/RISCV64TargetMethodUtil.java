@@ -180,7 +180,36 @@ public final class RISCV64TargetMethodUtil {
      * @return the previous displacement
      */
     public static int fixupCall19Site(byte [] code, int callOffset, int displacement) {
-        throw new UnsupportedOperationException("Unimplemented");
+        final boolean isNegative = displacement < 0;
+        if (isNegative) {
+            displacement = -displacement;
+        }
+        int instruction = extractInstruction(code, callOffset);
+        int offset = jumpAndLinkExtractDisplacement(instruction);
+        // The bimm offset must either point to one of the two trampolines or outside of them
+        assert (offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET) : offset;
+        // Get the offset of the unused trampoline
+        offset = offset == CALL_TRAMPOLINE1_OFFSET ? CALL_TRAMPOLINE2_OFFSET : CALL_TRAMPOLINE1_OFFSET;
+        final int trampolineOffset = callOffset + offset;
+        int[] mov32BitConstantInstructions = mov32BitConstantHelper(RISCV64.x28, displacement);
+        for (int i = 0; i < mov32BitConstantInstructions.length; i++) {
+            instruction = mov32BitConstantInstructions[i];
+            if (instruction == 0) { // fill in with asm.nop() if mov32BitConstant did not need those instructions
+                instruction = addImmediateHelper(RISCV64.zero, RISCV64.zero, 0);
+            }
+            writeInstruction(code, trampolineOffset + 8 + i * INSTRUCTION_SIZE, instruction);
+        }
+        // Create the new trampoline
+        instruction = addSubInstructionHelper(RISCV64.x28, RISCV64.x29, RISCV64.x28, isNegative);
+        writeInstruction(code, trampolineOffset + 24, instruction);
+        instruction = extractInstruction(code, callOffset + CALL_BRANCH_OFFSET);
+        final boolean isLinked = isJumpLinked(instruction);
+        instruction = jumpAndLinkHelper(isLinked ? RISCV64.ra : RISCV64.x0, RISCV64.x28, 0);
+        writeInstruction(code, callOffset + CALL_BRANCH_OFFSET, instruction);
+        // Patch the JAL to jump to the new trampoline
+        instruction = jumpAndLinkImmediateHelper(RISCV64.zero, offset);
+        writeInstruction(code, callOffset, instruction);
+        return 0;
     }
 
     private static void writeInstruction(byte[] code, int offset, int instruction) {
@@ -205,7 +234,7 @@ public final class RISCV64TargetMethodUtil {
             long disp64 = target.toLong() - callSite.plus(CALL_BRANCH_OFFSET).toLong();
             int disp32 = (int) disp64;
             FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-            assert NumUtil.isSignedNbit(28, disp32);
+            assert NumUtil.isSignedNbit(19, disp32);
             byte[] code = tm.code();
             final int oldDisplacement = fixupCall19Site(code, callOffset, disp32);
             return callSite.plus(oldDisplacement);
