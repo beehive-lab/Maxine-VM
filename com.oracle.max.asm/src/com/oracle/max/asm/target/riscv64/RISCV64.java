@@ -127,6 +127,8 @@ public class RISCV64 extends CiArchitecture {
     public static final CiRegister gp   = x3;
     public static final CiRegister tp   = x4;
 
+    public static final CiRegisterValue rsp = sp.asValue(CiKind.Int);
+
     public static final CiRegister t0 = x5;
     public static final CiRegister t1 = x6;
     public static final CiRegister t2 = x7;

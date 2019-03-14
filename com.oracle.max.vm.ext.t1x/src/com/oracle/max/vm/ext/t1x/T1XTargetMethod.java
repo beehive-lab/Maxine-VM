@@ -33,6 +33,7 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.oracle.max.criutils.TTY;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
 import com.sun.cri.bytecode.*;
@@ -59,6 +60,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.aarch64.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
@@ -406,6 +408,8 @@ public class T1XTargetMethod extends TargetMethod {
             return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else if (isAARCH64()) {
             return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (isRISCV64()) {
+            return RISCV64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.t1x.T1XTargetMethod.fixupCallSite");
         }

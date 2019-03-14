@@ -28,6 +28,7 @@ import static com.sun.max.vm.compiler.target.Stub.Type.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -40,6 +41,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
@@ -290,6 +292,8 @@ public final class Stub extends TargetMethod {
             return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else if (platform().isa == ISA.Aarch64) {
             return Aarch64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (platform().isa == ISA.RISCV64) {
+            return RISCV64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
             throw FatalError.unimplemented("com.sun.max.vm.compiler.target.Stub.fixupCallSite");
         }
