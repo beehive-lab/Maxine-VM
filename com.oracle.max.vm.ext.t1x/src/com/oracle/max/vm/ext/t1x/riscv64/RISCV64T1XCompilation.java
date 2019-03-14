@@ -871,7 +871,6 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     @HOSTED_ONLY
     public static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
-        System.out.println("dispFromCodeStart = " + dispFromCodeStart);
         int[] result = {};
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : RISCV64.cpuRegisters) {
