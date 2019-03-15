@@ -395,6 +395,8 @@ public class T1XTargetMethod extends TargetMethod {
             return ARMTargetMethodUtil.isPatchableCallSite(callSite);
         } else if (isAARCH64()) {
             return Aarch64TargetMethodUtil.isPatchableCallSite(callSite);
+        } else if (isRISCV64()) {
+            return RISCV64TargetMethodUtil.isPatchableCallSite(callSite);
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.t1x.T1XTargetMethod.isPatchableCallSite");
         }
@@ -453,6 +455,8 @@ public class T1XTargetMethod extends TargetMethod {
             return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else if (isAARCH64()) {
             return Aarch64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
+        } else if (isRISCV64()) {
+            return RISCV64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.t1x.T1XTargetMethod.patchCallSite");
         }

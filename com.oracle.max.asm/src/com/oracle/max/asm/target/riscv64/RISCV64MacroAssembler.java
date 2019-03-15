@@ -35,25 +35,12 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public static final int CALL_TRAMPOLINE2_OFFSET = INSTRUCTION_SIZE * (CALL_TRAMPOLINE_INSTRUCTIONS + 1);
     public static final int CALL_BRANCH_OFFSET = RIP_CALL_INSTRUCTION_SIZE - INSTRUCTION_SIZE;
 
-    private static final int B_IMM_OPCODE = 0b1101111;
-    private static  final int B_IMM_ADDRESS_MASK = 0xFFFFF000;
-
     public RISCV64MacroAssembler(CiTarget target) {
         super(target);
     }
 
     public RISCV64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
-    }
-
-    /**
-     * Checks if the given branch instruction is a branch immediate or branch register.
-     *
-     * @param instruction the machine code of the original instruction
-     * @return the instruction type
-     */
-    public static boolean isBimmInstruction(int instruction) {
-        return (instruction & NumUtil.getNbitNumberInt(7)) == B_IMM_OPCODE;
     }
 
     /**
@@ -75,28 +62,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
         // negative number -- sign extend.
         return displacement | (0xFFF << 20);
-    }
-
-    /**
-     * Patch the address part of a branch immediate instruction. Returns the
-     * patched instruction.
-     * @param oldInstruction -- the instruction to be patched
-     * @param displacement -- the targets displacement
-     * @return
-     */
-    public static int bImmPatch(int oldInstruction, int displacement) {
-        assert (oldInstruction & NumUtil.getNbitNumberInt(7)) == B_IMM_OPCODE :
-                "Not a branch immediat instruction: 0x" + Integer.toHexString(oldInstruction);
-        assert NumUtil.isSignedNbit(19, displacement)
-                : "Immediate has to be 19 bit signed number: " + Integer.toHexString(displacement);
-
-        int instruction = oldInstruction & ~B_IMM_ADDRESS_MASK;
-        instruction |= ((displacement >> 20) & 1) << 31; // This places bit 20 of imm32 in bit 31 of instruction
-        instruction |= ((displacement >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm32 in bits 30:21 of instruction
-        instruction |= ((displacement >> 11) & 1) << 20; // This places bit 11 of imm32 in bit20 of instruction
-        instruction |= ((displacement >> 12) & 0xFF) << 12; // This places bits 19:12 of imm32 in bits 19:12 of instruction
-
-        return instruction;
     }
 
     @Override
@@ -219,7 +184,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void mov32BitConstant(CiRegister dst, int imm32) {
-        //Any change made to this function must also be applied to mov32BitConstantHelper
+        // Any change made to this function must also be applied to mov32BitConstantHelper
+        // Any change made to this function must also be applied to RISCV64TargetMethodUtil::getDisplacementFromTrampoline
         if (imm32 == 0) {
             and(dst, RISCV64.x0, RISCV64.x0);
             return;
@@ -269,32 +235,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public static int shiftLeftLogicImmediateHelper(CiRegister dst, CiRegister rs, int imm32) {
-//        int instruction = opcode.getValue();
-//        instruction |= rd.getEncoding() << 7;
-//        instruction |= funct3 << 12;
-//        instruction |= rs1.getEncoding() << 15;
-//        instruction |= imm32 << 20;
-
         return COMP.getValue() | dst.number << 7 | 1 << 12 | rs.number << 15 | imm32 << 20;
     }
 
     public static int addImmediateHelper(CiRegister rd, CiRegister rs,  int imm12) {
-//        int instruction = opcode.getValue();
-//        instruction |= rd.getEncoding() << 7;
-//        instruction |= funct3 << 12;
-//        instruction |= rs1.getEncoding() << 15;
-//        instruction |= imm32 << 20;
         return COMP.getValue() | rd.getEncoding() << 7 | 0 << 12 | rs.getEncoding() << 15 | imm12 << 20;
     }
 
     public static int addSubInstructionHelper(CiRegister rd, CiRegister rs1, CiRegister rs2, boolean isNegative) {
-//        int instruction = opcode.getValue();
-//        instruction |= rd.getEncoding() << 7;
-//        instruction |= funct3 << 12;
-//        instruction |= rs1.getEncoding() << 15;
-//        instruction |= rs2.getEncoding() << 20;
-//        instruction |= funct7 << 25;
-
         if (isNegative) {
             return SUB.getValue() | rd.getEncoding() << 7 |  0 << 12 | rs1.getEncoding() << 15 |
                     rs2.getEncoding() << 20 | 32 << 25;
@@ -333,6 +281,44 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public static boolean isJumpInstruction(int instruction) {
         int opcode = instruction & 0b1111111;
         return opcode == JALR.getValue() || opcode == JAL.getValue();
+    }
+
+    public static boolean isAddInstruction(int instruction) {
+        assert isAddSubInstruction(instruction) : instruction;
+        int opcode = instruction & 0b1111111;
+        int funct7 = instruction >>> 25;
+        return opcode == ADD.getValue() && funct7 == 0b0;
+    }
+
+    public static boolean isAddSubInstruction(int instruction) {
+        int opcode = instruction & 0b1111111;
+        int funct7 = instruction >>> 25;
+        return opcode == ADD.getValue() &&
+                (funct7 == 0b0 || funct7 == 0b0100000);
+    }
+
+    public static boolean isAndInstruction(int instruction) {
+        return (instruction & 0b1111111) == RISCV64opCodes.AND.getValue();
+    }
+
+    public static int extractAddiImmediate(int instruction) {
+        assert (instruction & 0b1111111) == RISCV64opCodes.COMP.getValue() : Integer.toBinaryString(instruction);
+        return instruction >>> 20;
+    }
+
+    public static int extractLuiImmediate(int instruction) {
+        assert (instruction & 0b1111111) == RISCV64opCodes.LUI.getValue() : Integer.toBinaryString(instruction);
+        return instruction >>> 12;
+    }
+
+    public static boolean isSlliInstruction(int instruction) {
+        return (instruction & 0b1111111) == RISCV64opCodes.COMP.getValue() &&
+                ((instruction >>> 12) & 0b111) == 0b001;
+    }
+
+    public static boolean isSrliInstruction(int instruction) {
+        return (instruction & 0b1111111) == RISCV64opCodes.COMP.getValue() &&
+                ((instruction >>> 12) & 0b111) == 0b101;
     }
 
     public void mov(CiRegister rd, long imm) {

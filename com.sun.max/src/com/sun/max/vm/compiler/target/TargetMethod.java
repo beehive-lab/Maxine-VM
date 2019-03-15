@@ -51,6 +51,7 @@ import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
 import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -1238,6 +1239,9 @@ public abstract class TargetMethod extends MemoryRegion {
                 break;
             case AMD64:
                 AMD64TargetMethodUtil.advance(current, csl, csa);
+                break;
+            case RISCV64:
+                RISCV64TargetMethodUtil.advance(current, csl, csa);
                 break;
             default:
                 throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.advance");
