@@ -68,10 +68,6 @@ public class ProfilerBuffer {
     @NEVER_INLINE
     public void record(int index, String type, int size, long address) {
         this.index[currentIndex] = index;
-        // append a semicolon to primitive types
-        if (type.charAt(type.length() - 1) != ';') {
-            type = type.concat(";");
-        }
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
         this.address[currentIndex] = address;
@@ -82,10 +78,6 @@ public class ProfilerBuffer {
     @NEVER_INLINE
     public void record(int index, String type, int size, long address, int node) {
         this.index[currentIndex] = index;
-        // append a semicolon to primitive types
-        if (type.charAt(type.length() - 1) != ';') {
-            type = type.concat(";");
-        }
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
         this.address[currentIndex] = address;
@@ -102,6 +94,10 @@ public class ProfilerBuffer {
             Log.print(index[i]);
             Log.print(";");
             Log.print(type[i]);
+            // print a semicolon only for primitive types because the rest are already followed by one
+            if (type[i].charAt(type[i].length() - 1) != ';') {
+                Log.print(";");
+            }
             Log.print(size[i]);
             Log.print(";");
             Log.print(address[i]);
