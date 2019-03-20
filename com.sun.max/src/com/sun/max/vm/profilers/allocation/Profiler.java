@@ -283,7 +283,7 @@ public class Profiler {
         }
         findNumaNodes();
 
-        if (ValidateAllocationProfiler) {
+        if (!ValidateAllocationProfiler) {
             dumpBuffer();
         } else {
             //in validation mode don't dump buffer
