@@ -710,6 +710,10 @@ def allocprofiler(args):
             del vmArgs[index]
             profilerArgs.append('-XX:BufferSize='+num)
 
+        if 'validate' in vmArgs:
+            del vmArgs[vmArgs.index('validate')]
+            profilerArgs.append('-XX:+ValidateAllocationProfiler')
+
     print '=================================================='
     print '== Launching Maxine VM with Allocation Profiler =='
     print '=================================================='

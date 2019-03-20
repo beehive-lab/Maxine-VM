@@ -68,6 +68,10 @@ public class Profiler {
     private static boolean AllocationProfilerDump;
     public static boolean VerboseAllocationProfiler;
     public static int BufferSize;
+    public static boolean ValidateAllocationProfiler;
+
+    public static int totalNewSize = 0;
+    public static int totalSurvSize = 0;
 
     /**
      * The following two variables are used to help us ignore the application's
@@ -102,6 +106,7 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class, "Allocation Buffer Size.");
         VMOptions.addFieldOption("-XX:", "WarmupThreshold", Profiler.class, "The warmup threshold defines the number of warmup iterations (margined by System.gc()) are due before the allocation profiling begins. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "ValidateAllocationProfiler", Profiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
     public Profiler() {
@@ -184,6 +189,7 @@ public class Profiler {
         final boolean lockDisabledSafepoints = lock();
         newObjects.record(uniqueId, type, size, address);
         uniqueId++;
+        totalNewSize = totalNewSize + size;
         unlock(lockDisabledSafepoints);
     }
 
@@ -237,6 +243,7 @@ public class Profiler {
                 //object is alive -> update it's address -> copy it to to buffer
                 long newAddr = Heap.getForwardedAddress(address);
                 to.record(from.index[i], from.type[i], from.size[i], newAddr, from.node[i]);
+                totalSurvSize = totalSurvSize + from.size[i];
             }
             from.cleanBufferCell(i);
         }
@@ -276,10 +283,27 @@ public class Profiler {
         }
         findNumaNodes();
 
+        if (ValidateAllocationProfiler) {
+            dumpBuffer();
+        } else {
+            //in validation mode don't dump buffer
+            Log.print("Cycle ");
+            Log.println(profilingCycle);
+
+            Log.print("=> (Profiler Reports): New Objects Size =");
+            Log.print((float) totalNewSize / (1024 * 1024));
+            Log.println(" MB");
+
+            Log.print("=> (VM Reports): Heap Used Space =");
+            Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
+            Log.println(" MB");
+
+            Log.println("Garbage Collection");
+        }
+
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Dump Profiler Buffer. [pre-GC phase]");
         }
-        dumpBuffer();
 
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Leaving Pre-GC Phase.");
@@ -320,7 +344,22 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Dump Survivors Buffer. [pre-GC phase]");
         }
-        dumpSurvivors();
+
+        if (!ValidateAllocationProfiler) {
+            dumpSurvivors();
+        } else {
+            //in validation mode don't dump buffer
+            Log.print("=> (Profiler Reports): Survivor Objects Size =");
+            Log.print((float) totalSurvSize / (1024 * 1024));
+            Log.println(" MB");
+
+            Log.print("=> (VM Reports): Heap Used Space =");
+            Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
+            Log.println(" MB\n");
+        }
+
+        totalNewSize = totalSurvSize;
+        totalSurvSize = 0;
 
         profilingCycle++;
 

@@ -255,9 +255,25 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 }
                 // The same for the Allocation Profiler
                 if (CompilationBroker.AllocationProfilerEntryPoint != null || Profiler.profileAll()) {
+                    float beforeAllocProfiler = (float)Heap.reportUsedSpace() / (1024*1024);
                     // Initialize Allocation Profiler
                     MaxineVM.allocationProfiler = new Profiler();
                     MaxineVM.isAllocationProfilerInitialized = true;
+                    float afterAllocProfiler = (float)Heap.reportUsedSpace() / (1024*1024);
+
+                    if (Profiler.ValidateAllocationProfiler) {
+                        Log.println("*===================================================*\n" +
+                            "* Allocation Profiler is on validation mode.\n" +
+                            "*===================================================*\n" +
+                            "* You can use Allocation Profiler with confidence if:\n" +
+                            "* => a) VM Reported Heap Used Space = Initial Used Heap Space + Allocation Profiler Size + New Objects Size\n" +
+                            "* => b) VM Reported Heap Used Space after GC = Initial Used Heap Space + Allocation Profiler Size + Survivor Objects Size\n" +
+                            "* => c) Next Cycle's VM Reported Heap Used Space = Initial Used Heap Space + Allocation Profiler Size + Survivor Object Size\n" +
+                            "*===================================================*\n");
+                        Log.println("Initial Used Heap Size = " + beforeAllocProfiler + " MB");
+                        float allocProfilerSize = afterAllocProfiler - beforeAllocProfiler;
+                        Log.println("Allocation Profiler Size = " + allocProfilerSize + " MB\n");
+                    }
                 }
                 break;
             }
