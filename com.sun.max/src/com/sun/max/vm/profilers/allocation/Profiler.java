@@ -259,6 +259,7 @@ public class Profiler {
      * In odd profiling cycles we use the survivor1 buffer.
      */
     public void profileSurvivors() {
+
         if ((profilingCycle % 2) == 0) {
             //even cycles
             storeSurvivors(survivors1, survivors2);
@@ -281,6 +282,7 @@ public class Profiler {
             Log.print(getProfilingCycle());
             Log.println(" Profiling Is Now Complete. [pre-GC phase]");
         }
+
         findNumaNodes();
 
         if (!ValidateAllocationProfiler) {
@@ -308,20 +310,17 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Leaving Pre-GC Phase.");
         }
-
     }
 
     /**
      *  This method is called every time a GC has been completed.
      */
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
-    @NEVER_INLINE
     public void postGCActions() {
-        final boolean lockDisabledSafepoints = lock();
 
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Entering Post-GC Phase.");
         }
+
         profileSurvivors();
 
         if ((profilingCycle % 2) == 0) {
@@ -339,6 +338,7 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Clean-up Profiler Buffer. [post-gc phase]");
         }
+        
         newObjects.resetBuffer();
 
         if (VerboseAllocationProfiler) {
@@ -369,8 +369,6 @@ public class Profiler {
             Log.print(getProfilingCycle());
             Log.println("]");
         }
-
-        unlock(lockDisabledSafepoints);
     }
 
     /**
