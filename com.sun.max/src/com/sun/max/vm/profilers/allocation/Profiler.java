@@ -338,7 +338,6 @@ public class Profiler {
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Clean-up Profiler Buffer. [post-gc phase]");
         }
-        
         newObjects.resetBuffer();
 
         if (VerboseAllocationProfiler) {
