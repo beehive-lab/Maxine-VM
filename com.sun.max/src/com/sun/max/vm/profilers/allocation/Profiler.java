@@ -376,7 +376,10 @@ public class Profiler {
      * is being terminated. Currently empty.
      */
     public void terminate() {
-
+        if (getProfilingCycle() == 1) {
+            dumpBuffer();
+            dumpSurvivors();
+        }
     }
 
     private static VmThread lockOwner;
