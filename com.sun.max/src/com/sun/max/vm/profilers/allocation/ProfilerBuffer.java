@@ -21,7 +21,11 @@ package com.sun.max.vm.profilers.allocation;
 
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
+import com.sun.max.memory.VirtualMemory;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Size;
 import com.sun.max.vm.Log;
+import jdk.internal.org.objectweb.asm.Type;
 
 /**
  * This class implements any buffer used by the Allocation Profiler to keep track of the objects.
@@ -36,7 +40,7 @@ import com.sun.max.vm.Log;
  */
 public class ProfilerBuffer {
 
-    public int[] index;
+    Pointer index;
     public String[] type;
     public int[] size;
     public long[] address;
@@ -45,16 +49,25 @@ public class ProfilerBuffer {
     public String buffersName;
     public int currentIndex;
 
+    public final int sizeOfInt = Integer.SIZE/8;
+
     public ProfilerBuffer(int bufSize, String name) {
         this.buffersName = name;
-        index = new int[bufSize];
+        this.index = VirtualMemory.allocate(Size.fromInt(bufSize * sizeOfInt), VirtualMemory.Type.DATA);
+        if (this.index.isNotZero()) {
+            Log.print("start = ");
+            Log.println(index.asAddress().toLong());
+
+            Log.print("end = ");
+            Log.println(index.asAddress().toLong()+bufSize*sizeOfInt-1);
+        }
         type = new String[bufSize];
         size = new int[bufSize];
         address = new long[bufSize];
         node = new int[bufSize];
 
         for (int i = 0; i < bufSize; i++) {
-            index[i] = 0;
+            index.writeInt(i * sizeOfInt, 0);
             type[i] = "null";
             size[i] = 0;
             address[i] = 0;
@@ -64,10 +77,19 @@ public class ProfilerBuffer {
         currentIndex = 0;
     }
 
+    public void setIndexPtr(int position, int value) {
+        index.setInt(position, value);
+    }
+
+    public int getIndexPtr(int position) {
+        return index.getInt(position);
+    }
+
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int index, String type, int size, long address) {
-        this.index[currentIndex] = index;
+        //this.index[currentIndex] = index;
+        setIndexPtr(currentIndex, index);
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
         this.address[currentIndex] = address;
@@ -77,7 +99,8 @@ public class ProfilerBuffer {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int index, String type, int size, long address, int node) {
-        this.index[currentIndex] = index;
+        //this.index[currentIndex] = index;
+        setIndexPtr(currentIndex, index);
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
         this.address[currentIndex] = address;
@@ -91,7 +114,8 @@ public class ProfilerBuffer {
 
     public void dumpToStdOut(int cycle) {
         for (int i = 0; i < currentIndex; i++) {
-            Log.print(index[i]);
+            //Log.print(index[i]);
+            Log.print(getIndexPtr(i));
             Log.print(";");
             Log.print(type[i]);
             // print a semicolon only for primitive types because the rest are already followed by one
@@ -121,7 +145,8 @@ public class ProfilerBuffer {
     }
 
     public void cleanBufferCell(int i) {
-        this.index[i] = 0;
+        //this.index[i] = 0;
+        setIndexPtr(i, 0);
         this.type[i] = "null";
         this.size[i] = 0;
         this.address[i] = 0;
