@@ -50,8 +50,8 @@ public class ProfilerBuffer {
     public int bufferSize;
     public int currentIndex;
 
-    public final int sizeOfInt = Integer.SIZE/8;
-    public final int sizeOfLong = Long.SIZE/8;
+    public final int sizeOfInt = Integer.SIZE / 8;
+    public final int sizeOfLong = Long.SIZE / 8;
 
     public ProfilerBuffer(int bufSize, String name) {
         this.buffersName = name;
