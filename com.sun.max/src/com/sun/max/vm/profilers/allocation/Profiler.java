@@ -379,7 +379,22 @@ public class Profiler {
     public void terminate() {
         if (getProfilingCycle() == 1) {
             findNumaNodes();
-            dumpBuffer();
+
+            if (!ValidateAllocationProfiler) {
+                dumpBuffer();
+            } else {
+                //in validation mode don't dump buffer
+                Log.print("Cycle ");
+                Log.println(profilingCycle);
+
+                Log.print("=> (Profiler Reports): New Objects Size =");
+                Log.print((float) totalNewSize / (1024 * 1024));
+                Log.println(" MB");
+
+                Log.print("=> (VM Reports): Heap Used Space =");
+                Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
+                Log.println(" MB");
+            }
         }
     }
 
