@@ -378,8 +378,8 @@ public class Profiler {
      */
     public void terminate() {
         if (getProfilingCycle() == 1) {
+            findNumaNodes();
             dumpBuffer();
-            dumpSurvivors();
         }
     }
 
