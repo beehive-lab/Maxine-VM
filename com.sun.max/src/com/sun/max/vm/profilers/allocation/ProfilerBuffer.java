@@ -67,7 +67,7 @@ public class ProfilerBuffer {
         node = new int[bufSize];
 
         for (int i = 0; i < bufSize; i++) {
-            index.writeInt(i * sizeOfInt, 0);
+            writeIndex(i, 0);
             type[i] = "null";
             size[i] = 0;
             address[i] = 0;
@@ -77,11 +77,12 @@ public class ProfilerBuffer {
         currentIndex = 0;
     }
 
-    public void setIndexPtr(int position, int value) {
+    public void writeIndex(int position, int value) {
+        //index.writeInt(position * sizeOfInt, value);
         index.setInt(position, value);
     }
 
-    public int getIndexPtr(int position) {
+    public int getIndex(int position) {
         return index.getInt(position);
     }
 
@@ -89,7 +90,7 @@ public class ProfilerBuffer {
     @NEVER_INLINE
     public void record(int index, String type, int size, long address) {
         //this.index[currentIndex] = index;
-        setIndexPtr(currentIndex, index);
+        writeIndex(currentIndex, index);
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
         this.address[currentIndex] = address;
@@ -100,7 +101,7 @@ public class ProfilerBuffer {
     @NEVER_INLINE
     public void record(int index, String type, int size, long address, int node) {
         //this.index[currentIndex] = index;
-        setIndexPtr(currentIndex, index);
+        writeIndex(currentIndex, index);
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
         this.address[currentIndex] = address;
@@ -115,7 +116,7 @@ public class ProfilerBuffer {
     public void dumpToStdOut(int cycle) {
         for (int i = 0; i < currentIndex; i++) {
             //Log.print(index[i]);
-            Log.print(getIndexPtr(i));
+            Log.print(getIndex(i));
             Log.print(";");
             Log.print(type[i]);
             // print a semicolon only for primitive types because the rest are already followed by one
@@ -146,7 +147,7 @@ public class ProfilerBuffer {
 
     public void cleanBufferCell(int i) {
         //this.index[i] = 0;
-        setIndexPtr(i, 0);
+        writeIndex(i, 0);
         this.type[i] = "null";
         this.size[i] = 0;
         this.address[i] = 0;
