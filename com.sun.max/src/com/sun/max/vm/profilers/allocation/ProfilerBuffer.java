@@ -53,7 +53,7 @@ public class ProfilerBuffer {
 
     public ProfilerBuffer(int bufSize, String name) {
         this.buffersName = name;
-        this.index = VirtualMemory.allocate(Size.fromInt(bufSize * sizeOfInt), VirtualMemory.Type.DATA);
+        this.index = allocateIntArray(bufSize);
         if (this.index.isNotZero()) {
             Log.print("start = ");
             Log.println(index.asAddress().toLong());
@@ -75,6 +75,10 @@ public class ProfilerBuffer {
         }
 
         currentIndex = 0;
+    }
+
+    public Pointer allocateIntArray(int size) {
+        return VirtualMemory.allocate(Size.fromInt(size * sizeOfInt), VirtualMemory.Type.DATA);
     }
 
     public void writeIndex(int position, int value) {
