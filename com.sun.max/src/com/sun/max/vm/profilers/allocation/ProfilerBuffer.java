@@ -42,9 +42,9 @@ public class ProfilerBuffer {
 
     Pointer index;
     public String[] type;
-    public int[] size;
+    Pointer size;
     public long[] address;
-    public int[] node;
+    Pointer node;
 
     public String buffersName;
     public int currentIndex;
@@ -55,16 +55,16 @@ public class ProfilerBuffer {
         this.buffersName = name;
         this.index = allocateIntArrayOffHeap(bufSize);
         type = new String[bufSize];
-        size = new int[bufSize];
+        size = allocateIntArrayOffHeap(bufSize);
         address = new long[bufSize];
-        node = new int[bufSize];
+        node = allocateIntArrayOffHeap(bufSize);
 
         for (int i = 0; i < bufSize; i++) {
             writeIndex(i, 0);
             type[i] = "null";
-            size[i] = 0;
+            writeSize(i, 0);
             address[i] = 0;
-            node[i] = -1;
+            writeNode(i, -1);
         }
 
         currentIndex = 0;
@@ -82,12 +82,28 @@ public class ProfilerBuffer {
         return index.getInt(position);
     }
 
+    public void writeSize(int position, int value) {
+        size.setInt(position, value);
+    }
+
+    public int getSize(int position) {
+        return size.getInt(position);
+    }
+
+    public void writeNode(int position, int value) {
+        node.setInt(position, value);
+    }
+
+    public int getNode(int position) {
+        return node.getInt(position);
+    }
+
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int index, String type, int size, long address) {
         writeIndex(currentIndex, index);
         this.type[currentIndex] = type;
-        this.size[currentIndex] = size;
+        writeSize(currentIndex, size);
         this.address[currentIndex] = address;
         currentIndex++;
     }
@@ -97,14 +113,14 @@ public class ProfilerBuffer {
     public void record(int index, String type, int size, long address, int node) {
         writeIndex(currentIndex, index);
         this.type[currentIndex] = type;
-        this.size[currentIndex] = size;
+        writeSize(currentIndex, size);
         this.address[currentIndex] = address;
-        this.node[currentIndex] = node;
+        writeNode(currentIndex, node);
         currentIndex++;
     }
 
     public void setNode(int index, int node) {
-        this.node[index] = node;
+        writeNode(index, node);
     }
 
     public void dumpToStdOut(int cycle) {
@@ -116,11 +132,11 @@ public class ProfilerBuffer {
             if (type[i].charAt(type[i].length() - 1) != ';') {
                 Log.print(";");
             }
-            Log.print(size[i]);
+            Log.print(getSize(i));
             Log.print(";");
             Log.print(address[i]);
             Log.print(";");
-            Log.println(node[i]);
+            Log.println(getNode(i));
         }
 
         if (Profiler.VerboseAllocationProfiler) {
@@ -141,9 +157,9 @@ public class ProfilerBuffer {
     public void cleanBufferCell(int i) {
         writeIndex(i, 0);
         this.type[i] = "null";
-        this.size[i] = 0;
+        writeSize(i, 0);
         this.address[i] = 0;
-        this.node[i] = -1;
+        writeNode(i, -1);
     }
 
     public void resetBuffer() {

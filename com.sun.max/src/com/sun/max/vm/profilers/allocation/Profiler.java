@@ -242,8 +242,8 @@ public class Profiler {
             if (Heap.isSurvivor(address)) {
                 //object is alive -> update it's address -> copy it to to buffer
                 long newAddr = Heap.getForwardedAddress(address);
-                to.record(from.getIndex(i), from.type[i], from.size[i], newAddr, from.node[i]);
-                totalSurvSize = totalSurvSize + from.size[i];
+                to.record(from.getIndex(i), from.type[i], from.getSize(i), newAddr, from.getNode(i));
+                totalSurvSize = totalSurvSize + from.getSize(i);
             }
             from.cleanBufferCell(i);
         }
