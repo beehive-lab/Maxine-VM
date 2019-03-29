@@ -220,7 +220,7 @@ public class Profiler {
 
     public void findNumaNodes() {
         for (int i = 0; i < newObjects.currentIndex; i++) {
-            int node = utilsObject.findNode(newObjects.address[i]);
+            int node = utilsObject.findNode(newObjects.getAddr(i));
             newObjects.setNode(i, node);
         }
     }
@@ -238,7 +238,7 @@ public class Profiler {
             Log.println(to.buffersName);
         }
         for (int i = 0; i < from.currentIndex; i++) {
-            long address = from.address[i];
+            long address = from.getAddr(i);
             if (Heap.isSurvivor(address)) {
                 //object is alive -> update it's address -> copy it to to buffer
                 long newAddr = Heap.getForwardedAddress(address);

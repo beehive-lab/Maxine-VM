@@ -43,27 +43,31 @@ public class ProfilerBuffer {
     Pointer index;
     public String[] type;
     Pointer size;
-    public long[] address;
+    Pointer address;
     Pointer node;
 
     public String buffersName;
+    public int bufferSize;
     public int currentIndex;
 
     public final int sizeOfInt = Integer.SIZE/8;
+    public final int sizeOfLong = Long.SIZE/8;
 
     public ProfilerBuffer(int bufSize, String name) {
         this.buffersName = name;
+        this.bufferSize = bufSize;
+
         this.index = allocateIntArrayOffHeap(bufSize);
         type = new String[bufSize];
         size = allocateIntArrayOffHeap(bufSize);
-        address = new long[bufSize];
+        address = allocateLongArrayOffHeap(bufSize);
         node = allocateIntArrayOffHeap(bufSize);
 
         for (int i = 0; i < bufSize; i++) {
             writeIndex(i, 0);
             type[i] = "null";
             writeSize(i, 0);
-            address[i] = 0;
+            writeAddr(i, 0);
             writeNode(i, -1);
         }
 
@@ -72,6 +76,10 @@ public class ProfilerBuffer {
 
     public Pointer allocateIntArrayOffHeap(int size) {
         return VirtualMemory.allocate(Size.fromInt(size * sizeOfInt), VirtualMemory.Type.DATA);
+    }
+
+    public Pointer allocateLongArrayOffHeap(int size) {
+        return VirtualMemory.allocate(Size.fromInt(size * sizeOfLong), VirtualMemory.Type.DATA);
     }
 
     public void writeIndex(int position, int value) {
@@ -90,6 +98,14 @@ public class ProfilerBuffer {
         return size.getInt(position);
     }
 
+    public void writeAddr(int position, long value) {
+        address.setLong(position, value);
+    }
+
+    public long getAddr(int position) {
+        return address.getLong(position);
+    }
+
     public void writeNode(int position, int value) {
         node.setInt(position, value);
     }
@@ -104,7 +120,7 @@ public class ProfilerBuffer {
         writeIndex(currentIndex, index);
         this.type[currentIndex] = type;
         writeSize(currentIndex, size);
-        this.address[currentIndex] = address;
+        writeAddr(currentIndex, address);
         currentIndex++;
     }
 
@@ -114,7 +130,7 @@ public class ProfilerBuffer {
         writeIndex(currentIndex, index);
         this.type[currentIndex] = type;
         writeSize(currentIndex, size);
-        this.address[currentIndex] = address;
+        writeAddr(currentIndex, address);
         writeNode(currentIndex, node);
         currentIndex++;
     }
@@ -134,7 +150,7 @@ public class ProfilerBuffer {
             }
             Log.print(getSize(i));
             Log.print(";");
-            Log.print(address[i]);
+            Log.print(getAddr(i));
             Log.print(";");
             Log.println(getNode(i));
         }
@@ -145,7 +161,7 @@ public class ProfilerBuffer {
             Log.print(" usage = ");
             Log.print(currentIndex);
             Log.print(" / ");
-            Log.print(address.length);
+            Log.print(bufferSize);
             Log.println(". (This number helps in tuning Buffer's size).");
         }
     }
@@ -158,7 +174,7 @@ public class ProfilerBuffer {
         writeIndex(i, 0);
         this.type[i] = "null";
         writeSize(i, 0);
-        this.address[i] = 0;
+        writeAddr(i, 0);
         writeNode(i, -1);
     }
 
