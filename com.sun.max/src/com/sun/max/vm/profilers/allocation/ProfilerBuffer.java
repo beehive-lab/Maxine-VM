@@ -53,14 +53,7 @@ public class ProfilerBuffer {
 
     public ProfilerBuffer(int bufSize, String name) {
         this.buffersName = name;
-        this.index = allocateIntArray(bufSize);
-        if (this.index.isNotZero()) {
-            Log.print("start = ");
-            Log.println(index.asAddress().toLong());
-
-            Log.print("end = ");
-            Log.println(index.asAddress().toLong()+bufSize*sizeOfInt-1);
-        }
+        this.index = allocateIntArrayOffHeap(bufSize);
         type = new String[bufSize];
         size = new int[bufSize];
         address = new long[bufSize];
@@ -77,12 +70,11 @@ public class ProfilerBuffer {
         currentIndex = 0;
     }
 
-    public Pointer allocateIntArray(int size) {
+    public Pointer allocateIntArrayOffHeap(int size) {
         return VirtualMemory.allocate(Size.fromInt(size * sizeOfInt), VirtualMemory.Type.DATA);
     }
 
     public void writeIndex(int position, int value) {
-        //index.writeInt(position * sizeOfInt, value);
         index.setInt(position, value);
     }
 
@@ -93,7 +85,6 @@ public class ProfilerBuffer {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int index, String type, int size, long address) {
-        //this.index[currentIndex] = index;
         writeIndex(currentIndex, index);
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
@@ -104,7 +95,6 @@ public class ProfilerBuffer {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int index, String type, int size, long address, int node) {
-        //this.index[currentIndex] = index;
         writeIndex(currentIndex, index);
         this.type[currentIndex] = type;
         this.size[currentIndex] = size;
@@ -119,7 +109,6 @@ public class ProfilerBuffer {
 
     public void dumpToStdOut(int cycle) {
         for (int i = 0; i < currentIndex; i++) {
-            //Log.print(index[i]);
             Log.print(getIndex(i));
             Log.print(";");
             Log.print(type[i]);
@@ -150,7 +139,6 @@ public class ProfilerBuffer {
     }
 
     public void cleanBufferCell(int i) {
-        //this.index[i] = 0;
         writeIndex(i, 0);
         this.type[i] = "null";
         this.size[i] = 0;
