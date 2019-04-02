@@ -318,7 +318,7 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void jalr(CiRegister rd, CiRegister rs, int imm32, int pos) {
-        itype(JALR, rd, 0, rs, imm32);
+        itype(JALR, rd, 0, rs, imm32, pos);
     }
 
     /**

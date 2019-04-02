@@ -31,6 +31,9 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
+
+import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler;
+import com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil;
 import com.sun.max.vm.thread.VmThread;
 
 import com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler;
@@ -891,6 +894,20 @@ public class CompilationBroker {
                     }
                     break;
                 }
+                case RISCV64: {
+                    Pointer callIP = ip.minus(RISCV64MacroAssembler.RIP_CALL_INSTRUCTION_SIZE);
+                    CodePointer callSite = CodePointer.from(callIP);
+                    if (RISCV64TargetMethodUtil.isRIPCall(callIP)) {
+                        CodePointer target = RISCV64TargetMethodUtil.readCall32Target(callSite);
+                        if (riscv64PatchCallSite(current, callSite, target, BASELINE_ENTRY_POINT)) {
+                            return false;
+                        }
+                        if (riscv64PatchCallSite(current, callSite, target, OPTIMIZED_ENTRY_POINT)) {
+                            return false;
+                        }
+                    }
+                    break;
+                }
                 default:
                     throw FatalError.unimplemented("com.sun.max.vm.compiler.CompilationBroker.DirectCallPatcher.visitFrame");
             }
@@ -937,6 +954,20 @@ public class CompilationBroker {
                 assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
                 logStaticCallPatch(current, callSite, dcIndex, to);
                 Aarch64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                // Stop traversing the stack after a direct call site has been patched
+                return true;
+            }
+            return false;
+        }
+
+        private boolean riscv64PatchCallSite(StackFrameCursor current, CodePointer callSite, CodePointer target, CallEntryPoint entryPoint) {
+            if (target.equals(oldMethod.getEntryPoint(entryPoint))) {
+                final CodePointer to = newMethod.getEntryPoint(entryPoint);
+                final TargetMethod tm = current.targetMethod();
+                final int dcIndex = directCalleePosition(tm, callSite);
+                assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                logStaticCallPatch(current, callSite, dcIndex, to);
+                RISCV64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                 // Stop traversing the stack after a direct call site has been patched
                 return true;
             }

@@ -41,8 +41,8 @@ public class RISCV64LIRGenerator extends LIRGenerator {
     // TODO: (ck) We have to change those to ARM register terminology
     private static final CiRegisterValue RAX_I = RISCV64.a0.asValue(CiKind.Int);
     private static final CiRegisterValue RAX_L = RISCV64.a0.asValue(CiKind.Long);
-    private static final CiRegisterValue RDX_I = RISCV64.a3.asValue(CiKind.Int);
-    private static final CiRegisterValue RDX_L = RISCV64.a3.asValue(CiKind.Long);
+    private static final CiRegisterValue RDX_I = RISCV64.a2.asValue(CiKind.Int);
+    private static final CiRegisterValue RDX_L = RISCV64.a2.asValue(CiKind.Long);
     private static final CiRegisterValue RETURNREG_L = RISCV64.a0.asValue(CiKind.Long);
     private static final CiRegisterValue RETURNREG_I = RISCV64.a0.asValue(CiKind.Int);
 

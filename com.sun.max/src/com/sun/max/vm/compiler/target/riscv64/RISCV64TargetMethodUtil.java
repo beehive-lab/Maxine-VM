@@ -42,7 +42,7 @@ public final class RISCV64TargetMethodUtil {
      */
     private static final Object PatchingLock = new Object();
 
-    public static final int RET = 0xD65F_0000;
+    public static final int RET = 0x8067;
 
     /**
      * Extract an instruction from the code array which starts at index=idx.
@@ -77,7 +77,83 @@ public final class RISCV64TargetMethodUtil {
      * @return the absolute target address of the CALL
      */
     public static CodePointer readCall32Target(CodePointer callSite) {
-        throw new UnsupportedOperationException("Unimplemented");
+        Pointer callSitePointer = callSite.toPointer();
+        int instruction = callSitePointer.readInt(0);
+        assert isJumpInstruction(instruction) : instruction;
+        final int offset = jumpAndLinkExtractDisplacement(instruction);
+        assert offset == CALL_TRAMPOLINE1_OFFSET || offset == CALL_TRAMPOLINE2_OFFSET : offset;
+        callSitePointer = callSitePointer.plus(offset);
+        int displacement = getDisplacementFromTrampoline(callSitePointer);
+        final CodePointer branchSite = callSite.plus(CALL_BRANCH_OFFSET);
+        return branchSite.plus(displacement);
+    }
+
+    private static int getDisplacementFromTrampoline(Pointer callSitePointer) {
+        int displacement;
+        if (isAndInstruction(callSitePointer.readInt(8))) {
+            return 0;
+        }
+        int luiImm = RISCV64MacroAssembler.extractLuiImmediate(callSitePointer.readInt(8));
+        int addiImm = RISCV64MacroAssembler.extractAddiImmediate(callSitePointer.readInt(12));
+        if ((addiImm & 0xFFF) >>> 11 == 0b0) {
+            displacement = luiImm << 12 | addiImm;
+        } else {
+            displacement = ((luiImm - 0b1) << 12) | addiImm;
+        }
+        int addSubInstruction = callSitePointer.readInt(20);
+        if (!isAddInstruction(addSubInstruction)) {
+            displacement = -displacement;
+        }
+        return displacement;
+    }
+
+    private static void patchCallTrampoline(Pointer patchSite, int displacement, boolean isLinked) {
+        int instruction = patchSite.readInt(0);
+        int offset = jumpAndLinkExtractDisplacement(instruction);
+        // The bimm offset must either point to one of the two trampolines or outside of them
+        assert (offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET) : offset;
+        // Get the offset of the unused trampoline
+        offset = offset == CALL_TRAMPOLINE1_OFFSET ? CALL_TRAMPOLINE2_OFFSET : CALL_TRAMPOLINE1_OFFSET;
+        // Create the new trampoline
+        patchBranchRegister(patchSite, displacement, isLinked, offset);
+    }
+
+    private static void patchBranchRegister(Pointer patchSite, int displacement, boolean isLinked, int offset) {
+        final boolean isNegative = displacement < 0;
+        if (isNegative) {
+            displacement = -displacement;
+        }
+        int instruction;
+        int[] mov32BitConstantInstructions = mov32BitConstantHelper(RISCV64.x28, displacement);
+        for (int i = 0; i < mov32BitConstantInstructions.length; i++) {
+            instruction = mov32BitConstantInstructions[i];
+            if (instruction == 0) { // fill in with asm.nop() if mov32BitConstant did not need those instructions
+                instruction = addImmediateHelper(RISCV64.zero, RISCV64.zero, 0);
+            }
+            patchSite.writeInt(offset + 8 + i * INSTRUCTION_SIZE, instruction);
+        }
+        instruction = addSubInstructionHelper(RISCV64.x28, RISCV64.x29, RISCV64.x28, isNegative);
+        patchSite.writeInt(offset + 24, instruction);
+        instruction = jumpAndLinkHelper(isLinked ? RISCV64.ra : RISCV64.x0, RISCV64.x28, 0);
+        patchSite.writeInt(CALL_BRANCH_OFFSET, instruction);
+        // Patch the JAL to jump to the new trampoline
+        instruction = jumpAndLinkImmediateHelper(RISCV64.zero, offset);
+        patchSite.writeInt(0, instruction);
+
+    }
+
+    private static void writeJump(Pointer patchSite, CodePointer target) {
+        long disp64 = target.toLong() - patchSite.plus(CALL_BRANCH_OFFSET).toLong();
+        int displacement = (int) disp64;
+        assert displacement == disp64;
+        int branchOffset = CALL_BRANCH_OFFSET - CALL_TRAMPOLINE1_OFFSET;
+        patchSite.writeInt(CALL_TRAMPOLINE1_OFFSET + 4,
+                addImmediateHelper(RISCV64.x29, RISCV64.x29, branchOffset));
+        branchOffset -= (CALL_TRAMPOLINE_INSTRUCTIONS - 1) * INSTRUCTION_SIZE;
+        patchSite.writeInt(CALL_TRAMPOLINE1_OFFSET + (CALL_TRAMPOLINE_INSTRUCTIONS - 1) * INSTRUCTION_SIZE,
+                jumpAndLinkImmediateHelper(RISCV64.zero, branchOffset));
+        // Don't move this call higher since it flushes the cache
+        patchBranchRegister(patchSite, displacement, false, CALL_TRAMPOLINE1_OFFSET);
     }
 
     /**
@@ -93,32 +169,8 @@ public final class RISCV64TargetMethodUtil {
 
         final Pointer patchSite = tm.codeAt(pos).toPointer();
 
-        long disp64 = target.toLong() - patchSite.toLong();
-        int disp32 = (int) disp64;
-        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-
-        if (NumUtil.isSignedNbit(28, disp32)) {
-            synchronized (PatchingLock) {
-                throw new UnsupportedOperationException("Unimplemented");
-//                patchSite.writeInt(0, RISCV64Assembler.unconditionalBranchImmInstructionHelper(disp32, false));
-//                ARMTargetMethodUtil.maxine_cache_flush(patchSite, 4);
-            }
-        } else {
-            // Since adr is invoked NUMBER_OF_NOPS instructions before the actual branch we need to adjust the displacement
-            final boolean isNegative = disp32 < 0;
-            if (isNegative) {
-                disp32 = -disp32;
-            }
-
-            synchronized (PatchingLock) {
-                throw new UnsupportedOperationException("Unimplemented");
-//                patchSite.writeInt(0, RISCV64Assembler.adrHelper(RISCV64.r16, 0));
-//                patchSite.writeInt(4, RISCV64Assembler.movzHelper(64, RISCV64.r17, disp32 & 0xFFFF, 0));
-//                patchSite.writeInt(8, RISCV64Assembler.movkHelper(64, RISCV64.r17, (disp32 >> 16) & 0xFFFF, 16));
-//                patchSite.writeInt(12, RISCV64Assembler.addSubInstructionHelper(RISCV64.r16, RISCV64.r16, RISCV64.r17, isNegative));
-//                patchSite.writeInt(16, RISCV64Assembler.unconditionalBranchRegInstructionHelper(RISCV64.r16, false));
-//                ARMTargetMethodUtil.maxine_cache_flush(patchSite, 20);
-            }
+        synchronized (PatchingLock) {
+            writeJump(patchSite, target);
         }
     }
 
@@ -132,22 +184,10 @@ public final class RISCV64TargetMethodUtil {
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
-        CodePointer callSite = tm.codeAt(pos);
-        Pointer callSitePointer = callSite.toPointer();
-        int instruction = callSitePointer.readInt(0);
-        // first check for branch immediate (jump with 28bit displacement)
-        throw new UnsupportedOperationException("Unimplemented");
-//        if (RISCV64Assembler.isBimmInstruction(instruction)) {
-//            return readCall32Target(callSite).equals(jumpTarget);
-//        }
-//        // Else check for jumps with 32bit displacement. Move the callSite pointer to the actual branch instruction.
-//        callSite = callSite.plus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
-//        callSitePointer = callSite.toPointer();
-//        instruction = callSitePointer.readInt(0);
-//        if (RISCV64Assembler.isBranchInstruction(instruction)) {
-//            return readCall32Target(callSite).equals(jumpTarget);
-//        }
-//        return false;
+        if (!isJumpInstruction(tm.codeAt(pos).toPointer().readInt(0))) {
+            return false;
+        }
+        return readCall32Target(tm, pos).equals(jumpTarget);
     }
 
     /**
@@ -180,7 +220,36 @@ public final class RISCV64TargetMethodUtil {
      * @return the previous displacement
      */
     public static int fixupCall19Site(byte [] code, int callOffset, int displacement) {
-        throw new UnsupportedOperationException("Unimplemented");
+        final boolean isNegative = displacement < 0;
+        if (isNegative) {
+            displacement = -displacement;
+        }
+        int instruction = extractInstruction(code, callOffset);
+        int offset = jumpAndLinkExtractDisplacement(instruction);
+        // The bimm offset must either point to one of the two trampolines or outside of them
+        assert (offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET) : offset;
+        // Get the offset of the unused trampoline
+        offset = offset == CALL_TRAMPOLINE1_OFFSET ? CALL_TRAMPOLINE2_OFFSET : CALL_TRAMPOLINE1_OFFSET;
+        final int trampolineOffset = callOffset + offset;
+        int[] mov32BitConstantInstructions = mov32BitConstantHelper(RISCV64.x28, displacement);
+        for (int i = 0; i < mov32BitConstantInstructions.length; i++) {
+            instruction = mov32BitConstantInstructions[i];
+            if (instruction == 0) { // fill in with asm.nop() if mov32BitConstant did not need those instructions
+                instruction = addImmediateHelper(RISCV64.zero, RISCV64.zero, 0);
+            }
+            writeInstruction(code, trampolineOffset + 8 + i * INSTRUCTION_SIZE, instruction);
+        }
+        // Create the new trampoline
+        instruction = addSubInstructionHelper(RISCV64.x28, RISCV64.x29, RISCV64.x28, isNegative);
+        writeInstruction(code, trampolineOffset + 24, instruction);
+        instruction = extractInstruction(code, callOffset + CALL_BRANCH_OFFSET);
+        final boolean isLinked = isJumpLinked(instruction);
+        instruction = jumpAndLinkHelper(isLinked ? RISCV64.ra : RISCV64.x0, RISCV64.x28, 0);
+        writeInstruction(code, callOffset + CALL_BRANCH_OFFSET, instruction);
+        // Patch the JAL to jump to the new trampoline
+        instruction = jumpAndLinkImmediateHelper(RISCV64.zero, offset);
+        writeInstruction(code, callOffset, instruction);
+        return 0;
     }
 
     private static void writeInstruction(byte[] code, int offset, int instruction) {
@@ -205,7 +274,7 @@ public final class RISCV64TargetMethodUtil {
             long disp64 = target.toLong() - callSite.plus(CALL_BRANCH_OFFSET).toLong();
             int disp32 = (int) disp64;
             FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-            assert NumUtil.isSignedNbit(28, disp32);
+            assert NumUtil.isSignedNbit(19, disp32);
             byte[] code = tm.code();
             final int oldDisplacement = fixupCall19Site(code, callOffset, disp32);
             return callSite.plus(oldDisplacement);
@@ -215,7 +284,22 @@ public final class RISCV64TargetMethodUtil {
     }
 
     private static CodePointer fixupCall32Site(CodePointer callSite, CodePointer target) {
-        throw new UnsupportedOperationException("Unimplemented");
+        final Pointer callSitePointer = callSite.toPointer();
+        CodePointer oldTarget = readCall32Target(callSite);
+        if (oldTarget.equals(target)) {
+            return oldTarget;
+        }
+        assert isJumpInstruction(callSitePointer.readInt(0)) : callSitePointer.readInt(0);
+        Pointer branchSitePointer = callSitePointer.plus(CALL_BRANCH_OFFSET);
+        int instruction = branchSitePointer.readInt(0);
+        final boolean isLinked = isJumpLinked(instruction);
+
+        long disp64 = target.toLong() - branchSitePointer.toLong();
+        int disp32 = (int) disp64;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+        patchCallTrampoline(callSitePointer, disp32, isLinked);
+
+        return oldTarget;
     }
 
     public static boolean isPatchableCallSite(CodePointer callSite) {
@@ -276,28 +360,15 @@ public final class RISCV64TargetMethodUtil {
     }
 
     public static boolean isRIPCall(Pointer callIP) {
-        throw new UnsupportedOperationException("Unimplemented");
-//        int instruction = callIP.readInt(0);
-//        // If it is not a branch instruction then it is definitely not a RIP Call
-//        if (!RISCV64MacroAssembler.isBranchInstruction(instruction)) {
-//            return false;
-//        }
-//        // If it is not a branch immediate we need to check the previous instructions as well
-//        if (!RISCV64MacroAssembler.isBimmInstruction(instruction)) {
-//            final Pointer nopSite = callIP.minus(NUMBER_OF_NOPS * INSTRUCTION_SIZE);
-//            int movzInstruction = nopSite.readInt(4);
-//            if (!RISCV64MacroAssembler.isMovz(movzInstruction)) {
-//                return false;
-//            }
-//            int movkInstruction = nopSite.readInt(8);
-//            if (!RISCV64MacroAssembler.isMovk(movkInstruction)) {
-//                return false;
-//            }
-//            int addSubInstruction = nopSite.readInt(12);
-//            if (!RISCV64Assembler.isAddSubInstruction(addSubInstruction)) {
-//                return false;
-//            }
-//        }
-//        return true;
+        int instruction = callIP.readInt(0);
+        return isJumpInstruction(instruction)
+                && (jumpAndLinkExtractDisplacement(instruction) == CALL_TRAMPOLINE1_OFFSET
+                || jumpAndLinkExtractDisplacement(instruction) == CALL_TRAMPOLINE2_OFFSET);
+    }
+
+    public static Pointer returnAddressPointer(StackFrameCursor frame) {
+        TargetMethod tm = frame.targetMethod();
+        Pointer sp = frame.sp();
+        return sp.plus(tm.frameSize());
     }
 }

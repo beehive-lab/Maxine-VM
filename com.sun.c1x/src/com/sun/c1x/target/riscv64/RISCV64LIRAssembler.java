@@ -737,10 +737,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 } else {
                     tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                 }
-                masm.mov32BitConstant(scratchRegister, 0); // this gets patched by RISCV64InstructionDecoder.patchRelativeInstruction
+                masm.auipc(scratchRegister, 0); // this gets patched by RISCV64InstructionDecoder.patchRelativeInstruction
+                masm.addi(scratchRegister, scratchRegister, 0);
                 masm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
-                masm.auipc(scratchRegister1, 0);
-                masm.add(scratchRegister, scratchRegister1, scratchRegister);
                 rreg = RISCV64.f30;
                 masm.load(rreg, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister), kind);
             }
@@ -1145,12 +1144,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.sub(32, RISCV64.x31, reg1, scratchRegister);
                         break;
                     }
-                    case Object:
-                    case Long: {
-                        masm.mov64BitConstant(scratchRegister, c.asLong());
-                        masm.sub(64, RISCV64.x31, reg1, scratchRegister);
-                        break;
-                    }
                     case Float: {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
@@ -1184,6 +1177,20 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.bind(lessThanLabel);
                         masm.mov32BitConstant(RISCV64.x31, -1);
                         masm.bind(continueLabel);
+                        break;
+                    }
+                    case Long: {
+                        masm.mov64BitConstant(scratchRegister, c.asLong());
+                        masm.sub(64, RISCV64.x31, reg1, scratchRegister);
+                        break;
+                    }
+                    case Object: {
+                        if (c.isNull()) {
+                            masm.sub(64, RISCV64.x31, reg1, RISCV64.zero);
+                        } else {
+                            movoop(scratchRegister, c);
+                            masm.sub(64, RISCV64.x31, reg1, scratchRegister);
+                        }
                         break;
                     }
                     default:
@@ -2045,10 +2052,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 assert false : "Object inlining not supported";
             } else {
                 tasm.recordDataReferenceInCode(obj);
-                masm.mov32BitConstant(scratchRegister, 0); // this gets patched by RISCV64InstructionDecoder.patchRelativeInstruction
+                masm.auipc(scratchRegister, 0);
+                masm.addi(scratchRegister, scratchRegister, 0);  // this gets patched by RISCV64InstructionDecoder.patchRelativeInstruction
                 masm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
-                masm.auipc(scratchRegister1, 0);
-                masm.add(scratchRegister, scratchRegister1, scratchRegister);
                 masm.load(dst, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister), obj.kind);
             }
         }

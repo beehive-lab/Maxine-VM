@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - -XX:+LogCompiledMethods to print all runtime compiled methods in the application
 - New Jenkinsfile for running benchmarks
 - Dockerfile to create docker images for running and developing Maxine VM
+- RISC-V partial image build through cross-compilation
 
 ### Fixed
 
