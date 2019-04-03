@@ -141,6 +141,8 @@ public final class MaxineVM {
      *
      *  the -XX:ProfileAll option has been used
      *
+     *  In any case we ignore the warmup phase of the application (see {@link Profiler#warmupFinished}).
+     *
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject() {
@@ -148,7 +150,7 @@ public final class MaxineVM {
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
                     "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            return profilerTLA == 1 || Profiler.profileAll();
+            return (profilerTLA == 1 || Profiler.profileAll()) && Profiler.warmupFinished();
         }
         return false;
     }

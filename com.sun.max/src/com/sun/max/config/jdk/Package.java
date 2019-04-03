@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
@@ -197,6 +197,7 @@ public class Package extends BootImagePackage {
         HostedBootClassLoader.omitClass("sun.nio.ch.Util");
         HostedBootClassLoader.omitClass("sun.nio.fs.UnixNativeDispatcher");
         HostedBootClassLoader.omitClass("sun.jkernel.Bundle");
+        HostedBootClassLoader.omitPackage("uk.ac.manchester.jnumautils", true);
         // Java 7 only class that indirectly caches references to JarFiles
         HostedBootClassLoader.omitClass(sun.misc.Launcher.class.getName() + "$BootClassPathHolder");
         HostedBootClassLoader.omitClass("java.lang.invoke.BoundMethodHandle");

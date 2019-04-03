@@ -24,7 +24,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
-import os, shutil, fnmatch, subprocess, platform, itertools
+import os, shutil, fnmatch, subprocess, platform, itertools, datetime, sys, csv, re, multiprocessing
 from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
 from argparse import ArgumentParser
@@ -625,6 +625,107 @@ def olc(args):
 
     mx.run_java(['-ea', '-esa', '-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
 
+def getEntryOrExitPoint(option, vmArgs):
+    index = vmArgs.index(option)
+    value = vmArgs[index+1]
+    del vmArgs[index+1]
+    del vmArgs[index]
+    value = '"'+value.split('(')[0]+'"'
+    if option is 'entry':
+        return '-XX:AllocationProfilerEntryPoint='+value
+    else:
+        return '-XX:AllocationProfilerExitPoint='+value
+
+def ignoreTheRestOptions(vmArgs, profilerOptions):
+    for arg in reversed(vmArgs):
+        if arg in profilerOptions:
+            if arg == 'entry' or arg == 'exit':
+                del vmArgs[vmArgs.index(arg)+1]
+            del vmArgs[vmArgs.index(arg)]
+
+
+def allocprofiler(args):
+    """launch Maxine VM with Allocation Profiler
+
+    Run the Maxine VM with the Allocation Profiler and the given options and arguments.
+
+    where options include:
+        all                                                         profile the allocated objects by any method. 1st priority (after log) if present.
+        bufferSize                                                  the profiler's buffer size.
+        entry <entry point method> [ | exit <exit point method> ]   profile the allocated objects from the entry until the exit method. If no exitpoint given profiles until the end.
+        log                                                         execute the application and log the compiled methods by C1X and T1X. 1st priority if present.
+        verbose                                                     enable allocation profiler's verbosity.
+        warmup <num>                                                num of iterations to be considered as warmup and consequently to be ignored.
+
+    If no option given will run with the -XX:+AllocationProfilerAll option. This will profile all objects.
+
+    Use "mx allocprofiler -help" to see what other options this command accepts."""
+
+    cwdArgs = check_cwd_change(args)
+    cwd = cwdArgs[0]
+    vmArgs = cwdArgs[1]
+
+    profilerArgs = []
+
+    nativeLib = 'jnumautils-0.1-SNAPSHOT.jar'
+    jnumautils = join('-Xbootclasspath/p:lib/', nativeLib)
+    profilerArgs.append(jnumautils)
+
+    profilerOptions = ['all', 'entry', 'exit', 'log', 'verbose']
+
+    if 'log' in vmArgs:
+        profilerArgs.append('-XX:+LogCompiledMethods')
+        #ignore the rest profiler options
+        ignoreTheRestOptions(vmArgs, profilerOptions)
+    else:
+        # all | entry | entry exit | none
+        if 'all' in vmArgs:
+            #if the all option is present, ignore the rest
+            profilerArgs.append('-XX:+AllocationProfilerAll')
+            ignoreTheRestOptions(vmArgs, profilerOptions)
+        elif 'entry' in vmArgs:
+            profilerArgs.append(getEntryOrExitPoint('entry', vmArgs))
+            if 'exit' in vmArgs:
+                profilerArgs.append(getEntryOrExitPoint('exit', vmArgs))
+        else:
+            #if none option is present, use the all option
+            profilerArgs.append('-XX:+AllocationProfilerAll')
+
+        #enable/disable verbosity
+        if 'verbose' in vmArgs:
+            del vmArgs[vmArgs.index('verbose')]
+            profilerArgs.append('-XX:+VerboseAllocationProfiler')
+
+        if 'warmup' in vmArgs:
+            index = vmArgs.index('warmup')
+            num = vmArgs[index+1]
+            del vmArgs[index+1]
+            del vmArgs[index]
+            profilerArgs.append('-XX:WarmupThreshold='+num)
+
+        if 'bufferSize' in vmArgs:
+            index = vmArgs.index('bufferSize')
+            num = vmArgs[index+1]
+            del vmArgs[index+1]
+            del vmArgs[index]
+            profilerArgs.append('-XX:BufferSize='+num)
+
+        if 'validate' in vmArgs:
+            del vmArgs[vmArgs.index('validate')]
+            profilerArgs.append('-XX:+ValidateAllocationProfiler')
+
+    print '=================================================='
+    print '== Launching Maxine VM with Allocation Profiler =='
+    print '=================================================='
+    print '== Profiler Args:'
+    for args in profilerArgs:
+        print '\t', args
+    print '== VM and Application Args:'
+    for args in vmArgs:
+        print '\t', args
+    print '=================================================='
+
+    mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
@@ -810,6 +911,7 @@ def mx_init(suite):
                     help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
 
     commands = {
+        'allocprofiler': [allocprofiler, ''],
         'build': [build, '"for help run mx :build -h"'],
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],

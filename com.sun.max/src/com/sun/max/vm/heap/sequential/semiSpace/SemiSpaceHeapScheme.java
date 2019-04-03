@@ -112,6 +112,14 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     @INSPECTED
     private LinearAllocationMemoryRegion toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
 
+    public LinearAllocationMemoryRegion getToSpace() {
+        return toSpace;
+    }
+
+    public LinearAllocationMemoryRegion getFromSpace() {
+        return fromSpace;
+    }
+
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
      */
@@ -623,25 +631,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             TupleReferenceMap.visitReferences(hub, origin, refUpdater);
         }
         return cell.plus(Layout.size(origin));
-    }
-
-    public void scanAndProfile() {
-        Pointer cell = toSpace.start().asPointer();
-
-        while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {
-            final Pointer origin = Layout.cellToOrigin(cell);
-            final Hub hub = Layout.getHub(origin);
-            final String objectType = hub.classActor.name();
-            if (hub.specificLayout.isTupleLayout()) {
-                final int size = hub.tupleSize.toInt();
-                allocationProfiler.profileGC(size, objectType);
-                cell = cell.plus(Layout.size(origin));
-            } else {
-                final Size size = Layout.size(origin);
-                allocationProfiler.profileGC(size.toInt(), objectType);
-                cell = cell.plus(size);
-            }
-        }
     }
 
     void moveReachableObjects(Pointer start) {

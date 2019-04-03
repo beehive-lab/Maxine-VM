@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -38,6 +38,7 @@ import com.sun.max.vm.instrument.InstrumentationManager;
 import com.sun.max.vm.jni.JniFunctions;
 import com.sun.max.vm.log.VMLog;
 import com.sun.max.vm.profilers.allocation.Profiler;
+import com.sun.max.vm.profilers.allocation.ProfilerGCCallback;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.RunScheme;
 import com.sun.max.vm.runtime.CriticalMethod;
@@ -49,6 +50,7 @@ import com.sun.max.vm.type.SignatureDescriptor;
 import com.sun.max.vm.type.VMClassLoader;
 import sun.misc.Launcher;
 import sun.misc.Signal;
+import uk.ac.manchester.jnumautils.JNumaUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,6 +68,7 @@ import java.util.List;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+import static com.sun.max.vm.MaxineVM.allocationProfiler;
 import static com.sun.max.vm.MaxineVM.vm;
 import static com.sun.max.vm.VMConfiguration.vmConfig;
 import static com.sun.max.vm.VMOptions.register;
@@ -181,7 +184,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.terminate();
         }
-        // TODO: terminate the allocation profiler as well, and dump its findings
+        if (MaxineVM.allocationProfiler != null) {
+            MaxineVM.allocationProfiler.terminate();
+        }
     }
 
     public static void restartProfilers() {
@@ -207,6 +212,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         switch (phase) {
             case BOOTSTRAPPING: {
                 if (MaxineVM.isHosted()) {
+                    ProfilerGCCallback.init();
                     // Make sure MaxineVM.exit is available when running the JavaRunScheme.
                     new CriticalMethod(MaxineVM.class, "exit",
                                     SignatureDescriptor.create(void.class, int.class, boolean.class));
@@ -247,10 +253,27 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     final String heapProfOptionPrefix = hprofOption.toString();
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
-                // The same for the Dynamic Profiler
+                // The same for the Allocation Profiler
                 if (CompilationBroker.AllocationProfilerEntryPoint != null || Profiler.profileAll()) {
+                    float beforeAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
+                    // Initialize Allocation Profiler
                     MaxineVM.allocationProfiler = new Profiler();
                     MaxineVM.isAllocationProfilerInitialized = true;
+                    float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
+
+                    if (Profiler.ValidateAllocationProfiler) {
+                        Log.println("*===================================================*\n" +
+                            "* Allocation Profiler is on validation mode.\n" +
+                            "*===================================================*\n" +
+                            "* You can use Allocation Profiler with confidence if:\n" +
+                            "* => a) VM Reported Heap Used Space = Initial Used Heap Space + Allocation Profiler Size + New Objects Size\n" +
+                            "* => b) VM Reported Heap Used Space after GC = Initial Used Heap Space + Allocation Profiler Size + Survivor Objects Size\n" +
+                            "* => c) Next Cycle's VM Reported Heap Used Space = Initial Used Heap Space + Allocation Profiler Size + Survivor Object Size\n" +
+                            "*===================================================*\n");
+                        Log.println("Initial Used Heap Size = " + beforeAllocProfiler + " MB");
+                        float allocProfilerSize = afterAllocProfiler - beforeAllocProfiler;
+                        Log.println("Allocation Profiler Size = " + allocProfilerSize + " MB\n");
+                    }
                 }
                 break;
             }
@@ -326,8 +349,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
             error = true;
             MaxineVM vm = vm();
-            vm.phase = Phase.RUNNING;
             vmConfig().initializeSchemes(MaxineVM.Phase.RUNNING);
+            vm.phase = Phase.RUNNING;
             mainClassName = getMainClassName();
             VMTI.handler().vmInitialized();
             VMTI.handler().threadStart(VmThread.current());

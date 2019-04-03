@@ -1107,10 +1107,6 @@ public class MaxXirGenerator implements RiXirGenerator {
         Scale scale = Scale.fromInt(elemSize);
         alignArraySize(length, arraySize, elemSize, scale);
 
-        if (MaxineVM.profileThatObject()) {
-            callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub);
-        }
-
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
         asm.add(newMark, cell, arraySize);
@@ -1129,6 +1125,8 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
+
+        callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub, cell);
 
         asm.bindOutOfLine(reportNegativeIndexError);
         callRuntimeThroughStub(asm, "throwNegativeArraySizeException", null, length);
@@ -1161,10 +1159,6 @@ public class MaxXirGenerator implements RiXirGenerator {
         Scale scale = Scale.fromInt(elemSize);
         alignArraySize(length, arraySize, elemSize, scale);
 
-        if (MaxineVM.profileThatObject()) {
-            callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub);
-        }
-
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
 
@@ -1179,6 +1173,8 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Object, cell, asm.i(hubOffset()), hub, false);
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
+
+        callRuntimeThroughStub(asm, "callProfiler", null, arraySize, hub, cell);
 
         asm.bindOutOfLine(reportNegativeIndexError);
         callRuntimeThroughStub(asm, "throwNegativeArraySizeException", null, length);
@@ -1304,10 +1300,6 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
 
-        if (MaxineVM.profileThatObject()) {
-            callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub);
-        }
-
         asm.add(newMark, cell, tupleSize);
         asm.jlteq(ok, newMark, tlabEnd);
         // Slow path.
@@ -1326,6 +1318,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), asm.i(hubFirstWordIndex()), false);
         }
         asm.mov(result, cell);
+
+        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub, cell);
     }
 
     @HOSTED_ONLY
@@ -1373,9 +1367,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pload(WordUtil.archKind(), etla, tla, asm.i(VmThreadLocal.ETLA.offset), false);
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
         asm.pload(WordUtil.archKind(), tlabEnd, etla, offsetToTLABEnd, false);
-        if (MaxineVM.profileThatObject()) {
-            callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub);
-        }
+
         asm.add(newMark, cell, tupleSize);
         asm.jgt(slowPath, newMark, tlabEnd);
         asm.pstore(WordUtil.archKind(), etla, offsetToTLABMark, newMark, false);
@@ -1393,6 +1385,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), asm.i(hubFirstWordIndex()), false);
         }
         asm.mov(result, cell);
+
+        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub, cell);
 
         asm.bindOutOfLine(slowPath);
         callRuntimeThroughStub(asm, "slowPathAllocate", cell, tupleSize, etla);
@@ -2133,18 +2127,24 @@ public class MaxXirGenerator implements RiXirGenerator {
          * @param size of the profiled object.
          * @param hub object hub to obtain the type of the profiled object.
          */
-        public static void callProfiler(int size, Hub hub) {
+        public static void callProfiler(int size, Hub hub, Pointer cell) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
-            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub);
+
+            if (MaxineVM.profileThatObject()) {
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub, cell);
+            }
         }
 
-        public static void callProfilerArray(int size, Hub hub) {
+        public static void callProfilerArray(int size, Hub hub, Pointer cell) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
-            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub);
+
+            if (MaxineVM.profileThatObject()) {
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub, cell);
+            }
         }
 
         public static Pointer flushLog(Pointer logTail) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -84,6 +84,9 @@ public abstract class JTAbstractRunScheme extends AbstractTestRunScheme {
                 if (nativeTests) {
                     System.loadLibrary("javatest");
                 }
+                // Change vm phase to RUNNING for the tests, this make the VM treat them as applications and not
+                // trusted VM code. See com.sun.max.vm.jdk.JDK_java_lang_Class.getClassLoader0.
+                MaxineVM.vm().phase = MaxineVM.Phase.RUNNING;
                 runTests();
             }
         }

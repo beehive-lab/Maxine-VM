@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -452,19 +452,12 @@ public final class Heap {
     }
 
     private static boolean heapLockedCollectGarbage() {
-        if (MaxineVM.isAllocationProfilerInitialized && !VmThread.current().gcRequest.explicit) {
-            Log.println("== Implicit GC ==");
-            MaxineVM.allocationProfiler.printStats();
-        }
         if (verbose()) {
             VmThread.current().gcRequest.printBeforeGC();
         }
         final boolean result = heapScheme().collectGarbage();
         if (verbose()) {
             VmThread.current().gcRequest.printAfterGC(result);
-        }
-        if (MaxineVM.isAllocationProfilerInitialized && !VmThread.current().gcRequest.explicit) {
-            MaxineVM.allocationProfiler.postGCActions();
         }
         return result;
     }
@@ -646,6 +639,29 @@ public final class Heap {
             Log.println("Incompatible minimum and maximum heap sizes specified");
             MaxineVM.native_exit(1);
         }
+    }
+
+    /**
+     * Determines if the object under this address is in the Heap.
+     * @param address
+     * @return true if the object is in the Heap
+     */
+    public static boolean isSurvivor(long address) {
+        Pointer origin = Address.fromLong(address).asPointer();
+        final Reference forwardRef = Layout.readForwardRef(origin);
+
+        return !forwardRef.isZero();
+    }
+
+    /**
+     * Returns the address of a survived object after GC using the forwarding pointer.
+     * @param address
+     * @return
+     */
+    public static long getForwardedAddress(long address) {
+        Pointer cell = Address.fromLong(address).asPointer();
+        final Reference forwardRef = Layout.readForwardRef(cell);
+        return forwardRef.toOrigin().toLong();
     }
 
     /*
