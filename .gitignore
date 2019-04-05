@@ -64,10 +64,11 @@ codebuffer.c
 *_output
 
 # Libraries
-/lib
+/lib/*
 !/lib/asm-6.0-maxine.jar
 !/lib/asm-util-6.0-maxine.jar
 !/lib/okra-1.9.jar
+!/lib/jnumautils-0.1-SNAPSHOT.jar
 
 .metadata/*
 .recommenders/*
@@ -77,3 +78,7 @@ maxine-tester/junit-tests/GetResource.input
 maxine-tester/junit-tests/ZipFileReader.input
 com.sun.max.ins/NB3B.jar.sha1
 test/jasmin_classes.jar.sha1
+javafilelist.txt
+
+# Allocation Profiler Generated
+*.csv

@@ -806,35 +806,36 @@ public class JTRuns {
             case 721: jtt_reflect_Method_getParameterTypes01(); break;
             case 722: jtt_reflect_Method_getReturnType01(); break;
             case 723: jtt_reflect_Reflection_getCallerClass01(); break;
-            case 724: jtt_threads_Monitor_contended01(); break;
-            case 725: jtt_threads_Monitor_notowner01(); break;
-            case 726: jtt_threads_Monitorenter01(); break;
-            case 727: jtt_threads_Monitorenter02(); break;
-            case 728: jtt_threads_Object_wait01(); break;
-            case 729: jtt_threads_Object_wait02(); break;
-            case 730: jtt_threads_Object_wait03(); break;
-            case 731: jtt_threads_Object_wait04(); break;
-            case 732: jtt_threads_ThreadLocal01(); break;
-            case 733: jtt_threads_ThreadLocal02(); break;
-            case 734: jtt_threads_ThreadLocal03(); break;
-            case 735: jtt_threads_Thread_currentThread01(); break;
-            case 736: jtt_threads_Thread_getState01(); break;
-            case 737: jtt_threads_Thread_getState02(); break;
-            case 738: jtt_threads_Thread_holdsLock01(); break;
-            case 739: jtt_threads_Thread_isAlive01(); break;
-            case 740: jtt_threads_Thread_isInterrupted01(); break;
-            case 741: jtt_threads_Thread_isInterrupted02(); break;
-            case 742: jtt_threads_Thread_isInterrupted03(); break;
-            case 743: jtt_threads_Thread_isInterrupted04(); break;
-            case 744: jtt_threads_Thread_isInterrupted05(); break;
-            case 745: jtt_threads_Thread_join01(); break;
-            case 746: jtt_threads_Thread_join02(); break;
-            case 747: jtt_threads_Thread_join03(); break;
-            case 748: jtt_threads_Thread_new01(); break;
-            case 749: jtt_threads_Thread_new02(); break;
-            case 750: jtt_threads_Thread_setPriority01(); break;
-            case 751: jtt_threads_Thread_sleep01(); break;
-            case 752: jtt_threads_Thread_yield01(); break;
+            case 724: jtt_reflect_Reflection_getCallerClass02(); break;
+            case 725: jtt_threads_Monitor_contended01(); break;
+            case 726: jtt_threads_Monitor_notowner01(); break;
+            case 727: jtt_threads_Monitorenter01(); break;
+            case 728: jtt_threads_Monitorenter02(); break;
+            case 729: jtt_threads_Object_wait01(); break;
+            case 730: jtt_threads_Object_wait02(); break;
+            case 731: jtt_threads_Object_wait03(); break;
+            case 732: jtt_threads_Object_wait04(); break;
+            case 733: jtt_threads_ThreadLocal01(); break;
+            case 734: jtt_threads_ThreadLocal02(); break;
+            case 735: jtt_threads_ThreadLocal03(); break;
+            case 736: jtt_threads_Thread_currentThread01(); break;
+            case 737: jtt_threads_Thread_getState01(); break;
+            case 738: jtt_threads_Thread_getState02(); break;
+            case 739: jtt_threads_Thread_holdsLock01(); break;
+            case 740: jtt_threads_Thread_isAlive01(); break;
+            case 741: jtt_threads_Thread_isInterrupted01(); break;
+            case 742: jtt_threads_Thread_isInterrupted02(); break;
+            case 743: jtt_threads_Thread_isInterrupted03(); break;
+            case 744: jtt_threads_Thread_isInterrupted04(); break;
+            case 745: jtt_threads_Thread_isInterrupted05(); break;
+            case 746: jtt_threads_Thread_join01(); break;
+            case 747: jtt_threads_Thread_join02(); break;
+            case 748: jtt_threads_Thread_join03(); break;
+            case 749: jtt_threads_Thread_new01(); break;
+            case 750: jtt_threads_Thread_new02(); break;
+            case 751: jtt_threads_Thread_setPriority01(); break;
+            case 752: jtt_threads_Thread_sleep01(); break;
+            case 753: jtt_threads_Thread_yield01(); break;
         }
         return true;
     }
@@ -26891,6 +26892,28 @@ public class JTRuns {
             // (2) == "jtt.reflect.Reflection_getCallerClass01$Caller2"
                 runString = "(2)";
                 if (!"jtt.reflect.Reflection_getCallerClass01$Caller2".equals(jtt.reflect.Reflection_getCallerClass01.test(2))) {
+                    fail(runString);
+                    return;
+                }
+            } catch (Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
+        static void jtt_reflect_Reflection_getCallerClass02() {
+            begin("jtt.reflect.Reflection_getCallerClass02");
+            String runString = null;
+            try {
+            // (0) == "jtt.reflect.Reflection_getCallerClass02$Caller2"
+                runString = "(0)";
+                if (!"jtt.reflect.Reflection_getCallerClass02$Caller2".equals(jtt.reflect.Reflection_getCallerClass02.test(0))) {
+                    fail(runString);
+                    return;
+                }
+            // (1) == "jtt.reflect.Reflection_getCallerClass02"
+                runString = "(1)";
+                if (!"jtt.reflect.Reflection_getCallerClass02".equals(jtt.reflect.Reflection_getCallerClass02.test(1))) {
                     fail(runString);
                     return;
                 }

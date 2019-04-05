@@ -1,4 +1,6 @@
 #
+# Copyright (c) 2019, APT Group, School of Computer Science,
+# The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
@@ -29,44 +31,44 @@ include platform/platform.mk
 all : hosted substrate launch tele javatest
 
 hosted : build/$(OS)/hosted/makefile
-	(cd build/$(OS)/hosted; $(MAKE) all)
+	$(AT) (cd build/$(OS)/hosted; $(MAKE) all)
 
 substrate : build/$(OS)/substrate/makefile
-	(cd build/$(OS)/substrate; $(MAKE) all)
+	$(AT) (cd build/$(OS)/substrate; $(MAKE) all)
  
 launch : substrate build/$(OS)/launch/makefile
-	(cd build/$(OS)/launch; $(MAKE) all)
+	$(AT) (cd build/$(OS)/launch; $(MAKE) all)
 	
 tele : build/$(OS)/tele/makefile
-	(cd build/$(OS)/tele; $(MAKE) all)
+	$(AT) (cd build/$(OS)/tele; $(MAKE) all)
  
 javatest : build/$(OS)/javatest/makefile
-	(cd build/$(OS)/javatest; $(MAKE) all)
+	$(AT) (cd build/$(OS)/javatest; $(MAKE) all)
 
 build/$(OS)/hosted/makefile : hosted/hosted.mk
-	mkdir -p build/$(OS)/hosted
-	cp -f hosted/hosted.mk build/$(OS)/hosted/makefile
+	$(AT) mkdir -p build/$(OS)/hosted
+	$(AT) cp -f hosted/hosted.mk build/$(OS)/hosted/makefile
  
 build/$(OS)/substrate/makefile : substrate/substrate.mk
-	mkdir -p build/$(OS)/substrate
-	cp -f substrate/substrate.mk build/$(OS)/substrate/makefile
+	$(AT) mkdir -p build/$(OS)/substrate
+	$(AT) cp -f substrate/substrate.mk build/$(OS)/substrate/makefile
  
 build/$(OS)/launch/makefile : launch/launch.mk
-	mkdir -p build/$(OS)/launch
-	cp -f launch/launch.mk build/$(OS)/launch/makefile
+	$(AT) mkdir -p build/$(OS)/launch
+	$(AT) cp -f launch/launch.mk build/$(OS)/launch/makefile
  
 build/$(OS)/tele/makefile : tele/tele.mk
-	mkdir -p build/$(OS)/tele
-	cp -f tele/tele.mk build/$(OS)/tele/makefile
+	$(AT) mkdir -p build/$(OS)/tele
+	$(AT) cp -f tele/tele.mk build/$(OS)/tele/makefile
 
 build/$(OS)/javatest/makefile : javatest/javatest.mk
-	mkdir -p build/$(OS)/javatest
-	cp -f javatest/javatest.mk build/$(OS)/javatest/makefile
+	$(AT) mkdir -p build/$(OS)/javatest
+	$(AT) cp -f javatest/javatest.mk build/$(OS)/javatest/makefile
  
 clean :
-	rm -rf build/$(OS)
+	$(AT) rm -rf build/$(OS)
 
 platform :
-	echo $(PLATFORM)
+	$(AT) echo $(PLATFORM)
 .PHONY: clean hosted substrate launch tele javatest platform
 

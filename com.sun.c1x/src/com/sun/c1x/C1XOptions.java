@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -166,7 +166,7 @@ public final class C1XOptions {
         setOptimizationLevel(1);
 
         // turn detailed assertions on when the general assertions are on (misusing the assert keyword for this)
-        assert (DetailedAsserts = true) == true;
+        assert DetailedAsserts = true;
         initBootImageOptions();
     }
 
@@ -175,14 +175,14 @@ public final class C1XOptions {
         if (value == null || value.isEmpty()) {
             PrintCFGToFile = false;
         } else {
-            PrintCFGToFile = Integer.parseInt(value) == 1 ? true : false;
+            PrintCFGToFile = Integer.parseInt(value) == 1;
             OmmitAssembly = true;
         }
         value = System.getenv("PRINT_HIR");
         if (value == null || value.isEmpty()) {
             PrintHIR = false;
         } else {
-            PrintHIR = Integer.parseInt(value) == 1 ? true : false;
+            PrintHIR = Integer.parseInt(value) == 1;
         }
         value = System.getenv("PRINT_FILTER");
         if (value == null || value.isEmpty()) {

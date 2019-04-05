@@ -32,6 +32,10 @@ import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler;
+import com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil;
+import com.sun.max.vm.thread.VmThread;
+
 import com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -50,7 +54,6 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 
 
@@ -72,7 +75,7 @@ public class CompilationBroker {
      */
     public final RuntimeCompiler baselineCompiler;
 
-    /** 
+    /**
      * The optimizing compiler.
      */
     public final RuntimeCompiler optimizingCompiler;
@@ -90,7 +93,12 @@ public class CompilationBroker {
     private static boolean opt;
     private static boolean FailOverCompilation = true;
     private static boolean VMExtOpt;
+    private static Integer tmCounter = 0;
     static int PrintCodeCacheMetrics;
+
+    public static String   AllocationProfilerEntryPoint;
+    public static String   AllocationProfilerExitPoint;
+    private static boolean LogCompiledMethods = false;
 
     private static boolean offline = false;
     private static boolean simulateAdapter = false;
@@ -108,6 +116,9 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
+        addFieldOption("-XX:", "AllocationProfilerEntryPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should start");
+        addFieldOption("-XX:", "AllocationProfilerExitPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should end");
+        addFieldOption("-XX:", "LogCompiledMethods", CompilationBroker.class, "Log the names of compiled methods (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
 
@@ -478,6 +489,10 @@ public class CompilationBroker {
                     } else {
                         tm = compilation.compile();
                         VMTI.handler().methodCompiled(cma);
+                    }
+                    if (MaxineVM.isRunning() && LogCompiledMethods) {
+                        Log.println("TargetMethod(" + tmCounter++ + ")(" +
+                                 selectCompiler(cma, nature, isDeopt) + "): " + tm);
                     }
                     return tm;
                 } else {
@@ -879,6 +894,20 @@ public class CompilationBroker {
                     }
                     break;
                 }
+                case RISCV64: {
+                    Pointer callIP = ip.minus(RISCV64MacroAssembler.RIP_CALL_INSTRUCTION_SIZE);
+                    CodePointer callSite = CodePointer.from(callIP);
+                    if (RISCV64TargetMethodUtil.isRIPCall(callIP)) {
+                        CodePointer target = RISCV64TargetMethodUtil.readCall32Target(callSite);
+                        if (riscv64PatchCallSite(current, callSite, target, BASELINE_ENTRY_POINT)) {
+                            return false;
+                        }
+                        if (riscv64PatchCallSite(current, callSite, target, OPTIMIZED_ENTRY_POINT)) {
+                            return false;
+                        }
+                    }
+                    break;
+                }
                 default:
                     throw FatalError.unimplemented("com.sun.max.vm.compiler.CompilationBroker.DirectCallPatcher.visitFrame");
             }
@@ -925,6 +954,20 @@ public class CompilationBroker {
                 assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
                 logStaticCallPatch(current, callSite, dcIndex, to);
                 Aarch64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                // Stop traversing the stack after a direct call site has been patched
+                return true;
+            }
+            return false;
+        }
+
+        private boolean riscv64PatchCallSite(StackFrameCursor current, CodePointer callSite, CodePointer target, CallEntryPoint entryPoint) {
+            if (target.equals(oldMethod.getEntryPoint(entryPoint))) {
+                final CodePointer to = newMethod.getEntryPoint(entryPoint);
+                final TargetMethod tm = current.targetMethod();
+                final int dcIndex = directCalleePosition(tm, callSite);
+                assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                logStaticCallPatch(current, callSite, dcIndex, to);
+                RISCV64TargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                 // Stop traversing the stack after a direct call site has been patched
                 return true;
             }

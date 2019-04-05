@@ -33,6 +33,9 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     public RISCV64Assembler(CiTarget target) {
         super(target);
+        this.frameRegister = RISCV64.fp;
+        this.scratchRegister = RISCV64.x28;
+        this.scratchRegister1 = RISCV64.x29;
     }
 
     public RISCV64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
@@ -44,7 +47,7 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     @Override
     protected void patchJumpTarget(int branch, int target) {
-        throw new UnsupportedOperationException("Unimplemented");
+        throw new UnsupportedOperationException("This is implemented in the MacroAssembler");
     }
 
     /**
@@ -58,14 +61,24 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param opcode
      * @param rd
      * @param imm32
+     * @param pos
      */
-    private void utype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
+    private void utype(RISCV64opCodes opcode, CiRegister rd, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0 : opcode.getValue();
-        assert rd.number >> 5 == 0 : rd.number;
+        assert rd.getEncoding() >> 5 == 0 : rd.getEncoding();
         int instruction = opcode.getValue();
-        instruction |= rd.number << 7;
+        instruction |= rd.getEncoding() << 7;
         instruction |= imm32 & 0xFFFFF000;
-        emitInt(instruction);
+
+        if (pos == -1) {
+            emitInt(instruction);
+        } else {
+            emitInt(instruction, pos);
+        }
+    }
+
+    private void utype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
+        utype(opcode, rd, imm32, -1);
     }
 
     /**
@@ -85,14 +98,14 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     private void rtype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
         assert opcode.getValue() >> 7 == 0;
-        assert rd.number >> 5 == 0;
-        assert rs1.number >> 5 == 0;
-        assert rs2.number >> 5 == 0;
+        assert rd.getEncoding() >> 5 == 0;
+        assert rs1.getEncoding() >> 5 == 0;
+        assert rs2.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
-        instruction |= rd.number << 7;
+        instruction |= rd.getEncoding() << 7;
         instruction |= funct3 << 12;
-        instruction |= rs1.number << 15;
-        instruction |= rs2.number << 20;
+        instruction |= rs1.getEncoding() << 15;
+        instruction |= rs2.getEncoding() << 20;
         instruction |= funct7 << 25;
         emitInt(instruction);
     }
@@ -111,17 +124,25 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs1
      * @param imm32
      */
-    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
+    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0;
-        assert rd.number >> 5 == 0;
-        assert rs1.number >> 5 == 0;
+        assert rd.getEncoding() >> 5 == 0;
+        assert rs1.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
-        instruction |= rd.number << 7;
+        instruction |= rd.getEncoding() << 7;
         instruction |= funct3 << 12;
-        instruction |= rs1.number << 15;
+        instruction |= rs1.getEncoding() << 15;
         instruction |= imm32 << 20;
 
-        emitInt(instruction);
+        if (pos == -1) {
+            emitInt(instruction);
+        } else {
+            emitInt(instruction, pos);
+        }
+    }
+
+    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
+        itype(opcode, rd, funct3, rs1, imm32, -1);
     }
 
     /**
@@ -159,13 +180,13 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     private void stype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
         assert opcode.getValue() >> 7 == 0;
-        assert rs1.number >> 5 == 0;
-        assert rs2.number >> 5 == 0;
+        assert rs1.getEncoding() >> 5 == 0;
+        assert rs2.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
         instruction |= (imm32 & 0x1F) << 7;
         instruction |= funct3 << 12;
-        instruction |= rs1.number << 15;
-        instruction |= rs2.number << 20;
+        instruction |= rs1.getEncoding() << 15;
+        instruction |= rs2.getEncoding() << 20;
         instruction |= ((imm32 >> 5) & 0x7F) << 25;
         emitInt(instruction);
     }
@@ -184,20 +205,29 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs2
      * @param imm32
      */
-    private void btype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+    private void btype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0;
         assert ((byte) funct3) >> 3 == 0;
-        assert rs1.number >> 5 == 0;
-        assert rs2.number >> 5 == 0;
+        assert rs1.getEncoding() >> 5 == 0;
+        assert rs2.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
         instruction |= ((imm32 >> 11) & 1) << 7;
         instruction |= ((imm32 >> 1) & 0xF) << 8;
         instruction |= funct3 << 12;
-        instruction |= rs1.number << 15;
-        instruction |= rs2.number << 20;
+        instruction |= rs1.getEncoding() << 15;
+        instruction |= rs2.getEncoding() << 20;
         instruction |= ((imm32 >> 5) & 0x3F) << 25;
         instruction |= ((imm32 >> 12) & 1) << 31;
-        emitInt(instruction);
+
+        if (pos == -1) {
+            emitInt(instruction);
+        } else {
+            emitInt(instruction, pos);
+        }
+    }
+
+    private void btype(RISCV64opCodes opcode, int funct3, CiRegister rs1, CiRegister rs2, int imm32) {
+        btype(opcode, funct3, rs1, rs2, imm32, -1);
     }
 
     /**
@@ -211,17 +241,27 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param opcode
      * @param rd
      * @param imm32
+     * @param pos
      */
-    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
+    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32, int pos) {
         assert opcode.getValue() >> 7 == 0;
-        assert rd.number >> 5 == 0;
+        assert rd.getEncoding() >> 5 == 0;
         int instruction = opcode.getValue();
-        instruction |= rd.number << 7;
+        instruction |= rd.getEncoding() << 7;
         instruction |= ((imm32 >> 20) & 1) << 31; // This places bit 20 of imm32 in bit 31 of instruction
         instruction |= ((imm32 >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm32 in bits 30:21 of instruction
         instruction |= ((imm32 >> 11) & 1) << 20; // This places bit 11 of imm32 in bit20 of instruction
         instruction |= ((imm32 >> 12) & 0xFF) << 12; // This places bits 19:12 of imm32 in bits 19:12 of instruction
-        emitInt(instruction);
+
+        if (pos == -1) {
+            emitInt(instruction);
+        } else {
+            emitInt(instruction, pos);
+        }
+    }
+
+    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
+        jtype(opcode, rd, imm32, -1);
     }
 
     // RV32I Base instruction set /////////////////////////////////////////////
@@ -247,11 +287,22 @@ public class RISCV64Assembler extends AbstractAssembler {
         utype(AUIPC, rd, imm32);
     }
 
+    public void auipc(CiRegister rd, int imm32, int pos) {
+        utype(AUIPC, rd, imm32, pos);
+    }
+
+
+
     /**
      *
      * @param rd
      * @param imm32
+     * @param pos
      */
+    public void jal(CiRegister rd, int imm32, int pos) {
+        jtype(JAL, rd, imm32, pos);
+    }
+
     public void jal(CiRegister rd, int imm32) {
         jtype(JAL, rd, imm32);
     }
@@ -266,6 +317,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         itype(JALR, rd, 0, rs, imm32);
     }
 
+    public void jalr(CiRegister rd, CiRegister rs, int imm32, int pos) {
+        itype(JALR, rd, 0, rs, imm32, pos);
+    }
+
     /**
      *
      * @param rs1
@@ -274,6 +329,10 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     public void beq(CiRegister rs1, CiRegister rs2, int imm32) {
         btype(BRNC, 0, rs1, rs2, imm32);
+    }
+
+    public void beq(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 0, rs1, rs2, imm32, pos);
     }
 
     /**
@@ -286,6 +345,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         btype(BRNC, 1, rs1, rs2, imm32);
     }
 
+    public void bne(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 1, rs1, rs2, imm32, pos);
+    }
+
     /**
      *
      * @param rs1
@@ -294,6 +357,10 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     public void blt(CiRegister rs1, CiRegister rs2, int imm32) {
         btype(BRNC, 4, rs1, rs2, imm32);
+    }
+
+    public void blt(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 4, rs1, rs2, imm32, pos);
     }
 
     /**
@@ -306,6 +373,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         btype(BRNC, 5, rs1, rs2, imm32);
     }
 
+    public void bge(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 5, rs1, rs2, imm32, pos);
+    }
+
     /**
      *
      * @param rs1
@@ -316,6 +387,10 @@ public class RISCV64Assembler extends AbstractAssembler {
         btype(BRNC, 6, rs1, rs2, imm32);
     }
 
+    public void bltu(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 6, rs1, rs2, imm32, pos);
+    }
+
     /**
      *
      * @param rs1
@@ -324,6 +399,10 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     public void bgeu(CiRegister rs1, CiRegister rs2, int imm32) {
         btype(BRNC, 7, rs1, rs2, imm32);
+    }
+
+    public void bgeu(CiRegister rs1, CiRegister rs2, int imm32, int pos) {
+        btype(BRNC, 7, rs1, rs2, imm32, pos);
     }
 
     /**
@@ -603,7 +682,77 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs2
      */
     public void mul(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MUL, rd, 0, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void mulw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         rtype(MULW, rd, 0, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void div(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MUL, rd, 4, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void divw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MULW, rd, 4, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void divu(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MUL, rd, 5, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void divuw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MULW, rd, 5, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void rem(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(MUL, rd, 6, rs1, rs2, 1);
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void remw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32M, rd, 6, rs1, rs2, 1);
     }
 
     /**
@@ -819,30 +968,125 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     // Floating point instructions double precision
-    public void fadd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
-        throw new UnsupportedOperationException("Unimplemented");
+    public void faddd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0000001);
+    }
+
+    public void fsubd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0000101);
+    }
+
+    public void fmuld(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0001001);
+    }
+
+    public void fmuldRTZ(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 1, rs1, rs2, 0b0001001);
+    }
+
+    public void fdivd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0001101);
+    }
+
+    public void fdivdRTZ(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 1, rs1, rs2, 0b0001101);
     }
 
     public void fmvxd(CiRegister rd, CiRegister rs) {
-        assert rd.isGeneral() && rs.isFpu();
-        itype(FMV, rd, 0, rs, 0b111000100000);
+        assert rd.isGeneral() || rs.isFpu();
+        itype(RV32D, rd, 0, rs, 0b111000100000);
     }
 
     public void fmvdx(CiRegister rd, CiRegister rs) {
-        assert rd.isFpu() && rs.isGeneral();
-        itype(FMV, rd, 0, rs, 0b111100100000);
+        assert rd.isFpu() || rs.isGeneral();
+        itype(RV32D, rd, 0, rs, 0b111100100000);
     }
 
     public void fld(CiRegister dst, CiRegister base, int offset) {
         itype(LOAD_FP, dst, 3, base, offset);
     }
 
-    public void fsd(CiRegister dst, CiRegister base, int offset) {
-        stype(STORE_FP, 3, dst, base, offset);
+    public void fsd(CiRegister rd, CiRegister rs, int offset) {
+        stype(STORE_FP, 3, rd, rs, offset);
     }
 
+    public void fcvtsd(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b010000000001);
+    }
+
+    public void fcvtds(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b010000100000);
+    }
+
+    public void fcvtdw(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b110100100000);
+    }
+
+    public void fcvtwd(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b110000100000);
+    }
+
+    public void fcvtdl(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b110100100010);
+    }
+
+    public void fcvtld(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b110000100010);
+    }
+
+    public void fsgnjd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b0010001);
+    }
+
+    public void fsgnjxd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 2, rs1, rs2, 0b0010001);
+    }
+
+    public void fsgnjnd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 1, rs1, rs2, 0b0010001);
+    }
+
+    public void fsqrtd(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0, rs, 0b010110100000);
+    }
+
+    public void fltd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 1, rs1, rs2, 0b1010001);
+    }
+
+    public void fled(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0, rs1, rs2, 0b1010001);
+    }
+
+    public void feqd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32D, rd, 0b010, rs1, rs2, 0b1010001);
+    }
 
     // Floating point instructions single precision
+    public void fadds(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0000000);
+    }
+
+    public void fsubs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0000100);
+    }
+
+    public void fmuls(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0001000);
+    }
+
+    public void fmulsRTZ(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 1, rs1, rs2, 0b0001000);
+    }
+
+    public void fdivs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0001100);
+    }
+
+    public void fdivsRTZ(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 1, rs1, rs2, 0b0001100);
+    }
+
     public void flw(CiRegister dst, CiRegister base, int offset) {
         itype(LOAD_FP, dst, 2, base, offset);
     }
@@ -851,28 +1095,64 @@ public class RISCV64Assembler extends AbstractAssembler {
         stype(STORE_FP, 2, dst, base, offset);
     }
 
+    public void fcvtls(CiRegister rd, CiRegister rs) {
+        itype(RV32F, rd, 0, rs, 0b110000000010);
+    }
+
     public void fcvtws(CiRegister rd, CiRegister rs) {
-        itype(FCVTWS, rd, 0, rs, 0b110000000000);
+        itype(RV32F, rd, 0, rs, 0b110000000000);
     }
 
     public void fcvtwus(CiRegister rd, CiRegister rs) {
-        itype(FCVTWS, rd, 0, rs, 0b110000000001);
+        itype(RV32F, rd, 0, rs, 0b110000000001);
     }
 
     public void fcvtsw(CiRegister rd, CiRegister rs) {
-        itype(FCVTSW, rd, 0, rs, 0b110100000000);
+        itype(RV32F, rd, 0, rs, 0b110100000000);
     }
 
     public void fcvtswu(CiRegister rd, CiRegister rs) {
-        itype(FCVTSW, rd, 0, rs, 0b110100000001);
+        itype(RV32F, rd, 0, rs, 0b110100000001);
     }
 
     public void fmvxw(CiRegister rd, CiRegister rs) {
-        itype(FMV, rd, 0, rs, 0b111000000000);
+        itype(RV32F, rd, 0, rs, 0b111000000000);
     }
 
     public void fmvwx(CiRegister rd, CiRegister rs) {
-        itype(FMV, rd, 0, rs, 0b111100000000);
+        itype(RV32F, rd, 0, rs, 0b111100000000);
+    }
+
+    public void fcvtsl(CiRegister rd, CiRegister rs) {
+        itype(RV32F, rd, 0, rs, 0b110100000010);
+    }
+
+    public void fsgnjs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b0010000);
+    }
+
+    public void fsgnjxs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 2, rs1, rs2, 0b0010000);
+    }
+
+    public void fsgnjns(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 1, rs1, rs2, 0b0010000);
+    }
+
+    public void fsqrts(CiRegister rd, CiRegister rs) {
+        itype(RV32F, rd, 0, rs, 0b010110000000);
+    }
+
+    public void flts(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 1, rs1, rs2, 0b1010000);
+    }
+
+    public void fles(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0, rs1, rs2, 0b1010000);
+    }
+
+    public void feqs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        rtype(RV32F, rd, 0b010, rs1, rs2, 0b1010000);
     }
 
     public enum ExtendType {

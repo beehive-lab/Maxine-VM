@@ -304,6 +304,13 @@ public class VmThreadLocal implements FormatWithToString {
     public static final VmThreadLocal SUSPEND
         = new VmThreadLocal("SUSPEND", false, "Bitset for thread suspension", Nature.Single);
 
+    /**
+     * The {@linkplain VmThread#currentTLA() current} thread local storage when profiler is
+     * {@linkplain SafepointPoll#enable() enabled}.
+     */
+    public static final VmThreadLocal PROFILER_TLA
+        = new VmThreadLocal("PROFILER_TLA", false, "points to TLA used for profiler on/off", Nature.Single);
+
     private static VmThreadLocal[] valuesNeedingInitialization;
 
     /**

@@ -455,4 +455,3 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
     }
 
 }
-

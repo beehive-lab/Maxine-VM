@@ -3,7 +3,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 #
-# Copyright (c) 2017-2018, APT Group, School of Computer Science,
+# Copyright (c) 2017-2019, APT Group, School of Computer Science,
 # The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -24,7 +24,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
-import os, shutil, fnmatch, subprocess, platform
+import os, shutil, fnmatch, subprocess, platform, itertools, datetime, sys, csv, re, multiprocessing
 from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
 from argparse import ArgumentParser
@@ -173,7 +173,8 @@ def gate(args):
 
     testme(['-image-configs=java',
             '-maxvm-configs=std,forceC1X,forceT1X',
-            '-tests=c1x,graal,junit:uk.ac+tests.unsafe+tests.vm+max.l+max.c+max.u+max.i+max.M+max.p,jsr292,output,javatester'] + testArgs)
+            '-jtt-image-configs=jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x',
+            '-tests=c1x,junit:uk.ac+tests.unsafe+tests.vm+max.l+max.c+max.u+max.i+max.M+max.p,jsr292,output,javatester'] + testArgs)
     testme(['-image-configs=ss', '-tests=output:Hello+Catch+GC+WeakRef+Final', '-fail-fast'] + testArgs)
 
 
@@ -281,7 +282,7 @@ def image(args):
             imageArgs += [arg]
         i += 1
 
-    mx.run_java(['-Xbootclasspath/a:' + mx.distribution('GRAAL').path] + systemProps + ['-cp', sanitized_classpath(),
+    mx.run_java(['-Xbootclasspath/a:' + mx.distribution('GRAAL').path] + systemProps + ['-cp', suite_classpath(),
                                                                                         'com.sun.max.vm.hosted.BootImageGenerator',
                                                                                         '-trace=1',
                                                                                         '-run=java'] + imageArgs)
@@ -304,10 +305,13 @@ def check_cwd_change(args):
     return [cwd, vmArgs]
 
 
-# Graal classes are loaded from graal.jar by the extension class loader
-def sanitized_classpath():
-    """Remove Graal projects from the classpath"""
-    cp = mx.classpath()
+def suite_classpath():
+    """Get the classpath containing only the current suite's dependencies, removing Graal projects (if any) from it"""
+    dependencies = mx.dependencies(True)
+    dependencies = itertools.ifilter(lambda d: not d.isNativeProject(), dependencies)
+    dependencies = itertools.ifilter(lambda d: not d.isPackedResourceLibrary(), dependencies)
+    dependencies = [ d.name for d in dependencies]
+    cp = mx.classpath(dependencies)
     cp_list = cp.split(os.pathsep)
     sanitized_list = []
     for entry in cp_list:
@@ -319,7 +323,6 @@ def sanitized_classpath():
             sanitized_list.append(entry)
     result = os.pathsep.join(sanitized_list)
     return result
-
 
 def inspect(args):
     """launch a given program under the Inspector
@@ -403,7 +406,7 @@ def inspect(args):
 
     cmd = [mx.get_jdk().java]
     cmd += mx.get_jdk().processArgs(
-        sysProps + ['-cp', sanitized_classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
+        sysProps + ['-cp', suite_classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
         insArgs + ['-a=' + ' '.join(vmArgs)])
 
     if mx.get_os() == 'darwin' and not remote:
@@ -441,7 +444,7 @@ def jnigen(args):
 
     The exit code is non-zero if a Java source file was modified."""
 
-    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'com.sun.max.vm.jni.JniFunctionsGenerator'])
+    return mx.run_java(['-cp', mx.classpath('com.sun.max'), 'com.sun.max.vm.jni.JniFunctionsGenerator'])
 
 
 def optionsgen(args):
@@ -501,7 +504,9 @@ def loggen(args):
 
     The exit code is non-zero if a Java source file was modified."""
 
-    return mx.run_java(['-cp', mx.classpath('com.sun.max'), 'com.sun.max.vm.log.hosted.VMLoggerGenerator'])
+    return mx.run_java(['-cp', mx.classpath(['com.sun.max', 'com.oracle.max.vm.ext.jvmti',
+                                             'com.oracle.max.vm.ext.vma']),
+                        'com.sun.max.vm.log.hosted.VMLoggerGenerator'])
 
 
 def makejdk(args):
@@ -620,6 +625,107 @@ def olc(args):
 
     mx.run_java(['-ea', '-esa', '-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
 
+def getEntryOrExitPoint(option, vmArgs):
+    index = vmArgs.index(option)
+    value = vmArgs[index+1]
+    del vmArgs[index+1]
+    del vmArgs[index]
+    value = '"'+value.split('(')[0]+'"'
+    if option is 'entry':
+        return '-XX:AllocationProfilerEntryPoint='+value
+    else:
+        return '-XX:AllocationProfilerExitPoint='+value
+
+def ignoreTheRestOptions(vmArgs, profilerOptions):
+    for arg in reversed(vmArgs):
+        if arg in profilerOptions:
+            if arg == 'entry' or arg == 'exit':
+                del vmArgs[vmArgs.index(arg)+1]
+            del vmArgs[vmArgs.index(arg)]
+
+
+def allocprofiler(args):
+    """launch Maxine VM with Allocation Profiler
+
+    Run the Maxine VM with the Allocation Profiler and the given options and arguments.
+
+    where options include:
+        all                                                         profile the allocated objects by any method. 1st priority (after log) if present.
+        bufferSize                                                  the profiler's buffer size.
+        entry <entry point method> [ | exit <exit point method> ]   profile the allocated objects from the entry until the exit method. If no exitpoint given profiles until the end.
+        log                                                         execute the application and log the compiled methods by C1X and T1X. 1st priority if present.
+        verbose                                                     enable allocation profiler's verbosity.
+        warmup <num>                                                num of iterations to be considered as warmup and consequently to be ignored.
+
+    If no option given will run with the -XX:+AllocationProfilerAll option. This will profile all objects.
+
+    Use "mx allocprofiler -help" to see what other options this command accepts."""
+
+    cwdArgs = check_cwd_change(args)
+    cwd = cwdArgs[0]
+    vmArgs = cwdArgs[1]
+
+    profilerArgs = []
+
+    nativeLib = 'jnumautils-0.1-SNAPSHOT.jar'
+    jnumautils = join('-Xbootclasspath/p:lib/', nativeLib)
+    profilerArgs.append(jnumautils)
+
+    profilerOptions = ['all', 'entry', 'exit', 'log', 'verbose']
+
+    if 'log' in vmArgs:
+        profilerArgs.append('-XX:+LogCompiledMethods')
+        #ignore the rest profiler options
+        ignoreTheRestOptions(vmArgs, profilerOptions)
+    else:
+        # all | entry | entry exit | none
+        if 'all' in vmArgs:
+            #if the all option is present, ignore the rest
+            profilerArgs.append('-XX:+AllocationProfilerAll')
+            ignoreTheRestOptions(vmArgs, profilerOptions)
+        elif 'entry' in vmArgs:
+            profilerArgs.append(getEntryOrExitPoint('entry', vmArgs))
+            if 'exit' in vmArgs:
+                profilerArgs.append(getEntryOrExitPoint('exit', vmArgs))
+        else:
+            #if none option is present, use the all option
+            profilerArgs.append('-XX:+AllocationProfilerAll')
+
+        #enable/disable verbosity
+        if 'verbose' in vmArgs:
+            del vmArgs[vmArgs.index('verbose')]
+            profilerArgs.append('-XX:+VerboseAllocationProfiler')
+
+        if 'warmup' in vmArgs:
+            index = vmArgs.index('warmup')
+            num = vmArgs[index+1]
+            del vmArgs[index+1]
+            del vmArgs[index]
+            profilerArgs.append('-XX:WarmupThreshold='+num)
+
+        if 'bufferSize' in vmArgs:
+            index = vmArgs.index('bufferSize')
+            num = vmArgs[index+1]
+            del vmArgs[index+1]
+            del vmArgs[index]
+            profilerArgs.append('-XX:BufferSize='+num)
+
+        if 'validate' in vmArgs:
+            del vmArgs[vmArgs.index('validate')]
+            profilerArgs.append('-XX:+ValidateAllocationProfiler')
+
+    print '=================================================='
+    print '== Launching Maxine VM with Allocation Profiler =='
+    print '=================================================='
+    print '== Profiler Args:'
+    for args in profilerArgs:
+        print '\t', args
+    print '== VM and Application Args:'
+    for args in vmArgs:
+        print '\t', args
+    print '=================================================='
+
+    mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
@@ -678,7 +784,7 @@ def testme(args):
         tee = Tee(f)
         jdk = mx.get_jdk()
         mx.run_java(
-            ['-cp', sanitized_classpath(), 'com.oracle.max.vm.tests.vm.MaxineTester', '-output-dir=maxine-tester',
+            ['-cp', suite_classpath(), 'com.oracle.max.vm.tests.vm.MaxineTester', '-output-dir=maxine-tester',
              '-graal-jar=' + mx.distribution('GRAAL').path,
              '-refvm=' + jdk.java, '-refvm-args=' + ' '.join(jdk.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
 
@@ -805,6 +911,7 @@ def mx_init(suite):
                     help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
 
     commands = {
+        'allocprofiler': [allocprofiler, ''],
         'build': [build, '"for help run mx :build -h"'],
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],

@@ -19,6 +19,8 @@
  */
 package com.sun.max.vm.compiler.target.riscv64;
 
+import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.INSTRUCTION_SIZE;
+import static com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.RIP_CALL_INSTRUCTION_SIZE;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
@@ -274,7 +276,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
         /**
          * The size in bytes of the prologue, see {@link Baseline2Opt#emitPrologue(Object, Adapter)}.
          */
-        public static final int PROLOGUE_SIZE = 6 * 4;
+        public static final int PROLOGUE_SIZE = 7 * 4;
 
         @Override
         public int prologueSizeForCallee(ClassMethodActor callee) {
@@ -302,9 +304,8 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             if (adapter == null) {
                 masm.nop(PROLOGUE_SIZE / 4);
             } else {
-                throw new UnsupportedOperationException("Unimplemented");
-//                masm.push(RISCV64.linkRegister);
-//                masm.call();
+                masm.push(64, RISCV64.ra);
+                masm.call();
             }
             int size = masm.codeBuffer.position();
             assert size == PROLOGUE_SIZE;
@@ -366,7 +367,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             /* The adapter is called from the prologue -- the link register contains
              * the address of the optimised callees method body.
              */
-            masm.jal(RISCV64.ra, 0);
+            masm.jalr(RISCV64.ra, RISCV64.ra, 0);
             int callSize = masm.codeBuffer.position() - callPos;
             // restore the stack pointer,
             masm.mov(RISCV64.sp, RISCV64.fp);
@@ -379,7 +380,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
 
             // roll the stack pointer back before the first argument on the caller's stack.
             masm.add(RISCV64.sp, RISCV64.sp, baselineArgsSize);
-            masm.jal(RISCV64.ra, 0);
+            masm.jalr(RISCV64.zero, RISCV64.ra, 0);
 
             final byte[] code = masm.codeBuffer.close(true);
 
@@ -426,8 +427,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
                 default :
                     throw ProgramError.unexpected("Bad case");
             }
-            throw new UnsupportedOperationException("Unimplemented");
-//            masm.load(reg, masm.getAddressInFrame(RISCV64.sp, offset32), loadKind);
+            masm.load(reg, masm.getAddressInFrame(RISCV64.sp, offset32), loadKind);
         }
 
         protected void adapt(RISCV64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
@@ -623,19 +623,18 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
             Label end = new Label();
-            throw new UnsupportedOperationException("Unimplemented");
-//            masm.b(end);
-//            // Pad with nops up to the OPT entry point
-//            masm.align(OPTIMIZED_ENTRY_POINT.offset());
-//            // stack the return address in the caller, i.e. the instruction following the branch to
-//            // here in the optimised caller.
-//            masm.push(RISCV64.linkRegister);
-//            masm.call();
-//            masm.bind(end);
-//            int size = masm.codeBuffer.position();
-//            assert size == PROLOGUE_SIZE : "Bad prologue";
-//            copyIfOutputStream(masm.codeBuffer, out);
-//            return size;
+            masm.b(end);
+            // Pad with nops up to the OPT entry point
+            masm.align(OPTIMIZED_ENTRY_POINT.offset());
+            // stack the return address in the caller, i.e. the instruction following the branch to
+            // here in the optimised caller.
+            masm.push(64, RISCV64.ra);
+            masm.call();
+            masm.bind(end);
+            int size = masm.codeBuffer.position();
+            assert size == PROLOGUE_SIZE : "Bad prologue";
+            copyIfOutputStream(masm.codeBuffer, out);
+            return size;
         }
 
         /*
@@ -766,9 +765,8 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
      */
     void stackCopy(RISCV64MacroAssembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         final int size = kind.stackKind.width.numberOfBits;
-        throw new UnsupportedOperationException("Unimplemented");
-//        asm.ldr(size, scratch, asm.getAddressInFrame(RISCV64.sp, sourceStackOffset));
-//        asm.str(size, scratch, asm.getAddressInFrame(RISCV64.sp, destStackOffset));
+        asm.ldr(size, scratch, asm.getAddressInFrame(RISCV64.sp, sourceStackOffset));
+        asm.str(size, scratch, asm.getAddressInFrame(RISCV64.sp, destStackOffset));
     }
 
 }

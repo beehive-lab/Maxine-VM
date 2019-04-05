@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -168,7 +168,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
                 RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
 
             }
-            if (initialised == false) {
+            if (!initialised) {
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);
@@ -2144,7 +2144,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean expectedValue     = BC_long_tests.le(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
+            boolean returnValue       = registerValues[0] == 1;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
@@ -2167,7 +2167,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean expectedValue     = BC_long_tests.ge(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
+            boolean returnValue       = registerValues[0] == 1;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
@@ -2190,7 +2190,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean expectedValue     = BC_long_tests.eq(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
+            boolean returnValue       = registerValues[0] == 1;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
@@ -2213,7 +2213,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean expectedValue     = BC_long_tests.ne(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
+            boolean returnValue       = registerValues[0] == 1;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
@@ -2236,7 +2236,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean expectedValue     = BC_long_tests.gt(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
+            boolean returnValue       = registerValues[0] == 1;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
@@ -2259,7 +2259,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean expectedValue     = BC_long_tests.lt(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] == 1 ? true : false;
+            boolean returnValue       = registerValues[0] == 1;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
@@ -2304,7 +2304,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean expectedValue     = BC_lcmp.test(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
             int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
-            boolean returnValue       = registerValues[0] > 0 ? true : false;
+            boolean returnValue       = registerValues[0] > 0;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }

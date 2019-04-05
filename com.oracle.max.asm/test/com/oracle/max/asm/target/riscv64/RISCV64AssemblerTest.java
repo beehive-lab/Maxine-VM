@@ -40,7 +40,7 @@ public class RISCV64AssemblerTest {
 
     private int assemble(String instruction) {
         try {
-            String[] cmd = {"/bin/sh", "-c", "echo \"" + instruction + "\" | riscv64-unknown-elf-as -- && riscv64-unknown-elf-objdump -D a.out | tail -n 1 | awk '{print $2}'"};
+            String[] cmd = {"/bin/sh", "-c", "echo \"" + instruction + "\" | riscv64-linux-gnu-as -- && riscv64-linux-gnu-objdump -D a.out | tail -n 1 | awk '{print $2}'"};
             Process p = Runtime.getRuntime().exec(cmd);
             BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
             p.waitFor();

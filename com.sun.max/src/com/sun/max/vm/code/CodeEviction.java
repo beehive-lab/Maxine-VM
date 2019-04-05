@@ -41,6 +41,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.aarch64.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.profile.*;
@@ -100,6 +101,8 @@ public final class CodeEviction extends VmOperation {
                     directCallee = ARMTargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
                 } else if (platform().isa == ISA.Aarch64) {
                     directCallee = Aarch64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
+                } else if (platform().isa == ISA.RISCV64) {
+                    directCallee = RISCV64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
                 } else {
                     directCallee = null;
                 }
@@ -391,6 +394,8 @@ public final class CodeEviction extends VmOperation {
                     target = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else if (platform().isa == ISA.Aarch64) {
                     target = Aarch64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else if (platform().isa == ISA.RISCV64) {
+                    target = RISCV64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
                     throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.BaselineFixCalls.doTargetMethod");
                 }
@@ -448,6 +453,8 @@ public final class CodeEviction extends VmOperation {
                     target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else if (platform().isa == ISA.Aarch64) {
                     target  = Aarch64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else if (platform().isa == ISA.RISCV64) {
+                    target = RISCV64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
                     throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.OptFixCalls.doTargetMethod");
                 }
@@ -858,6 +865,8 @@ public final class CodeEviction extends VmOperation {
                 target = ARMTargetMethodUtil.readCall32Target(tm, callPos);
             } else if (platform().isa == ISA.Aarch64) {
                 target = Aarch64TargetMethodUtil.readCall32Target(tm, callPos);
+            } else if (platform().isa == ISA.RISCV64) {
+                target = RISCV64TargetMethodUtil.readCall32Target(tm, callPos);
             } else {
                 throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.patchDirectCallsIn");
             }
@@ -1055,6 +1064,8 @@ public final class CodeEviction extends VmOperation {
                     target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else if (platform().isa == ISA.Aarch64) {
                     target  = Aarch64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else if (platform().isa == ISA.RISCV64) {
+                    target = RISCV64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
                     throw FatalError.unimplemented("com.sun.max.vm.code.CodeEviction.DumpDirectCalls.doTargetMethod");
                 }

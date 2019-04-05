@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -211,7 +213,7 @@ public class MaxWordType {
             } else if (object instanceof LoadFieldNode && ((LoadFieldNode) object).object() != null) {
                 // field loads from Hub objects are guaranteed non-null
                 ResolvedJavaType fieldObjectType = ObjectStamp.typeOrNull(((LoadFieldNode) object).object());
-                return fieldObjectType ==  null ? false : MaxResolvedJavaType.getHubType().isAssignableFrom(fieldObjectType);
+                return fieldObjectType != null && MaxResolvedJavaType.getHubType().isAssignableFrom(fieldObjectType);
             } else if (isWordPhiReally(object)) {
                 return true;
             } else {

@@ -31,6 +31,7 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.aarch64.Aarch64TargetMethodUtil;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil;
 import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -224,6 +225,8 @@ public final class CodeCacheValidation extends VmOperation {
                 callTarget = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
             } else if (platform().isa == ISA.Aarch64) {
                 callTarget = Aarch64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+            } else if (platform().isa == ISA.RISCV64) {
+                callTarget = RISCV64TargetMethodUtil.readCall32Target(targetMethod, callPos);
             } else {
                 throw FatalError.unimplemented("com.sun.max.vm.code.CodeCacheValidation.validateDirectCallsOf");
             }

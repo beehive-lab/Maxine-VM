@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -154,7 +154,7 @@ public abstract class AssemblyTester<Template_Type extends Template> {
 
         public boolean hasNext() {
             if (count == 0) {
-                return testCaseLegality == TestCaseLegality.LEGAL ? (iterations == 0) : false;
+                return testCaseLegality == TestCaseLegality.LEGAL && (iterations == 0);
             }
             if (!advanced) {
                 hasNext = advance();

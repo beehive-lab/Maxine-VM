@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,12 +25,13 @@ import com.sun.max.vm.runtime.FatalError;
 
 import static com.oracle.max.vm.tests.crossisa.CrossISATester.BitsFlag.All64Bits;
 import static com.oracle.max.vm.tests.crossisa.CrossISATester.BitsFlag.Lower32Bits;
+import static java.lang.Enum.valueOf;
 
 public class MaxineRISCV64Tester extends CrossISATester {
     public static final int NUM_REGS = 32;
 
     /*
-     * riscv64-unknown-elf-gcc -g -march=rv64g -mabi=lp64d -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -Ttest_riscv64.ld startup_riscv64.s test_riscv64.c -o test.elf
+     * riscv64-linux-gnu-gcc -g -march=rv64g -mabi=lp64d -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -Ttest_riscv64.ld startup_riscv64.s test_riscv64.c -o test.elf
      * qemu-system-riscv64 -nographic -S -s -kernel test.elf
      */
     private MaxineRISCV64Tester(String[] args) {
@@ -63,7 +64,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
         if (gccProcessBuilder != null) {
             return gccProcessBuilder;
         }
-        return new ProcessBuilder("riscv64-unknown-elf-gcc", "-g", "-march=rv64g", "-mabi=lp64d", "-static",
+        return new ProcessBuilder("riscv64-linux-gnu-gcc", "-g", "-march=rv64g", "-mabi=lp64d", "-static",
                                   "-mcmodel=medany", "-fvisibility=hidden", "-nostdlib", "-nostartfiles",
                                   "-Ttest_riscv64.ld", "startup_riscv64.s", "test_riscv64.c", "-o", "test.elf");
     }
@@ -81,7 +82,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
         if (gdbProcessBuilder != null) {
             return gdbProcessBuilder;
         }
-        return new ProcessBuilder("riscv64-unknown-elf-gdb", "-q", "-x", "gdb_input_riscv");
+        return new ProcessBuilder("riscv64-elf-gdb", "-q", "-x", gdbInput);
     }
 
     @Override
@@ -133,7 +134,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
      */
     @Override
     public void setExpectedValue(CiRegister fpuRegister, float expectedValue) {
-        final int index = fpuRegister.getEncoding() - 1; // -1 to compensate for the zero register
+        final int index = fpuRegister.getEncoding();
         expectedFloatRegisters[index] = expectedValue;
         testFloatRegisters[index] = true;
     }
@@ -146,7 +147,7 @@ public class MaxineRISCV64Tester extends CrossISATester {
      */
     @Override
     public void setExpectedValue(CiRegister fpuRegister, double expectedValue) {
-        final int index = fpuRegister.getEncoding() - 1; // -1 to compensate for the zero register
+        final int index = fpuRegister.getEncoding();
         expectedDoubleRegisters[index] = expectedValue;
         testDoubleRegisters[index] = true;
     }
@@ -164,7 +165,20 @@ public class MaxineRISCV64Tester extends CrossISATester {
      */
     @Override
     protected float parseFloatRegister(String line) {
-        throw FatalError.unimplemented();
+        try {
+            if (line.contains("nan")) {
+                String number = line.split("\\s+-nan\\(0xfffff")[1];
+                number = number.split("\\)")[0];
+                return Float.intBitsToFloat(Integer.parseUnsignedInt(number, 16));
+            } else {
+                double number = Double.parseDouble(line.split("\\s+")[1]);
+                return Float.intBitsToFloat((int) Double.doubleToRawLongBits(number));
+            }
+        } catch (Exception e) {
+            System.out.println("Float: GDB output line could not be parsed: " + line);
+        }
+
+        return 0;
     }
 
     /**
@@ -179,12 +193,27 @@ public class MaxineRISCV64Tester extends CrossISATester {
      * @return The parsed double value of the register
      */
     protected double parseDoubleRegister(String line) {
-        throw FatalError.unimplemented();
+        try {
+            String value = line.split("\\s+")[1];
+            if ("inf".equals(value)) {
+                return Double.POSITIVE_INFINITY;
+            } else if ("-inf".equals(value)) {
+                return Double.NEGATIVE_INFINITY;
+            } else {
+                return Double.parseDouble(value);
+            }
+        } catch (Exception e) {
+            System.out.println("Double: GDB output line could not be parsed: " + line);
+        }
+
+        return 0.0;
     }
 
     public void runSimulation() throws Exception {
         super.runSimulation();
         parseLongRegisters("ra ", "pc");
+        parseFloatRegisters("ft0 ", "ustatus");
+        parseDoubleRegisters("ft0 ", "ustatus");
     }
 
     public static void main(String[] args) throws Exception {

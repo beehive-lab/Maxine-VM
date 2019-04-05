@@ -24,6 +24,7 @@ package com.sun.max.vm.heap;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+import static com.sun.max.vm.MaxineVM.allocationProfiler;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -480,6 +481,22 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return slowPathAllocate(size, etla, TLAB_MARK.load(etla), TLAB_TOP.load(etla));
     }
 
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public final void profile(int size, Hub hub, Pointer cell) {
+        final String objectType = hub.classActor.name();
+        final long address = cell.toLong();
+        allocationProfiler.profile(size, objectType, address);
+    }
+
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public final void profileArray(int size, Hub hub, Pointer cell) {
+        final String objectType = hub.classActor.name();
+        final long address = cell.toLong();
+        allocationProfiler.profile(size, objectType, address);
+    }
+
     /**
      * Handling of custom allocation by sub-classes.
      * The normal allocation path. may be escaped by temporarily enabling use of a custom allocator identified with an opaque identifier.
@@ -527,6 +544,12 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createArray(DynamicHub dynamicHub, int length) {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
+
+        if (MaxineVM.profileThatObject()) {
+            final String objectType = dynamicHub.classActor.name();
+            final long address = cell.toLong();
+            allocationProfiler.profile(size.toInt(), objectType, address);
+        }
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
 
@@ -539,6 +562,12 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             Object result = Cell.plantTuple(cell, hub);
             return result;
         } else {
+
+            if (MaxineVM.profileThatObject()) {
+                final String objectType = hub.classActor.name();
+                final long address = cell.toLong();
+                allocationProfiler.profile(hub.tupleSize.toInt(), objectType, address);
+            }
             return Cell.plantTuple(cell, hub);
         }
     }
@@ -547,6 +576,12 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
+
+        if (MaxineVM.profileThatObject()) {
+            final String objectType = hub.classActor.name();
+            final long address = cell.toLong();
+            allocationProfiler.profile(size.toInt(), objectType, address);
+        }
         return Cell.plantHybrid(cell, size, hub);
     }
 
@@ -554,6 +589,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Size size = Layout.hybridLayout().getArraySize(length);
         final Pointer cell = tlabAllocate(size);
+
+        if (MaxineVM.profileThatObject()) {
+            final Pointer oldOrigin = Reference.fromJava(hybrid).toOrigin();
+            final Hub hub = Layout.getHub(oldOrigin);
+            final String objectType = hub.classActor.name();
+            final long address = cell.toLong();
+            allocationProfiler.profile(size.toInt(), objectType, address);
+        }
         return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
 
@@ -561,6 +604,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object clone(Object object) {
         final Size size = Layout.size(Reference.fromJava(object));
         final Pointer cell = tlabAllocate(size);
+
+        if (MaxineVM.profileThatObject()) {
+            final Pointer oldOrigin = Reference.fromJava(object).toOrigin();
+            final Hub hub = Layout.getHub(oldOrigin);
+            final String objectType = hub.classActor.name();
+            final long address = cell.toLong();
+            allocationProfiler.profile(size.toInt(), objectType, address);
+        }
         return Cell.plantClone(cell, size, object);
     }
 

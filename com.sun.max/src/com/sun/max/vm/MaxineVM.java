@@ -50,6 +50,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.profilers.allocation.Profiler;
 
 /**
  * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time.
@@ -70,7 +71,7 @@ public final class MaxineVM {
 
     public static final String NAME = "Maxine Virtual Machine";
     public static final int MAJOR_VERSION = 2;
-    public static final int MINOR_VERSION = 6;
+    public static final int MINOR_VERSION = 7;
     public static final int PATCH_VERSION = 0;
     public static final String VERSION_STRING = Integer.toString(MAJOR_VERSION) + "." + Integer.toString(MINOR_VERSION) + "." + Integer.toString(PATCH_VERSION);
     public static final String HOME_URL = "https://github.com/beehive-lab/Maxine-VM";
@@ -119,6 +120,40 @@ public final class MaxineVM {
 
     private static long startupTime;
     private static long startupTimeNano;
+
+    /**
+     * The Dynamic Profiler object. It's initialized during Java Run Scheme initialization (if it's needed).
+     */
+    public static Profiler allocationProfiler;
+
+    public static boolean isAllocationProfilerInitialized = false;
+
+    /**
+     * This method is used to guard object allocation code sections.
+     *
+     * An object will be profiled only if:
+     *  1) MaxineVM is Running
+     *  2) -XX:+AllocationProfilerEntryPoint is used
+     *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
+     *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
+     *
+     *  OR
+     *
+     *  the -XX:ProfileAll option has been used
+     *
+     *  In any case we ignore the warmup phase of the application (see {@link Profiler#warmupFinished}).
+     *
+     * @return true if all the above conditions are true.
+     */
+    public static boolean profileThatObject() {
+        if (isAllocationProfilerInitialized) {
+            assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
+                    "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
+            int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
+            return (profilerTLA == 1 || Profiler.profileAll()) && Profiler.warmupFinished();
+        }
+        return false;
+    }
 
     /**
      * Allows the Inspector access to the thread locals block for the primordial thread.

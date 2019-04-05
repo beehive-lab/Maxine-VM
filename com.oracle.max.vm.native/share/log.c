@@ -41,9 +41,11 @@ void log_assert(boolean condition, char *conditionString, char *fileName, int li
 }
 
 static mutex_Struct log_mutexStruct;
+static mutex_Struct allocationProfiler_mutexStruct;
 
 void log_initialize(const char *path) {
     mutex_initialize(&log_mutexStruct);
+    mutex_initialize(&allocationProfiler_mutexStruct);
 #if !os_MAXVE
     if (path == NULL) {
         path = "stdout";
@@ -73,11 +75,27 @@ void log_lock(void) {
 	}
 }
 
+void allocationProfiler_lock(void) {
+    int result;
+    result = mutex_enter_nolog(&allocationProfiler_mutexStruct);
+    if (result != 0) {
+        log_exit(-1, "Thread %p could not lock mutex %p: %s", thread_self(), &allocationProfiler_mutexStruct, strerror(result));
+    }
+}
+
 void log_unlock(void) {
     int result;
 	if ((result = mutex_exit_nolog(&log_mutexStruct)) != 0) {
         log_exit(-1, "Thread %p could not unlock mutex %p: %s", thread_self(), &log_mutexStruct, strerror(result));
 	}
+}
+
+void allocationProfiler_unlock(void) {
+    int result;
+    result = mutex_exit_nolog(&allocationProfiler_mutexStruct);
+    if (result != 0) {
+        log_exit(-1, "Thread %p could not unlock mutex %p: %s", thread_self(), &allocationProfiler_mutexStruct, strerror(result));
+    }
 }
 
 void log_print_format(const char *format, ...) {

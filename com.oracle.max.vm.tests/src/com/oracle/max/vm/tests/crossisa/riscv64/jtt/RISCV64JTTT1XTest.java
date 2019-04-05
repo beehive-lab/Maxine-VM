@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -168,7 +168,7 @@ public class RISCV64JTTT1XTest {
                 RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
             }
 
-            if (initialised == false) {
+            if (!initialised) {
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);
@@ -191,13 +191,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_iadd.test(50, -49);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_iadd");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 50);
-        masm.mov32BitConstant(x1, -49);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x10, 50);
+        masm.mov32BitConstant(x11, -49);
+        masm.push(64, x10, x11);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -214,12 +214,12 @@ public class RISCV64JTTT1XTest {
         byte[] code = getByteArray("test", "jtt.bytecode.BC_iadd2");
         for (int i = 0; i < argsOne.length; i++) {
             int answer = jtt.bytecode.BC_iadd2.test(argsOne[i], argsTwo[i]);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             initialiseFrameForCompilation(code, "(BB)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, argsOne[i]);
-            masm.mov32BitConstant(x1, argsTwo[i]);
-            masm.push(64, x0, x1);
+            masm.mov32BitConstant(x5, argsOne[i]);
+            masm.mov32BitConstant(x6, argsTwo[i]);
+            masm.push(64, x5, x6);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(2);
             theCompiler.cleanup();
@@ -237,12 +237,12 @@ public class RISCV64JTTT1XTest {
         int expectedValue;
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = jtt.bytecode.BC_iadd3.test(argsOne[i], argsTwo[i]);
-            tester.setExpectedValue(x0, expectedValue);
+            tester.setExpectedValue(x10, expectedValue);
             initialiseFrameForCompilation(code, "(SS)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, argsOne[i]);
-            masm.mov32BitConstant(x1, argsTwo[i]);
-            masm.push(64, x0, x1);
+            masm.mov32BitConstant(x5, argsOne[i]);
+            masm.mov32BitConstant(x6, argsTwo[i]);
+            masm.push(64, x5, x6);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(2);
             theCompiler.cleanup();
@@ -254,13 +254,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_imul.test(10, 12);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_imul");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 10);
-        masm.mov32BitConstant(x1, 12);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x5, 10);
+        masm.mov32BitConstant(x6, 12);
+        masm.push(64, x5, x6);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "imul");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -272,13 +272,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_isub.test(100, 50);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_isub");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 100);
-        masm.mov32BitConstant(x1, 50);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x5, 100);
+        masm.mov32BitConstant(x6, 50);
+        masm.push(64, x5, x6);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "isub");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -290,12 +290,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ineg.test(100);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_ineg");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 100);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, 100);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -307,12 +307,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ineg.test(-100);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_ineg");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, -100);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, -100);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -324,13 +324,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ior.test(50, 100);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_ior");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 50);
-        masm.mov32BitConstant(x1, 100);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x5, 50);
+        masm.mov32BitConstant(x6, 100);
+        masm.push(64, x5, x6);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ior");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -342,13 +342,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ixor.test(50, 39);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_ixor");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 50);
-        masm.mov32BitConstant(x1, 39);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x5, 50);
+        masm.mov32BitConstant(x6, 39);
+        masm.push(64, x5, x6);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ixor");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -360,13 +360,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_iand.test(50, 39);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_iand");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 50);
-        masm.mov32BitConstant(x1, 39);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x5, 50);
+        masm.mov32BitConstant(x6, 39);
+        masm.push(64, x5, x6);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iand");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -378,13 +378,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ishl.test(10, 2);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_ishl");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 10);
-        masm.mov32BitConstant(x1, 2);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x5, 10);
+        masm.mov32BitConstant(x6, 2);
+        masm.push(64, x5, x6);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishl");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -396,13 +396,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ishr.test(2048, 2);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_ishr");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 2048);
-        masm.mov32BitConstant(x1, 2);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x5, 2048);
+        masm.mov32BitConstant(x6, 2);
+        masm.push(64, x5, x6);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishr");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -414,13 +414,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ishr.test(-2147483648, 16);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_ishr");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, -2147483648);
-        masm.mov32BitConstant(x1, 16);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x5, -2147483648);
+        masm.mov32BitConstant(x6, 16);
+        masm.push(64, x5, x6);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishr");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -432,13 +432,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_iushr.test(-2147483648, 16);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_iushr");
         initialiseFrameForCompilation(code, "(II)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, -2147483648);
-        masm.mov32BitConstant(x1, 16);
-        masm.push(64, x0, x1);
+        masm.mov32BitConstant(x5, -2147483648);
+        masm.mov32BitConstant(x6, 16);
+        masm.push(64, x5, x6);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iushr");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(2);
@@ -452,14 +452,14 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         byte answer = jtt.bytecode.BC_i2b.test(255);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2b");
         initialiseFrameForCompilation(code, "(I)B");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
         CompilationBroker.singleton.setSimulateAdapter(false);
         masm.nop(4);
-        masm.mov32BitConstant(x0, 255);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, 255);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -471,12 +471,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         byte answer = jtt.bytecode.BC_i2b.test(-1);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2b");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, -1);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, -1);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -488,12 +488,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         byte answer = jtt.bytecode.BC_i2b.test(128);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2b");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 128);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, 128);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -505,12 +505,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         short answer = jtt.bytecode.BC_i2s.test(65535);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 65535);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, 65535);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -522,12 +522,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         short answer = jtt.bytecode.BC_i2s.test(32768);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 32768);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, 32768);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -539,12 +539,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         short answer = jtt.bytecode.BC_i2s.test(-1);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, -1);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, -1);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -556,12 +556,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         short answer = jtt.bytecode.BC_i2s.test(Integer.MAX_VALUE);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, Integer.MAX_VALUE);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, Integer.MAX_VALUE);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -573,12 +573,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         short answer = jtt.bytecode.BC_i2s.test(0xcafebabe);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 0xcafebabe);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, 0xcafebabe);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -590,12 +590,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         char answer = jtt.bytecode.BC_i2c.test(-1);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2c");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, -1);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, -1);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -607,12 +607,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         char answer = jtt.bytecode.BC_i2c.test(65535);
-        tester.setExpectedValue(x0, answer);
+        tester.setExpectedValue(x10, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2c");
         initialiseFrameForCompilation(code, "(I)I");
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(x0, 65535);
-        masm.push(64, x0);
+        masm.mov32BitConstant(x5, 65535);
+        masm.push(64, x5);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
         theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest(1);
@@ -626,12 +626,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (int i = 0; i < args.length; i++) {
             int expectedValue = jtt.bytecode.BC_ireturn.test(args[i]);
-            tester.setExpectedValue(x0, expectedValue);
+            tester.setExpectedValue(x10, expectedValue);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ireturn");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, args[i]);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, args[i]);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
@@ -653,12 +653,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_tableswitch.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_tableswitch");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
@@ -679,40 +679,40 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_tableswitch2.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_tableswitch2");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
         }
     }
 
-//    @Test
-//    public void t1x_jtt_BC_fdiv() throws Exception {
-//        float[] argOne = {14.0f};
-//        float[] argTwo = {7.0f};
-//        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "freturn");
-//        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "fdiv");
-//
-//        byte[] code = getByteArray("test", "jtt.bytecode.BC_fdiv");
-//        for (int i = 0; i < argOne.length; i++) {
-//            initialiseFrameForCompilation(code, "(FF)F");
-//            float answer = jtt.bytecode.BC_fdiv.test(argOne[i], argTwo[i]);
-//            tester.setExpectedValue(f0, answer);
-//            RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-//            masm.mov32BitConstant(x0, Float.floatToRawIntBits(argOne[i]));
-//            masm.mov32BitConstant(x1, Float.floatToRawIntBits(argTwo[i]));
-//            masm.fmovCpu2Fpu(32, f0, x0);
-//            masm.fmovCpu2Fpu(32, f1, x1);
-//            masm.fpush(f0, f1);
-//            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
-//            generateAndTest(2);
-//        }
-//    }
+    @Test
+    public void t1x_jtt_BC_fdiv() throws Exception {
+        float[] argOne = {14.0f};
+        float[] argTwo = {7.0f};
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "freturn");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "fdiv");
+
+        byte[] code = getByteArray("test", "jtt.bytecode.BC_fdiv");
+        for (int i = 0; i < argOne.length; i++) {
+            initialiseFrameForCompilation(code, "(FF)F");
+            float answer = jtt.bytecode.BC_fdiv.test(argOne[i], argTwo[i]);
+            tester.setExpectedValue(f10, answer);
+            RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(x5, Float.floatToRawIntBits(argOne[i]));
+            masm.mov32BitConstant(x6, Float.floatToRawIntBits(argTwo[i]));
+            masm.fmvwx(f0, x5);
+            masm.fmvwx(f1, x6);
+            masm.fpush(32, f0, f1);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
+            generateAndTest(2);
+        }
+    }
 
     @Test
     public void t1x_jtt_BC_tableswitch_3() throws Exception {
@@ -728,12 +728,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_tableswitch3.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_tableswitch3");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
@@ -754,12 +754,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_tableswitch4.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_tableswitch4");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
@@ -790,12 +790,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_lookupswitch01.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_lookupswitch01");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
@@ -829,12 +829,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_lookupswitch02.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_lookupswitch02");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
@@ -869,12 +869,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_lookupswitch03.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_lookupswitch03");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
@@ -909,12 +909,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_lookupswitch04.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_lookupswitch04");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
@@ -933,12 +933,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iinc_1.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iinc_1");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_1");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -957,12 +957,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iinc_2.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iinc_2");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_2");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -981,12 +981,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iinc_3.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iinc_3");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_3");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1005,12 +1005,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iinc_4.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iinc_4");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_4");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1029,12 +1029,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iload_0.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iload_0");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1054,12 +1054,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iload_0_1.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iload_0_1");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_1");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1078,12 +1078,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iload_0_2.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iload_0_2");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0); // local slot is argument x0
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5); // local slot is argument x0
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_2");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1102,14 +1102,14 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iload_1.test(pair.first, pair.second);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iload_1");
             initialiseFrameForCompilation(code, "(II)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.mov32BitConstant(x1, pair.second);
-            masm.push(64, x0);
-            masm.push(64, x1);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.mov32BitConstant(x6, pair.second);
+            masm.push(64, x5);
+            masm.push(64, x6);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(2);
             theCompiler.cleanup();
@@ -1128,12 +1128,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iload_1_1.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iload_1_1");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_1_1");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1152,13 +1152,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iload_1_2.test(pair.first, pair.second);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iload_1_2");
             initialiseFrameForCompilation(code, "(II)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.mov32BitConstant(x1, pair.second);
-            masm.push(64, x0, x1);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.mov32BitConstant(x6, pair.second);
+            masm.push(64, x5, x6);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(2);
             theCompiler.cleanup();
@@ -1176,16 +1176,16 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iload_2.test(pair.first, pair.second, pair.third);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iload_2");
             initialiseFrameForCompilation(code, "(III)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.mov32BitConstant(x1, pair.second);
-            masm.mov32BitConstant(x2, pair.third);
-            masm.push(64, x0);
-            masm.push(64, x1);
-            masm.push(64, x2);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.mov32BitConstant(x6, pair.second);
+            masm.mov32BitConstant(x7, pair.third);
+            masm.push(64, x5);
+            masm.push(64, x6);
+            masm.push(64, x7);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_2");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(3);
@@ -1204,18 +1204,18 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iload_3.test(pair.first, pair.second, pair.third, pair.fourth);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iload_3");
             initialiseFrameForCompilation(code, "(IIII)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.mov32BitConstant(x1, pair.second);
-            masm.mov32BitConstant(x2, pair.third);
-            masm.mov32BitConstant(x3, pair.fourth);
-            masm.push(64, x0);
-            masm.push(64, x1);
-            masm.push(64, x2);
-            masm.push(64, x3);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.mov32BitConstant(x6, pair.second);
+            masm.mov32BitConstant(x7, pair.third);
+            masm.mov32BitConstant(x28, pair.fourth);
+            masm.push(64, x5);
+            masm.push(64, x6);
+            masm.push(64, x7);
+            masm.push(64, x28);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_3");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(4);
@@ -1237,12 +1237,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "putfieldLong");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iconst.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iconst");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iconst");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1261,12 +1261,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ifeq.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifeq");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1283,12 +1283,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ifeq_2.test(pair.first) ? 1 : 0;
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifeq_2");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
             theCompiler.cleanup();
@@ -1305,12 +1305,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ifeq_3.test(pair.first) ? 1 : 0;
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifeq_3");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1329,12 +1329,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ifge.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifge");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1353,12 +1353,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ifgt.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifgt");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifgt");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1377,12 +1377,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ifle.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifle");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifle");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1401,12 +1401,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ifne.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifne");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifne");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1425,12 +1425,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iflt.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iflt");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1449,12 +1449,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ificmplt1.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ificmplt1");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1473,12 +1473,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ificmplt2.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ificmplt2");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1497,12 +1497,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ificmpne1.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ificmpne1");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1521,12 +1521,12 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ificmpne2.test(pair.first);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ificmpne2");
             initialiseFrameForCompilation(code, "(I)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.push(64, x0);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.push(64, x5);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(1);
@@ -1548,13 +1548,13 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ifge_3.test(pair.first, pair.second) ? 1 : 0;
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifge_3");
             initialiseFrameForCompilation(code, "(II)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.mov32BitConstant(x1, pair.second);
-            masm.push(64, x0, x1);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.mov32BitConstant(x6, pair.second);
+            masm.push(64, x5, x6);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifgt");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(2);
@@ -1573,14 +1573,14 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_ifge_2.test(pair.first, pair.second) ? 1 : 0;
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ifge_2");
             initialiseFrameForCompilation(code, "(II)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.mov32BitConstant(x1, pair.second);
-            masm.push(64, x0);
-            masm.push(64, x1);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.mov32BitConstant(x6, pair.second);
+            masm.push(64, x5);
+            masm.push(64, x6);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(2);
             theCompiler.cleanup();
@@ -1598,14 +1598,14 @@ public class RISCV64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "fcmpl");
         for (Args pair : pairs) {
             int answer = jtt.jasm.BC_fcmpl.test(pair.ffirst, pair.fsecond);
-            tester.setExpectedValue(x0, answer);
+            tester.setExpectedValue(x10, answer);
             byte[] code = getByteArray("test", "jtt.jasm.BC_fcmpl");
             initialiseFrameForCompilation(code, "(FF)I");
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(x0, pair.first);
-            masm.mov32BitConstant(x1, pair.second);
-            masm.push(64, x0);
-            masm.push(64, x1);
+            masm.mov32BitConstant(x5, pair.first);
+            masm.mov32BitConstant(x6, pair.second);
+            masm.push(64, x5);
+            masm.push(64, x6);
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest(2);
             theCompiler.cleanup();

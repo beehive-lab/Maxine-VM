@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -477,7 +477,7 @@ public class JVMTI {
      */
     public static synchronized boolean compiledCodeEventsNeeded(ClassMethodActor classMethodActor) {
         return JVMTIEvents.anyCodeEventsSet() ||
-            (classMethodActor == null ? false : JVMTIBreakpoints.hasBreakpoints(classMethodActor));
+            (classMethodActor != null && JVMTIBreakpoints.hasBreakpoints(classMethodActor));
     }
 
     /**

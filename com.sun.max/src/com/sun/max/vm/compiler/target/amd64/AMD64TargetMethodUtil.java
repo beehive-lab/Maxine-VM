@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -78,9 +78,9 @@ public final class AMD64TargetMethodUtil {
         // This may cause up to 7 nops to be inserted before a call.
         final Address callSiteAddress = callSite.toAddress();
         final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
-        return callSiteAddress.plus(1).isWordAligned() ? true :
-        // last byte of call site:
-                        callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
+        return callSiteAddress.plus(1).isWordAligned()
+                // last byte of call site:
+                || callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
     }
 
     /**

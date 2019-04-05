@@ -21,6 +21,7 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
+import static com.sun.max.vm.MaxineVM.allocationProfiler;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
@@ -110,6 +111,14 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     @INSPECTED
     private LinearAllocationMemoryRegion toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
+
+    public LinearAllocationMemoryRegion getToSpace() {
+        return toSpace;
+    }
+
+    public LinearAllocationMemoryRegion getFromSpace() {
+        return fromSpace;
+    }
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
@@ -565,7 +574,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             final Pointer toOrigin = Layout.cellToOrigin(toCell);
             final Reference toRef = Reference.fromOrigin(toOrigin);
             Layout.writeForwardRef(fromOrigin, toRef);
-
 
             return toRef;
         }

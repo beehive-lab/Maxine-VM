@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -170,7 +170,8 @@ final class JDK_java_lang_Class {
     @SUBSTITUTE
     ClassLoader getClassLoader0() {
         final ClassLoader classLoader = thisClassActor().classLoader;
-        if (classLoader == BootClassLoader.BOOT_CLASS_LOADER) {
+        // Don't return the boot class loader to the application
+        if (classLoader == BootClassLoader.BOOT_CLASS_LOADER && MaxineVM.isRunning()) {
             return null;
         }
         return classLoader;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -32,11 +32,7 @@ typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
 #if os_DARWIN
 #include <unistd.h>
 #include <libgen.h>
-#if (defined JDK7) || (defined JDK8)
 #define LIBRARY_NAME "libjvm.dylib"
-#else
-#define LIBRARY_NAME "libjvmlinkage.dylib"
-#endif
 
 /*
  * On Darwin, there is a fourth argument passed to main whose first element contains the path where the executing

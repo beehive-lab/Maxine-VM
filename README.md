@@ -2,8 +2,9 @@
 
 #### Releases
 
-(See [CHANGELOG](CHANGELOG.md) for more)
+(See [releases](https://github.com/beehive-lab/Maxine-VM/releases) and [CHANGELOG](CHANGELOG.md) for more details)
 
+- 2019-04-05: Maxine VM 2.7.0 Release
 - 2018-12-05: Maxine VM 2.6.0 Release
 - 2018-10-16: Maxine VM 2.5.2 Release
 - 2018-10-16: Maxine VM 2.5.1 Release
@@ -23,11 +24,11 @@ Maxine VM's roadmap can be found [here](https://maxine-vm.readthedocs.io/en/late
 
 #### Publications
 
-For the original Maxine VM please cite:  
-[C. Wimmer et al, “Maxine: An approachable virtual machine for, and in, java”, In ACM TACO 2013.](http://dl.acm.org/citation.cfm?id=2400689&dl=ACM&coll=DL&CFID=748733895&CFTOKEN=73017278)
-
 For Maxine VM >= v2.1 please cite:  
 [Christos Kotselidis, et al. Heterogeneous Managed Runtime Systems: A Computer Vision Case Study. In 13th ACM SIGPLAN/SIGOPS International Conference on Virtual Execution Environments (VEE), 2017.](http://dl.acm.org/citation.cfm?id=3050764)
+
+For the original Maxine VM please cite:  
+[C. Wimmer et al, “Maxine: An approachable virtual machine for, and in, java”, In ACM TACO 2013.](http://dl.acm.org/citation.cfm?id=2400689&dl=ACM&coll=DL&CFID=748733895&CFTOKEN=73017278)
 
 #### Acknowledgments
 

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -284,7 +286,7 @@ public class JVMTIFunctionsGenerator {
         @Override
         public void startFunction(VmEntryFunctionDeclaration decl) {
             super.startFunction(decl);
-            currentMethodEnvChecked = decl.name.equals("SetJVMTIEnv") ? true : false;
+            currentMethodEnvChecked = decl.name.equals("SetJVMTIEnv");
             logArgs = null;
         }
 

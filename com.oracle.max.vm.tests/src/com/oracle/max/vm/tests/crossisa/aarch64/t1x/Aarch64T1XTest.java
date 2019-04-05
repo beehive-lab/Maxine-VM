@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -162,7 +162,7 @@ public class Aarch64T1XTest extends MaxTestCase {
             String optimizingCompilerName = new String("com.oracle.max.vm.ext.c1x.C1X");
             RuntimeCompiler.baselineCompilerOption.setValue(baselineCompilerName);
             RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
-            if (initialised == false) {
+            if (!initialised) {
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);

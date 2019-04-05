@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
@@ -346,7 +346,7 @@ public class MaxineTesterConfiguration {
 
         imageConfig("vm-output", "-run=com.oracle.max.vm.tests.vm.output");
 
-        maxvmConfig("std", "-Xms2g", "-Xmx2g");
+        maxvmConfig("std", "-Xms1g", "-Xmx1g");
         maxvmConfig("eviction1000", "-Xms2g", "-Xmx2g", "-XX:CodeCacheContentionFrequency=1000");
         maxvmConfig("eviction100", "-Xms2g", "-Xmx2g", "-XX:CodeCacheContentionFrequency=100");
         maxvmConfig("eviction10", "-Xms2g", "-Xmx2g", "-XX:CodeCacheContentionFrequency=10");

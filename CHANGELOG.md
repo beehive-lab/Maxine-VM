@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2019-04-05
+
+### Added
+
+- Various new RISC-V instructions in assembler (mostly regarding floating points)
+- C1X for RISC-V
+- C1X test cases for RISC-V
+- RISC-V partial image build through cross-compilation
+- Allocation Profiler (-XX:+AllocationProfilerAll -XX:+AllocationProfilerDump) gathers stats about object allocations
+- Fine grain allocation profiling with -XX:AllocationProfilerEntryPoint -XX:AllocationProfilerExitPoint
+- -XX:+LogCompiledMethods to print all runtime compiled methods in the application
+- New Jenkinsfile for running benchmarks
+- CircleCI configuration
+- Dockerfile to create docker images for running and developing Maxine VM
+- Dockerization of Continuous Integration
+
+### Fixed
+
+- Reflection.getCallerClass()
+- mx gen and jni code generation
+- Reduced output of mx build
+- Simplified conditional and boolean expressions (refactoring)
+- Update Cross-ISA infrastructure to use newer tools
+- Documentation refactoring and update
+- MacOS support (with OpenJDK 8u181)
+
 ## [2.6.0] - 2018-12-05
 
 ### Added

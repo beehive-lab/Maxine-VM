@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017-2018, APT Group, School of Computer Science,
+# Copyright (c) 2017-2019, APT Group, School of Computer Science,
 # The University of Manchester. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
@@ -99,6 +99,11 @@ suite = {
         "ASMUTIL": {
             "sha1": "9d5ed2a22332f928c29ce88a2cfb44340313f33e",
             "path": "lib/asm-util-6.0-maxine.jar",
+        },
+
+        "JNUMAUTILS": {
+            "sha1": "425952b1dd9f15bb8d0d77577ef5917f44a7dc84",
+            "path": "lib/jnumautils-0.1-SNAPSHOT.jar",
         },
 
     },
@@ -317,6 +322,7 @@ suite = {
                 "com.oracle.max.asm",
                 "com.oracle.max.criutils",
                 "JDK_TOOLS",
+                "JNUMAUTILS",
             ],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",

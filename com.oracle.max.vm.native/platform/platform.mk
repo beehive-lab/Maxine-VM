@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017-2018, APT Group, School of Computer Science,
+# Copyright (c) 2017-2019, APT Group, School of Computer Science,
 # The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -18,6 +18,12 @@
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
+
+# Print verbose output only when MX_VERBOSE is set to y (i.e. mx -V command is used)
+ifneq ($(MX_VERBOSE), y)
+    AT := @
+    MAKE := $(MAKE) -s
+endif
 
 # Currently all Maxine target implementations are 64 bit.
 # This is where you might change that for the native code; TARGET_WORD_SIZE is interpreted in word.h
@@ -69,7 +75,7 @@ ifeq ($(TARGETOS),Darwin)
     OS := darwin
     DARWIN_GCC_MFLAG :=
     ifeq ($(TARGETISA),i386)
-        mach := $(shell ls /usr/include/mach/x86_64)
+        mach := $(shell ls /usr/include/mach/x86_64 2> /dev/null)
         ifneq ($(mach), )
             DARWIN_GCC_MFLAG := -m64
             ISA := amd64

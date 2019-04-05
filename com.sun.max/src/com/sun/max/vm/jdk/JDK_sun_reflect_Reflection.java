@@ -115,6 +115,19 @@ public final class JDK_sun_reflect_Reflection {
     }
 
     /**
+     * Gets the class of the caller.
+     *
+     * @see sun.reflect.Reflection#getCallerClass()
+     * @return the class of the caller at the specified stack depth
+     */
+    @CallerSensitive
+    @SUBSTITUTE
+    @NEVER_INLINE
+    private static Class getCallerClass() {
+        return getCallerClass(-1);
+    }
+
+    /**
      * Gets the class of the caller at a specified number of stack frames depth.
      *
      * @see sun.reflect.Reflection#getCallerClass(int)
