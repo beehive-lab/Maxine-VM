@@ -850,8 +850,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                     asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 } else {
                     int startPos = buf.position();
-                    asm.mov64BitConstant(scratch1, offset);
-                    asm.add(64, scratch, scratch, scratch1);
+                    asm.mov64BitConstant(scratch2, offset);
+                    asm.add(64, scratch, scratch, scratch2);
                     int endPos = buf.position();
                     assert endPos - startPos <= RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS * RISCV64MacroAssembler.INSTRUCTION_SIZE : endPos - startPos;
                 }
