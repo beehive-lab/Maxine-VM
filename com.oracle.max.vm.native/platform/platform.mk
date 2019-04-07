@@ -64,7 +64,10 @@ ifeq ($(TARGETOS),Darwin)
     TARGETISA ?= $(shell uname -p)
 endif # Darwin
 ifeq ($(TARGETOS),Linux)
-    TARGETISA ?= $(shell uname -m)
+    # AAA
+    # TARGETISA ?= $(shell uname -m)
+    # TARGETISA := aarch64
+    TARGETISA := riscv64
 endif # Linux
 ifeq ($(TARGETOS),SunOS)
     TARGETISA := $(shell isainfo -n)
@@ -106,6 +109,10 @@ ifeq ($(TARGETOS),Linux)
     endif
     ifeq ($(TARGETISA), aarch64)
         ISA := aarch64
+    endif
+    # AAA
+    ifeq ($(TARGETISA), riscv64)
+        ISA := riscv64
     endif
     ifeq ($(TARGETISA), armv7l)
         ISA := arm
@@ -233,10 +240,13 @@ ifeq ($(OS),darwin)
 endif
 
 ifeq ($(OS),linux)
-    ifneq "$(findstring def, $(origin CC))" ""
-        # origin of CC is either undefined or default, so set it here
-        CC = gcc
-    endif
+    # AAA
+    # ifneq "$(findstring def, $(origin CC))" ""
+    #     # origin of CC is either undefined or default, so set it here
+    #     CC = gcc
+    # endif
+    # CC = aarch64-linux-gnu-gcc
+    CC = riscv64-linux-gnu-gcc
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
         CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK) $(OTHER_CFLAGS)

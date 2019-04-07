@@ -31,6 +31,7 @@
 #define isa_POWER              0
 #define isa_ARM                0
 #define isa_AARCH64            0
+#define isa_RISCV64            0
 
 #if defined(__sparc) || defined(sparc)
 #   undef  isa_SPARC
@@ -132,6 +133,22 @@
     typedef aarch64_OsTeleStateRegisters isa_OsTeleStateRegisters;
     typedef struct aarch64_CanonicalStateRegisters isa_CanonicalStateRegistersStruct;
     typedef aarch64_CanonicalStateRegisters isa_CanonicalStateRegisters;
+#elif defined (__riscv64__) || defined (RISCV64) || defined(riscv64)
+#undef isa_RISCV64
+#define isa_RISCV64 1
+#define isa_IDENTIFIER  RISCV64
+#include "riscv64.h"
+    typedef riscv64_OsTeleIntegerRegisters isa_OsTeleIntegerRegisters;
+    typedef struct riscv64_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
+    typedef riscv64_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
+
+    typedef riscv64_OsTeleFloatingPointRegisters isa_OsTeleFloatingPointRegisters;
+    typedef struct riscv64_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegistersStruct;
+    typedef riscv64_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegisters;
+
+    typedef riscv64_OsTeleStateRegisters isa_OsTeleStateRegisters;
+    typedef struct riscv64_CanonicalStateRegisters isa_CanonicalStateRegistersStruct;
+    typedef riscv64_CanonicalStateRegisters isa_CanonicalStateRegisters;
 #else
 #   error
 #endif

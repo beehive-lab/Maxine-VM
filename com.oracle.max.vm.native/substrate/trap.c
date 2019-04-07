@@ -172,6 +172,8 @@ static Address getInstructionPointer(UContext *ucontext) {
     return ucontext->uc_mcontext.arm_pc;
 #   elif isa_AARCH64
     return ucontext->uc_mcontext.pc;
+#   elif isa_RISCV64
+    return ucontext->uc_mcontext.__gregs[0]; // gregs[0] holds the program counter. Please see https://github.com/riscv/riscv-glibc/blob/riscv-glibc-2.26/sysdeps/unix/sysv/linux/riscv/bits/sigcontext.h
 #   endif
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rip;
@@ -199,6 +201,8 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 	    ucontext->uc_mcontext.arm_pc = (greg_t) (stub);
 #   elif isa_AARCH64
 	    ucontext->uc_mcontext.pc = (greg_t) stub;
+#   elif isa_RISCV64
+        ucontext->uc_mcontext.__gregs[0] = (greg_t) stub;
 #   endif
 #elif os_MAXVE
     ucontext->rip = (unsigned long) stub;
@@ -454,6 +458,9 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #elif isa_AARCH64
     tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.regs[26]);
     ucontext->uc_mcontext.regs[26] = (Address) dtla;
+#elif isa_RISCV64
+    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.__gregs[30]);
+    ucontext->uc_mcontext.__gregs[30] = (Address) dtla;
 #else
     c_UNIMPLEMENTED();
 #endif

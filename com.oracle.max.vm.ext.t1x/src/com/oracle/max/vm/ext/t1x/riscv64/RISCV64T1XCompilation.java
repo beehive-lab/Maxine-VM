@@ -413,6 +413,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         objectLiterals.add(T1XTargetMethod.PROTECTED);
         int dispPos = buf.position();
         asm.auipc(scratch, 0); // this gets patched by fixup
+        asm.addi(scratch, scratch, 0);
         asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
         asm.str(64, RISCV64.zr, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
@@ -848,13 +849,11 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                     asm.addi(scratch, scratch, (int) offset);
                     asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 } else {
-                    FatalError.unimplemented();
-//                    asm.adr(scratch, 0);
-//                    int startPos = buf.position();
-//                    asm.mov64BitConstant(scratch2, offset);
-//                    asm.add(64, scratch, scratch, scratch2);
-//                    int endPos = buf.position();
-//                    assert endPos - startPos <= RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS * RISCV64MacroAssembler.INSTRUCTION_SIZE : endPos - startPos;
+                    int startPos = buf.position();
+                    asm.mov64BitConstant(scratch2, offset);
+                    asm.add(64, scratch, scratch, scratch2);
+                    int endPos = buf.position();
+                    assert endPos - startPos <= RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS * RISCV64MacroAssembler.INSTRUCTION_SIZE : endPos - startPos;
                 }
             } else {
                 throw new InternalError("Unknown PatchInfoRISCV64." + tag);
