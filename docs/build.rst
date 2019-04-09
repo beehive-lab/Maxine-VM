@@ -7,9 +7,28 @@ The easiest way to build and use Maxine is through the ``beehivelab/maxine-dev``
 This image comes with all dependencies installed and configured.
 You only need to get the latest maxine sources and build them through the container.
 
+Creating the docker container
+-----------------------------
 
-Prerequisites
--------------
+To create a docker container from the ``beehivelab/maxine-dev`` docker image run::
+
+    docker create \
+        -p 9873:873 \
+        --mount src="/tmp/.X11-unix",target="/tmp/.X11-unix",type=bind \
+        -e DISPLAY=unix$DISPLAY --cap-add=SYS_PTRACE \
+        --name maxine-dev -ti beehivelab/maxine-dev
+
+This will create a container named ``maxine-dev``.
+
+- ``-p 9873:873`` maps port 9873 of the host to port 873 of the docker container.
+- ``--mount src="/tmp/.X11-unix",target="/tmp/.X11-unix",type=bind`` mounts the host X11 socket to the container socket.
+- ``-e DISPLAY=unix$DISPLAY`` passes in the ``DISPLAY`` environment variable.
+- ``--cap-add=SYS_PTRACE`` enables ``ptrace`` capability for the container.
+- ``--name maxine-dev`` names the new image so that it can later be referenced (to start it, stop it, attach to it etc.).
+- ``-ti`` instructs docker to create an interactive session with a pseudo-tty, to allow us to interact with the container.
+
+Initializing the container
+--------------------------
 
 The docker image expects the source code to be in the layout shown below::
 
@@ -24,31 +43,20 @@ To get the source code in this layout execute::
     $ git clone https://github.com/graalvm/mx.git maxine-src/mx
     $ git clone https://github.com/beehive-lab/Maxine-VM.git maxine-src/maxine
 
-Creating the docker container
------------------------------
+Then start the container (on a different terminal) with::
 
-From the directory ``maxine-src``, that we created in the previous step, run:
+    docker start -i maxine-dev
 
-::
+Return back to the main terminal and copy the ``maxine-src`` directory to the container using::
 
-    docker create -u=$(id -u):$(id -g) \
-        --mount src="$(pwd)",target="/maxine-src",type=bind \
-        --mount src="$HOME/.mx",target="/.mx",type=bind \
-        --mount src="/tmp/.X11-unix",target="/tmp/.X11-unix",type=bind \
-        -e DISPLAY=unix$DISPLAY --cap-add=SYS_PTRACE \
-        --name maxine-dev -ti beehivelab/maxine-dev
+    rsync -avP maxine-src --delete rsync://localhost:9873/root/
 
-This will create a container named ``maxine-dev``.
+Optionally copy over your ``~/.mx`` directory as well
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- ``-u=$(id -u):$(id -g)`` instructs docker to write and read files as the current user instead of root which is the default.
-- ``--mount src="$(pwd)",target="/maxine-src",type=bind`` essentially mounts the current directory to the docker container under the `/maxine-src` directory.
-  Similarly, `--mount src="$HOME/.mx",target="/.mx",type=bind` does the same for the `~/.mx` directory.
-  Any changes performed to mounted folders outside the docker container are visible in the container and vice versa.
-- ``--mount src="/tmp/.X11-unix",target="/tmp/.X11-unix",type=bind`` mounts the host X11 socket to the container socket.
-- ``-e DISPLAY=unix$DISPLAY`` passes in the ``DISPLAY`` environment variable.
-- ``--cap-add=SYS_PTRACE`` enables ``ptrace`` capability for the container.
-- ``--name maxine-dev`` names the new image so that it can later be referenced (to start it, stop it, attach to it etc.).
-- ``-ti`` instructs docker to create an interactive session with a pseudo-tty, to allow us to interact with the container.
+If you use ``mx`` locally as well you can use the same cache to avoid fetching again large files::
+
+    rsync -avP ~/.mx --delete rsync://localhost:9873/root/
 
 Using the ``maxine-dev`` container
 ----------------------------------
@@ -58,6 +66,14 @@ This will start the container and open a ``bash`` shell in it.
 From this shell you can build and run maxine.
 
 To exit the shell and stop the container type ``Ctrl-D``.
+
+Keeping your data on the host in sync with your data on the docker container
+----------------------------------------------------------------------------
+
+If you use the container for development purposes you most probably will be interested in editing the source code on the host while building and running on the docker container.
+To automatically synchronize your files from the host to the container use::
+
+    fswatch -0 maxine-src | xargs -0 -n 1 -I {} rsync -avP maxine-src --delete rsync://localhost:9873/root/
 
 Build
 -----

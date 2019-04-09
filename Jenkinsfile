@@ -3,7 +3,7 @@ pipeline {
         dockerfile {
             filename 'Dockerfile'
             dir 'docker'
-            args '--mount src="$HOME/.mx",target="/.mx",type=bind'
+            args '--mount src="$HOME/.mx",target="/root/.mx",type=bind'
         }
     }
     options {

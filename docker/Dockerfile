@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     make gcc gdb g++ python python2.7 git \
     openjdk-8-jdk \
-    screen \
+    screen rsync \
     && apt-get clean
 
 # Cross-ISA support
@@ -59,7 +59,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends linux-tools-generic \
     && apt-get clean
 
-ENV MAXINE_SRC=/maxine-src
+ENV MAXINE_SRC=/root/maxine-src
 ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
 ENV MAXINE_HOME=$MAXINE_SRC/maxine
 ENV DEFAULT_VM=maxine
@@ -68,6 +68,14 @@ ENV PATH=$PATH:/opt/riscv/bin:$MAXINE_SRC/mx/:$MAXINE_HOME/com.oracle.max.vm.nat
 # You will need to download and install SPECJVM2008 manually to the following directory
 # ENV SPECJVM2008=$MAXINE_SRC/graal/lib/SPECJVM2008
 
+# enable rsync
+RUN sed -i 's/RSYNC_ENABLE=false/RSYNC_ENABLE=true/g' /etc/default/rsync
+# Setup rsync
+ADD ./rsyncd.conf /etc/rsyncd.conf
+
+RUN mkdir /root/.mx
+RUN mkdir -p ${MAXINE_HOME}
+
 WORKDIR $MAXINE_HOME
 
-CMD bash
+CMD service rsync start && bash
