@@ -7,9 +7,8 @@ The easiest way to build and use Maxine is through the ``beehivelab/maxine-dev``
 This image comes with all dependencies installed and configured.
 You only need to get the latest maxine sources and build them through the container.
 
-
-Prerequisites
--------------
+Getting the source code
+-----------------------
 
 The docker image expects the source code to be in the layout shown below::
 
@@ -27,9 +26,12 @@ To get the source code in this layout execute::
 Creating the docker container
 -----------------------------
 
-From the directory ``maxine-src``, that we created in the previous step, run:
+GNU/Linux
+~~~~~~~~~
 
-::
+On GNU/Linux distributions we can simply mount the host directories on the container.
+
+From the directory ``maxine-src``, that we created in the previous step, run::
 
     docker create -u=$(id -u):$(id -g) \
         --mount src="$(pwd)",target="/maxine-src",type=bind \
@@ -49,6 +51,52 @@ This will create a container named ``maxine-dev``.
 - ``--cap-add=SYS_PTRACE`` enables ``ptrace`` capability for the container.
 - ``--name maxine-dev`` names the new image so that it can later be referenced (to start it, stop it, attach to it etc.).
 - ``-ti`` instructs docker to create an interactive session with a pseudo-tty, to allow us to interact with the container.
+
+macOS
+~~~~~
+
+On macOS unfortunately simply mounting host directories on docker containers, although functional, is slow.
+As an alternative we run an rsync daemon on the docker container and rsync the source code from the host to the container.
+
+To create a docker container from the ``beehivelab/maxine-dev`` docker image run::
+
+    docker create \
+        -p 9873:873 \
+        --cap-add=SYS_PTRACE \
+        --name maxine-dev -ti beehivelab/maxine-dev
+
+This will create a container named ``maxine-dev``.
+
+- ``-p 9873:873`` maps port 9873 of the host to port 873 of the docker container.
+- ``--cap-add=SYS_PTRACE`` enables ``ptrace`` capability for the container.
+- ``--name maxine-dev`` names the new image so that it can later be referenced (to start it, stop it, attach to it etc.).
+- ``-ti`` instructs docker to create an interactive session with a pseudo-tty, to allow us to interact with the container.
+
+Initializing the container
+''''''''''''''''''''''''''
+
+Then start the container (on a different terminal) with::
+
+    docker start -i maxine-dev
+
+Return back to the main terminal and copy the ``maxine-src`` directory to the container using::
+
+    rsync -avP maxine-src --delete rsync://localhost:9873/root/
+
+Optionally copy over your ``~/.mx`` directory as well
+'''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+If you use ``mx`` locally as well you can use the same cache to avoid fetching again large files::
+
+    rsync -avP ~/.mx --delete rsync://localhost:9873/root/
+
+Keeping your data on the host in sync with your data on the docker container
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+If you use the container for development purposes you most probably will be interested in editing the source code on the host.
+To automatically synchronize your files from the host to the container use::
+
+    fswatch -0 maxine-src | xargs -0 -n 1 -I {} rsync -avP maxine-src --delete rsync://localhost:9873/root/
 
 Using the ``maxine-dev`` container
 ----------------------------------
@@ -215,7 +263,7 @@ Get the source code
 
 #. Get the Maxine VM source code::
 
-    git clone https://github.com/beehive-lab/Maxine-VM.git maxine
+    git clone --recursive https://github.com/beehive-lab/Maxine-VM.git maxine
 
 This command will create a directory named ``maxine`` with the contents checked out from the git repository.
 
