@@ -7,6 +7,9 @@ The easiest way to build and use Maxine is through the ``beehivelab/maxine-dev``
 This image comes with all dependencies installed and configured.
 You only need to get the latest maxine sources and build them through the container.
 
+.. note::
+    If for some reason using docker is not desirable/possible please refer to the end of this page for instructions on building maxine without docker.
+
 Getting the source code
 -----------------------
 
@@ -149,6 +152,15 @@ To launch the VM (or any other command for that matter) without using ``mx``, th
 
     mx -v helloworld
 
+Creating a Maxine-based JDK
+---------------------------
+
+To create a Maxine-based JDK that can serve as a replacement for OpenJDK or OracleJDK issue::
+
+    mx makejdk
+
+This will create the directory ``$MAXINE_HOME/maxjdk`` which you can now use as the ``JAVA_HOME`` for running java with Maxine.
+
 Profiling
 ---------
 
@@ -201,6 +213,26 @@ In particular, a hot method that contains no loops will not appear in the output
 However, the stack trace will likely show the closest caller that contains a loop (or a system call that will cause the thread to reach a safepoint).
 
 The data is output using the Maxine log mechanism, so can be captured in a file by setting the ``MAXINE_LOG_FILE`` environment variable.
+
+Choice of Optimizing Compiler
+-----------------------------
+
+Maxine provides two optimizing compilers, C1X and Graal.
+The former, an evolution of the Hostpot client compiler, is very stable but no longer under development.
+Graal is more akin to the Hotspot server compiler and is under active development and improvement.
+The default image build still uses C1X as the optimizing compiler, but it is possible to select Graal, both for runtime compilations and for compiling the VM boot image (the latter is currently unstable).
+To build a boot image with Graal as the runtime optimizing compiler, use the following command::
+
+ mx image @c1xgraal
+
+In this case the optimizing compiler is actually a hybrid of C1X and Graal, with C1X being used as a fallback option if the Graal compilation fails.
+Note that the VM boot image is considerably larger (~100MB) with Graal included.
+
+To compile the boot image itself with Graal, do::
+
+ mx image @c1xgraal-boot
+
+The Graal-compiled VM boot image will execute a few simple test programs but currently is not robust enough to be the default.
 
 Building Maxine without docker
 ------------------------------
@@ -266,23 +298,3 @@ Get the source code
     git clone --recursive https://github.com/beehive-lab/Maxine-VM.git maxine
 
 This command will create a directory named ``maxine`` with the contents checked out from the git repository.
-
-Choice of Optimizing Compiler
------------------------------
-
-Maxine provides two optimizing compilers, C1X and Graal.
-The former, an evolution of the Hostpot client compiler, is very stable but no longer under development.
-Graal is more akin to the Hotspot server compiler and is under active development and improvement.
-The default image build still uses C1X as the optimizing compiler, but it is possible to select Graal, both for runtime compilations and for compiling the VM boot image (the latter is currently unstable).
-To build a boot image with Graal as the runtime optimizing compiler, use the following command::
-
- mx image @c1xgraal
-
-In this case the optimizing compiler is actually a hybrid of C1X and Graal, with C1X being used as a fallback option if the Graal compilation fails.
-Note that the VM boot image is considerably larger (~100MB) with Graal included.
-
-To compile the boot image itself with Graal, do::
-
- mx image @c1xgraal-boot
-
-The Graal-compiled VM boot image will execute a few simple test programs but currently is not robust enough to be the default.
