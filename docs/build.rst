@@ -7,9 +7,11 @@ The easiest way to build and use Maxine is through the ``beehivelab/maxine-dev``
 This image comes with all dependencies installed and configured.
 You only need to get the latest maxine sources and build them through the container.
 
+.. note::
+    If for some reason using docker is not desirable/possible please refer to the end of this page for instructions on building maxine without docker.
 
-Prerequisites
--------------
+Getting the source code
+-----------------------
 
 The docker image expects the source code to be in the layout shown below::
 
@@ -27,9 +29,12 @@ To get the source code in this layout execute::
 Creating the docker container
 -----------------------------
 
-From the directory ``maxine-src``, that we created in the previous step, run:
+GNU/Linux
+~~~~~~~~~
 
-::
+On GNU/Linux distributions we can simply mount the host directories on the container.
+
+From the directory ``maxine-src``, that we created in the previous step, run::
 
     docker create -u=$(id -u):$(id -g) \
         --mount src="$(pwd)",target="/maxine-src",type=bind \
@@ -49,6 +54,52 @@ This will create a container named ``maxine-dev``.
 - ``--cap-add=SYS_PTRACE`` enables ``ptrace`` capability for the container.
 - ``--name maxine-dev`` names the new image so that it can later be referenced (to start it, stop it, attach to it etc.).
 - ``-ti`` instructs docker to create an interactive session with a pseudo-tty, to allow us to interact with the container.
+
+macOS
+~~~~~
+
+On macOS unfortunately simply mounting host directories on docker containers, although functional, is slow.
+As an alternative we run an rsync daemon on the docker container and rsync the source code from the host to the container.
+
+To create a docker container from the ``beehivelab/maxine-dev`` docker image run::
+
+    docker create \
+        -p 9873:873 \
+        --cap-add=SYS_PTRACE \
+        --name maxine-dev -ti beehivelab/maxine-dev
+
+This will create a container named ``maxine-dev``.
+
+- ``-p 9873:873`` maps port 9873 of the host to port 873 of the docker container.
+- ``--cap-add=SYS_PTRACE`` enables ``ptrace`` capability for the container.
+- ``--name maxine-dev`` names the new image so that it can later be referenced (to start it, stop it, attach to it etc.).
+- ``-ti`` instructs docker to create an interactive session with a pseudo-tty, to allow us to interact with the container.
+
+Initializing the container
+''''''''''''''''''''''''''
+
+Then start the container (on a different terminal) with::
+
+    docker start -i maxine-dev
+
+Return back to the main terminal and copy the ``maxine-src`` directory to the container using::
+
+    rsync -avP maxine-src --delete rsync://localhost:9873/root/
+
+Optionally copy over your ``~/.mx`` directory as well
+'''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+If you use ``mx`` locally as well you can use the same cache to avoid fetching again large files::
+
+    rsync -avP ~/.mx --delete rsync://localhost:9873/root/
+
+Keeping your data on the host in sync with your data on the docker container
+''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+If you use the container for development purposes you most probably will be interested in editing the source code on the host.
+To automatically synchronize your files from the host to the container use::
+
+    fswatch -0 maxine-src | xargs -0 -n 1 -I {} rsync -avP maxine-src --delete rsync://localhost:9873/root/
 
 Using the ``maxine-dev`` container
 ----------------------------------
@@ -100,6 +151,15 @@ Now let's use Maxine to run a more substantial program::
 To launch the VM (or any other command for that matter) without using ``mx``, the ``-v`` option echoes the commands issued by the mx script::
 
     mx -v helloworld
+
+Creating a Maxine-based JDK
+---------------------------
+
+To create a Maxine-based JDK that can serve as a replacement for OpenJDK or OracleJDK issue::
+
+    mx makejdk
+
+This will create the directory ``$MAXINE_HOME/maxjdk`` which you can now use as the ``JAVA_HOME`` for running java with Maxine.
 
 Profiling
 ---------
@@ -153,6 +213,26 @@ In particular, a hot method that contains no loops will not appear in the output
 However, the stack trace will likely show the closest caller that contains a loop (or a system call that will cause the thread to reach a safepoint).
 
 The data is output using the Maxine log mechanism, so can be captured in a file by setting the ``MAXINE_LOG_FILE`` environment variable.
+
+Choice of Optimizing Compiler
+-----------------------------
+
+Maxine provides two optimizing compilers, C1X and Graal.
+The former, an evolution of the Hostpot client compiler, is very stable but no longer under development.
+Graal is more akin to the Hotspot server compiler and is under active development and improvement.
+The default image build still uses C1X as the optimizing compiler, but it is possible to select Graal, both for runtime compilations and for compiling the VM boot image (the latter is currently unstable).
+To build a boot image with Graal as the runtime optimizing compiler, use the following command::
+
+ mx image @c1xgraal
+
+In this case the optimizing compiler is actually a hybrid of C1X and Graal, with C1X being used as a fallback option if the Graal compilation fails.
+Note that the VM boot image is considerably larger (~100MB) with Graal included.
+
+To compile the boot image itself with Graal, do::
+
+ mx image @c1xgraal-boot
+
+The Graal-compiled VM boot image will execute a few simple test programs but currently is not robust enough to be the default.
 
 Building Maxine without docker
 ------------------------------
@@ -215,26 +295,6 @@ Get the source code
 
 #. Get the Maxine VM source code::
 
-    git clone https://github.com/beehive-lab/Maxine-VM.git maxine
+    git clone --recursive https://github.com/beehive-lab/Maxine-VM.git maxine
 
 This command will create a directory named ``maxine`` with the contents checked out from the git repository.
-
-Choice of Optimizing Compiler
------------------------------
-
-Maxine provides two optimizing compilers, C1X and Graal.
-The former, an evolution of the Hostpot client compiler, is very stable but no longer under development.
-Graal is more akin to the Hotspot server compiler and is under active development and improvement.
-The default image build still uses C1X as the optimizing compiler, but it is possible to select Graal, both for runtime compilations and for compiling the VM boot image (the latter is currently unstable).
-To build a boot image with Graal as the runtime optimizing compiler, use the following command::
-
- mx image @c1xgraal
-
-In this case the optimizing compiler is actually a hybrid of C1X and Graal, with C1X being used as a fallback option if the Graal compilation fails.
-Note that the VM boot image is considerably larger (~100MB) with Graal included.
-
-To compile the boot image itself with Graal, do::
-
- mx image @c1xgraal-boot
-
-The Graal-compiled VM boot image will execute a few simple test programs but currently is not robust enough to be the default.
