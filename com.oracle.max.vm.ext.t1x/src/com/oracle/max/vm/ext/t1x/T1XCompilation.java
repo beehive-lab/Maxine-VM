@@ -59,6 +59,7 @@ import com.sun.max.vm.verifier.*;
 public abstract class T1XCompilation {
 
     private static boolean debugMethodsEnabled = false;
+    protected static DebugMethodWriter debugMethodWriter;
     protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
 
     protected static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();
@@ -98,8 +99,6 @@ public abstract class T1XCompilation {
             offset += JVMS_SLOT_SIZE;
         }
     }
-
-    protected DebugMethodWriter debugMethodWriter;
 
     /**
      * Gets the effective address of a word-sized operand stack slot.
