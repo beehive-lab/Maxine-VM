@@ -339,7 +339,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             int a = debugMethodWriter.getNextID();
             asm.movl(scratch, a);
             try {
-                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
+                debugMethodWriter.append(method.holder() + "." + method.name(), a);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -368,7 +368,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         asm.ret(stackAmountInBytes);
         if (T1XOptions.DebugMethods) {
             try {
-                debugMethodWriter.flushDebugMethod();
+                debugMethodWriter.flush();
             } catch (Exception e) {
                 e.printStackTrace();
             }

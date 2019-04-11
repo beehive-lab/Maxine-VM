@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -518,7 +518,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             int a = debugMethodWriter.getNextID();
             asm.movImm32(ConditionFlag.Always, ARMV7.r12, a);
             try {
-                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
+                debugMethodWriter.append(method.holder() + "." + method.name(), a);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -550,7 +550,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.mov(ConditionFlag.Always, false, ARMV7.PC, ARMV7.r8);
         if (T1XOptions.DebugMethods) {
             try {
-                debugMethodWriter.flushDebugMethod();
+                debugMethodWriter.flush();
             } catch (Exception e) {
                 e.printStackTrace();
             }

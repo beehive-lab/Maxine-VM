@@ -1345,7 +1345,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitDebugID(String methodName, String inlinedMethodName) {
-        debugMethodWriter.appendDebugMethod(inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position() + " (inlined)", methodID);
+        debugMethodWriter.append(inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position() + " (inlined)", methodID);
     }
 
     @Override
@@ -1692,7 +1692,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
                     if (C1XOptions.DebugMethods) {
                         masm.mov32BitConstant(masm.scratchRegister, methodID);
-                        debugMethodWriter.appendDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
+                        debugMethodWriter.append(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
                     }
                     break;
                 }
