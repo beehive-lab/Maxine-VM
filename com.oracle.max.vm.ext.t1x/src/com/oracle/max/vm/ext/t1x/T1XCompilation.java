@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
@@ -59,7 +59,6 @@ import com.sun.max.vm.verifier.*;
 public abstract class T1XCompilation {
 
     private static boolean debugMethodsEnabled = false;
-    private static boolean debugMarkers;
     protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
 
     protected static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();
@@ -84,8 +83,6 @@ public abstract class T1XCompilation {
     protected static final CiAddress[] FP_SLOTS_CACHE = new CiAddress[(FP_SLOTS_CACHE_END_OFFSET - FP_SLOTS_CACHE_START_OFFSET) / JVMS_SLOT_SIZE];
 
     static {
-        String value = System.getenv("ENABLE_DEBUG_METHODS_ID");
-        debugMarkers = value != null && !value.isEmpty();
         for (int i = 0; i < SP_WORD_ADDRESSES_CACHE.length; i++) {
             SP_WORD_ADDRESSES_CACHE[i] = new CiAddress(WordUtil.archKind(), SP, i * JVMS_SLOT_SIZE);
         }
@@ -595,7 +592,7 @@ public abstract class T1XCompilation {
     }
 
     protected void start(T1XTemplateTag tag) {
-        if (debugMarkers) {
+        if (T1XOptions.DebugMethods) {
             assignInt(scratch, tag.ordinal() | (0xbeef << 16));
         }
         T1XTemplate template = getTemplate(tag);
@@ -657,13 +654,13 @@ public abstract class T1XCompilation {
         assert template != null;
         assert assertArgsAreInitialized();
 
-        if (debugMarkers) {
+        if (T1XOptions.DebugMethods) {
             assignInt(scratch, 0xd00dd00d);
         }
 
         emitAndRecordSafepoints(template);
 
-        if (debugMarkers) {
+        if (T1XOptions.DebugMethods) {
             assignInt(scratch, 0xbeefd00d);
         }
 
@@ -708,7 +705,7 @@ public abstract class T1XCompilation {
         }
         template = null;
         initializedArgs = 0;
-        if (debugMarkers) {
+        if (T1XOptions.DebugMethods) {
             assignInt(scratch, 0xdeadd00d);
         }
     }
@@ -2309,7 +2306,7 @@ public abstract class T1XCompilation {
         T1XTemplateTag tag = INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
         do_profileExceptionSeen();
-        if (debugMarkers) {
+        if (T1XOptions.DebugMethods) {
             assignInt(scratch, index | (0xbeaf << 16));
         }
         try {
