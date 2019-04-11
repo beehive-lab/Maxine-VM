@@ -48,9 +48,6 @@ import java.util.Arrays;
 
 public class RISCV64T1XCompilation extends T1XCompilation {
 
-    private DebugMethodWriter debugMethodWriter;
-    private static boolean debugMethodsEnabled = false;
-
     protected final RISCV64MacroAssembler asm;
     final PatchInfoRISCV64 patchInfo;
 
@@ -59,10 +56,6 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         asm = new RISCV64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoRISCV64();
-        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
-            debugMethodWriter = new DebugMethodWriter("t1x");
-            debugMethodsEnabled = true;
-        }
     }
 
     @Override

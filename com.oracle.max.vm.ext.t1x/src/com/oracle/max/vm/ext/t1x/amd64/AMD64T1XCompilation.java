@@ -57,18 +57,12 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     protected final AMD64MacroAssembler asm;
     final PatchInfoAMD64 patchInfo;
-    private DebugMethodWriter debugMethodWriter;
-    private static boolean debugMethodsEnabled = false;
 
     public AMD64T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new AMD64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoAMD64();
-        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
-            debugMethodWriter = new DebugMethodWriter("t1x");
-            debugMethodsEnabled = true;
-        }
     }
 
     public AMD64MacroAssembler getMacroAssembler() {

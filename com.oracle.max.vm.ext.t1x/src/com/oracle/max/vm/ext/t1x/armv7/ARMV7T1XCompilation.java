@@ -60,18 +60,12 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     protected final ARMV7MacroAssembler asm;
     private final PatchInfoARMV7 patchInfo;
-    private DebugMethodWriter debugMethodWriter;
-    private static boolean debugMethodsEnabled = false;
 
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new ARMV7MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
-        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
-            debugMethodWriter = new DebugMethodWriter("t1x");
-            debugMethodsEnabled = true;
-        }
     }
 
     @Override

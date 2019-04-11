@@ -58,6 +58,7 @@ import com.sun.max.vm.verifier.*;
  */
 public abstract class T1XCompilation {
 
+    private static boolean debugMethodsEnabled = false;
     private static boolean debugMarkers;
     protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
 
@@ -100,6 +101,8 @@ public abstract class T1XCompilation {
             offset += JVMS_SLOT_SIZE;
         }
     }
+
+    protected DebugMethodWriter debugMethodWriter;
 
     /**
      * Gets the effective address of a word-sized operand stack slot.
@@ -302,6 +305,10 @@ public abstract class T1XCompilation {
     public T1XCompilation(T1X compiler) {
         this.compiler = compiler;
         this.objectLiterals = new ArrayList<Object>();
+        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
+            debugMethodWriter = new DebugMethodWriter("t1x");
+            debugMethodsEnabled = true;
+        }
     }
 
     /**

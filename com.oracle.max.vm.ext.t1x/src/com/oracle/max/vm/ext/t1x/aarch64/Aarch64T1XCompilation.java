@@ -48,9 +48,6 @@ import com.sun.max.vm.type.*;
 
 public class Aarch64T1XCompilation extends T1XCompilation {
 
-    private DebugMethodWriter debugMethodWriter;
-    private static boolean debugMethodsEnabled = false;
-
     protected final Aarch64MacroAssembler asm;
     final PatchInfoAARCH64 patchInfo;
 
@@ -59,10 +56,6 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         asm = new Aarch64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoAARCH64();
-        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
-            debugMethodWriter = new DebugMethodWriter("t1x");
-            debugMethodsEnabled = true;
-        }
     }
 
     @Override
