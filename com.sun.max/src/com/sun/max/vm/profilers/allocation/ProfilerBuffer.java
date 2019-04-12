@@ -25,8 +25,6 @@ import com.sun.max.memory.VirtualMemory;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Size;
 import com.sun.max.vm.Log;
-import jdk.internal.org.objectweb.asm.Type;
-
 /**
  * This class implements any buffer used by the Allocation Profiler to keep track of the objects.
  *
@@ -41,7 +39,7 @@ import jdk.internal.org.objectweb.asm.Type;
 public class ProfilerBuffer {
 
     Pointer index;
-    public String[] type;
+    Pointer type;
     Pointer size;
     Pointer address;
     Pointer node;
@@ -52,24 +50,46 @@ public class ProfilerBuffer {
 
     public final int sizeOfInt = Integer.SIZE / 8;
     public final int sizeOfLong = Long.SIZE / 8;
+    public static final int maxChars = 200;
+    public static final int sizeOfChar = Character.SIZE / 8;
+
+    /**
+     * A char[] buffer to store the object type off-heap read values
+     */
+    public char[] readStringBuffer;
+    public int readStringBufferLength;
+
+    /**
+     * A primitive representation of null string.
+     */
+    public static final char[] nullValue = {'n','u','l','l', '\0'};
 
     public ProfilerBuffer(int bufSize, String name) {
         this.buffersName = name;
         this.bufferSize = bufSize;
 
-        this.index = allocateIntArrayOffHeap(bufSize);
-        type = new String[bufSize];
-        size = allocateIntArrayOffHeap(bufSize);
-        address = allocateLongArrayOffHeap(bufSize);
-        node = allocateIntArrayOffHeap(bufSize);
+        this.readStringBuffer = new char[maxChars];
+        this.readStringBufferLength = 0;
 
+        this.index = allocateIntArrayOffHeap(bufSize);
+        this.type = allocateStringArrayOffHeap(bufSize);
+        this.size = allocateIntArrayOffHeap(bufSize);
+        this.address = allocateLongArrayOffHeap(bufSize);
+        this.node = allocateIntArrayOffHeap(bufSize);
+
+        //no initialization needed
+        /*
         for (int i = 0; i < bufSize; i++) {
             writeIndex(i, 0);
-            type[i] = "null";
+            //type[i] = "null";
+            //Log.println("before writestring");
+            //writeString(i, "null1".toCharArray());
+            writeType(i, nullValue);
             writeSize(i, 0);
             writeAddr(i, 0);
             writeNode(i, -1);
         }
+        */
 
         currentIndex = 0;
     }
@@ -80,6 +100,35 @@ public class ProfilerBuffer {
 
     public Pointer allocateLongArrayOffHeap(int size) {
         return VirtualMemory.allocate(Size.fromInt(size * sizeOfLong), VirtualMemory.Type.DATA);
+    }
+
+    public Pointer allocateStringArrayOffHeap(int size) {
+        return VirtualMemory.allocate(Size.fromInt(size * maxChars * sizeOfChar), VirtualMemory.Type.DATA);
+
+    }
+
+    public void writeType(int position, char[] value) {
+        int stringIndex = position * maxChars * sizeOfChar;
+        int i = 0;
+        while (value[i] != '\0') {
+            type.setChar(stringIndex + i, value[i]);
+            i++;
+        }
+        type.setChar(stringIndex + i, '\0');
+    }
+
+    public char[] readType(int position) {
+        int stringIndex = position * maxChars * sizeOfChar;
+        int i = 0;
+        char c = type.getChar(stringIndex + i);
+        while (c != '\0') {
+            readStringBuffer[i] =  c;
+            i++;
+            c = type.getChar(stringIndex + i);
+        }
+        readStringBuffer[i] = '\0';
+        readStringBufferLength = i;
+        return readStringBuffer;
     }
 
     public void writeIndex(int position, int value) {
@@ -116,9 +165,9 @@ public class ProfilerBuffer {
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int index, String type, int size, long address) {
+    public void record(int index, char[] type, int size, long address) {
         writeIndex(currentIndex, index);
-        this.type[currentIndex] = type;
+        writeType(currentIndex, type);
         writeSize(currentIndex, size);
         writeAddr(currentIndex, address);
         currentIndex++;
@@ -126,9 +175,9 @@ public class ProfilerBuffer {
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int index, String type, int size, long address, int node) {
+    public void record(int index, char[] type, int size, long address, int node) {
         writeIndex(currentIndex, index);
-        this.type[currentIndex] = type;
+        writeType(currentIndex, type);
         writeSize(currentIndex, size);
         writeAddr(currentIndex, address);
         writeNode(currentIndex, node);
@@ -143,9 +192,14 @@ public class ProfilerBuffer {
         for (int i = 0; i < currentIndex; i++) {
             Log.print(getIndex(i));
             Log.print(";");
-            Log.print(type[i]);
+
+            readType(i);
+            for (int j = 0; j < readStringBufferLength; j++) {
+                Log.print(readStringBuffer[j]);
+            }
             // print a semicolon only for primitive types because the rest are already followed by one
-            if (type[i].charAt(type[i].length() - 1) != ';') {
+            if (readStringBuffer[readStringBufferLength-1] != ';') {
+
                 Log.print(";");
             }
             Log.print(getSize(i));
@@ -172,7 +226,7 @@ public class ProfilerBuffer {
 
     public void cleanBufferCell(int i) {
         writeIndex(i, 0);
-        this.type[i] = "null";
+        writeType(i, nullValue);
         writeSize(i, 0);
         writeAddr(i, 0);
         writeNode(i, -1);

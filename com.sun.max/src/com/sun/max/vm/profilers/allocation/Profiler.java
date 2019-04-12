@@ -74,6 +74,12 @@ public class Profiler {
     public static int totalSurvSize = 0;
 
     /**
+     * A buffer to transform a String object to char array.
+     */
+    public static char[] charArrayBuffer;
+    public static int charArrayBufferLength;
+
+    /**
      * The following two variables are used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The iteration
      * is calculated by the number of System.gc() calls. The MaxineVM.profileThatObject()
@@ -146,6 +152,8 @@ public class Profiler {
         survivors1 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No1");
         survivors2 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No2");
 
+        charArrayBuffer = new char[ProfilerBuffer.maxChars];
+
         profilingCycle = 1;
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Initialization Complete.");
@@ -176,6 +184,23 @@ public class Profiler {
         return iteration >= WarmupThreshold;
     }
 
+    public void asCharArray(String str) {
+        int i = 0;
+        while(i < str.length()) {
+            charArrayBuffer[i] = str.charAt(i);
+            i++;
+        }
+        charArrayBuffer[i] = '\0';
+        charArrayBufferLength = i;
+    }
+
+    public void printCharArrayBuffer(char[] array, int length) {
+        for(int i = 0; i < length; i++){
+            Log.print(array[i]);
+        }
+        Log.println("");
+    }
+
     /**
      * This method is called when a profiled object is allocated.
      */
@@ -187,7 +212,9 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        newObjects.record(uniqueId, type, size, address);
+        //transform the object type from String to char[] and pass the charArrayBuffer[] to record
+        asCharArray(type);
+        newObjects.record(uniqueId, charArrayBuffer, size, address);
         uniqueId++;
         totalNewSize = totalNewSize + size;
         unlock(lockDisabledSafepoints);
@@ -242,10 +269,11 @@ public class Profiler {
             if (Heap.isSurvivor(address)) {
                 //object is alive -> update it's address -> copy it to to buffer
                 long newAddr = Heap.getForwardedAddress(address);
-                to.record(from.getIndex(i), from.type[i], from.getSize(i), newAddr, from.getNode(i));
+                from.readType(i);
+                to.record(from.getIndex(i), from.readStringBuffer, from.getSize(i), newAddr, from.getNode(i));
                 totalSurvSize = totalSurvSize + from.getSize(i);
             }
-            from.cleanBufferCell(i);
+            //from.cleanBufferCell(i);
         }
     }
 
