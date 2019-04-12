@@ -412,7 +412,7 @@ def inspect(args):
     if mx.get_os() == 'darwin' and not remote:
         # The -E option propagates the environment variables into the sudo process
         mx.run(['sudo', '-E', '-p',
-                'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd, cwd=cwd)
+                'Debugging is a privileged operation on Mac OS X. Please enter your "sudo" password:'] + cmd, cwd=cwd)
     else:
         mx.run(cmd, cwd=cwd, env=ldenv)
 
