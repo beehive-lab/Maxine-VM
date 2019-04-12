@@ -305,7 +305,7 @@ public final class C1XCompilation {
 
             if (C1XOptions.DebugMethods) {
                 try {
-                    lirAssembler.getDebugMethodWriter().flushDebugMethod();
+                    lirAssembler.getDebugMethodWriter().flush();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

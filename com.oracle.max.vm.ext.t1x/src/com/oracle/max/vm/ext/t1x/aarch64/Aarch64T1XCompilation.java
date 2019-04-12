@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -48,9 +48,6 @@ import com.sun.max.vm.type.*;
 
 public class Aarch64T1XCompilation extends T1XCompilation {
 
-    private DebugMethodWriter debugMethodWriter;
-    private static boolean debugMethodsEnabled = false;
-
     protected final Aarch64MacroAssembler asm;
     final PatchInfoAARCH64 patchInfo;
 
@@ -59,10 +56,6 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         asm = new Aarch64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoAARCH64();
-        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
-            debugMethodWriter = new DebugMethodWriter("t1x");
-            debugMethodsEnabled = true;
-        }
     }
 
     @Override
@@ -405,7 +398,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
             int a = debugMethodWriter.getNextID();
             asm.mov64BitConstant(scratch, a);
             try {
-                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
+                debugMethodWriter.append(method.holder() + "." + method.name(), a);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -434,7 +427,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         asm.ret(Aarch64.linkRegister);
         if (T1XOptions.DebugMethods) {
             try {
-                debugMethodWriter.flushDebugMethod();
+                debugMethodWriter.flush();
             } catch (Exception e) {
                 e.printStackTrace();
             }

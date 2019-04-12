@@ -2039,7 +2039,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitDebugID(String methodName, String inlinedMethodName) {
         assert C1XOptions.DebugMethods;
-        debugMethodWriter.appendDebugMethod(inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position(), methodID);
+        debugMethodWriter.append(inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position(), methodID);
     }
 
     @Override
@@ -2387,7 +2387,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
                     if (C1XOptions.DebugMethods) {
                         masm.movImmediate(ConditionFlag.Always, ARMV7.r12, methodID);
-                        debugMethodWriter.appendDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
+                        debugMethodWriter.append(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
                     }
                     break;
                 }

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -20,9 +22,9 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.max.vm.ext.t1x.amd64;
+package com.sun.max.config.vm.ext.t1x.amd64;
 
-import static com.oracle.max.vm.ext.t1x.Package.*;
+import static com.sun.max.config.vm.ext.t1x.Package.*;
 import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.config.*;
@@ -31,6 +33,10 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.*;
 
 public class Package extends BootImagePackage {
+    public Package() {
+        super("com.oracle.max.vm.ext.t1x.amd64.**");
+    }
+
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         if (platform().isa == ISA.AMD64) {
