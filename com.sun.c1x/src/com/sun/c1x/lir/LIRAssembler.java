@@ -56,8 +56,6 @@ public abstract class LIRAssembler {
 
     protected static DebugMethodWriter debugMethodWriter;
     protected int methodID;
-    private static boolean debugMethodsEnabled = false;
-
 
     protected static class SlowPath {
         public final LIRXirInstruction instruction;
@@ -71,6 +69,10 @@ public abstract class LIRAssembler {
         }
     }
 
+    static {
+        debugMethodWriter = new DebugMethodWriter("c1x");
+    }
+
     public LIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
         this.compilation = compilation;
         this.tasm = tasm;
@@ -78,13 +80,7 @@ public abstract class LIRAssembler {
         this.frameMap = compilation.frameMap();
         this.branchTargetBlocks = new ArrayList<BlockBegin>();
         this.xirSlowPath = new ArrayList<SlowPath>();
-        if (C1XOptions.DebugMethods) {
-            if (!debugMethodsEnabled) {
-                debugMethodWriter = new DebugMethodWriter("c1x");
-                debugMethodsEnabled = true;
-            }
-            methodID = debugMethodWriter.getNextID();
-        }
+        methodID = debugMethodWriter.getNextID();
     }
 
     protected RiMethod method() {

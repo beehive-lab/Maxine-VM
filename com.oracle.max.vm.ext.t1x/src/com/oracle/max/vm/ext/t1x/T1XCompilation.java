@@ -58,7 +58,6 @@ import com.sun.max.vm.verifier.*;
  */
 public abstract class T1XCompilation {
 
-    private static boolean debugMethodsEnabled = false;
     protected static DebugMethodWriter debugMethodWriter;
     protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
 
@@ -295,16 +294,16 @@ public abstract class T1XCompilation {
      */
     private boolean isDeopt;
 
+    static {
+        debugMethodWriter = new DebugMethodWriter("t1x");
+    }
+
     /**
      * Creates a compilation object.
      */
     public T1XCompilation(T1X compiler) {
         this.compiler = compiler;
         this.objectLiterals = new ArrayList<Object>();
-        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
-            debugMethodWriter = new DebugMethodWriter("t1x");
-            debugMethodsEnabled = true;
-        }
     }
 
     /**
