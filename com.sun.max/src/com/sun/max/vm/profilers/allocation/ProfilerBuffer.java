@@ -130,6 +130,7 @@ public class ProfilerBuffer {
         while (charIndex < value.length) {
             c = value[charIndex];
             if (c == '\0') {
+                type.setChar(writeIndex, c);
                 break;
             }
             if (writeIndex < sizeInBytes) {
@@ -224,12 +225,17 @@ public class ProfilerBuffer {
             Log.print(getIndex(i));
             Log.print(";");
 
+            // read and store the string in the readStringBuffer.
             readType(i);
-            for (int j = 0; j < readStringBufferLength; j++) {
+            
+            // print the string char by char
+            int j = 0;
+            while (readStringBuffer[j] != '\0') {
                 Log.print(readStringBuffer[j]);
+                j++;
             }
             // print a semicolon only for primitive types because the rest are already followed by one
-            if (readStringBuffer[readStringBufferLength - 1] != ';') {
+            if (readStringBuffer[j - 1] != ';') {
                 Log.print(";");
             }
             Log.print(getSize(i));
