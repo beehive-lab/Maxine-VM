@@ -64,6 +64,13 @@ public class ProfilerBuffer {
      */
     public static final char[] nullValue = {'n','u','l','l', '\0'};
 
+
+    int allocSize;
+    int pageSize;
+    int numOfAllocPages;
+    int sizeInBytes;
+    long endAddr;
+
     public ProfilerBuffer(int bufSize, String name) {
         this.buffersName = name;
         this.bufferSize = bufSize;
@@ -77,19 +84,19 @@ public class ProfilerBuffer {
         this.address = allocateLongArrayOffHeap(bufSize);
         this.node = allocateIntArrayOffHeap(bufSize);
 
-        //no initialization needed
-        /*
-        for (int i = 0; i < bufSize; i++) {
-            writeIndex(i, 0);
-            //type[i] = "null";
-            //Log.println("before writestring");
-            //writeString(i, "null1".toCharArray());
-            writeType(i, nullValue);
-            writeSize(i, 0);
-            writeAddr(i, 0);
-            writeNode(i, -1);
-        }
-        */
+        /**
+         * Off-heap String array useful values.
+         * Since the end address is not available, we need to calculate it.
+         * The VirtualMemory.allocate() method calls the mmap sys call under the hood,
+         * so the space requests need to be in bytes.
+         * The mmap sys call allocates space in memory page batches.
+         * Memory page size in linux is 4kB.
+         */
+        allocSize = bufSize * maxChars * sizeOfChar;
+        pageSize = 4096;
+        numOfAllocPages = allocSize / pageSize + 1;
+        sizeInBytes = numOfAllocPages * pageSize;
+        endAddr = type.toLong() + (long) sizeInBytes;
 
         currentIndex = 0;
     }
@@ -107,28 +114,45 @@ public class ProfilerBuffer {
 
     }
 
-    public void writeType(int position, char[] value) {
-        int stringIndex = position * maxChars * sizeOfChar;
-        int i = 0;
-        while (value[i] != '\0') {
-            type.setChar(stringIndex + i, value[i]);
-            i++;
+    public void writeType(int index, char[] value) {
+        int stringIndex = index * maxChars;
+        int charIndex = 0;
+        int writeIndex = stringIndex + charIndex;
+
+        char c;
+
+        while(charIndex < value.length){
+            c = value[charIndex];
+            if (c == '\0') {
+                break;
+            }
+            if (writeIndex < sizeInBytes) {
+                type.setChar(writeIndex, c);
+            } else {
+                Log.print("Off-heap String array overflow detected at index: ");
+                Log.println(writeIndex);
+                Log.print("Suggestion: Increase the Buffer Size (use bufferSize <num> option).");
+            }
+            charIndex ++;
+            writeIndex = stringIndex + charIndex;
         }
-        type.setChar(stringIndex + i, '\0');
     }
 
-    public char[] readType(int position) {
-        int stringIndex = position * maxChars * sizeOfChar;
-        int i = 0;
-        char c = type.getChar(stringIndex + i);
-        while (c != '\0') {
-            readStringBuffer[i] =  c;
-            i++;
-            c = type.getChar(stringIndex + i);
+    public void readType(int index) {
+        int stringIndex = index * maxChars;
+        int charIndex = 0;
+        int readIndex = stringIndex + charIndex;
+
+        char c = type.getChar(readIndex);
+
+        while(c!='\0'){
+            readStringBuffer[charIndex] = c;
+            charIndex ++;
+            readIndex = stringIndex + charIndex;
+            c = type.getChar(readIndex);
         }
-        readStringBuffer[i] = '\0';
-        readStringBufferLength = i;
-        return readStringBuffer;
+        readStringBuffer[charIndex] = c;
+        readStringBufferLength = charIndex;
     }
 
     public void writeIndex(int position, int value) {
