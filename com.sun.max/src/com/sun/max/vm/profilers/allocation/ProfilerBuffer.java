@@ -45,7 +45,7 @@ public class ProfilerBuffer {
     Pointer node;
 
     public String buffersName;
-    public int bufferSize;
+    public long bufferSize;
     public int currentIndex;
 
     public final int sizeOfInt = Integer.SIZE / 8;
@@ -54,7 +54,7 @@ public class ProfilerBuffer {
     public static final int sizeOfChar = Character.SIZE / 8;
 
     /**
-     * A char[] buffer to store the object type off-heap read values
+     * A char[] buffer to store the object type off-heap read values.
      */
     public char[] readStringBuffer;
     public int readStringBufferLength;
@@ -62,16 +62,16 @@ public class ProfilerBuffer {
     /**
      * A primitive representation of null string.
      */
-    public static final char[] nullValue = {'n','u','l','l', '\0'};
+    public static final char[] nullValue = {'n', 'u', 'l', 'l', '\0'};
 
 
-    int allocSize;
-    int pageSize;
-    int numOfAllocPages;
-    int sizeInBytes;
+    long allocSize;
+    long pageSize;
+    long numOfAllocPages;
+    long sizeInBytes;
     long endAddr;
 
-    public ProfilerBuffer(int bufSize, String name) {
+    public ProfilerBuffer(long bufSize, String name) {
         this.buffersName = name;
         this.bufferSize = bufSize;
 
@@ -96,22 +96,28 @@ public class ProfilerBuffer {
         pageSize = 4096;
         numOfAllocPages = allocSize / pageSize + 1;
         sizeInBytes = numOfAllocPages * pageSize;
-        endAddr = type.toLong() + (long) sizeInBytes;
+        endAddr = type.toLong() + sizeInBytes;
 
         currentIndex = 0;
     }
 
-    public Pointer allocateIntArrayOffHeap(int size) {
-        return VirtualMemory.allocate(Size.fromInt(size * sizeOfInt), VirtualMemory.Type.DATA);
+    public Pointer allocateIntArrayOffHeap(long size) {
+        return VirtualMemory.allocate(Size.fromLong(size * sizeOfInt), VirtualMemory.Type.DATA);
     }
 
-    public Pointer allocateLongArrayOffHeap(int size) {
-        return VirtualMemory.allocate(Size.fromInt(size * sizeOfLong), VirtualMemory.Type.DATA);
+    public Pointer allocateLongArrayOffHeap(long size) {
+        return VirtualMemory.allocate(Size.fromLong(size * sizeOfLong), VirtualMemory.Type.DATA);
     }
 
-    public Pointer allocateStringArrayOffHeap(int size) {
-        return VirtualMemory.allocate(Size.fromInt(size * maxChars * sizeOfChar), VirtualMemory.Type.DATA);
+    public Pointer allocateStringArrayOffHeap(long size) {
+        Pointer space = VirtualMemory.allocate(Size.fromLong(size * (long) maxChars * (long) sizeOfChar), VirtualMemory.Type.DATA);
 
+        if (space.isZero()) {
+            Log.print(this.buffersName);
+            Log.print("'s Type Array Allocation Failed.");
+            System.exit(0);
+        }
+        return space;
     }
 
     public void writeType(int index, char[] value) {
@@ -121,7 +127,7 @@ public class ProfilerBuffer {
 
         char c;
 
-        while(charIndex < value.length){
+        while (charIndex < value.length) {
             c = value[charIndex];
             if (c == '\0') {
                 break;
@@ -131,9 +137,10 @@ public class ProfilerBuffer {
             } else {
                 Log.print("Off-heap String array overflow detected at index: ");
                 Log.println(writeIndex);
-                Log.print("Suggestion: Increase the Buffer Size (use bufferSize <num> option).");
+                Log.println("Suggestion: Increase the Buffer Size (use bufferSize <num> option).");
+                break;
             }
-            charIndex ++;
+            charIndex++;
             writeIndex = stringIndex + charIndex;
         }
     }
@@ -145,9 +152,9 @@ public class ProfilerBuffer {
 
         char c = type.getChar(readIndex);
 
-        while(c!='\0'){
+        while (c != '\0') {
             readStringBuffer[charIndex] = c;
-            charIndex ++;
+            charIndex++;
             readIndex = stringIndex + charIndex;
             c = type.getChar(readIndex);
         }
@@ -222,8 +229,7 @@ public class ProfilerBuffer {
                 Log.print(readStringBuffer[j]);
             }
             // print a semicolon only for primitive types because the rest are already followed by one
-            if (readStringBuffer[readStringBufferLength-1] != ';') {
-
+            if (readStringBuffer[readStringBufferLength - 1] != ';') {
                 Log.print(";");
             }
             Log.print(getSize(i));

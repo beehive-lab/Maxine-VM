@@ -96,12 +96,12 @@ public class Profiler {
     /**
      * The size of the Allocation Profiling Buffer.
      */
-    public int allocBufferSize = MINIMUMBUFFERSIZE;
+    public long allocBufferSize = MINIMUMBUFFERSIZE;
 
     /**
      * The size of each Survivors Profiling Buffer.
      */
-    public int survBufferSize = MINIMUMBUFFERSIZE;
+    public long survBufferSize = MINIMUMBUFFERSIZE;
 
     /**
      * The options a user can pass to the Allocation Profiler.
@@ -186,7 +186,7 @@ public class Profiler {
 
     public void asCharArray(String str) {
         int i = 0;
-        while(i < str.length()) {
+        while (i < str.length()) {
             charArrayBuffer[i] = str.charAt(i);
             i++;
         }
@@ -195,7 +195,7 @@ public class Profiler {
     }
 
     public void printCharArrayBuffer(char[] array, int length) {
-        for(int i = 0; i < length; i++){
+        for (int i = 0; i < length; i++) {
             Log.print(array[i]);
         }
         Log.println("");
