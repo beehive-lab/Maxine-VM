@@ -122,6 +122,14 @@ public class ProfilerBuffer {
         return space;
     }
 
+    public void deallocateAll() {
+        VirtualMemory.deallocate(id.asAddress(), Size.fromLong(bufferSize * sizeOfInt), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(type.asAddress(), Size.fromLong(bufferSize * (long) maxChars * (long) sizeOfChar), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(size.asAddress(), Size.fromLong(bufferSize * sizeOfInt), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(address.asAddress(), Size.fromLong(bufferSize * sizeOfLong), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(node.asAddress(), Size.fromLong(bufferSize * sizeOfInt), VirtualMemory.Type.DATA);
+    }
+
     public void writeType(int index, char[] value) {
         int stringIndex = index * maxChars;
         int charIndex = 0;

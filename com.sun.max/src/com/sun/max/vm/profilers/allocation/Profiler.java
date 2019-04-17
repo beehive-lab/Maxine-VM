@@ -404,6 +404,12 @@ public class Profiler {
         }
     }
 
+    public void releaseReservedMemory() {
+        newObjects.deallocateAll();
+        survivors1.deallocateAll();
+        survivors2.deallocateAll();
+    }
+
     /**
      * This method can be used for actions need to take place right before
      * Allocation Profiler's termination. It is triggered when JavaRunScheme
@@ -428,6 +434,14 @@ public class Profiler {
                 Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
                 Log.println(" MB");
             }
+        }
+        if (VerboseAllocationProfiler) {
+            Log.print("(Allocation Profiler): Release Reserved Memory.");
+        }
+        releaseReservedMemory();
+
+        if (VerboseAllocationProfiler) {
+            Log.print("(Allocation Profiler): Terminating... Bye!");
         }
     }
 
