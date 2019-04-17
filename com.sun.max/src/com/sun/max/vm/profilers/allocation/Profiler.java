@@ -253,7 +253,7 @@ public class Profiler {
     }
 
     /**
-     * We search "from" buffer for survivor objects and store them into "to" buffer.
+     * Search "from" buffer for survivor objects and store them into "to" buffer.
      * @param from the source buffer in which we search for survivor objects.
      * @param to the destination buffer in which we store the survivor objects.
      */
@@ -266,11 +266,18 @@ public class Profiler {
         }
         for (int i = 0; i < from.currentIndex; i++) {
             long address = from.readAddr(i);
+            /*
+            if an object is alive, update both its Virtual Address and
+            NUMA Node before copy it to the survivors buffer
+             */
             if (Heap.isSurvivor(address)) {
-                //object is alive -> update it's address -> copy it to to buffer
+                // update Virtual Address
                 long newAddr = Heap.getForwardedAddress(address);
+                // update NUMA Node
+                int node = utilsObject.findNode(newAddr);
                 from.readType(i);
-                to.record(from.readId(i), from.readStringBuffer, from.readSize(i), newAddr, from.readNode(i));
+                // write it to Buffer
+                to.record(from.readId(i), from.readStringBuffer, from.readSize(i), newAddr, node);
                 totalSurvSize = totalSurvSize + from.readSize(i);
             }
         }
