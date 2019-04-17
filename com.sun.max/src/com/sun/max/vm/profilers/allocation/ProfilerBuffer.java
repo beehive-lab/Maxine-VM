@@ -242,8 +242,6 @@ public class ProfilerBuffer {
             }
             Log.print(readSize(i));
             Log.print(";");
-            Log.print(readAddr(i));
-            Log.print(";");
             Log.println(readNode(i));
         }
 
