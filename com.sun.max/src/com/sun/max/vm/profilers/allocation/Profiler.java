@@ -247,7 +247,7 @@ public class Profiler {
 
     public void findNumaNodes() {
         for (int i = 0; i < newObjects.currentIndex; i++) {
-            int node = utilsObject.findNode(newObjects.getAddr(i));
+            int node = utilsObject.findNode(newObjects.readAddr(i));
             newObjects.setNode(i, node);
         }
     }
@@ -265,15 +265,14 @@ public class Profiler {
             Log.println(to.buffersName);
         }
         for (int i = 0; i < from.currentIndex; i++) {
-            long address = from.getAddr(i);
+            long address = from.readAddr(i);
             if (Heap.isSurvivor(address)) {
                 //object is alive -> update it's address -> copy it to to buffer
                 long newAddr = Heap.getForwardedAddress(address);
                 from.readType(i);
-                to.record(from.getIndex(i), from.readStringBuffer, from.getSize(i), newAddr, from.getNode(i));
-                totalSurvSize = totalSurvSize + from.getSize(i);
+                to.record(from.readId(i), from.readStringBuffer, from.readSize(i), newAddr, from.readNode(i));
+                totalSurvSize = totalSurvSize + from.readSize(i);
             }
-            //from.cleanBufferCell(i);
         }
     }
 

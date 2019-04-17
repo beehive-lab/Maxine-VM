@@ -38,7 +38,7 @@ import com.sun.max.vm.Log;
  */
 public class ProfilerBuffer {
 
-    Pointer index;
+    Pointer id;
     Pointer type;
     Pointer size;
     Pointer address;
@@ -50,11 +50,14 @@ public class ProfilerBuffer {
 
     public final int sizeOfInt = Integer.SIZE / 8;
     public final int sizeOfLong = Long.SIZE / 8;
-    public static final int maxChars = 200;
     public static final int sizeOfChar = Character.SIZE / 8;
+    /**
+     * The maximum Type string length.
+     */
+    public static final int maxChars = 200;
 
     /**
-     * A char[] buffer to store the object type off-heap read values.
+     * A char[] buffer to store a string which is being read from native.
      */
     public char[] readStringBuffer;
     public int readStringBufferLength;
@@ -64,7 +67,14 @@ public class ProfilerBuffer {
      */
     public static final char[] nullValue = {'n', 'u', 'l', 'l', '\0'};
 
-
+    /**
+     * Off-heap String array useful values.
+     * Since the end address is not available, we need to calculate it.
+     * The VirtualMemory.allocate() method calls the mmap sys call under the hood,
+     * so the space requests need to be in bytes.
+     * The mmap sys call allocates space in memory page batches.
+     * Memory page size in linux is 4kB.
+     */
     long allocSize;
     long pageSize;
     long numOfAllocPages;
@@ -72,26 +82,18 @@ public class ProfilerBuffer {
     long endAddr;
 
     public ProfilerBuffer(long bufSize, String name) {
-        this.buffersName = name;
-        this.bufferSize = bufSize;
+        buffersName = name;
+        bufferSize = bufSize;
 
-        this.readStringBuffer = new char[maxChars];
-        this.readStringBufferLength = 0;
+        readStringBuffer = new char[maxChars];
+        readStringBufferLength = 0;
 
-        this.index = allocateIntArrayOffHeap(bufSize);
-        this.type = allocateStringArrayOffHeap(bufSize);
-        this.size = allocateIntArrayOffHeap(bufSize);
-        this.address = allocateLongArrayOffHeap(bufSize);
-        this.node = allocateIntArrayOffHeap(bufSize);
+        id = allocateIntArrayOffHeap(bufSize);
+        type = allocateStringArrayOffHeap(bufSize);
+        size = allocateIntArrayOffHeap(bufSize);
+        address = allocateLongArrayOffHeap(bufSize);
+        node = allocateIntArrayOffHeap(bufSize);
 
-        /**
-         * Off-heap String array useful values.
-         * Since the end address is not available, we need to calculate it.
-         * The VirtualMemory.allocate() method calls the mmap sys call under the hood,
-         * so the space requests need to be in bytes.
-         * The mmap sys call allocates space in memory page batches.
-         * Memory page size in linux is 4kB.
-         */
         allocSize = bufSize * maxChars * sizeOfChar;
         pageSize = 4096;
         numOfAllocPages = allocSize / pageSize + 1;
@@ -163,42 +165,42 @@ public class ProfilerBuffer {
         readStringBufferLength = charIndex;
     }
 
-    public void writeIndex(int position, int value) {
-        index.setInt(position, value);
+    public void writeId(int index, int value) {
+        id.setInt(index, value);
     }
 
-    public int getIndex(int position) {
-        return index.getInt(position);
+    public int readId(int index) {
+        return id.getInt(index);
     }
 
-    public void writeSize(int position, int value) {
-        size.setInt(position, value);
+    public void writeSize(int index, int value) {
+        size.setInt(index, value);
     }
 
-    public int getSize(int position) {
-        return size.getInt(position);
+    public int readSize(int index) {
+        return size.getInt(index);
     }
 
-    public void writeAddr(int position, long value) {
-        address.setLong(position, value);
+    public void writeAddr(int index, long value) {
+        address.setLong(index, value);
     }
 
-    public long getAddr(int position) {
-        return address.getLong(position);
+    public long readAddr(int index) {
+        return address.getLong(index);
     }
 
-    public void writeNode(int position, int value) {
-        node.setInt(position, value);
+    public void writeNode(int index, int value) {
+        node.setInt(index, value);
     }
 
-    public int getNode(int position) {
-        return node.getInt(position);
+    public int readNode(int index) {
+        return node.getInt(index);
     }
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int index, char[] type, int size, long address) {
-        writeIndex(currentIndex, index);
+    public void record(int id, char[] type, int size, long address) {
+        writeId(currentIndex, id);
         writeType(currentIndex, type);
         writeSize(currentIndex, size);
         writeAddr(currentIndex, address);
@@ -207,8 +209,8 @@ public class ProfilerBuffer {
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int index, char[] type, int size, long address, int node) {
-        writeIndex(currentIndex, index);
+    public void record(int id, char[] type, int size, long address, int node) {
+        writeId(currentIndex, id);
         writeType(currentIndex, type);
         writeSize(currentIndex, size);
         writeAddr(currentIndex, address);
@@ -216,33 +218,33 @@ public class ProfilerBuffer {
         currentIndex++;
     }
 
+
     public void setNode(int index, int node) {
         writeNode(index, node);
     }
 
     public void dumpToStdOut(int cycle) {
         for (int i = 0; i < currentIndex; i++) {
-            Log.print(getIndex(i));
+            Log.print(readId(i));
             Log.print(";");
 
             // read and store the string in the readStringBuffer.
             readType(i);
-            
-            // print the string char by char
+            // print the string char by char.
             int j = 0;
             while (readStringBuffer[j] != '\0') {
                 Log.print(readStringBuffer[j]);
                 j++;
             }
-            // print a semicolon only for primitive types because the rest are already followed by one
+            // print a semicolon only for primitive types because the rest are already followed by one.
             if (readStringBuffer[j - 1] != ';') {
                 Log.print(";");
             }
-            Log.print(getSize(i));
+            Log.print(readSize(i));
             Log.print(";");
-            Log.print(getAddr(i));
+            Log.print(readAddr(i));
             Log.print(";");
-            Log.println(getNode(i));
+            Log.println(readNode(i));
         }
 
         if (Profiler.VerboseAllocationProfiler) {
@@ -261,7 +263,7 @@ public class ProfilerBuffer {
     }
 
     public void cleanBufferCell(int i) {
-        writeIndex(i, 0);
+        writeId(i, 0);
         writeType(i, nullValue);
         writeSize(i, 0);
         writeAddr(i, 0);
