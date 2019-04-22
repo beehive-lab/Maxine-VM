@@ -206,7 +206,7 @@ public class Profiler {
      */
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void profile(int size, String type, long address) {
+    public void profile(int threadId, int size, String type, long address) {
         /* PROFILER_TLA is currently a thread local that has it's value maintained
          * only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA. That
          * said if we lock and disable safepoints it is no longer accessible, thus
@@ -214,7 +214,7 @@ public class Profiler {
         final boolean lockDisabledSafepoints = lock();
         //transform the object type from String to char[] and pass the charArrayBuffer[] to record
         asCharArray(type);
-        newObjects.record(uniqueId, charArrayBuffer, size, address);
+        newObjects.record(uniqueId, threadId, charArrayBuffer, size, address);
         uniqueId++;
         totalNewSize = totalNewSize + size;
         unlock(lockDisabledSafepoints);
@@ -277,7 +277,7 @@ public class Profiler {
                 int node = utilsObject.findNode(newAddr);
                 from.readType(i);
                 // write it to Buffer
-                to.record(from.readId(i), from.readStringBuffer, from.readSize(i), newAddr, node);
+                to.record(from.readId(i), from.readThreadId(i), from.readStringBuffer, from.readSize(i), newAddr, node);
                 totalSurvSize = totalSurvSize + from.readSize(i);
             }
         }

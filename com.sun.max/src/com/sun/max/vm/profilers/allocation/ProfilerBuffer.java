@@ -43,6 +43,7 @@ public class ProfilerBuffer {
     Pointer size;
     Pointer address;
     Pointer node;
+    Pointer threadId;
 
     public String buffersName;
     public long bufferSize;
@@ -93,6 +94,7 @@ public class ProfilerBuffer {
         size = allocateIntArrayOffHeap(bufSize);
         address = allocateLongArrayOffHeap(bufSize);
         node = allocateIntArrayOffHeap(bufSize);
+        threadId = allocateIntArrayOffHeap(bufSize);
 
         allocSize = bufSize * maxChars * sizeOfChar;
         pageSize = 4096;
@@ -205,10 +207,19 @@ public class ProfilerBuffer {
         return node.getInt(index);
     }
 
+    public void writeThreadId(int index, int value) {
+        threadId.setInt(index, value);
+    }
+
+    public int readThreadId(int index) {
+        return threadId.getInt(index);
+    }
+
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int id, char[] type, int size, long address) {
+    public void record(int id, int threadId, char[] type, int size, long address) {
         writeId(currentIndex, id);
+        writeThreadId(currentIndex, threadId);
         writeType(currentIndex, type);
         writeSize(currentIndex, size);
         writeAddr(currentIndex, address);
@@ -217,8 +228,9 @@ public class ProfilerBuffer {
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int id, char[] type, int size, long address, int node) {
+    public void record(int id, int threadId, char[] type, int size, long address, int node) {
         writeId(currentIndex, id);
+        writeThreadId(currentIndex, threadId);
         writeType(currentIndex, type);
         writeSize(currentIndex, size);
         writeAddr(currentIndex, address);
@@ -234,6 +246,9 @@ public class ProfilerBuffer {
     public void dumpToStdOut(int cycle) {
         for (int i = 0; i < currentIndex; i++) {
             Log.print(readId(i));
+            Log.print(";");
+
+            Log.println(readThreadId(i));
             Log.print(";");
 
             // read and store the string in the readStringBuffer.
