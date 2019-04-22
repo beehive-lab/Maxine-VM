@@ -248,7 +248,7 @@ public class ProfilerBuffer {
             Log.print(readId(i));
             Log.print(";");
 
-            Log.println(readThreadId(i));
+            Log.print(readThreadId(i));
             Log.print(";");
 
             // read and store the string in the readStringBuffer.
