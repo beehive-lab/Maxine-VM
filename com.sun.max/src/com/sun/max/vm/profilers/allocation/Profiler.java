@@ -72,6 +72,7 @@ public class Profiler {
 
     public static int totalNewSize = 0;
     public static int totalSurvSize = 0;
+    public static int queryObjectCounter = 0;
 
     /**
      * A buffer to transform a String object to char array.
@@ -91,6 +92,7 @@ public class Profiler {
      */
     public static int WarmupThreshold;
     public static int iteration = 0;
+    public static int Neo4jWarmupThreshold;
 
     public final static int MINIMUMBUFFERSIZE = 500000;
     /**
@@ -112,6 +114,7 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class, "Allocation Buffer Size.");
         VMOptions.addFieldOption("-XX:", "WarmupThreshold", Profiler.class, "The warmup threshold defines the number of warmup iterations (margined by System.gc()) are due before the allocation profiling begins. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "Neo4jWarmupThreshold", Profiler.class, "The Neo4j warmup threshold defines the number of Neo4J warmup iterations are due before the allocation profiling begins. (default: 0)");
         VMOptions.addFieldOption("-XX:", "ValidateAllocationProfiler", Profiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
@@ -182,6 +185,10 @@ public class Profiler {
 
     public static boolean warmupFinished() {
         return iteration >= WarmupThreshold;
+    }
+
+    public static boolean neo4jWarmupFinished() {
+        return queryObjectCounter >= Neo4jWarmupThreshold;
     }
 
     /**
