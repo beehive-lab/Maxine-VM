@@ -35,6 +35,7 @@ import com.sun.max.vm.compiler.deopt.Deoptimization;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.hosted.CompiledPrototype;
 import com.sun.max.vm.instrument.InstrumentationManager;
+import com.sun.max.vm.jdk.JDK_sun_launcher_LauncherHelper;
 import com.sun.max.vm.jni.JniFunctions;
 import com.sun.max.vm.log.VMLog;
 import com.sun.max.vm.profilers.allocation.Profiler;
@@ -98,6 +99,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         "-Xprof", false, null, "run CPU sampling profiler"), MaxineVM.Phase.STARTING);
     private static final VMStringOption hprofOption = register(new VMStringOption(
         "-Xhprof", false, null, "run heap sampling profiler"), MaxineVM.Phase.STARTING);
+    private static final VMStringOption showSettingsOption = register(new VMStringOption(
+        "-XshowSettings", false, ":all",
+        "show all settings and continue (optionally limit to vm, properties or locale settings appending :vm, :properties and :locale respectively)"),
+        MaxineVM.Phase.STARTING);
 
     /**
      * List of classes to explicitly reinitialise in the {@link Phase#STARTING} phase.
@@ -342,6 +347,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             }
             if (showVersionOption.isPresent()) {
                 sun.misc.Version.print();
+            }
+            if (showSettingsOption.isPresent()) {
+                final String showSettingsOptionValue = showSettingsOption.getValue();
+                JDK_sun_launcher_LauncherHelper.showSettings(true, showSettingsOptionValue, 0, 0, 0, true);
             }
             if (!parseMain()) {
                 return;

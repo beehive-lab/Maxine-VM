@@ -545,6 +545,8 @@ public final class JDKInterceptor {
             "instance",
         JDK.sun_misc_SharedSecrets,
             "javaObjectInputStreamAccess",
+        JDK.sun_launcher_LauncherHelper,
+            "appClass",
    };
     // Checkstyle: resume
 
