@@ -1080,14 +1080,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
     public final void call() {
         int before = codeBuffer.position();
-        jal(RISCV64.zero, INSTRUCTION_SIZE); // Jump to Trampoline 1
+        jal(RISCV64.zero, CALL_TRAMPOLINE1_OFFSET); // Jump to Trampoline 1
         // Trampoline 1
         auipc(scratchRegister1, 0);
         addi(scratchRegister1, scratchRegister1, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE1_OFFSET);
         nop(4); // mov32BitConstant(scratchRegister, 0);
         add(64, scratchRegister, scratchRegister1, scratchRegister);
 
-        jal(RISCV64.zero, CALL_TRAMPOLINE_INSTRUCTIONS - 1); // Jump to last branch
+        jal(RISCV64.zero, CALL_TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE); // Jump to last branch
         // Trampoline 2
         auipc(scratchRegister1, 0);
         addi(scratchRegister1, scratchRegister1, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE2_OFFSET);
