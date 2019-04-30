@@ -38,7 +38,7 @@ public class VerboseVMOption extends VMOption {
     /**
      * Determines if information should be displayed about each compiler event.
      */
-    public boolean verboseCompilation;
+    public boolean verboseCompilation = true;
 
     /**
      * Determines if information should be displayed about each garbage collection event.
@@ -63,25 +63,32 @@ public class VerboseVMOption extends VMOption {
 
     @Override
     public boolean parseValue(Pointer optionValue) {
-        if (CString.length(optionValue).isZero()) {
-            verboseClass = true;
-            verboseGC = true;
-            verboseJNI = true;
-            verboseCompilation = true;
-            verboseProperties = true;
-        } else if (CString.equals(optionValue, ":gc")) {
-            verboseGC = true;
-        } else if (CString.equals(optionValue, ":class")) {
-            verboseClass = true;
-        } else if (CString.equals(optionValue, ":jni")) {
-            verboseJNI = true;
-        } else if (CString.equals(optionValue, ":comp")) {
-            verboseCompilation = true;
-        } else if (CString.equals(optionValue, ":props")) {
-            verboseProperties = true;
-        } else {
-            return false;
-        }
+//        if (CString.length(optionValue).isZero()) {
+//            verboseClass = true;
+//            verboseGC = true;
+//            verboseJNI = true;
+//            verboseCompilation = true;
+//            verboseProperties = true;
+//        } else if (CString.equals(optionValue, ":gc")) {
+//            verboseGC = true;
+//        } else if (CString.equals(optionValue, ":class")) {
+//            verboseClass = true;
+//        } else if (CString.equals(optionValue, ":jni")) {
+//            verboseJNI = true;
+//        } else if (CString.equals(optionValue, ":comp")) {
+//            verboseCompilation = true;
+//        } else if (CString.equals(optionValue, ":props")) {
+//            verboseProperties = true;
+//        } else {
+//            return false;
+//        }
+
+        verboseClass = true;
+        verboseGC = true;
+        verboseJNI = true;
+        verboseCompilation = true;
+        verboseProperties = true;
+
         return true;
     }
 

@@ -594,6 +594,9 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             final int frameToCSA = csl.frameOffsetToCSA;
 
+            // TODO INFINITE LOOP
+//            asm.jal(RISCV64.zero, 0);
+
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -826,6 +829,9 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             final int frameToCSA = csl.frameOffsetToCSA;
 
+            // TODO INFINITE LOOP
+//            asm.jal(RISCV64.zero, -4);
+
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -838,11 +844,10 @@ public class Stubs {
             if (isHosted() && index == 0) {
                 indexMovInstrPos = asm.codeBuffer.position();
             }
+            asm.mov(registerConfig.getScratchRegister(), index);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
-
-            asm.mov(registerConfig.getScratchRegister(), index);
 
             CiValue[] args = isInterface ? resolveInterfaceCallArgs : resolveVirtualCallArgs;
 
@@ -1120,6 +1125,9 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
 
+            // TODO INFINITE LOOP
+//            asm.jal(RISCV64.zero, -4);
+
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -1374,6 +1382,9 @@ public class Stubs {
             int frameToCSA = csl.frameOffsetToCSA;
             CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
+
+            // TODO INFINITE LOOP
+//            asm.jal(RISCV64.zero, -4);
 
             // the very first instruction must save the flags.
             // we save them twice and overwrite the first copy with the trap instruction/return address.
@@ -1657,6 +1668,9 @@ public class Stubs {
             RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
+            // TODO INFINITE LOOP
+//            asm.jal(RISCV64.zero, 0);
+
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -1803,6 +1817,9 @@ public class Stubs {
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
+
+            // TODO INFINITE LOOP
+//            asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -2303,6 +2320,9 @@ public class Stubs {
             RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
+            // TODO INFINITE LOOP
+//            asm.jal(RISCV64.zero, 0);
+
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
             try {
@@ -2700,6 +2720,9 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             int cfo = frameSize + target().stackAlignment; // Caller frame offset
 
+            // TODO INFINITE LOOP
+//            asm.jal(RISCV64.zero, 0);
+
             String runtimeRoutineName;
             if (kind == null) {
                 runtimeRoutineName = "deoptimizeAtSafepoint";
@@ -2979,6 +3002,10 @@ public class Stubs {
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
+
+            // TODO INFINITE LOOP
+//            masm.jal(RISCV64.zero, 0);
+
 
             for (int i = 0; i < prologueSize; ++i) {
                 masm.nop();

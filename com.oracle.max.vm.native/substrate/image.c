@@ -346,15 +346,17 @@ static void mapHeapAndCode(int fd) {
     // boot heap and code must be mapped together (the method offsets in boot image are relative to heap base)
     theHeap = maxve_remap_boot_code_region(theHeap, heapAndCodeSize);
 #endif
-#if log_LOADER
+    theCode = theHeap + theHeader->heapSize;
+    theCodeEnd = theCode + theHeader->codeSize;
+    #if log_LOADER
     log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %u",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
     log_println("boot heap start at %p", theHeap);
+    log_println("boot heap end at %p ", theHeap + theHeader->heapSize);
     log_println("code heap start at %p", theCode);
+    log_println("code heap end at %p", theCodeEnd);
     log_println("application heap start at %p", theCode + theHeader->codeSize);
     log_println("application heap stop at %p", theHeap + virtualSpaceSize);
 #endif
-    theCode = theHeap + theHeader->heapSize;
-    theCodeEnd = theCode + theHeader->codeSize;
 }
 
 static void relocate(int fd) {
