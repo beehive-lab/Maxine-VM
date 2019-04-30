@@ -459,7 +459,7 @@ public class RegisterConfigs {
                 setNonZero(standard.getAttributesMap(), RISCV64.LATCH_REGISTER, RISCV64.sp, RISCV64.fp);
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, csaRegisters));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, RISCV64.csaRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, RISCV64TrapFrameAccess.CSL);
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
                         RISCV64.x10, RISCV64.x11, RISCV64.x12, RISCV64.x13,

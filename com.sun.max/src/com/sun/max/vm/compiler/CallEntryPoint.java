@@ -32,6 +32,7 @@ import com.sun.max.vm.compiler.target.aarch64.Aarch64AdapterGenerator;
 import com.sun.max.vm.compiler.target.arm.ARMAdapterGenerator;
 import com.sun.max.vm.compiler.target.riscv64.RISCV64AdapterGenerator;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.runtime.FatalError;
 
 /**
  * A {@linkplain TargetMethod target method} may have multiple entry points, depending on the calling convention of the
