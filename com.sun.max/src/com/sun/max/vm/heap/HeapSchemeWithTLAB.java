@@ -486,8 +486,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final void profile(int size, Hub hub, Pointer cell) {
         final String objectType = hub.classActor.name();
         final long address = cell.toLong();
-        final int threadId = VmThread.current().id();
-        allocationProfiler.profile(threadId, size, objectType, address);
+        allocationProfiler.profile(size, objectType, address);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
@@ -495,8 +494,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final void profileArray(int size, Hub hub, Pointer cell) {
         final String objectType = hub.classActor.name();
         final long address = cell.toLong();
-        final int threadId = VmThread.current().id();
-        allocationProfiler.profile(threadId, size, objectType, address);
+        allocationProfiler.profile(size, objectType, address);
     }
 
     /**
@@ -550,8 +548,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (MaxineVM.profileThatObject()) {
             final String objectType = dynamicHub.classActor.name();
             final long address = cell.toLong();
-            final int threadId = VmThread.current().id();
-            allocationProfiler.profile(threadId, size.toInt(), objectType, address);
+            allocationProfiler.profile(size.toInt(), objectType, address);
         }
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -569,8 +566,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             if (MaxineVM.profileThatObject()) {
                 final String objectType = hub.classActor.name();
                 final long address = cell.toLong();
-                final int threadId = VmThread.current().id();
-                allocationProfiler.profile(threadId, hub.tupleSize.toInt(), objectType, address);
+                allocationProfiler.profile(hub.tupleSize.toInt(), objectType, address);
             }
             return Cell.plantTuple(cell, hub);
         }
@@ -584,8 +580,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (MaxineVM.profileThatObject()) {
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
-            final int threadId = VmThread.current().id();
-            allocationProfiler.profile(threadId, size.toInt(), objectType, address);
+            allocationProfiler.profile(size.toInt(), objectType, address);
         }
         return Cell.plantHybrid(cell, size, hub);
     }
@@ -600,8 +595,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Hub hub = Layout.getHub(oldOrigin);
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
-            final int threadId = VmThread.current().id();
-            allocationProfiler.profile(threadId, size.toInt(), objectType, address);
+            allocationProfiler.profile(size.toInt(), objectType, address);
         }
         return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
@@ -616,8 +610,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             final Hub hub = Layout.getHub(oldOrigin);
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
-            final int threadId = VmThread.current().id();
-            allocationProfiler.profile(threadId, size.toInt(), objectType, address);
+            allocationProfiler.profile(size.toInt(), objectType, address);
         }
         return Cell.plantClone(cell, size, object);
     }
