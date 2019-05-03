@@ -184,6 +184,13 @@ public class Profiler {
         return iteration >= WarmupThreshold;
     }
 
+    /**
+     * This method has the same functionality as the String.toCharArray() but
+     * we avoid the new object creation by not returning the char array. Instead
+     * of that we store the characters of the string in a static char[] buffer,
+     * the charArrayBuffer.
+     * @param str, The String to be converted to char array.
+     */
     public void asCharArray(String str) {
         int i = 0;
         while (i < str.length()) {
