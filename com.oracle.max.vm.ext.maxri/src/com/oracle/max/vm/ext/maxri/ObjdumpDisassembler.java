@@ -34,6 +34,7 @@ import com.sun.max.vm.runtime.FatalError;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,12 +46,12 @@ import static com.sun.max.platform.Platform.target;
  */
 public class ObjdumpDisassembler {
 
-    public static String disassemble(CiTargetMethod tm) {
+    public static String disassemble(CiTargetMethod tm, byte[] code, int codeSize, long startAddress) {
         File tmp = null;
         try {
             tmp = File.createTempFile("compiledBinary", ".bin");
             try (FileOutputStream fos = new FileOutputStream(tmp)) {
-                fos.write(tm.targetCode(), 0, tm.targetCodeSize());
+                fos.write(code, 0, codeSize);
             }
 
             final Platform platform = Platform.platform();
@@ -69,6 +70,8 @@ public class ObjdumpDisassembler {
             }
 
             Map<Integer, String> annotations = new HashMap<>();
+            addAnnotaions(tm.annotations(), annotations);
+            addExceptionHandlersComment(tm, annotations);
             CiUtil.RefMapFormatter slotFormatter = new CiUtil.RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
             for (CiTargetMethod.Safepoint safepoint : tm.safepoints) {
                 if (safepoint instanceof CiTargetMethod.Call) {
@@ -88,7 +91,7 @@ public class ObjdumpDisassembler {
                 putAnnotation(annotations, site.pcOffset, "{" + site.constant + "}");
             }
 
-            return objdump(tmp, annotations, 0);
+            return objdump(tmp, annotations, startAddress);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -96,6 +99,37 @@ public class ObjdumpDisassembler {
             if (tmp != null) {
                 tmp.delete();
             }
+        }
+    }
+
+    public static void addAnnotaions(List<CiTargetMethod.CodeAnnotation> codeAnnotations, Map<Integer, String> annotations) {
+        if (codeAnnotations == null || codeAnnotations.isEmpty()) {
+            return;
+        }
+        for (CiTargetMethod.CodeAnnotation a : codeAnnotations) {
+            if (a instanceof CiTargetMethod.JumpTable) {
+                System.err.println("WARNING: Ignoring jump tables in disassemble");
+            } else if (a instanceof CiTargetMethod.LookupTable) {
+                System.err.println("WARNING: Ignoring lookup tables in disassemble");
+            } else if (a instanceof CiTargetMethod.CodeComment) {
+                CiTargetMethod.CodeComment comment = (CiTargetMethod.CodeComment) a;
+                putAnnotation(annotations, comment.position, comment.value);
+            }
+        }
+    }
+
+    private static void addExceptionHandlersComment(CiTargetMethod tm, Map<Integer, String> annotations) {
+        if (!tm.exceptionHandlers.isEmpty()) {
+            String nl = System.getProperty("line.separator");
+            StringBuilder buf = new StringBuilder("------ Exception Handlers ------").append(nl);
+            for (CiTargetMethod.ExceptionHandler e : tm.exceptionHandlers) {
+                buf.append("    ").
+                        append(e.pcOffset).append(" -> ").
+                        append(e.handlerPos).
+                        append("  ").append(e.exceptionType == null ? "<any>" : e.exceptionType).
+                        append(nl);
+            }
+            putAnnotation(annotations, 0, buf.toString());
         }
     }
 
@@ -119,7 +153,7 @@ public class ObjdumpDisassembler {
     }
 
     private static String objdump(File binaryFile, Map<Integer, String> annotations, long startAddress) throws IOException {
-        final String cmdline[];
+        final String[] cmdline;
         final Platform platform = Platform.platform();
         if (platform.isa == ISA.AMD64) {
             cmdline = new String[]{"objdump", "-D", "-b", "binary", "-M", "x86-64", "-m", "i386", binaryFile.getAbsolutePath()};
