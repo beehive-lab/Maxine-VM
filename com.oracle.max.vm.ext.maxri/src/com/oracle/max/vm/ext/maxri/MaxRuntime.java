@@ -218,35 +218,22 @@ public class MaxRuntime implements RiRuntime {
 
     @Override
     public String disassemble(final CiTargetMethod tm) {
-        return disassemble(tm, null);
+        return ObjdumpDisassembler.disassemble(tm);
     }
 
     public String disassemble(CiTargetMethod ciTM, MaxTargetMethod maxTM) {
-        byte[] code = maxTM == null ? Arrays.copyOf(ciTM.targetCode(), ciTM.targetCodeSize()) : maxTM.code();
         final Platform platform = Platform.platform();
+        // For non-amd64 platforms use objdump for disassemble
+        if (platform.isa != ISA.AMD64) {
+            return disassemble(ciTM);
+        }
+        byte[] code = maxTM == null ? Arrays.copyOf(ciTM.targetCode(), ciTM.targetCodeSize()) : maxTM.code();
 
         long startAddress = maxTM == null ? 0L : maxTM.codeStart().toLong();
         HexCodeFile hcf = new HexCodeFile(code, startAddress, platform.isa.name(), platform.wordWidth().numberOfBits);
         HexCodeFile.addAnnotations(hcf, ciTM.annotations());
         addExceptionHandlersComment(ciTM, hcf);
-        CiRegister fp;
-        int refMapToFPOffset;
-        if (platform.isa == ISA.AMD64) {
-            fp = AMD64.rsp;
-            refMapToFPOffset = 0;
-        } else if (platform.isa == ISA.ARM) {
-            fp = ARMV7.r13;
-            refMapToFPOffset = 0;
-        } else if (platform.isa == ISA.Aarch64) {
-            fp = Aarch64.sp;
-            refMapToFPOffset = 0;
-        } else if (platform.isa == ISA.RISCV64) {
-            fp = RISCV64.sp;
-            refMapToFPOffset = 0;
-        } else {
-            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxRuntime.disassemble(com.sun.cri.ci.CiTargetMethod, com.oracle.max.vm.ext.maxri.MaxTargetMethod)");
-        }
-        RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
+        RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, AMD64.rsp, 0);
         for (Safepoint safepoint : ciTM.safepoints) {
             if (safepoint instanceof Call) {
                 Call call = (Call) safepoint;
