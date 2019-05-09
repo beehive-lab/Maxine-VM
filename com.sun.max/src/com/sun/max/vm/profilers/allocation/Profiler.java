@@ -76,7 +76,7 @@ public class Profiler {
     /**
      * A buffer to transform a String object to char array.
      */
-    public static char[] charArrayBuffer;
+    private static char[] charArrayBuffer;
     public static int charArrayBufferLength;
 
     /**
@@ -186,12 +186,10 @@ public class Profiler {
 
     /**
      * This method has the same functionality as the String.toCharArray() but
-     * we avoid the new object creation by not returning the char array. Instead
-     * of that we store the characters of the string in a static char[] buffer,
-     * the charArrayBuffer.
+     * we avoid the new object creation.
      * @param str, The String to be converted to char array.
      */
-    public void asCharArray(String str) {
+    public static char[] asCharArray(String str) {
         int i = 0;
         while (i < str.length()) {
             charArrayBuffer[i] = str.charAt(i);
@@ -199,6 +197,7 @@ public class Profiler {
         }
         charArrayBuffer[i] = '\0';
         charArrayBufferLength = i;
+        return charArrayBuffer;
     }
 
     public void printCharArrayBuffer(char[] array, int length) {
@@ -220,7 +219,7 @@ public class Profiler {
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
         //transform the object type from String to char[] and pass the charArrayBuffer[] to record
-        asCharArray(type);
+        charArrayBuffer = asCharArray(type);
         final int threadId = VmThread.current().id();
         newObjects.record(uniqueId, threadId, charArrayBuffer, size, address);
         uniqueId++;
