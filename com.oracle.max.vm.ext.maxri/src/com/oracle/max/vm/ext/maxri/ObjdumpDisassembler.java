@@ -28,10 +28,8 @@ import com.sun.cri.ci.CiRegister;
 import com.sun.cri.ci.CiTargetMethod;
 import com.sun.cri.ci.CiUtil;
 import com.sun.max.lang.ISA;
-import com.sun.max.platform.OS;
 import com.sun.max.platform.Platform;
 import com.sun.max.vm.compiler.target.Safepoints;
-import com.sun.max.vm.compiler.target.TargetMethod;
 import com.sun.max.vm.runtime.FatalError;
 
 import java.io.*;
@@ -55,31 +53,20 @@ public class ObjdumpDisassembler {
                 fos.write(tm.targetCode(), 0, tm.targetCodeSize());
             }
 
-            String[] cmdline;
             final Platform platform = Platform.platform();
             CiRegister fp;
-            int refMapToFPOffset;
+            int refMapToFPOffset = 0;
             if (platform.isa == ISA.AMD64) {
-                cmdline = new String[]{"objdump", "-D", "-b", "binary", "-M", "x86-64", "-m", "i386", tmp.getAbsolutePath()};
                 fp = AMD64.rsp;
-                refMapToFPOffset = 0;
             } else if (platform.isa == ISA.ARM) {
-                cmdline = new String[]{"arm-none-eabi-objdump", "-D", "-b", "binary", "-m", "arm", tmp.getAbsolutePath()};
                 fp = ARMV7.r13;
-                refMapToFPOffset = 0;
             } else if (platform.isa == ISA.Aarch64) {
-                cmdline = new String[]{"aarch64-linux-gnu-objdump", "-D", "-b", "binary", "-m", "aarch64", tmp.getAbsolutePath()};
                 fp = Aarch64.sp;
-                refMapToFPOffset = 0;
             } else if (platform.isa == ISA.RISCV64) {
-                cmdline = new String[]{"riscv64-linux-gnu-objdump", "-D", "-b", "binary", "-m", "riscv:rv64", tmp.getAbsolutePath()};
                 fp = RISCV64.sp;
-                refMapToFPOffset = 0;
             } else {
-                throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxRuntime.disassemble(com.sun.cri.ci.CiTargetMethod, com.oracle.max.vm.ext.maxri.MaxTargetMethod)");
+                throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxRuntime.objdump(com.sun.cri.ci.CiTargetMethod, com.oracle.max.vm.ext.maxri.MaxTargetMethod)");
             }
-
-            Pattern p = Pattern.compile(" *(([0-9a-fA-F]+):\t.*)");
 
             Map<Integer, String> annotations = new HashMap<>();
             CiUtil.RefMapFormatter slotFormatter = new CiUtil.RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
@@ -101,42 +88,7 @@ public class ObjdumpDisassembler {
                 putAnnotation(annotations, site.pcOffset, "{" + site.constant + "}");
             }
 
-            Process proc = Runtime.getRuntime().exec(cmdline);
-            InputStream is = proc.getInputStream();
-            StringBuilder sb = new StringBuilder();
-
-            InputStreamReader isr = new InputStreamReader(is);
-            try (BufferedReader br = new BufferedReader(isr)) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    Matcher m = p.matcher(line);
-                    if (m.find()) {
-                        int address = Integer.parseInt(m.group(2), 16);
-                        String annotation = annotations.get(address);
-                        if (annotation != null) {
-                            annotation = annotation.replace("\n", "\n; ");
-                            sb.append("; ").append(annotation).append('\n');
-                        }
-                        line = m.replaceAll("0x$1");
-                    }
-                    sb.append(line).append("\n");
-                }
-            }
-            try (BufferedReader ebr = new BufferedReader(new InputStreamReader(proc.getErrorStream()))) {
-                String errLine = ebr.readLine();
-                if (errLine != null) {
-                    System.err.print("Error output from executing: ");
-                    for (int i = 0; i < cmdline.length; i++) {
-                        System.err.print(quoteShellArg(cmdline[i]) + " ");
-                    }
-                    System.err.println();
-                    System.err.println(errLine);
-                    while ((errLine = ebr.readLine()) != null) {
-                        System.err.println(errLine);
-                    }
-                }
-            }
-            return sb.toString();
+            return objdump(tmp, annotations, 0);
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -145,6 +97,81 @@ public class ObjdumpDisassembler {
                 tmp.delete();
             }
         }
+    }
+
+    public static String disassemble(byte[] code, long startAddress) {
+        File tmp = null;
+        try {
+            tmp = File.createTempFile("compiledBinary", ".bin");
+            try (FileOutputStream fos = new FileOutputStream(tmp)) {
+                fos.write(code);
+            }
+
+            return objdump(tmp, null, startAddress);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            if (tmp != null) {
+                tmp.delete();
+            }
+        }
+    }
+
+    private static String objdump(File binaryFile, Map<Integer, String> annotations, long startAddress) throws IOException {
+        final String cmdline[];
+        final Platform platform = Platform.platform();
+        if (platform.isa == ISA.AMD64) {
+            cmdline = new String[]{"objdump", "-D", "-b", "binary", "-M", "x86-64", "-m", "i386", binaryFile.getAbsolutePath()};
+        } else if (platform.isa == ISA.ARM) {
+            cmdline = new String[]{"arm-none-eabi-objdump", "-D", "-b", "binary", "-m", "arm", binaryFile.getAbsolutePath()};
+        } else if (platform.isa == ISA.Aarch64) {
+            cmdline = new String[]{"aarch64-linux-gnu-objdump", "-D", "-b", "binary", "-m", "aarch64", binaryFile.getAbsolutePath()};
+        } else if (platform.isa == ISA.RISCV64) {
+            cmdline = new String[]{"riscv64-linux-gnu-objdump", "-D", "-b", "binary", "-m", "riscv:rv64", binaryFile.getAbsolutePath()};
+        } else {
+            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxRuntime.objdump(com.sun.cri.ci.CiTargetMethod, com.oracle.max.vm.ext.maxri.MaxTargetMethod)");
+        }
+
+        Process proc = Runtime.getRuntime().exec(cmdline);
+        InputStream is = proc.getInputStream();
+        StringBuilder sb = new StringBuilder();
+        Pattern hexAddressPattern = Pattern.compile(" *([0-9a-fA-F]+)(:\t.*)");
+
+        InputStreamReader isr = new InputStreamReader(is);
+        try (BufferedReader br = new BufferedReader(isr)) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                Matcher m = hexAddressPattern.matcher(line);
+                if (m.find()) {
+                    int address = Integer.parseInt(m.group(1), 16);
+                    if (annotations != null) {
+                        String annotation = annotations.get(address);
+                        if (annotation != null) {
+                            annotation = annotation.replace("\n", "\n; ");
+                            sb.append("; ").append(annotation).append('\n');
+                        }
+                    }
+                    line = m.replaceFirst("0x" + Long.toHexString(address + startAddress) + "$2");
+                    sb.append(line).append("\n");
+                }
+            }
+        }
+        try (BufferedReader ebr = new BufferedReader(new InputStreamReader(proc.getErrorStream()))) {
+            String errLine = ebr.readLine();
+            if (errLine != null) {
+                System.err.print("Error output from executing: ");
+                for (int i = 0; i < cmdline.length; i++) {
+                    System.err.print(quoteShellArg(cmdline[i]) + " ");
+                }
+                System.err.println();
+                System.err.println(errLine);
+                while ((errLine = ebr.readLine()) != null) {
+                    System.err.println(errLine);
+                }
+            }
+        }
+        return sb.toString();
     }
 
     /**
