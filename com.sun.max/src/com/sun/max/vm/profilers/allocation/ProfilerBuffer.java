@@ -21,8 +21,10 @@ package com.sun.max.vm.profilers.allocation;
 
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
+import com.sun.max.memory.VirtualMemory;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Size;
 import com.sun.max.vm.Log;
-
 /**
  * This class implements any buffer used by the Allocation Profiler to keep track of the objects.
  *
@@ -36,73 +38,234 @@ import com.sun.max.vm.Log;
  */
 public class ProfilerBuffer {
 
-    public int[] index;
-    public String[] type;
-    public int[] size;
-    public long[] address;
-    public int[] node;
+    Pointer id;
+    Pointer type;
+    Pointer size;
+    Pointer address;
+    Pointer node;
+    Pointer threadId;
 
     public String buffersName;
+    public long bufferSize;
     public int currentIndex;
 
-    public ProfilerBuffer(int bufSize, String name) {
-        this.buffersName = name;
-        index = new int[bufSize];
-        type = new String[bufSize];
-        size = new int[bufSize];
-        address = new long[bufSize];
-        node = new int[bufSize];
+    public final int sizeOfInt = Integer.SIZE / 8;
+    public final int sizeOfLong = Long.SIZE / 8;
+    public static final int sizeOfChar = Character.SIZE / 8;
+    /**
+     * The maximum Type string length.
+     */
+    public static final int maxChars = 200;
 
-        for (int i = 0; i < bufSize; i++) {
-            index[i] = 0;
-            type[i] = "null";
-            size[i] = 0;
-            address[i] = 0;
-            node[i] = -1;
-        }
+    /**
+     * A char[] buffer to store a string which is being read from native.
+     */
+    public char[] readStringBuffer;
+    public int readStringBufferLength;
+
+    /**
+     * A primitive representation of null string.
+     */
+    public static final char[] nullValue = {'n', 'u', 'l', 'l', '\0'};
+
+    /**
+     * Off-heap String array useful values.
+     * Since the end address is not available, we need to calculate it.
+     * The VirtualMemory.allocate() method calls the mmap sys call under the hood,
+     * so the space requests need to be in bytes.
+     * The mmap sys call allocates space in memory page batches.
+     * Memory page size in linux is 4kB.
+     */
+    long allocSize;
+    long pageSize;
+    long numOfAllocPages;
+    long sizeInBytes;
+    long endAddr;
+
+    public ProfilerBuffer(long bufSize, String name) {
+        buffersName = name;
+        bufferSize = bufSize;
+
+        readStringBuffer = new char[maxChars];
+        readStringBufferLength = 0;
+
+        id = allocateIntArrayOffHeap(bufSize);
+        type = allocateStringArrayOffHeap(bufSize);
+        size = allocateIntArrayOffHeap(bufSize);
+        address = allocateLongArrayOffHeap(bufSize);
+        node = allocateIntArrayOffHeap(bufSize);
+        threadId = allocateIntArrayOffHeap(bufSize);
+
+        allocSize = bufSize * maxChars * sizeOfChar;
+        pageSize = 4096;
+        numOfAllocPages = allocSize / pageSize + 1;
+        sizeInBytes = numOfAllocPages * pageSize;
+        endAddr = type.toLong() + sizeInBytes;
 
         currentIndex = 0;
     }
 
+    public Pointer allocateIntArrayOffHeap(long size) {
+        return VirtualMemory.allocate(Size.fromLong(size * sizeOfInt), VirtualMemory.Type.DATA);
+    }
+
+    public Pointer allocateLongArrayOffHeap(long size) {
+        return VirtualMemory.allocate(Size.fromLong(size * sizeOfLong), VirtualMemory.Type.DATA);
+    }
+
+    public Pointer allocateStringArrayOffHeap(long size) {
+        Pointer space = VirtualMemory.allocate(Size.fromLong(size * (long) maxChars * (long) sizeOfChar), VirtualMemory.Type.DATA);
+
+        if (space.isZero()) {
+            Log.print(this.buffersName);
+            Log.print("'s Type Array Allocation Failed.");
+            System.exit(0);
+        }
+        return space;
+    }
+
+    public void deallocateAll() {
+        VirtualMemory.deallocate(id.asAddress(), Size.fromLong(bufferSize * sizeOfInt), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(type.asAddress(), Size.fromLong(bufferSize * (long) maxChars * (long) sizeOfChar), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(size.asAddress(), Size.fromLong(bufferSize * sizeOfInt), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(address.asAddress(), Size.fromLong(bufferSize * sizeOfLong), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(node.asAddress(), Size.fromLong(bufferSize * sizeOfInt), VirtualMemory.Type.DATA);
+    }
+
+    public void writeType(int index, char[] value) {
+        int stringIndex = index * maxChars;
+        int charIndex = 0;
+        int writeIndex = stringIndex + charIndex;
+
+        char c;
+
+        while (charIndex < value.length) {
+            c = value[charIndex];
+            if (c == '\0') {
+                type.setChar(writeIndex, c);
+                break;
+            }
+            if (writeIndex < sizeInBytes) {
+                type.setChar(writeIndex, c);
+            } else {
+                Log.print("Off-heap String array overflow detected at index: ");
+                Log.println(writeIndex);
+                Log.println("Suggestion: Increase the Buffer Size (use bufferSize <num> option).");
+                break;
+            }
+            charIndex++;
+            writeIndex = stringIndex + charIndex;
+        }
+    }
+
+    public void readType(int index) {
+        int stringIndex = index * maxChars;
+        int charIndex = 0;
+        int readIndex = stringIndex + charIndex;
+
+        char c = type.getChar(readIndex);
+
+        while (c != '\0') {
+            readStringBuffer[charIndex] = c;
+            charIndex++;
+            readIndex = stringIndex + charIndex;
+            c = type.getChar(readIndex);
+        }
+        readStringBuffer[charIndex] = c;
+        readStringBufferLength = charIndex;
+    }
+
+    public void writeId(int index, int value) {
+        id.setInt(index, value);
+    }
+
+    public int readId(int index) {
+        return id.getInt(index);
+    }
+
+    public void writeSize(int index, int value) {
+        size.setInt(index, value);
+    }
+
+    public int readSize(int index) {
+        return size.getInt(index);
+    }
+
+    public void writeAddr(int index, long value) {
+        address.setLong(index, value);
+    }
+
+    public long readAddr(int index) {
+        return address.getLong(index);
+    }
+
+    public void writeNode(int index, int value) {
+        node.setInt(index, value);
+    }
+
+    public int readNode(int index) {
+        return node.getInt(index);
+    }
+
+    public void writeThreadId(int index, int value) {
+        threadId.setInt(index, value);
+    }
+
+    public int readThreadId(int index) {
+        return threadId.getInt(index);
+    }
+
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int index, String type, int size, long address) {
-        this.index[currentIndex] = index;
-        this.type[currentIndex] = type;
-        this.size[currentIndex] = size;
-        this.address[currentIndex] = address;
+    public void record(int id, int threadId, char[] type, int size, long address) {
+        writeId(currentIndex, id);
+        writeThreadId(currentIndex, threadId);
+        writeType(currentIndex, type);
+        writeSize(currentIndex, size);
+        writeAddr(currentIndex, address);
         currentIndex++;
     }
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void record(int index, String type, int size, long address, int node) {
-        this.index[currentIndex] = index;
-        this.type[currentIndex] = type;
-        this.size[currentIndex] = size;
-        this.address[currentIndex] = address;
-        this.node[currentIndex] = node;
+    public void record(int id, int threadId, char[] type, int size, long address, int node) {
+        writeId(currentIndex, id);
+        writeThreadId(currentIndex, threadId);
+        writeType(currentIndex, type);
+        writeSize(currentIndex, size);
+        writeAddr(currentIndex, address);
+        writeNode(currentIndex, node);
         currentIndex++;
     }
+
 
     public void setNode(int index, int node) {
-        this.node[index] = node;
+        writeNode(index, node);
     }
 
     public void dumpToStdOut(int cycle) {
         for (int i = 0; i < currentIndex; i++) {
-            Log.print(index[i]);
+            Log.print(readId(i));
             Log.print(";");
-            Log.print(type[i]);
-            // print a semicolon only for primitive types because the rest are already followed by one
-            if (type[i].charAt(type[i].length() - 1) != ';') {
+
+            Log.print(readThreadId(i));
+            Log.print(";");
+
+            // read and store the string in the readStringBuffer.
+            readType(i);
+            // print the string char by char.
+            int j = 0;
+            while (readStringBuffer[j] != '\0') {
+                Log.print(readStringBuffer[j]);
+                j++;
+            }
+            // print a semicolon only for primitive types because the rest are already followed by one.
+            if (readStringBuffer[j - 1] != ';') {
                 Log.print(";");
             }
-            Log.print(size[i]);
+            Log.print(readSize(i));
             Log.print(";");
-            Log.print(address[i]);
-            Log.print(";");
-            Log.println(node[i]);
+            Log.println(readNode(i));
         }
 
         if (Profiler.VerboseAllocationProfiler) {
@@ -111,7 +274,7 @@ public class ProfilerBuffer {
             Log.print(" usage = ");
             Log.print(currentIndex);
             Log.print(" / ");
-            Log.print(address.length);
+            Log.print(bufferSize);
             Log.println(". (This number helps in tuning Buffer's size).");
         }
     }
@@ -121,11 +284,11 @@ public class ProfilerBuffer {
     }
 
     public void cleanBufferCell(int i) {
-        this.index[i] = 0;
-        this.type[i] = "null";
-        this.size[i] = 0;
-        this.address[i] = 0;
-        this.node[i] = -1;
+        writeId(i, 0);
+        writeType(i, nullValue);
+        writeSize(i, 0);
+        writeAddr(i, 0);
+        writeNode(i, -1);
     }
 
     public void resetBuffer() {
