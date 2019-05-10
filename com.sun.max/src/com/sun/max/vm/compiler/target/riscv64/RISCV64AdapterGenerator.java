@@ -276,7 +276,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
         /**
          * The size in bytes of the prologue, see {@link Baseline2Opt#emitPrologue(Object, Adapter)}.
          */
-        public static final int PROLOGUE_SIZE = 7 * 4;
+        public static final int PROLOGUE_SIZE = RIP_CALL_INSTRUCTION_SIZE + 2 * INSTRUCTION_SIZE;
 
         @Override
         public int prologueSizeForCallee(ClassMethodActor callee) {
