@@ -42,6 +42,7 @@
 #include "threads.h"
 #include "threadLocals.h"
 #include <sys/mman.h>
+#include <numa.h>
 
 #if (os_DARWIN || os_LINUX)
 #   include <pthread.h>
@@ -208,6 +209,16 @@ void *thread_self() {
     return (void *) thread_current();
 }
 
+void numa_aware_thread_tracking(int threadId){
+
+    // NUMA-aware thread tracking in behalf of Allocation Profiler
+    int cpu = sched_getcpu();
+    int numaNode;
+    numaNode = numa_node_of_cpu(cpu);
+
+    log_println("(Run) Thread %d, CPU %d, Numa Node %d", threadId, cpu, numaNode);
+}
+
 /**
  * The start routine called by the native threading library once the new thread starts.
  *
@@ -219,6 +230,8 @@ void *thread_run(void *arg) {
     TLA etla = ETLA_FROM_TLBLOCK(tlBlock);
     jint id = tla_load(jint, etla, ID);
     Address nativeThread = (Address) thread_current();
+
+    numa_aware_thread_tracking(id);
 
 #if log_THREADS
     log_println("thread_run: BEGIN t=%p", nativeThread);
