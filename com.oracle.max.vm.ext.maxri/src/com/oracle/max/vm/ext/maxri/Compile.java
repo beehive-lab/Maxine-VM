@@ -20,6 +20,7 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
+import static com.sun.max.platform.Platform.platform;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.io.*;
@@ -52,8 +53,6 @@ import com.sun.max.vm.value.*;
 public class Compile {
 
     private static final OptionSet options = new OptionSet(false);
-    private static int methodsFound = 0;
-    private static PrintWriter writer = null;
 
     private static final Map<String, String> compilerAliases = RuntimeCompiler.aliases;
     private static final String compilerAliasNames = compilerAliases.keySet().toString().replaceAll("[\\[\\]]", "");
@@ -349,11 +348,8 @@ public class Compile {
     private static void doCompile(RuntimeCompiler compiler, List<MethodActor> methods, ProgressPrinter progress) {
         // compile all the methods and report progress
         try {
-            writer = new PrintWriter("codebuffer.c", "UTF-8");
-            methodsFound++;
             for (MethodActor methodActor : methods) {
                 Log.println(methodActor.toString());
-                writer.println("// " + methodActor.toString());
                 progress.begin(methodActor.toString());
                 Throwable error = compile(compiler, methodActor, true);
                 if (error == null) {
@@ -366,25 +362,31 @@ public class Compile {
                     }
                 }
             }
-            writer.close();
         } catch (Exception e) {
             System.err.println(e);
             e.printStackTrace();
-            writer.close();
         }
     }
 
-    private static void offlineDebug(byte[] stubs) {
+    /**
+     * Generates a binary file with the generated code and the corresponding assembly of it for inspection.
+     *
+     * @param tm The target method to dump
+     */
+    private static void offlineDebug(TargetMethod tm) {
+        new File("olc").mkdirs();
+        String filePrefix = "olc" + File.separator + tm.name() + "-" + platform().isa.toString().toLowerCase();
         try {
-            writer.println("unsigned char codeArray" + methodsFound++ + "[" + stubs.length + "]  = { \n");
-            for (int i = 0; i < stubs.length; i++) {
-                writer.println("0x" + Integer.toHexString(stubs[i]) + ", ");
+            try (FileOutputStream binaryStream = new FileOutputStream(filePrefix + ".bin")) {
+                binaryStream.write(tm.code());
             }
-            writer.println("0xfe, 0xff, 0xff, 0xea };\n\n");
-        } catch (Exception e) {
-            System.err.println(e);
+            try (PrintWriter assemblyWriter = new PrintWriter(filePrefix + ".S")) {
+                assemblyWriter.write(ObjdumpDisassembler.disassemble(tm.code(), 0));
+            }
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
-            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -395,7 +397,7 @@ public class Compile {
         CiStatistics stats = new CiStatistics();
         try {
             TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
-            offlineDebug(tm.code());
+            offlineDebug(tm);
             if (validateInline.getValue()) {
                 validateInlining(tm);
             }

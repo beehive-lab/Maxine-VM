@@ -111,8 +111,7 @@ public class CFGPrinterObserver implements CompilationObserver {
             cfgprinted = true;
         }
 
-        //(ck): Disable arm disassembler for now
-        if (event.getTargetMethod() != null && !event.getCompilation().target.arch.isARM()) {
+        if (event.getTargetMethod() != null) {
             if (cfgprinted) {
                 // Avoid duplicate "cfg" section
                 label = null;
