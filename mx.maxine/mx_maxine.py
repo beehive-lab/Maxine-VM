@@ -629,7 +629,6 @@ def olc(args):
 
     while i < len(args):
         arg = args[i]
-        print(arg)
         if arg in ['-cp', '-classpath']:
             insCP += [mx.expand_project_in_class_path_arg(args[i + 1])]
             i += 1
