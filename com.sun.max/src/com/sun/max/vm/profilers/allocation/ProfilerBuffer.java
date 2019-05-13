@@ -243,8 +243,14 @@ public class ProfilerBuffer {
         writeNode(index, node);
     }
 
-    public void dumpToStdOut(int cycle) {
+    public void dumpToStdOut(int cycle, int allocation) {
         for (int i = 0; i < currentIndex; i++) {
+            Log.print(cycle);
+            Log.print(";");
+
+            Log.print(allocation);
+            Log.print(";");
+
             Log.print(readId(i));
             Log.print(";");
 
@@ -279,8 +285,8 @@ public class ProfilerBuffer {
         }
     }
 
-    public void print(int cycle) {
-        dumpToStdOut(cycle);
+    public void print(int cycle, int allocation) {
+        dumpToStdOut(cycle, allocation);
     }
 
     public void cleanBufferCell(int i) {

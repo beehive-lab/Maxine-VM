@@ -232,10 +232,10 @@ public class Profiler {
      */
     public void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
-        Log.print("==== Profiling Cycle ");
-        Log.print(profilingCycle);
-        Log.println(" ====");
-        newObjects.print(profilingCycle);
+        //Log.print("==== Profiling Cycle ");
+        //Log.print(profilingCycle);
+        //Log.println(" ====");
+        newObjects.print(profilingCycle, 1);
         unlock(lockDisabledSafepoints);
     }
 
@@ -245,9 +245,9 @@ public class Profiler {
         Log.print(profilingCycle);
         Log.println(" ====");
         if ((profilingCycle % 2) == 0) {
-            survivors2.print(profilingCycle);
+            survivors2.print(profilingCycle, 0);
         } else {
-            survivors1.print(profilingCycle);
+            survivors1.print(profilingCycle, 0);
         }
         unlock(lockDisabledSafepoints);
     }
