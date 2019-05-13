@@ -373,9 +373,9 @@ public class Compile {
      *
      * @param tm The target method to dump
      */
-    private static void offlineDebug(TargetMethod tm) {
+    private static void offlineDebug(TargetMethod tm, String compilerName) {
         new File("olc").mkdirs();
-        String filePrefix = "olc" + File.separator + tm.name() + "-" + platform().isa.toString().toLowerCase();
+        String filePrefix = "olc" + File.separator + tm.classMethodActor().qualifiedName() + "-" + compilerName + "-" + platform().isa.toString().toLowerCase();
         try {
             try (FileOutputStream binaryStream = new FileOutputStream(filePrefix + ".bin")) {
                 binaryStream.write(tm.code());
@@ -397,7 +397,7 @@ public class Compile {
         CiStatistics stats = new CiStatistics();
         try {
             TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
-            offlineDebug(tm);
+            offlineDebug(tm, compiler.name(tm.classMethodActor));
             if (validateInline.getValue()) {
                 validateInlining(tm);
             }
