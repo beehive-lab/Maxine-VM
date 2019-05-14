@@ -54,7 +54,7 @@ public class LightweightLockword extends HashableLockword {
     protected static final int RCOUNT_FIELD_WIDTH = 5;
     protected static final int UTIL_FIELD_WIDTH = 9;
     protected static final int NUM_BITS = Platform.target().arch.is64bit() ? 64 : 32;
-    protected static final int THREADID_FIELD_WIDTH = NUM_BITS - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
+    public static final int THREADID_FIELD_WIDTH = NUM_BITS - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
     protected static final int THREADID_SHIFT = Platform.target().arch.is64bit() ? (HASHCODE_SHIFT + HASH_FIELD_WIDTH) : NUMBER_OF_MODE_BITS;
     protected static final int UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;
     protected static final int RCOUNT_SHIFT = UTIL_SHIFT + UTIL_FIELD_WIDTH;
