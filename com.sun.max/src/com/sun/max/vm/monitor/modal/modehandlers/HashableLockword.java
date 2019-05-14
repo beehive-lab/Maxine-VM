@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -33,9 +33,9 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 /**
  * Abstracts access to a lock word's hashcode bit field.
  *
- * @see ModalLockword64
+ * @see ModalLockword
  */
-public class HashableLockword64 extends ModalLockword64 {
+public class HashableLockword extends ModalLockword {
 
     /*
      * Field layout (64 Bit):
@@ -55,15 +55,15 @@ public class HashableLockword64 extends ModalLockword64 {
     protected static final Address HASHCODE_SHIFTED_MASK = Platform.target().arch.is32bit() ? Word.allOnes().asAddress() : Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
 
     @HOSTED_ONLY
-    public HashableLockword64(long value) {
+    public HashableLockword(long value) {
         super(value);
     }
 
     /**
-     * Prints the monitor state encoded in a {@code HashableLockword64} to the {@linkplain Log log} stream.
+     * Prints the monitor state encoded in a {@code HashableLockword} to the {@linkplain Log log} stream.
      */
-    public static void log(HashableLockword64 lockword) {
-        Log.print("HashableLockword64: ");
+    public static void log(HashableLockword lockword) {
+        Log.print("HashableLockword: ");
         if (lockword.isInflated()) {
             Log.print("inflated=true");
         } else {
@@ -74,14 +74,14 @@ public class HashableLockword64 extends ModalLockword64 {
     }
 
     /**
-     * Boxing-safe cast of a {@code Word} to a {@code HashableLockword64}.
+     * Boxing-safe cast of a {@code Word} to a {@code HashableLockword}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @INTRINSIC(UNSAFE_CAST)
-    public static HashableLockword64 from(Word word) {
-        return new HashableLockword64(word.value);
+    public static HashableLockword from(Word word) {
+        return new HashableLockword(word.value);
     }
 
     /**
@@ -95,16 +95,16 @@ public class HashableLockword64 extends ModalLockword64 {
     }
 
     /**
-     * Installs the given hashcode into a <i>copy</i> of this {@code HashableLockword64}. The copied
+     * Installs the given hashcode into a <i>copy</i> of this {@code HashableLockword}. The copied
      * lock word is returned.
      * <p/>
      * Note: It is assumed that this lock word does not contain an existing hashcode.
      *
      * @param hashcode the hashcode to install
-     * @return a copy of this {@code HashableLockword64} with the installed hashcode
+     * @return a copy of this {@code HashableLockword} with the installed hashcode
      */
     @INLINE
-    public final HashableLockword64 setHashcode(int hashcode) {
-        return HashableLockword64.from(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
+    public final HashableLockword setHashcode(int hashcode) {
+        return HashableLockword.from(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
     }
 }

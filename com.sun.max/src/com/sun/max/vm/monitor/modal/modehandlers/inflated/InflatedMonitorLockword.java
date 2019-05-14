@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -32,7 +32,7 @@ import com.sun.max.vm.reference.*;
 /**
  * Abstracts access to an inflated lock word's bit fields.
  */
-public class InflatedMonitorLockword64 extends HashableLockword64 {
+public class InflatedMonitorLockword extends HashableLockword {
 
     /*
      * Field layout (64 Bit) :
@@ -53,34 +53,34 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
     private static final Address MONITOR_MASK = Platform.target().arch.is64bit() ? Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS) : Word.allOnes().asAddress();
 
     @HOSTED_ONLY
-    public InflatedMonitorLockword64(long value) {
+    public InflatedMonitorLockword(long value) {
         super(value);
     }
 
     /**
-     * Boxing-safe cast of a {@code Word} to a {@code InflatedMonitorLockword64}.
+     * Boxing-safe cast of a {@code Word} to a {@code InflatedMonitorLockword}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @INTRINSIC(UNSAFE_CAST)
-    public static final InflatedMonitorLockword64 from(Word word) {
-        return new InflatedMonitorLockword64(word.value);
+    public static final InflatedMonitorLockword from(Word word) {
+        return new InflatedMonitorLockword(word.value);
     }
 
     /**
-     * Tests if the given lock word is an {@code InflatedMonitorLockword64}.
+     * Tests if the given lock word is an {@code InflatedMonitorLockword}.
      *
      * @param lockword the lock word to test
-     * @return true if {@code lockword} is an {@code InflatedMonitorLockword64}; false otherwise
+     * @return true if {@code lockword} is an {@code InflatedMonitorLockword}; false otherwise
      */
     @INLINE
-    public static final boolean isInflatedMonitorLockword(ModalLockword64 lockword) {
-        return InflatedMonitorLockword64.from(lockword).isInflated();
+    public static final boolean isInflatedMonitorLockword(ModalLockword lockword) {
+        return InflatedMonitorLockword.from(lockword).isInflated();
     }
 
     /**
-     * Tests if this {@code InflatedMonitorLockword64} is bound to a {@code JavaMonitor}.
+     * Tests if this {@code InflatedMonitorLockword} is bound to a {@code JavaMonitor}.
      *
      * @return true if bound, false otherwise
      */
@@ -90,16 +90,16 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
     }
 
     /**
-     * Returns a new {@code InflatedMonitorLockword64} which is bound to the given {@code JavaMonitor} object.
+     * Returns a new {@code InflatedMonitorLockword} which is bound to the given {@code JavaMonitor} object.
      *
      * Note: The binding is only created one-way, i.e. the lock word points to the inflated monitor, but not the other
      * way-around.
      *
-     * @param monitor the monitor to which the {@code InflatedMonitorLockword64} should be bound
-     * @return a new {@code InflatedMonitorLockword64} which is bound to {@code monitor}
+     * @param monitor the monitor to which the {@code InflatedMonitorLockword} should be bound
+     * @return a new {@code InflatedMonitorLockword} which is bound to {@code monitor}
      */
     @INLINE
-    public static final InflatedMonitorLockword64 boundFromMonitor(JavaMonitor monitor) {
+    public static final InflatedMonitorLockword boundFromMonitor(JavaMonitor monitor) {
         if (Platform.target().arch.is64bit()) {
             return from(Reference.fromJava(monitor).toOrigin().asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
         } else {
@@ -108,8 +108,8 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
     }
 
     @INLINE
-    public static final InflatedMonitorLockword64 boundFromZero() {
-        return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
+    public static final InflatedMonitorLockword boundFromZero() {
+        return InflatedMonitorLockword.from(HashableLockword.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
     /**
@@ -133,23 +133,23 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
     }
 
     /**
-     * (Image build support) Returns a new, unbound {@code InflatedMonitorLockword64} with the given hashcode installed
+     * (Image build support) Returns a new, unbound {@code InflatedMonitorLockword} with the given hashcode installed
      * into the hashcode field.
      *
      * @param hashcode the hashcode to install
      * @return the lock word
      */
     @INLINE
-    public static final InflatedMonitorLockword64 unboundFromHashcode(int hashcode) {
+    public static final InflatedMonitorLockword unboundFromHashcode(int hashcode) {
         if (Platform.target().arch.is64bit()) {
-            return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
+            return InflatedMonitorLockword.from(HashableLockword.from(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
         } else {
-            return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX));
+            return InflatedMonitorLockword.from(HashableLockword.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX));
         }
     }
 
     @INLINE
-    public static final InflatedMonitorLockword64 fromHashcode(int hashcode) {
-        return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress());
+    public static final InflatedMonitorLockword fromHashcode(int hashcode) {
+        return InflatedMonitorLockword.from(HashableLockword.from(Address.zero()).setHashcode(hashcode).asAddress());
     }
 }

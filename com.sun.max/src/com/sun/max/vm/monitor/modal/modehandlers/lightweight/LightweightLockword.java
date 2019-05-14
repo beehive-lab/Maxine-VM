@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -31,7 +31,7 @@ import com.sun.max.vm.monitor.modal.modehandlers.*;
 /**
  * Provides common bit-field definitions and method-level access for lightweight lock words.
  */
-public class LightweightLockword64 extends HashableLockword64 {
+public class LightweightLockword extends HashableLockword {
 
     /*
      * Field layout for 64 bit:
@@ -65,15 +65,15 @@ public class LightweightLockword64 extends HashableLockword64 {
 
 
     @HOSTED_ONLY
-    public LightweightLockword64(long value) {
+    public LightweightLockword(long value) {
         super(value);
     }
 
     /**
-     * Prints the monitor state encoded in a {@code LightweightLockword64} to the {@linkplain Log log} stream.
+     * Prints the monitor state encoded in a {@code LightweightLockword} to the {@linkplain Log log} stream.
      */
-    public static void log(LightweightLockword64 lockword) {
-        Log.print("LightweightLockword64: ");
+    public static void log(LightweightLockword lockword) {
+        Log.print("LightweightLockword: ");
         if (lockword.isInflated()) {
             Log.print("inflated=true");
         } else {
@@ -90,14 +90,14 @@ public class LightweightLockword64 extends HashableLockword64 {
     }
 
     /**
-     * Boxing-safe cast of a {@code Word} to a {@code LightweightLockword64}.
+     * Boxing-safe cast of a {@code Word} to a {@code LightweightLockword}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @INTRINSIC(UNSAFE_CAST)
-    public static LightweightLockword64 from(Word word) {
-        return new LightweightLockword64(word.value);
+    public static LightweightLockword from(Word word) {
+        return new LightweightLockword(word.value);
     }
 
     /**
@@ -147,10 +147,10 @@ public class LightweightLockword64 extends HashableLockword64 {
      * @return a copy lock word with incremented recursion count
      */
     @INLINE
-    public final LightweightLockword64 incrementCount() {
+    public final LightweightLockword incrementCount() {
         // So long as the rcount field is within a byte boundary, we can just use addition
         // without any endian issues.
-        return LightweightLockword64.from(asAddress().plus(RCOUNT_INC_WORD));
+        return LightweightLockword.from(asAddress().plus(RCOUNT_INC_WORD));
     }
 
     /**
@@ -159,8 +159,8 @@ public class LightweightLockword64 extends HashableLockword64 {
      * @return a copy lock word with decremented recursion count
      */
     @INLINE
-    public final LightweightLockword64 decrementCount() {
-        return LightweightLockword64.from(asAddress().minus(RCOUNT_INC_WORD));
+    public final LightweightLockword decrementCount() {
+        return LightweightLockword.from(asAddress().minus(RCOUNT_INC_WORD));
     }
 
     /**

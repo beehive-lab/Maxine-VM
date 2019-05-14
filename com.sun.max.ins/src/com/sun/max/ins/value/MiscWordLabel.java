@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -104,9 +106,9 @@ public final class MiscWordLabel extends ValueLabel {
                     final ModalMonitorScheme modalMonitorScheme = (ModalMonitorScheme) monitorScheme;
                     modalLockwordDecoder = modalMonitorScheme.getModalLockwordDecoder();
                 }
-                final ModalLockword64 modalLockword = ModalLockword64.from(miscWord);
-                if (modalLockwordDecoder.isLockwordInMode(modalLockword, BiasedLockword64.class)) {
-                    final BiasedLockword64 biasedLockword = BiasedLockword64.from(modalLockword);
+                final ModalLockword modalLockword = ModalLockword.from(miscWord);
+                if (modalLockwordDecoder.isLockwordInMode(modalLockword, BiasedLockword.class)) {
+                    final BiasedLockword biasedLockword = BiasedLockword.from(modalLockword);
                     final int hashcode = biasedLockword.getHashcode();
                     final int recursion = biasedLockword.getRecursionCount();
                     final int ownerThreadID = BiasedLockModeHandler.decodeBiasOwnerThreadID(biasedLockword);
@@ -114,19 +116,19 @@ public final class MiscWordLabel extends ValueLabel {
                     final String threadName = inspection().nameDisplay().longName(thread);
                     final int biasEpoch = biasedLockword.getEpoch().toInt();
                     setText("BiasedLock(" + recursion + "): " + hexString);
-                    setToolTipText("BiasedLockword64:  recursion=" + recursion + ";  thread=" + threadName + ";  biasEpoch=" + biasEpoch + "; hashcode=" + hashcode);
-                } else if (modalLockwordDecoder.isLockwordInMode(modalLockword, ThinLockword64.class)) {
-                    final ThinLockword64 thinLockword = ThinLockword64.from(modalLockword);
+                    setToolTipText("BiasedLockword:  recursion=" + recursion + ";  thread=" + threadName + ";  biasEpoch=" + biasEpoch + "; hashcode=" + hashcode);
+                } else if (modalLockwordDecoder.isLockwordInMode(modalLockword, ThinLockword.class)) {
+                    final ThinLockword thinLockword = ThinLockword.from(modalLockword);
                     final int hashcode = thinLockword.getHashcode();
                     final int recursionCount = thinLockword.getRecursionCount();
                     final int ownerThreadID = ThinLockModeHandler.decodeLockOwnerThreadID(thinLockword);
                     final MaxThread thread = vm().threadManager().getThread(ownerThreadID);
                     final String threadName = inspection().nameDisplay().longName(thread);
                     setText("ThinLock(" + recursionCount + "): " + hexString);
-                    setToolTipText("ThinLockword64:  recursion=" + recursionCount + ";  thread=" + threadName + "; hashcode=" + hashcode);
-                } else if (modalLockwordDecoder.isLockwordInMode(modalLockword, InflatedMonitorLockword64.class)) {
+                    setToolTipText("ThinLockword:  recursion=" + recursionCount + ";  thread=" + threadName + "; hashcode=" + hashcode);
+                } else if (modalLockwordDecoder.isLockwordInMode(modalLockword, InflatedMonitorLockword.class)) {
                     setText("InflatedMonitorLock: " + hexString);
-                    final InflatedMonitorLockword64 inflatedLockword = InflatedMonitorLockword64.from(modalLockword);
+                    final InflatedMonitorLockword inflatedLockword = InflatedMonitorLockword.from(modalLockword);
                     final boolean isBound = inflatedLockword.isBound();
                     if (isBound) {
                         // JavaMonitor is a proper object, not just a Word.
@@ -135,19 +137,19 @@ public final class MiscWordLabel extends ValueLabel {
                         } catch (MaxVMBusyException e) {
                         }
                         if (javaMonitor == null) {
-                            setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + inspection().nameDisplay().unavailableDataLongText());
+                            setToolTipText("InflatedMonitorLockword:  bound, monitor=" + inspection().nameDisplay().unavailableDataLongText());
                         } else {
                             final String name = javaMonitor.classActorForObjectType().qualifiedName();
-                            setToolTipText("InflatedMonitorLockword64:  bound, monitor=" + name);
+                            setToolTipText("InflatedMonitorLockword:  bound, monitor=" + name);
                         }
                     } else {
                         // Field access
                         final int hashcode = inflatedLockword.getHashcode();
-                        setToolTipText("InflatedMonitorLockword64:  unbound, hashcode=" + hashcode);
+                        setToolTipText("InflatedMonitorLockword:  unbound, hashcode=" + hashcode);
                     }
                 } else {
                     setText(hexString);
-                    setToolTipText("Non-decodable ModalLockword64");
+                    setToolTipText("Non-decodable ModalLockword");
                 }
             } else {
                 setText(hexString);

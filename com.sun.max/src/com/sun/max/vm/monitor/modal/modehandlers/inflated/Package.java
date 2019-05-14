@@ -35,7 +35,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public Class[] wordSubclasses() {
-        return new Class[] {InflatedMonitorLockword64.class};
+        return new Class[] {InflatedMonitorLockword.class};
     }
 
     @Override

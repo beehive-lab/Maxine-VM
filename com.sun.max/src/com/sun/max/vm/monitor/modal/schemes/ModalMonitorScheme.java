@@ -91,7 +91,7 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
          * @param mode the mode to test
          * @return true if the lockword is in the given mode; false otherwise
          */
-        boolean isLockwordInMode(ModalLockword64 modalLockword, Class<? extends ModalLockword64> mode);
+        boolean isLockwordInMode(ModalLockword modalLockword, Class<? extends ModalLockword> mode);
     }
 
     /**

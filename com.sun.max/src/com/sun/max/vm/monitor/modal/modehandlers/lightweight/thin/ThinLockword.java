@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -27,9 +27,9 @@ import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.Address;
 import com.sun.max.unsafe.Word;
 import com.sun.max.vm.Log;
-import com.sun.max.vm.monitor.modal.modehandlers.HashableLockword64;
-import com.sun.max.vm.monitor.modal.modehandlers.ModalLockword64;
-import com.sun.max.vm.monitor.modal.modehandlers.lightweight.LightweightLockword64;
+import com.sun.max.vm.monitor.modal.modehandlers.HashableLockword;
+import com.sun.max.vm.monitor.modal.modehandlers.ModalLockword;
+import com.sun.max.vm.monitor.modal.modehandlers.lightweight.LightweightLockword;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
@@ -37,7 +37,7 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 /**
  * Abstracts access to a thin lock word's bit fields.
  */
-public class ThinLockword64 extends LightweightLockword64 {
+public class ThinLockword extends LightweightLockword {
 
     /*
      * For 64 bit:
@@ -67,15 +67,15 @@ public class ThinLockword64 extends LightweightLockword64 {
                     : HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
 
     @HOSTED_ONLY
-    public ThinLockword64(long value) {
+    public ThinLockword(long value) {
         super(value);
     }
 
     /**
-     * Prints the monitor state encoded in a {@code ThinLockword64} to the {@linkplain Log log} stream.
+     * Prints the monitor state encoded in a {@code ThinLockword} to the {@linkplain Log log} stream.
      */
-    public static void log(ThinLockword64 lockword) {
-        Log.print("ThinLockword64: ");
+    public static void log(ThinLockword lockword) {
+        Log.print("ThinLockword: ");
         if (lockword.isInflated()) {
             Log.print("inflated=true");
         } else {
@@ -94,25 +94,25 @@ public class ThinLockword64 extends LightweightLockword64 {
     }
 
     /**
-     * Boxing-safe cast of a {@code Word} to a {@code ThinLockword64}.
+     * Boxing-safe cast of a {@code Word} to a {@code ThinLockword}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @INTRINSIC(UNSAFE_CAST)
-    public static ThinLockword64 from(Word word) {
-        return new ThinLockword64(word.value);
+    public static ThinLockword from(Word word) {
+        return new ThinLockword(word.value);
     }
 
     /**
-     * Tests if the given lock word is a {@code ThinLockword64}.
+     * Tests if the given lock word is a {@code ThinLockword}.
      *
      * @param lockword the lock word to test
-     * @return true if {@code lockword} is a {@code ThinLockword64}; false otherwise
+     * @return true if {@code lockword} is a {@code ThinLockword}; false otherwise
      */
     @INLINE
-    public static final boolean isThinLockword(ModalLockword64 lockword) {
-        return ThinLockword64.from(lockword).isLightweight();
+    public static final boolean isThinLockword(ModalLockword lockword) {
+        return ThinLockword.from(lockword).isLightweight();
     }
 
     /**
@@ -121,8 +121,8 @@ public class ThinLockword64 extends LightweightLockword64 {
      * @return the copy lock word
      */
     @INLINE
-    public final ThinLockword64 asUnlocked() {
-        return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
+    public final ThinLockword asUnlocked() {
+        return ThinLockword.from(asAddress().and(UNLOCKED_MASK));
     }
 
     /**
@@ -132,8 +132,8 @@ public class ThinLockword64 extends LightweightLockword64 {
      * @param threadID the lock owner
      */
     @INLINE
-    public final ThinLockword64 asLockedOnceBy(int threadID) {
-        return ThinLockword64.from(asUnlocked().asAddress().or(Address.fromInt(threadID).shiftedLeft(THREADID_SHIFT)).or(RCOUNT_INC_WORD));
+    public final ThinLockword asLockedOnceBy(int threadID) {
+        return ThinLockword.from(asUnlocked().asAddress().or(Address.fromInt(threadID).shiftedLeft(THREADID_SHIFT)).or(RCOUNT_INC_WORD));
     }
 
     /**
@@ -147,25 +147,25 @@ public class ThinLockword64 extends LightweightLockword64 {
     }
 
     /**
-     * (Image build support) Returns a new, unlocked {@code ThinLockword64} with the given
+     * (Image build support) Returns a new, unlocked {@code ThinLockword} with the given
      * hashcode installed into the hashcode field.
      *
      * @param hashcode the hashcode to install
      * @return the lock word
      */
     @INLINE
-    public static final ThinLockword64 unlockedFromHashcode(int hashcode) {
+    public static final ThinLockword unlockedFromHashcode(int hashcode) {
         if (Platform.target().arch.is64bit()) {
-            return ThinLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode));
+            return ThinLockword.from(HashableLockword.from(Address.zero()).setHashcode(hashcode));
         } else {
-            return ThinLockword64.from(HashableLockword64.from(Address.zero()));
+            return ThinLockword.from(HashableLockword.from(Address.zero()));
         }
     }
 
     @INLINE
-    public static final ThinLockword64 fromHashcode(int hashcode) {
+    public static final ThinLockword fromHashcode(int hashcode) {
         assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
-        return ThinLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode));
+        return ThinLockword.from(HashableLockword.from(Address.zero()).setHashcode(hashcode));
     }
 
 }
