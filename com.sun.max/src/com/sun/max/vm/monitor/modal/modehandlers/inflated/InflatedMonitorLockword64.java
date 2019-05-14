@@ -38,17 +38,16 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
      * Field layout (64 Bit) :
      *
      * bit [63............................... 1 0] Shape Binding Lock-state
-     *
-     * [ 0 ][ hash ][0][1] Inflated Unbound Unlocked [ Pointer to JavaMonitor object ][1][1] Inflated Bound Unlocked or
-     * locked [ Undefined ][m][0] Lightweight
+     *     [     0    ][        hash       ][0][1] Inflated Unbound Unlocked
+     *     [ Pointer to JavaMonitor object ][1][1] Inflated Bound Unlocked or locked
+     *     [          Undefined            ][m][0] Lightweight
      *
      * Field layout (32 Bit) :
      *
      * bit [31.................................0] Shape Binding Lock-state
-     *
-     * [1/0][ThreadId] 0 [0][1] Locking in-flight op ThreadId Inflated Unbound Unlocked [1/0][ThreadId] [1][1] Locking
-     * in-flight op ThreadId Inflated Bound Unlocked or locked [1/0][ThreadId] [m][0] Locking in-flight op ThreadId
-     * Lightweight
+     *     [1/0][         ThreadId        ][0][1] Locking in-flight op ThreadId Inflated Unbound Unlocked
+     *     [1/0][         ThreadId        ][1][1] Locking in-flight op ThreadId Inflated Bound Unlocked or locked
+     *     [1/0][         ThreadId        ][m][0] Locking in-flight op ThreadId Lightweight
      */
 
     private static final Address MONITOR_MASK = Platform.target().arch.is64bit() ? Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS) : Word.allOnes().asAddress();

@@ -35,12 +35,11 @@ public class BiasedLockword64 extends LightweightLockword64 {
     /*
      * bit [63............................................. 1 0] Shape Mode Lock-state
      *
-     * [ 0 ][ UNUSED_EPOCH][ 0 ][ hash ][m][0] Lightweight Biasable No bias owner. Unlocked [ 0 ][ epoch ][ thread ID ][
-     * hash ][m][0] Lightweight Biasable Bias owned. Unlocked [ r. count ][ epoch ][ thread ID ][ hash ][m][0]
-     * Lightweight Biasable Bias owned. Locked (rcount >= 1)
-     *
-     * [ r. count ][REVOKED_EPOCH][ thread ID ][ hash ][m][0] Lightweight Delegate lightweight lock mode [ Undefined
-     * ][m][1] Inflated
+     *     [      0    ][ UNUSED_EPOCH][     0     ][ hash ][m][0] Lightweight Biasable No bias owner. Unlocked
+     *     [      0    ][     epoch   ][ thread ID ][ hash ][m][0] Lightweight Biasable Bias owned. Unlocked
+     *     [  r. count ][     epoch   ][ thread ID ][ hash ][m][0] Lightweight Biasable Bias owned. Locked (rcount >= 1)
+     *     [  r. count ][REVOKED_EPOCH][ thread ID ][ hash ][m][0] Lightweight Delegate lightweight lock mode
+     *     [                 Undefined                     ][m][1] Inflated
      *
      *
      * Note: a valid thread ID must be >= 1 The per-shape mode bit, m, is not used and is always masked.

@@ -48,12 +48,12 @@ public class ThinLockword64 extends LightweightLockword64 {
      *     [                 Undefined               ][m][1]     Inflated
      *
      * For 32 bit:
-     * bit [32............................................. 1  0]     Shape         Lock-state
+     * bit [32........................................ 1  0]     Shape         Lock-state
      *
-     *     [     0    ][ util  ][     0                   ][m][0]     Lightweight   Unlocked
-     *     [ r. count 5][ util 1 ][  thread ID 4]          [m][0]     Lightweight   Locked (rcount >= 1)
-     *     [                 Undefined                    ][m][1]     Inflated
-     *     [                  hash                              ]
+     *     [     0     ][  util  ][         0        ][m][0]     Lightweight   Unlocked
+     *     [ r. count 5][ util 1 ][    thread ID 4   ][m][0]     Lightweight   Locked (rcount >= 1)
+     *     [                Undefined                ][m][1]     Inflated
+     *     [                  hash                         ]
      *
      * Note:
      * A valid thread ID must be >= 1. This is enforced by VmThreadMap.

@@ -44,9 +44,9 @@ public class LightweightLockword64 extends HashableLockword64 {
      *
      * Field layout for 32 bit:
      *
-     * bit [32........................................ 1  0]     Shape
+     * bit [32.............................................. 1  0]     Shape
      *
-     *     [ r. count 5 ][ util 1 ][  thread ID 4][ hash 20][m][0]     Lightweight
+     *     [ r. count 5 ][ util 1 ][ thread ID 4 ][ hash 20][m][0]     Lightweight
      *     [                 Undefined                     ][m][1]     Inflated
      *
      */
