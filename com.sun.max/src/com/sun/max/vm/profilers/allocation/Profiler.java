@@ -232,18 +232,22 @@ public class Profiler {
      */
     public void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
-        //Log.print("==== Profiling Cycle ");
-        //Log.print(profilingCycle);
-        //Log.println(" ====");
+        if (VerboseAllocationProfiler) {
+            Log.print("==== Profiling Cycle ");
+            Log.print(profilingCycle);
+            Log.println(" ====");
+        }
         newObjects.print(profilingCycle, 1);
         unlock(lockDisabledSafepoints);
     }
 
     public void dumpSurvivors() {
         final boolean lockDisabledSafepoints = lock();
-        Log.print("==== Survivors Cycle ");
-        Log.print(profilingCycle);
-        Log.println(" ====");
+        if (VerboseAllocationProfiler) {
+            Log.print("==== Survivors Cycle ");
+            Log.print(profilingCycle);
+            Log.println(" ====");
+        }
         if ((profilingCycle % 2) == 0) {
             survivors2.print(profilingCycle, 0);
         } else {
