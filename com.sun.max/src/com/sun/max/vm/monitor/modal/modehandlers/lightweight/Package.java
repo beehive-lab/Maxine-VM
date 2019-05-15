@@ -33,7 +33,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public Class[] wordSubclasses() {
-        return new Class[] {LightweightLockword64.class};
+        return new Class[] {LightweightLockword.class};
     }
 
     @Override

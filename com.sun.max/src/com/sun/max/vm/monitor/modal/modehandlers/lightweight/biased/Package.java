@@ -35,7 +35,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public Class[] wordSubclasses() {
-        return new Class[] {BiasedLockword64.class, BiasedLockEpoch64.class};
+        return new Class[] {BiasedLockword.class, BiasedLockEpoch.class};
     }
 
     @Override

@@ -66,14 +66,14 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
     }
 
     @INLINE
-    protected final InflatedMonitorLockword64 readMiscAndProtectBinding(Object object) {
-        final InflatedMonitorLockword64 lockword = InflatedMonitorLockword64.from(ObjectAccess.readMisc(object));
+    protected final InflatedMonitorLockword readMiscAndProtectBinding(Object object) {
+        final InflatedMonitorLockword lockword = InflatedMonitorLockword.from(ObjectAccess.readMisc(object));
         if (Platform.target().arch.is64bit()) {
             if (lockword.isBound()) {
                 JavaMonitorManager.protectBinding(lockword.getBoundMonitor());
             }
         } else {
-            final InflatedMonitorLockword64 hashword = InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
+            final InflatedMonitorLockword hashword = InflatedMonitorLockword.from(ObjectAccess.readHash(object));
             if (lockword.isBound()) {
                 JavaMonitorManager.protectBinding(hashword.getBoundMonitor());
             }
@@ -81,17 +81,17 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         return lockword;
     }
 
-    protected int makeBoundHashCode(Object object, InflatedMonitorLockword64 lockword, InflatedMonitorLockword64 hashword) {
+    protected int makeBoundHashCode(Object object, InflatedMonitorLockword lockword, InflatedMonitorLockword hashword) {
         assert hashword.isZero() || Platform.target().arch.is32bit() : " Hashword != null in 64 bit mode ";
         final JavaMonitor monitor = Platform.target().arch.is64bit() ? lockword.getBoundMonitor() : hashword.getBoundMonitor();
         assert monitor != null  : "null monitor in makeboundHashCode";
-        final HashableLockword64 swappedLockword = Platform.target().arch.is64bit() ? HashableLockword64.from(monitor.displacedMisc()) : HashableLockword64.from(monitor.displacedHash());
+        final HashableLockword swappedLockword = Platform.target().arch.is64bit() ? HashableLockword.from(monitor.displacedMisc()) : HashableLockword.from(monitor.displacedHash());
         int hashcode = swappedLockword.getHashcode();
         if (hashcode == 0) {
             hashcode = monitorScheme().createHashCode(object);
-            final HashableLockword64 newSwappedLockword = swappedLockword.setHashcode(hashcode);
-            final HashableLockword64 answer = Platform.target().arch.is64bit() ? HashableLockword64.from(monitor.compareAndSwapDisplacedMisc(swappedLockword, newSwappedLockword))
-                            : HashableLockword64.from(monitor.compareAndSwapDisplacedHash(swappedLockword, newSwappedLockword));
+            final HashableLockword newSwappedLockword = swappedLockword.setHashcode(hashcode);
+            final HashableLockword answer = Platform.target().arch.is64bit() ? HashableLockword.from(monitor.compareAndSwapDisplacedMisc(swappedLockword, newSwappedLockword))
+                            : HashableLockword.from(monitor.compareAndSwapDisplacedHash(swappedLockword, newSwappedLockword));
             if (!answer.equals(swappedLockword)) {
                 hashcode = answer.getHashcode();
             }
@@ -99,7 +99,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         return hashcode;
     }
 
-    protected void monitorExit(Object object, InflatedMonitorLockword64 lockword, InflatedMonitorLockword64 hashword) {
+    protected void monitorExit(Object object, InflatedMonitorLockword lockword, InflatedMonitorLockword hashword) {
         assert hashword.isZero() || Platform.target().arch.is32bit() : "Non null hashword in 64 bit";
         if (!lockword.isBound()) {
             throw new IllegalMonitorStateException();
@@ -108,7 +108,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         monitor.monitorExit();
     }
 
-    protected void monitorNotify(Object object, boolean all, InflatedMonitorLockword64 lockword, InflatedMonitorLockword64 hashword) {
+    protected void monitorNotify(Object object, boolean all, InflatedMonitorLockword lockword, InflatedMonitorLockword hashword) {
         assert hashword.isZero() || Platform.target().arch.is32bit() : "Non null hashword in 64 bit";
         if (!lockword.isBound()) {
             throw new IllegalMonitorStateException();
@@ -117,7 +117,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         monitor.monitorNotify(all);
     }
 
-    protected void monitorWait(Object object, long timeout, InflatedMonitorLockword64 lockword, InflatedMonitorLockword64 hashword) throws InterruptedException {
+    protected void monitorWait(Object object, long timeout, InflatedMonitorLockword lockword, InflatedMonitorLockword hashword) throws InterruptedException {
         assert hashword.isZero() || Platform.target().arch.is32bit() : "Non null hashword in 64 bit";
         if (!lockword.isBound()) {
             throw new IllegalMonitorStateException();
@@ -126,7 +126,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         monitor.monitorWait(timeout);
     }
 
-    protected boolean threadHoldsMonitor(InflatedMonitorLockword64 lockword, InflatedMonitorLockword64 hashword, VmThread thread) {
+    protected boolean threadHoldsMonitor(InflatedMonitorLockword lockword, InflatedMonitorLockword hashword, VmThread thread) {
         assert hashword.isZero() || Platform.target().arch.is32bit() : "Non null hashword in 64 bit";
         return lockword.isBound() && (Platform.target().arch.is64bit() ? lockword.getBoundMonitor().isOwnedBy(thread) : hashword.getBoundMonitor().isOwnedBy(thread));
     }
@@ -169,11 +169,11 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
          * mode: A misc word in unbounded stated. The hashcode has to be installed separately.
          */
         public Word createMisc(Object object) {
-            return InflatedMonitorLockword64.unboundFromHashcode(monitorScheme().createHashCode(object));
+            return InflatedMonitorLockword.unboundFromHashcode(monitorScheme().createHashCode(object));
         }
 
         public int createHash(Object object) {
-            int hashCode = InflatedMonitorLockword64.fromHashcode(monitorScheme().createHashCode(object)).getHashcode();
+            int hashCode = InflatedMonitorLockword.fromHashcode(monitorScheme().createHashCode(object)).getHashcode();
             assert hashCode == monitorScheme().createHashCode(object) : "Failed installation of hashcode!";
             return hashCode;
         }
@@ -182,8 +182,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             if (MaxineVM.isHosted()) {
                 return monitorScheme().createHashCode(object);
             }
-            final InflatedMonitorLockword64 lockword = readMiscAndProtectBinding(object);
-            final InflatedMonitorLockword64 hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
+            final InflatedMonitorLockword lockword = readMiscAndProtectBinding(object);
+            final InflatedMonitorLockword hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object));
 
             if (lockword.isBound()) {
                 return makeBoundHashCode(object, lockword, hashword);
@@ -191,7 +191,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             int hashcode = Platform.target().arch.is64bit() ? lockword.getHashcode() : hashword.getHashcode();
             if (hashcode == 0) {
                 hashcode = monitorScheme().createHashCode(object);
-                final HashableLockword64 newLockword = Platform.target().arch.is64bit() ? lockword.setHashcode(hashcode) : hashword.setHashcode(hashcode);
+                final HashableLockword newLockword = Platform.target().arch.is64bit() ? lockword.setHashcode(hashcode) : hashword.setHashcode(hashcode);
                 final Word answer = Platform.target().arch.is64bit() ? ObjectAccess.compareAndSwapMisc(object, lockword, newLockword) : ObjectAccess.compareAndSwapHash(object, hashword, newLockword);
                 if (Platform.target().arch.is64bit()) {
                     if (!answer.equals(lockword)) {
@@ -215,9 +215,9 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 return;
             }
             // 64Bit: hashWord+bits, 32Bit: Just bits
-            InflatedMonitorLockword64 lockword = readMiscAndProtectBinding(object);
+            InflatedMonitorLockword lockword = readMiscAndProtectBinding(object);
             // 64Bit: null, 32Bit: hashWord
-            InflatedMonitorLockword64 hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
+            InflatedMonitorLockword hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object));
             JavaMonitor monitor = null;
             while (true) {
                 if (lockword.isBound()) {
@@ -238,8 +238,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                     monitor.setDisplacedHash(hashword);
                 }
                 // 64Bit: monitor+bits, 32Bit: monitor address
-                final InflatedMonitorLockword64 newLockword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.boundFromMonitor(monitor) : InflatedMonitorLockword64.boundFromZero();
-                final InflatedMonitorLockword64 newHashword = InflatedMonitorLockword64.boundFromMonitor(monitor);
+                final InflatedMonitorLockword newLockword = Platform.target().arch.is64bit() ? InflatedMonitorLockword.boundFromMonitor(monitor) : InflatedMonitorLockword.boundFromZero();
+                final InflatedMonitorLockword newHashword = InflatedMonitorLockword.boundFromMonitor(monitor);
 
                 final Word answer = Platform.target().arch.is64bit() ? ObjectAccess.compareAndSwapMisc(object, lockword, newLockword) : ObjectAccess.compareAndSwapHash(object, hashword, newHashword);
 
@@ -247,16 +247,16 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                     if (answer.equals(lockword)) {
                         return;
                     } else {
-                        lockword = InflatedMonitorLockword64.from(answer);
+                        lockword = InflatedMonitorLockword.from(answer);
                     }
                 } else {
                     if (answer.equals(hashword)) {
                         ObjectAccess.writeMisc(object, newLockword);
                         return;
                     } else {
-                        hashword = InflatedMonitorLockword64.from(answer);
+                        hashword = InflatedMonitorLockword.from(answer);
                         while (!lockword.isBound()) {
-                            lockword = InflatedMonitorLockword64.from(ObjectAccess.readMisc(object));
+                            lockword = InflatedMonitorLockword.from(ObjectAccess.readMisc(object));
                         }
                     }
                 }
@@ -271,8 +271,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             if (MaxineVM.isPrimordial()) {
                 return;
             }
-            final InflatedMonitorLockword64 lockword = InflatedMonitorLockword64.from(ObjectAccess.readMisc(object));
-            final InflatedMonitorLockword64 hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
+            final InflatedMonitorLockword lockword = InflatedMonitorLockword.from(ObjectAccess.readMisc(object));
+            final InflatedMonitorLockword hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object));
             super.monitorExit(object, lockword, hashword);
         }
 
@@ -282,8 +282,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 HostMonitor.notify(object);
                 return;
             }
-            final InflatedMonitorLockword64 lockword = InflatedMonitorLockword64.from(ObjectAccess.readMisc(object));
-            final InflatedMonitorLockword64 hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
+            final InflatedMonitorLockword lockword = InflatedMonitorLockword.from(ObjectAccess.readMisc(object));
+            final InflatedMonitorLockword hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object));
             super.monitorNotify(object, all, lockword, hashword);
         }
 
@@ -293,14 +293,14 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 HostMonitor.wait(object, timeout);
                 return;
             }
-            final InflatedMonitorLockword64 lockword = readMiscAndProtectBinding(object);
-            final InflatedMonitorLockword64 hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
+            final InflatedMonitorLockword lockword = readMiscAndProtectBinding(object);
+            final InflatedMonitorLockword hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object));
             super.monitorWait(object, timeout, lockword, hashword);
         }
 
         public boolean threadHoldsMonitor(Object object, VmThread thread) {
-            final InflatedMonitorLockword64 lockword = readMiscAndProtectBinding(object);
-            final InflatedMonitorLockword64 hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
+            final InflatedMonitorLockword lockword = readMiscAndProtectBinding(object);
+            final InflatedMonitorLockword hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object));
             return super.threadHoldsMonitor(lockword, hashword, thread);
         }
 
@@ -324,52 +324,52 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             super(unboundMiscWordWriter);
         }
 
-        public int delegateMakeHashcode(Object object, ModalLockword64 lockword) {
-            final InflatedMonitorLockword64 inflatedLockword = readMiscAndProtectBinding(object);
+        public int delegateMakeHashcode(Object object, ModalLockword lockword) {
+            final InflatedMonitorLockword inflatedLockword = readMiscAndProtectBinding(object);
             if (inflatedLockword.isBound()) {
                 return makeBoundHashCode(object, inflatedLockword,
-                                Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)));
+                                Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object)));
             }
             return 0;
         }
 
-        public boolean delegateMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID) {
-            final InflatedMonitorLockword64 inflatedLockword = readMiscAndProtectBinding(object);
+        public boolean delegateMonitorEnter(Object object, ModalLockword lockword, int lockwordThreadID) {
+            final InflatedMonitorLockword inflatedLockword = readMiscAndProtectBinding(object);
             if (!inflatedLockword.isBound()) {
                 return false;
             }
-            final JavaMonitor monitor = Platform.target().arch.is64bit() ? inflatedLockword.getBoundMonitor() : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)).getBoundMonitor();
+            final JavaMonitor monitor = Platform.target().arch.is64bit() ? inflatedLockword.getBoundMonitor() : InflatedMonitorLockword.from(ObjectAccess.readHash(object)).getBoundMonitor();
             monitor.monitorEnter();
             return true;
         }
 
-        public void delegateMonitorExit(Object object, ModalLockword64 lockword) {
-            monitorExit(object, InflatedMonitorLockword64.from(lockword),
-                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)));
+        public void delegateMonitorExit(Object object, ModalLockword lockword) {
+            monitorExit(object, InflatedMonitorLockword.from(lockword),
+                            Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object)));
         }
 
-        public void delegateMonitorNotify(Object object, boolean all, ModalLockword64 lockword) {
-            monitorNotify(object, all, InflatedMonitorLockword64.from(lockword),
-                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)));
+        public void delegateMonitorNotify(Object object, boolean all, ModalLockword lockword) {
+            monitorNotify(object, all, InflatedMonitorLockword.from(lockword),
+                            Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object)));
         }
 
-        public void delegateMonitorWait(Object object, long timeout, ModalLockword64 lockword) throws InterruptedException {
-            final InflatedMonitorLockword64 inflatedLockword = InflatedMonitorLockword64.from(lockword);
-            final  InflatedMonitorLockword64 hashword = InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
+        public void delegateMonitorWait(Object object, long timeout, ModalLockword lockword) throws InterruptedException {
+            final InflatedMonitorLockword inflatedLockword = InflatedMonitorLockword.from(lockword);
+            final InflatedMonitorLockword hashword = InflatedMonitorLockword.from(ObjectAccess.readHash(object));
             if (inflatedLockword.isBound()) {
                 JavaMonitorManager.protectBinding(Platform.target().arch.is64bit() ? inflatedLockword.getBoundMonitor() : hashword.getBoundMonitor());
             }
             monitorWait(object, timeout, inflatedLockword,
-                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : hashword);
+                            Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : hashword);
         }
 
-        public DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockword64 lockword, VmThread thread, int lockwordThreadID) {
-            final InflatedMonitorLockword64 inflatedLockword = readMiscAndProtectBinding(object);
+        public DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockword lockword, VmThread thread, int lockwordThreadID) {
+            final InflatedMonitorLockword inflatedLockword = readMiscAndProtectBinding(object);
             if (!inflatedLockword.isBound()) {
                 return DelegatedThreadHoldsMonitorResult.NOT_THIS_MODE;
             }
             return super.threadHoldsMonitor(inflatedLockword,
-                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)), thread)
+                            Platform.target().arch.is64bit() ? InflatedMonitorLockword.from(Word.zero()) : InflatedMonitorLockword.from(ObjectAccess.readHash(object)), thread)
                                             ? DelegatedThreadHoldsMonitorResult.TRUE : DelegatedThreadHoldsMonitorResult.FALSE;
         }
 
@@ -391,7 +391,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             super(new UnboundMiscWordWriter() {
 
                 public void writeUnboundMiscWord(Object object, Word preBindingMiscWord) {
-                    ObjectAccess.writeMisc(object, ThinLockword64.from(preBindingMiscWord).asUnlocked());
+                    ObjectAccess.writeMisc(object, ThinLockword.from(preBindingMiscWord).asUnlocked());
                 }
 
                 public void writeUnboundHashWord(Object object, Word hashWord) {
@@ -407,8 +407,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             }
         }
 
-        public ModalLockword64 prepareModalLockword(Object object, ModalLockword64 currentLockword) {
-            final ThinLockword64 thinLockword = ThinLockword64.from(currentLockword);
+        public ModalLockword prepareModalLockword(Object object, ModalLockword currentLockword) {
+            final ThinLockword thinLockword = ThinLockword.from(currentLockword);
             // FIXME: We have to map the thinLockword thread ID back to the VmThread. This is expensive -
             // and has to lock VMThread.ACTIVE. Maybe we should just keep threadID's in Monitor's too?
             // FIXME: What if the VmThread is null?
@@ -423,12 +423,12 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             } else {
                 monitor.monitorPrivateRelease();
             }
-            return InflatedMonitorLockword64.boundFromMonitor(monitor);
+            return InflatedMonitorLockword.boundFromMonitor(monitor);
         }
 
-        public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword, ModalLockword64 hash) {
-            final ThinLockword64 thinLockword = ThinLockword64.from(currentLockword);
-            final JavaMonitor monitor =  InflatedMonitorLockword64.from(preparedLockword).getBoundMonitor();
+        public ModalLockword reprepareModalLockword(ModalLockword preparedLockword, ModalLockword currentLockword, ModalLockword hash) {
+            final ThinLockword thinLockword = ThinLockword.from(currentLockword);
+            final JavaMonitor monitor =  InflatedMonitorLockword.from(preparedLockword).getBoundMonitor();
             monitor.setDisplacedMisc(thinLockword);
             if (Platform.target().arch.is32bit()) {
                 monitor.setDisplacedHash(hash);
@@ -442,8 +442,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             return preparedLockword;
         }
 
-        public void cancelPreparedModalLockword(ModalLockword64 preparedLockword) {
-            JavaMonitorManager.unbindMonitor(InflatedMonitorLockword64.from(preparedLockword).getBoundMonitor());
+        public void cancelPreparedModalLockword(ModalLockword preparedLockword) {
+            JavaMonitorManager.unbindMonitor(InflatedMonitorLockword.from(preparedLockword).getBoundMonitor());
         }
     }
 
@@ -456,7 +456,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             super(new UnboundMiscWordWriter() {
 
                 public void writeUnboundMiscWord(Object object, Word preBindingMiscWord) {
-                    ObjectAccess.writeMisc(object, BiasedLockword64.from(preBindingMiscWord).asAnonBiased());
+                    ObjectAccess.writeMisc(object, BiasedLockword.from(preBindingMiscWord).asAnonBiased());
                 }
 
                 public void writeUnboundHashWord(Object object, Word hashWord) {
@@ -473,10 +473,10 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             }
         }
 
-        public ModalLockword64 prepareModalLockword(Object object, ModalLockword64 currentLockword) {
-            final BiasedLockword64 biasedLockword = BiasedLockword64.from(currentLockword);
+        public ModalLockword prepareModalLockword(Object object, ModalLockword currentLockword) {
+            final BiasedLockword biasedLockword = BiasedLockword.from(currentLockword);
             final JavaMonitor monitor = JavaMonitorManager.bindMonitor(object);
-            final InflatedMonitorLockword64 newLockword = InflatedMonitorLockword64.boundFromMonitor(monitor);
+            final InflatedMonitorLockword newLockword = InflatedMonitorLockword.boundFromMonitor(monitor);
             monitor.setDisplacedMisc(biasedLockword);
             if (!biasedLockword.countUnderflow()) {
                 // It does not matter if the threadID has been recycled after the bias request.
@@ -488,10 +488,10 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             return newLockword;
         }
 
-        public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword, ModalLockword64 hash) {
+        public ModalLockword reprepareModalLockword(ModalLockword preparedLockword, ModalLockword currentLockword, ModalLockword hash) {
             assert Platform.target().arch.is64bit() : "Biased locking is not implemented in 32 bit";
-            final BiasedLockword64 biasedLockword = BiasedLockword64.from(currentLockword);
-            final JavaMonitor monitor = InflatedMonitorLockword64.from(preparedLockword).getBoundMonitor();
+            final BiasedLockword biasedLockword = BiasedLockword.from(currentLockword);
+            final JavaMonitor monitor = InflatedMonitorLockword.from(preparedLockword).getBoundMonitor();
             monitor.setDisplacedMisc(biasedLockword);
             if (!biasedLockword.countUnderflow()) {
                 final VmThread owner = VmThreadMap.ACTIVE.getVmThreadForID(decodeLockwordThreadID(biasedLockword.getBiasOwnerID()));
@@ -502,8 +502,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             return preparedLockword;
         }
 
-        public void cancelPreparedModalLockword(ModalLockword64 preparedLockword) {
-            JavaMonitorManager.unbindMonitor(InflatedMonitorLockword64.from(preparedLockword).getBoundMonitor());
+        public void cancelPreparedModalLockword(ModalLockword preparedLockword) {
+            JavaMonitorManager.unbindMonitor(InflatedMonitorLockword.from(preparedLockword).getBoundMonitor());
         }
     }
 }

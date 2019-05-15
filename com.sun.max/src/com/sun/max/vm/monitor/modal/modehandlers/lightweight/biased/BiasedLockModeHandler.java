@@ -73,24 +73,24 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
     }
 
     // Inspector support
-    public static int decodeBiasOwnerThreadID(BiasedLockword64 biasedLockword) {
+    public static int decodeBiasOwnerThreadID(BiasedLockword biasedLockword) {
         if (biasedLockword.equals(biasedLockword.asAnonBiased())) {
             return -1;
         }
         return decodeLockwordThreadID(biasedLockword.getBiasOwnerID());
     }
 
-    protected ModalLockword64 revokeBias(Object object) {
-        final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-        if (BiasedLockword64.isBiasedLockword(lockword)) {
-            final ModalLockword64 newLockword = delegate().prepareModalLockword(object, lockword);
+    protected ModalLockword revokeBias(Object object) {
+        final ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+        if (BiasedLockword.isBiasedLockword(lockword)) {
+            final ModalLockword newLockword = delegate().prepareModalLockword(object, lockword);
             ObjectAccess.writeMisc(object, newLockword);
             return newLockword;
         }
         return lockword;
     }
 
-    protected ModalLockword64 revokeWithoutSafepointing(Object object) {
+    protected ModalLockword revokeWithoutSafepointing(Object object) {
         synchronized (VmThreadMap.THREAD_LOCK) {
             return revokeBias(object);
         }
@@ -98,7 +98,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
     class RevokeBiasOperation extends VmOperation {
         final Object object;
-        ModalLockword64 newLockword;
+        ModalLockword newLockword;
         RevokeBiasOperation(VmThread thread, Object object) {
             super("RevokeBias", thread, Mode.Safepoint, false);
             this.object = object;
@@ -109,13 +109,13 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
     }
 
-    protected ModalLockword64 revokeWithOwnerSafepointed(final Object object, int vmThreadMapThreadID, BiasedLockword64 biasedLockword) {
+    protected ModalLockword revokeWithOwnerSafepointed(final Object object, int vmThreadMapThreadID, BiasedLockword biasedLockword) {
         synchronized (VmThreadMap.THREAD_LOCK) {
             final VmThread biasOwnerThread = VmThreadMap.ACTIVE.getVmThreadForID(vmThreadMapThreadID);
             if (biasOwnerThread == null) {
                 // The bias owner is terminated. No need to safepoint.
                 // Lets try to reset the bias to anon.
-                return ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, biasedLockword.asAnonBiased()));
+                return ModalLockword.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, biasedLockword.asAnonBiased()));
             }
             final Pointer tla = biasOwnerThread.tla();
             if (tla.isZero()) {
@@ -130,7 +130,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
     }
 
     public Word createMisc(Object object) {
-        return BiasedLockword64.anonBiasedFromHashcode(monitorScheme().createHashCode(object));
+        return BiasedLockword.anonBiasedFromHashcode(monitorScheme().createHashCode(object));
     }
 
     public void afterGarbageCollection() {
@@ -148,10 +148,10 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         }
         if (ASSUME_PERFECT_ENTRY_AND_EXIT_PAIRS) {
             // We cannot have any safepoints (and hence any revocation) on the code path between here and the lockword store.
-            final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-            if (BiasedLockword64.isBiasedLockword(lockword)) {
+            final ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+            if (BiasedLockword.isBiasedLockword(lockword)) {
                 // Blind fast path monitor exit.
-                ObjectAccess.writeMisc(object, BiasedLockword64.from(lockword).decrementCount());
+                ObjectAccess.writeMisc(object, BiasedLockword.from(lockword).decrementCount());
             } else {
                 // Not a biased lock; delegate.
                 delegate().delegateMonitorExit(object, lockword);
@@ -159,9 +159,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
         } else {
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
             // We cannot have any safepoints (and hence any revocation) on the code path between here and the lockword store.
-            final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-            if (BiasedLockword64.isBiasedLockword(lockword)) {
-                final BiasedLockword64 biasedLockword = BiasedLockword64.from(lockword);
+            final ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+            if (BiasedLockword.isBiasedLockword(lockword)) {
+                final BiasedLockword biasedLockword = BiasedLockword.from(lockword);
                 if (biasedLockword.getBiasOwnerID() != lockwordThreadID || biasedLockword.countUnderflow()) {
                     throw new IllegalMonitorStateException();
                 }
@@ -180,9 +180,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             HostMonitor.notify(object);
             return;
         }
-        final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-        if (BiasedLockword64.isBiasedLockword(lockword)) {
-            final BiasedLockword64 biasedLockword = BiasedLockword64.from(lockword);
+        final ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+        if (BiasedLockword.isBiasedLockword(lockword)) {
+            final BiasedLockword biasedLockword = BiasedLockword.from(lockword);
             if (biasedLockword.countUnderflow() || biasedLockword.getBiasOwnerID() != encodeCurrentThreadIDForLockword()) {
                 throw new IllegalMonitorStateException();
             }
@@ -199,9 +199,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             HostMonitor.wait(object, timeout);
             return;
         }
-        ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-        if (BiasedLockword64.isBiasedLockword(lockword)) {
-            final BiasedLockword64 biasedLockword = BiasedLockword64.from(lockword);
+        ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+        if (BiasedLockword.isBiasedLockword(lockword)) {
+            final BiasedLockword biasedLockword = BiasedLockword.from(lockword);
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
             if (biasedLockword.countUnderflow() || biasedLockword.getBiasOwnerID() != lockwordThreadID) {
                 throw new IllegalMonitorStateException();
@@ -222,9 +222,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
     public boolean threadHoldsMonitor(Object object, VmThread thread) {
         final int lockwordThreadID = encodeCurrentThreadIDForLockword();
-        final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-        if (BiasedLockword64.isBiasedLockword(lockword)) {
-            final BiasedLockword64 biasedLockword = BiasedLockword64.from(lockword);
+        final ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+        if (BiasedLockword.isBiasedLockword(lockword)) {
+            final BiasedLockword biasedLockword = BiasedLockword.from(lockword);
             return !biasedLockword.countUnderflow() && biasedLockword.getBiasOwnerID() == lockwordThreadID;
         }
         final DelegatedThreadHoldsMonitorResult result = delegate().delegateThreadHoldsMonitor(object, lockword, thread, lockwordThreadID);
@@ -244,9 +244,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             }
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
             // We cannot have any safepoints (and hence any revocation) on the code path between here and the lockword store.
-            final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-            if (BiasedLockword64.isBiasedLockword(lockword)) {
-                final BiasedLockword64 biasedLockword = BiasedLockword64.from(lockword);
+            final ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+            if (BiasedLockword.isBiasedLockword(lockword)) {
+                final BiasedLockword biasedLockword = BiasedLockword.from(lockword);
                 if (biasedLockword.getBiasOwnerID() == lockwordThreadID && !biasedLockword.countOverflow()) {
                     ObjectAccess.writeMisc(object, biasedLockword.incrementCount());
                     return;
@@ -255,15 +255,15 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             slowPathMonitorEnter(object, lockword, lockwordThreadID);
         }
 
-        private void slowPathMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID) {
-            ModalLockword64 currentLockword = lockword;
-            while (BiasedLockword64.isBiasedLockword(currentLockword)) {
-                final BiasedLockword64 biasedLockword = BiasedLockword64.from(currentLockword);
+        private void slowPathMonitorEnter(Object object, ModalLockword lockword, int lockwordThreadID) {
+            ModalLockword currentLockword = lockword;
+            while (BiasedLockword.isBiasedLockword(currentLockword)) {
+                final BiasedLockword biasedLockword = BiasedLockword.from(currentLockword);
                 // Is the lock unbiased and biasable?
                 if (biasedLockword.equals(biasedLockword.asAnonBiased())) {
                     // Try to get the bias
-                    final BiasedLockword64 newBiasedLockword = biasedLockword.asBiasedAndLockedOnceBy(lockwordThreadID);
-                    currentLockword = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, newBiasedLockword));
+                    final BiasedLockword newBiasedLockword = biasedLockword.asBiasedAndLockedOnceBy(lockwordThreadID);
+                    currentLockword = ModalLockword.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, newBiasedLockword));
                     if (currentLockword.equals(biasedLockword)) {
                         // Current thread is now the bias owner
                         return;
@@ -293,9 +293,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 return monitorScheme().createHashCode(object);
             }
             int newHashcode = 0;
-            ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-            while (BiasedLockword64.isBiasedLockword(lockword)) {
-                final BiasedLockword64 biasedLockword = BiasedLockword64.from(lockword);
+            ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+            while (BiasedLockword.isBiasedLockword(lockword)) {
+                final BiasedLockword biasedLockword = BiasedLockword.from(lockword);
                 final int hashcode = biasedLockword.getHashcode();
                 if (hashcode != 0) {
                     return hashcode;
@@ -311,7 +311,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                     return newHashcode;
                 } else if (biasedLockword.equals(biasedLockword.asAnonBiased())) {
                     // If the biased lock is anon biased, then try setting a hashcode
-                    lockword = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, biasedLockword.setHashcode(newHashcode)));
+                    lockword = ModalLockword.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, biasedLockword.setHashcode(newHashcode)));
                     if (lockword.equals(biasedLockword)) {
                         return newHashcode;
                     }
@@ -350,11 +350,11 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 return;
             }
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
-            final BiasedLockEpoch64 classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
+            final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
             // We cannot have any safepoints (and hence any revocation) on the code path between here and the lockword store.
-            final ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-            if (BiasedLockword64.isBiasedLockword(lockword)) {
-                final BiasedLockword64 biasedLockword = BiasedLockword64.from(lockword);
+            final ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+            if (BiasedLockword.isBiasedLockword(lockword)) {
+                final BiasedLockword biasedLockword = BiasedLockword.from(lockword);
                 if (biasedLockword.getEpoch().equals(classEpoch) && biasedLockword.getBiasOwnerID() == lockwordThreadID && !biasedLockword.countOverflow()) {
                     ObjectAccess.writeMisc(object, biasedLockword.incrementCount());
                     return;
@@ -363,17 +363,17 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             slowPathMonitorEnter(object, lockword, lockwordThreadID);
         }
 
-        private void slowPathMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID) {
-            ModalLockword64 currentLockword = lockword;
-            while (BiasedLockword64.isBiasedLockword(currentLockword)) {
-                final BiasedLockword64 biasedLockword = BiasedLockword64.from(currentLockword);
-                final BiasedLockEpoch64 classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
+        private void slowPathMonitorEnter(Object object, ModalLockword lockword, int lockwordThreadID) {
+            ModalLockword currentLockword = lockword;
+            while (BiasedLockword.isBiasedLockword(currentLockword)) {
+                final BiasedLockword biasedLockword = BiasedLockword.from(currentLockword);
+                final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
                 if (classEpoch.isBulkRevocation()) {
                     // Objects of this class are no longer eligible for biased locking
                     if (biasedLockword.equals(biasedLockword.asAnonBiased())) {
                         // Object is not biased or locked, change the lockword to the next locking mode
-                        final ModalLockword64 newLockword = delegate().prepareModalLockword(object, currentLockword);
-                        currentLockword = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, newLockword));
+                        final ModalLockword newLockword = delegate().prepareModalLockword(object, currentLockword);
+                        currentLockword = ModalLockword.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, newLockword));
                         if (!currentLockword.equals(biasedLockword)) {
                             delegate().cancelPreparedModalLockword(newLockword);
                         }
@@ -399,8 +399,8 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                     return;
                 } else if (biasedLockword.equals(biasedLockword.asAnonBiased()) || !biasedLockword.getEpoch().equals(classEpoch)) {
                     // Object is not biased or it's bias is not in the current epoch. Try to get the bias.
-                    final BiasedLockword64 newBiasedLockword = biasedLockword.asBiasedAndLockedOnceBy(lockwordThreadID, classEpoch);
-                    currentLockword = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, newBiasedLockword));
+                    final BiasedLockword newBiasedLockword = biasedLockword.asBiasedAndLockedOnceBy(lockwordThreadID, classEpoch);
+                    currentLockword = ModalLockword.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, newBiasedLockword));
                     if (currentLockword.equals(biasedLockword)) {
                         // Current thread is now the bias owner
                         return;
@@ -427,9 +427,9 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 return monitorScheme().createHashCode(object);
             }
             int newHashcode = 0;
-            ModalLockword64 lockword = ModalLockword64.from(ObjectAccess.readMisc(object));
-            while (BiasedLockword64.isBiasedLockword(lockword)) {
-                final BiasedLockword64 biasedLockword = BiasedLockword64.from(lockword);
+            ModalLockword lockword = ModalLockword.from(ObjectAccess.readMisc(object));
+            while (BiasedLockword.isBiasedLockword(lockword)) {
+                final BiasedLockword biasedLockword = BiasedLockword.from(lockword);
                 final int hashcode = biasedLockword.getHashcode();
                 if (hashcode != 0) {
                     return hashcode;
@@ -440,7 +440,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 }
 
                 // Do we own the bias?
-                final BiasedLockEpoch64 classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
+                final BiasedLockEpoch classEpoch = ObjectAccess.readHub(object).biasedLockEpoch;
                 final int lockwordThreadID = encodeCurrentThreadIDForLockword();
                 if (biasedLockword.getBiasOwnerID() == lockwordThreadID) {
                     if (biasedLockword.getEpoch().equals(classEpoch) || !biasedLockword.countUnderflow()) {
@@ -449,7 +449,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                     }
                 }
                 if (biasedLockword.equals(biasedLockword.asAnonBiased()) || !biasedLockword.getEpoch().equals(classEpoch)) {
-                    lockword = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, biasedLockword.setHashcode(newHashcode)));
+                    lockword = ModalLockword.from(ObjectAccess.compareAndSwapMisc(object, biasedLockword, biasedLockword.setHashcode(newHashcode)));
                     if (lockword.equals(biasedLockword)) {
                         return newHashcode;
                     }
@@ -481,10 +481,10 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             return revocationHeuristics;
         }
 
-        private ModalLockword64 performRevocation(Object object, BiasedLockword64 lockword) {
+        private ModalLockword performRevocation(Object object, BiasedLockword lockword) {
             final BiasedLockRevocationHeuristics revocationHeuristics = getHeuristics(object);
             final RevocationType type = revocationHeuristics.notifyContentionRevocationRequest();
-            ModalLockword64 postRevokeLockword = ModalLockword64.from(Word.zero());
+            ModalLockword postRevokeLockword = ModalLockword.from(Word.zero());
             switch (type) {
                 case SINGLE_OBJECT_REVOCATION: {
                     if (Monitor.TraceMonitors) {
@@ -529,7 +529,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
 
         class BulkRevokeOperation extends VmOperation {
             private final Object object;
-            ModalLockword64 postRevokeLockword;
+            ModalLockword postRevokeLockword;
             BulkRevokeOperation(Object object) {
                 super("BulkRevoke", null, Mode.Safepoint, false);
                 this.object = object;
@@ -537,14 +537,14 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             @Override
             protected void doIt() {
                 final Hub hub = ObjectAccess.readHub(object);
-                hub.biasedLockEpoch = BiasedLockEpoch64.bulkRevocation();
+                hub.biasedLockEpoch = BiasedLockEpoch.bulkRevocation();
                 postRevokeLockword = revokeBias(object);
             }
         }
 
         class BulkRebiasOperation extends VmOperation {
             private final Object object;
-            ModalLockword64 postRebiasLockword;
+            ModalLockword postRebiasLockword;
             BulkRebiasOperation(Object object) {
                 super("BulkRebias", null, Mode.Safepoint, false);
                 this.object = object;
@@ -552,7 +552,7 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             @Override
             protected void doIt() {
                 final Hub hub = ObjectAccess.readHub(object);
-                final BiasedLockEpoch64 epoch = hub.biasedLockEpoch;
+                final BiasedLockEpoch epoch = hub.biasedLockEpoch;
                 hub.biasedLockEpoch = epoch.increment();
                 postRebiasLockword = revokeBias(object);
             }

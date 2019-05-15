@@ -35,7 +35,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public Class[] wordSubclasses() {
-        return new Class[] {ThinLockword64.class};
+        return new Class[] {ThinLockword.class};
     }
 
     @Override

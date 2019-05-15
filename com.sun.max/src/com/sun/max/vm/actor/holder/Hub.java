@@ -59,7 +59,7 @@ public abstract class Hub extends Hybrid {
     @INSPECTED
     public final ClassActor classActor;
     public final Layout.Category layoutCategory;
-    public BiasedLockEpoch64 biasedLockEpoch = BiasedLockEpoch64.init();
+    public BiasedLockEpoch biasedLockEpoch = BiasedLockEpoch.init();
     /**
      * Word index to the first element of the variable-size part of the hub.
      * The index is relative to the first word following the hub's header.
