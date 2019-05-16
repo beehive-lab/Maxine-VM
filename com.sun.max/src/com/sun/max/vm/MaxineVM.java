@@ -118,6 +118,8 @@ public final class MaxineVM {
      */
     private static int exitCode = 0;
 
+    public static int queryObjectCounter = 0;
+
     private static long startupTime;
     private static long startupTimeNano;
 
@@ -153,6 +155,14 @@ public final class MaxineVM {
             return (profilerTLA == 1 || Profiler.profileAll()) && Profiler.warmupFinished() && Profiler.neo4jWarmupFinished();
         }
         return false;
+    }
+
+    public static void queryObjectCount(String type) {
+        if (type.contains("QueryObject")) {
+            queryObjectCounter++;
+            Log.print(" QueryObject #");
+            Log.println(queryObjectCounter);
+        }
     }
 
     /**

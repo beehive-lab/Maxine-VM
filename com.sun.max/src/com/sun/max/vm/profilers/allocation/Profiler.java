@@ -72,7 +72,6 @@ public class Profiler {
 
     public static int totalNewSize = 0;
     public static int totalSurvSize = 0;
-    public static int queryObjectCounter = 0;
 
     /**
      * A buffer to transform a String object to char array.
@@ -188,7 +187,7 @@ public class Profiler {
     }
 
     public static boolean neo4jWarmupFinished() {
-        return queryObjectCounter >= Neo4jWarmupThreshold;
+        return MaxineVM.queryObjectCounter >= Neo4jWarmupThreshold && MaxineVM.queryObjectCounter <= Neo4jWarmupThreshold;
     }
 
     /**
