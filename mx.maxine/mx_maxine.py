@@ -754,7 +754,7 @@ def allocprofiler(args):
     profilerArgs = []
 
     nativeLib = 'jnumautils-0.1-SNAPSHOT.jar'
-    jnumautils = join('-Xbootclasspath/p:lib/', nativeLib)
+    jnumautils = join('-Xbootclasspath/p:$MAXINE_HOME/lib/', nativeLib)
     profilerArgs.append(jnumautils)
 
     profilerOptions = ['all', 'entry', 'exit', 'log', 'verbose']
