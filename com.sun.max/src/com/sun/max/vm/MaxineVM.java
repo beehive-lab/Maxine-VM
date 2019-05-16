@@ -160,8 +160,9 @@ public final class MaxineVM {
     public static void queryObjectCount(String type) {
         if (type.contains("QueryObject")) {
             queryObjectCounter++;
-            Log.print(" QueryObject #");
-            Log.println(queryObjectCounter);
+            // for debug
+            //Log.print(" QueryObject #");
+            //Log.println(queryObjectCounter);
         }
     }
 

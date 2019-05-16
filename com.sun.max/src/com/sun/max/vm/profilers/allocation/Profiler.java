@@ -91,6 +91,18 @@ public class Profiler {
      */
     public static int WarmupThreshold;
     public static int iteration = 0;
+
+    /**
+     * The following variable is used to help us ignore the application's
+     * warmup iterations in order to profile only the effective part. The iteration
+     * is calculated by the number of Query executions. The MaxineVM.profileThatObject()
+     * method returns false as long as the iteration is below the Neo4jWarmupThreshold, which
+     * is given by the user, ignoring any object allocation by that point. The Neo4jProfileQueries (default 1)
+     * indicates how many queries we want to profile.
+     *
+     * NOTE: This technique is applicable only for Neo4j benchmarks, since the query executions
+     * are marked with a unique object (QueryObject) that we count.
+     */
     public static int Neo4jWarmupThreshold;
     public static int Neo4jProfileQueries = 1;
 
@@ -189,7 +201,6 @@ public class Profiler {
     }
 
     public static boolean neo4jWarmupFinished() {
-        return MaxineVM.queryObjectCounter >= Neo4jWarmupThreshold && MaxineVM.queryObjectCounter <= Neo4jWarmupThreshold;
         return MaxineVM.queryObjectCounter >= Neo4jWarmupThreshold && MaxineVM.queryObjectCounter <= Neo4jWarmupThreshold + (Neo4jProfileQueries - 1);
     }
 
