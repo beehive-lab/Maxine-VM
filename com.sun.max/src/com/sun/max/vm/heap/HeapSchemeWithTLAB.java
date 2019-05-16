@@ -63,8 +63,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public static boolean GenInlinedTLABAlloc = true;
 
 
-    // public static int queryObjectCounter = 0;
-
     /**
      * Determines if TLABs should be traced.
      *
@@ -85,14 +83,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     private static boolean PrintTLABStats;
-
-    // public void queryObjectCount(String type) {
-    //     if (type.contains("QueryObject")) {
-    //         queryObjectCounter++;
-    //         Log.print(" QueryObject #");
-    //         Log.println(queryObjectCounter);
-    //     }
-    // }
 
     static {
         VMOptions.addFieldOption("-XX:", "PrintTLABStats", Classes.getDeclaredField(HeapSchemeWithTLAB.class, "PrintTLABStats"),
