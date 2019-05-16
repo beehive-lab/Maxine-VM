@@ -158,7 +158,7 @@ public final class MaxineVM {
     }
 
     public static void queryObjectCount(String type) {
-        if (type.contains("QueryObject")) {
+        if (type.contains(Profiler.ProfileObject)) {
             queryObjectCounter++;
             // for debug
             //Log.print(" QueryObject #");
