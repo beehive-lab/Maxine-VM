@@ -657,7 +657,79 @@ def ignoreTheRestOptions(vmArgs, profilerOptions):
                 del vmArgs[vmArgs.index(arg)+1]
             del vmArgs[vmArgs.index(arg)]
 
+def allocprofilerpostprocessing():
+    filename = os.environ['MAXINE_LOG_FILE']
 
+    #open file
+    file = open(filename, 'r')
+    lines = file.readlines()
+    file.close
+
+    # create a new directory under ProfilingResults
+    folder = str(datetime.datetime.now().strftime('%Y%m%d_%H%M'))
+    src_dir = os.getenv('MAXINE_HOME', '')
+    dst_dir = src_dir+'/ProfilingResults/'+folder
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
+
+    #open a new file for allocations only
+    allocationsFileName = dst_dir+'/allocations.csv'
+    allocationsFile = open(allocationsFileName, 'a')
+    #with the following format
+    allocationsFile.write('Cycle;ThreadNumaNode;Type;Size;NumaNode\n')
+
+    #thread map regex
+    threadMapPattern = r'\(Run\)\sThread\s([0-9]+)\,\sCPU\s([0-9]+),\sNuma\sNode\s([0-9]+)'
+
+    #object allocation regex
+    #Format: 
+    #Cycle ; is New Allocation ; ID ; Thread id ; Class/Type ; Size ; NUMA Node
+    recordPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[^\;.]*\;[0-9]+\;[0-9]+'
+
+    #index     - content
+    #thread id - numa node
+    threadMap = []
+    #there is no thread 0 so put a garbage value
+    threadMap.insert(0, -9)
+
+    #i=0
+    print 'Applying Thread Map...'    
+    for line in lines:
+        #i = i + 1
+        #if (i > 200):
+        #   break
+        #print line
+        threadMapMatch = re.match(threadMapPattern, line)
+        if (threadMapMatch):
+            threadId = int(threadMapMatch.group(1))
+            cpu = int(threadMapMatch.group(2))
+            numaNode = int(threadMapMatch.group(3))
+            threadMap.insert(threadId, numaNode)
+        else:
+            #filter new allocations and redirect them to the new file
+            found = re.match(recordPattern, line)
+            index = int(found.group(1))
+            a = line.split(';')
+
+            cycle = a[0]
+            isAllocation = a[1]
+            uniqueId = a[2]
+            threadId = int(a[3])
+            classOrType = a[4]
+            size = a[5]
+            numaNode = a[6]
+            #apply thread mapping
+            threadNumaNode = str(threadMap[threadId])
+
+            if (isAllocation == '1' ):
+                a = cycle + ';' + threadNumaNode + ';' + classOrType + ';' + size + ';' + numaNode
+                allocationsFile.write(a)
+            #else:
+                #to be continued
+    allocationsFile.close
+    print 'Finished.'
+    print 'The Profiling Results are under: $MAXINE_HOME/ProfilingResults/'+folder
+    
 def allocprofiler(args):
     """launch Maxine VM with Allocation Profiler
 
@@ -740,6 +812,10 @@ def allocprofiler(args):
     print '=================================================='
 
     mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
+
+    print '=================================================='
+    print 'The execution is finished. A reformation of the results will follow.'
+    allocprofilerpostprocessing()
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
