@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- jdk8u212 support
 - Binary file and assembly generation for offline compiled methods (for debugging/educational purposes)
 - Support `-C1X:+PrintLIRWithAssembly` and `-C1X:PrintCFGToFile` for all platforms through objdump
 - Off-heap allocation for allocation profiler (-XX:+AllocationProfilerAll -XX:+AllocationProfilerDump)

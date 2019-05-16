@@ -249,7 +249,9 @@ To get it and add it to your ``PATH`` execute::
  git clone https://github.com/graalvm/mx
  export PATH=$PATH:$(pwd)/mx
 
-Maxine also depends on openJDK 8. To get it from the ubuntu repositories run::
+Maxine also depends on openJDK 8.
+To see the supported jdk versions please refer to the :doc:`Status <./Status>` page.
+To get it from the ubuntu repositories run::
 
  sudo apt-get install openjdk-8-jdk
 
