@@ -1,0 +1,25 @@
+version: "3"
+services:
+  maxine-dev:
+    # build: .
+    image: beehivelab/maxine-dev:latest
+    container_name: maxine-dev
+    cap_add: 
+      - SYS_PTRACE
+    stdin_open: true
+    tty: true
+    environment:
+      DISPLAY: unix${DISPLAY}
+    ports:
+      - "9873:873"
+    volumes:
+      - maxine-dev-mx-sync:/root/.mx:nocopy # nocopy is important
+      - maxine-dev-src-sync:/root/maxine-src:nocopy # nocopy is important
+      - /tmp/.X11-unix:/tmp/.X11-unix
+
+# that the important thing
+volumes:
+  maxine-dev-mx-sync:
+    external: true
+  maxine-dev-src-sync:
+    external: true
