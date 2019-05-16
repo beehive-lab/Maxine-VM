@@ -152,7 +152,7 @@ public final class MaxineVM {
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
                     "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            return (profilerTLA == 1 || Profiler.profileAll()) && Profiler.warmupFinished() && Profiler.neo4jWarmupFinished();
+            return (profilerTLA == 1 || Profiler.profileAll()) && Profiler.warmupFinished() && Profiler.DBWarmupFinished();
         }
         return false;
     }

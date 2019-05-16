@@ -96,15 +96,15 @@ public class Profiler {
      * The following variable is used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The iteration
      * is calculated by the number of Query executions. The MaxineVM.profileThatObject()
-     * method returns false as long as the iteration is below the Neo4jWarmupThreshold, which
-     * is given by the user, ignoring any object allocation by that point. The Neo4jProfileQueries (default 1)
+     * method returns false as long as the iteration is below the DBWarmupThreshold, which
+     * is given by the user, ignoring any object allocation by that point. The ProfileQueries (default 1)
      * indicates how many queries we want to profile.
      *
-     * NOTE: This technique is applicable only for Neo4j benchmarks, since the query executions
-     * are marked with a unique object (QueryObject) that we count.
+     * NOTE: This technique is applicable only for database applications, if only the query executions
+     * are marked with a unique object (eg. QueryObject) that we count.
      */
-    public static int Neo4jWarmupThreshold;
-    public static int Neo4jProfileQueries = 1;
+    public static int DBWarmupThreshold;
+    public static int ProfileQueries = 1;
 
     public final static int MINIMUMBUFFERSIZE = 500000;
     /**
@@ -126,8 +126,8 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class, "Allocation Buffer Size.");
         VMOptions.addFieldOption("-XX:", "WarmupThreshold", Profiler.class, "The warmup threshold defines the number of warmup iterations (margined by System.gc()) are due before the allocation profiling begins. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "Neo4jWarmupThreshold", Profiler.class, "The Neo4j warmup threshold defines the number of Neo4J warmup iterations are due before the allocation profiling begins. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "Neo4jProfileQueries", Profiler.class, "The number of Neo4j queries that we want to profile. (default: 1)");
+        VMOptions.addFieldOption("-XX:", "DBWarmupThreshold", Profiler.class, "It defines the number of db warmup iterations are due before the allocation profiling begins. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "ProfileQueries", Profiler.class, "The number of queries that we want to profile. (default: 1)");
         VMOptions.addFieldOption("-XX:", "ValidateAllocationProfiler", Profiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
@@ -200,8 +200,8 @@ public class Profiler {
         return iteration >= WarmupThreshold;
     }
 
-    public static boolean neo4jWarmupFinished() {
-        return MaxineVM.queryObjectCounter >= Neo4jWarmupThreshold && MaxineVM.queryObjectCounter <= Neo4jWarmupThreshold + (Neo4jProfileQueries - 1);
+    public static boolean DBWarmupFinished() {
+        return MaxineVM.queryObjectCounter >= DBWarmupThreshold && MaxineVM.queryObjectCounter <= DBWarmupThreshold + (ProfileQueries - 1);
     }
 
     /**
