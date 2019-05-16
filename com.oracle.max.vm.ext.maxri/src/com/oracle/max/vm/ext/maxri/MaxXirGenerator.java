@@ -2132,8 +2132,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
-            MaxineVM.queryObjectCount(hub.classActor.name());
-            if (MaxineVM.profileThatObject()) {
+            if (MaxineVM.profileThatObject(hub.classActor.name())) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub, cell);
             }
         }
@@ -2143,8 +2142,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
-            MaxineVM.queryObjectCount(hub.classActor.name());
-            if (MaxineVM.profileThatObject()) {
+            if (MaxineVM.profileThatObject(hub.classActor.name())) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub, cell);
             }
         }

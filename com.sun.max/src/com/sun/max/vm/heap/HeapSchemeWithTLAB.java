@@ -546,8 +546,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
 
-        MaxineVM.queryObjectCount(dynamicHub.classActor.name());
-        if (MaxineVM.profileThatObject()) {
+        if (MaxineVM.profileThatObject(dynamicHub.classActor.name())) {
             final String objectType = dynamicHub.classActor.name();
             final long address = cell.toLong();
             allocationProfiler.profile(size.toInt(), objectType, address);
@@ -565,8 +564,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             return result;
         } else {
 
-            MaxineVM.queryObjectCount(hub.classActor.name());
-            if (MaxineVM.profileThatObject()) {
+            if (MaxineVM.profileThatObject(hub.classActor.name())) {
                 final String objectType = hub.classActor.name();
                 final long address = cell.toLong();
                 allocationProfiler.profile(hub.tupleSize.toInt(), objectType, address);
@@ -580,8 +578,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
 
-        MaxineVM.queryObjectCount(hub.classActor.name());
-        if (MaxineVM.profileThatObject()) {
+        if (MaxineVM.profileThatObject(hub.classActor.name())) {
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
             allocationProfiler.profile(size.toInt(), objectType, address);
@@ -594,8 +591,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Size size = Layout.hybridLayout().getArraySize(length);
         final Pointer cell = tlabAllocate(size);
 
-        MaxineVM.queryObjectCount(Layout.getHub(Reference.fromJava(hybrid).toOrigin()).classActor.name());
-        if (MaxineVM.profileThatObject()) {
+        if (MaxineVM.profileThatObject(Layout.getHub(Reference.fromJava(hybrid).toOrigin()).classActor.name())) {
             final Pointer oldOrigin = Reference.fromJava(hybrid).toOrigin();
             final Hub hub = Layout.getHub(oldOrigin);
             final String objectType = hub.classActor.name();
@@ -610,8 +606,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Size size = Layout.size(Reference.fromJava(object));
         final Pointer cell = tlabAllocate(size);
 
-        MaxineVM.queryObjectCount(Layout.getHub(Reference.fromJava(object).toOrigin()).classActor.name());
-        if (MaxineVM.profileThatObject()) {
+        if (MaxineVM.profileThatObject(Layout.getHub(Reference.fromJava(object).toOrigin()).classActor.name())) {
             final Pointer oldOrigin = Reference.fromJava(object).toOrigin();
             final Hub hub = Layout.getHub(oldOrigin);
             final String objectType = hub.classActor.name();

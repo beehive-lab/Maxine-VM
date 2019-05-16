@@ -202,7 +202,7 @@ public class Profiler {
         return iteration >= WarmupThreshold;
     }
 
-    public static boolean DBWarmupFinished() {
+    public static boolean dbWarmupFinished() {
         return MaxineVM.queryObjectCounter >= DBWarmupThreshold && MaxineVM.queryObjectCounter <= DBWarmupThreshold + (ProfileQueries - 1);
     }
 
