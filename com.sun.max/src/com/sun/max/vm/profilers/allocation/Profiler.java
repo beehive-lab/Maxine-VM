@@ -92,6 +92,7 @@ public class Profiler {
     public static int WarmupThreshold;
     public static int iteration = 0;
     public static int Neo4jWarmupThreshold;
+    public static int Neo4jProfileQueries = 1;
 
     public final static int MINIMUMBUFFERSIZE = 500000;
     /**
@@ -114,6 +115,7 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class, "Allocation Buffer Size.");
         VMOptions.addFieldOption("-XX:", "WarmupThreshold", Profiler.class, "The warmup threshold defines the number of warmup iterations (margined by System.gc()) are due before the allocation profiling begins. (default: 0)");
         VMOptions.addFieldOption("-XX:", "Neo4jWarmupThreshold", Profiler.class, "The Neo4j warmup threshold defines the number of Neo4J warmup iterations are due before the allocation profiling begins. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "Neo4jProfileQueries", Profiler.class, "The number of Neo4j queries that we want to profile. (default: 1)");
         VMOptions.addFieldOption("-XX:", "ValidateAllocationProfiler", Profiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
@@ -188,6 +190,7 @@ public class Profiler {
 
     public static boolean neo4jWarmupFinished() {
         return MaxineVM.queryObjectCounter >= Neo4jWarmupThreshold && MaxineVM.queryObjectCounter <= Neo4jWarmupThreshold;
+        return MaxineVM.queryObjectCounter >= Neo4jWarmupThreshold && MaxineVM.queryObjectCounter <= Neo4jWarmupThreshold + (Neo4jProfileQueries - 1);
     }
 
     /**
