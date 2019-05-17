@@ -1,13 +1,13 @@
 FROM ubuntu:18.04
 LABEL maintainer="foivos.zakkak@manchester.ac.uk"
 LABEL name="beehivelab/maxine-dev"
-LABEL version="1.1.0"
+LABEL version="1.2.0"
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    make gcc gdb g++ python python2.7 git \
+    make gcc gdb g++ python python2.7 libnuma-dev \
+    git screen rsync ssh \
     openjdk-8-jdk \
-    screen rsync ssh \
     && apt-get clean
 
 # Cross-ISA support
