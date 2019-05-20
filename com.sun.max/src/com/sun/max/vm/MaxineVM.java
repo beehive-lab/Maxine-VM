@@ -148,13 +148,13 @@ public final class MaxineVM {
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject(String type) {
-        if (type.contains(Profiler.ProfileObject)) {
-            profileObjectCounter++;
-            // for debug
-            //Log.print(" ProfileObject #");
-            //Log.println(profileObjectCounter);
-        }
         if (isAllocationProfilerInitialized) {
+            if (type.contains(Profiler.ProfileObject)) {
+                profileObjectCounter++;
+                // for debug
+                //Log.print(" ProfileObject #");
+                //Log.println(profileObjectCounter);
+            }
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
                     "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
