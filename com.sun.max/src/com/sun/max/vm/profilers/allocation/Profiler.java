@@ -93,19 +93,16 @@ public class Profiler {
     public static int iteration = 0;
 
     /**
-     * The following variable is used to help us ignore the db application's
-     * warmup iterations in order to profile only the effective part. The iteration
-     * is calculated by the number of Query executions. The MaxineVM.profileThatObject()
-     * method returns false as long as the iteration is below the DBWarmupThreshold, which
-     * is given by the user, ignoring any object allocation by that point. The ProfileQueries (default 1)
-     * indicates how many queries we want to profile.
-     *
-     * NOTE: This technique is applicable only for database applications, if only the query executions
-     * are marked with a unique object ProfileObject (eg. QueryObject) that we count.
+     * The following variable is used to help us ignore the application's
+     * warmup iterations in order to profile only the effective part. The profile-window
+     * is calculated by the number of ProfileObjects. The MaxineVM.profileThatObject()
+     * method returns false as long as the iteration is below the ObjectWarmupThreshold, which
+     * is given by the user, ignoring any object allocation by that point. The ProfileWindow (default 1)
+     * indicates how many object allocations we want to profile, between those ProfileObjects.
      */
-    public static int DBWarmupThreshold;
-    public static int ProfileQueries = 1;
-    public static String ProfileObject = "QueryObject";
+    public static int ObjectWarmupThreshold;
+    public static int ProfileWindow = 1;
+    public static String ProfileObject = "ProfileObject";
 
     public final static int MINIMUMBUFFERSIZE = 500000;
     /**
@@ -127,9 +124,9 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class, "Allocation Buffer Size.");
         VMOptions.addFieldOption("-XX:", "WarmupThreshold", Profiler.class, "The warmup threshold defines the number of warmup iterations (margined by System.gc()) are due before the allocation profiling begins. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "DBWarmupThreshold", Profiler.class, "It defines the number of db warmup iterations are due before the allocation profiling begins. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "ProfileQueries", Profiler.class, "The number of queries that we want to profile. (default: 1)");
-        VMOptions.addFieldOption("-XX:", "ProfileObject", Profiler.class, "The name of the Object that the profiler looks for in order to start profiling. (default: 'QueryObject')");
+        VMOptions.addFieldOption("-XX:", "ObjectWarmupThreshold", Profiler.class, "It defines the number of db warmup iterations are due before the allocation profiling begins. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "ProfileWindow", Profiler.class, "The number of objects that we want to profile in between the ProfileObjects. (default: 1)");
+        VMOptions.addFieldOption("-XX:", "ProfileObject", Profiler.class, "The name of the Object that the profiler looks for in order to start profiling. (default: 'ProfileObject')");
         VMOptions.addFieldOption("-XX:", "ValidateAllocationProfiler", Profiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
@@ -202,8 +199,8 @@ public class Profiler {
         return iteration >= WarmupThreshold;
     }
 
-    public static boolean dbWarmupFinished() {
-        return MaxineVM.queryObjectCounter >= DBWarmupThreshold && MaxineVM.queryObjectCounter <= DBWarmupThreshold + (ProfileQueries - 1);
+    public static boolean objectWarmupFinished() {
+        return MaxineVM.profileObjectCounter >= ObjectWarmupThreshold && MaxineVM.profileObjectCounter <= ObjectWarmupThreshold + (ProfileWindow - 1);
     }
 
     /**

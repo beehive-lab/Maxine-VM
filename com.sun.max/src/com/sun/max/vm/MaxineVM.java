@@ -118,7 +118,7 @@ public final class MaxineVM {
      */
     private static int exitCode = 0;
 
-    public static int queryObjectCounter = 0;
+    public static int profileObjectCounter = 0;
 
     private static long startupTime;
     private static long startupTimeNano;
@@ -149,16 +149,16 @@ public final class MaxineVM {
      */
     public static boolean profileThatObject(String type) {
         if (type.contains(Profiler.ProfileObject)) {
-            queryObjectCounter++;
+            profileObjectCounter++;
             // for debug
-            //Log.print(" QueryObject #");
-            //Log.println(queryObjectCounter);
+            //Log.print(" ProfileObject #");
+            //Log.println(profileObjectCounter);
         }
         if (isAllocationProfilerInitialized) {
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
                     "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            return (profilerTLA == 1 || Profiler.profileAll()) && Profiler.warmupFinished() && Profiler.dbWarmupFinished();
+            return (profilerTLA == 1 || Profiler.profileAll()) && Profiler.warmupFinished() && Profiler.objectWarmupFinished();
         }
         return false;
     }
