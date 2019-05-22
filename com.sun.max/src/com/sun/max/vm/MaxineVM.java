@@ -149,7 +149,7 @@ public final class MaxineVM {
      */
     public static boolean profileThatObject(String type) {
         if (isAllocationProfilerInitialized) {
-            if (type.contains(Profiler.ProfileObject)) {
+            if (type.contains(Profiler.FlareObject)) {
                 profileObjectCounter++;
                 // for debug
                 //Log.print(" ProfileObject #");

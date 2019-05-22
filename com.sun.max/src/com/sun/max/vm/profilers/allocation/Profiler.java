@@ -80,6 +80,8 @@ public class Profiler {
     public static int charArrayBufferLength;
 
     /**
+     * PROFILING POLICY 1: Explicit GC Driven
+     * Trigger Event: An Application's System.gc() call.
      * The following two variables are used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The iteration
      * is calculated by the number of System.gc() calls. The MaxineVM.profileThatObject()
@@ -93,6 +95,8 @@ public class Profiler {
     public static int iteration = 0;
 
     /**
+     * PROFILING POLICY 2: Flare-Object Driven
+     * Trigger Event: A Flare-Object Allocation by the Application.
      * The following variable is used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The profile-window
      * is calculated by the number of ProfileObjects. The MaxineVM.profileThatObject()
@@ -102,7 +106,7 @@ public class Profiler {
      */
     public static int ObjectWarmupThreshold;
     public static int ProfileWindow = 1;
-    public static String ProfileObject = "ProfileObject";
+    public static String FlareObject = "FlareObject";
 
     public final static int MINIMUMBUFFERSIZE = 500000;
     /**
