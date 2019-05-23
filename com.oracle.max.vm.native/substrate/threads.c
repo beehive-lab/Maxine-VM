@@ -209,7 +209,7 @@ void *thread_self() {
     return (void *) thread_current();
 }
 
-void numa_aware_thread_tracking(int threadId){
+void log_numa_thread(int threadId){
 
     // NUMA-aware thread tracking in behalf of Allocation Profiler
     int cpu = sched_getcpu();
@@ -231,7 +231,9 @@ void *thread_run(void *arg) {
     jint id = tla_load(jint, etla, ID);
     Address nativeThread = (Address) thread_current();
 
-    numa_aware_thread_tracking(id);
+#if log_NUMA_THREADS
+    log_numa_thread(id);
+#endif
 
 #if log_THREADS
     log_println("thread_run: BEGIN t=%p", nativeThread);
