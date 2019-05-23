@@ -443,7 +443,7 @@ public class Profiler {
          * Check if the current GC is explicit. If yes, increase the iteration counter.
          */
         if (isExplicitGC) {
-            iteration ++;
+            iteration++;
         }
         isExplicitGC = false;
 

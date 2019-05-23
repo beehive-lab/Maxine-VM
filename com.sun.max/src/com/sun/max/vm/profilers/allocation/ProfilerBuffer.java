@@ -243,6 +243,12 @@ public class ProfilerBuffer {
         writeNode(index, node);
     }
 
+    /**
+     * Allocation Profiler Output format.
+     * Cycle; isAllocation; UniqueId; ThreadId; Type/Class; Size; NumaNode
+     * @param cycle
+     * @param allocation
+     */
     public void dumpToStdOut(int cycle, int allocation) {
         for (int i = 0; i < currentIndex; i++) {
             Log.print(cycle);
