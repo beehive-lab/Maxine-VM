@@ -78,7 +78,7 @@ public final class JDK_java_lang_Runtime {
     @SUBSTITUTE
     private void gc() {
         if (!Heap.gcDisabled()) {
-            Profiler.iteration++;
+            Profiler.isExplicitGC = true;
             final GCRequest gcRequest = GCRequest.clearedGCRequest();
             gcRequest.explicit = true;
             Heap.collectGarbage();

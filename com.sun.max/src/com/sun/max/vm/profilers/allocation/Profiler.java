@@ -95,6 +95,17 @@ public class Profiler {
     public static int iteration = 0;
 
     /**
+     * This field stores the GC type information (implicit or explicit).
+     * By default is false. It is set to true, when an explicit GC is triggered
+     * at JDK_java_lang_Runtime class. It is then accessed by the Profiler at the post-gc phase.
+     * If an explicit gc is found, the explicit gc counter is incremented.
+     * This way, the Explicit-GC Policy is, timing-wise, more accurate since the Profiler
+     * is switched on exactly at the point when the last warm-up iteration has been finished
+     * and therefore, profiles only what it should.
+     */
+    public static boolean isExplicitGC = false;
+
+    /**
      * PROFILING POLICY 2: Flare-Object Driven
      * Trigger Event: A Flare-Object Allocation by the Application.
      * The following variable is used to help us ignore the application's
@@ -130,7 +141,7 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "WarmupThreshold", Profiler.class, "The warmup threshold defines the number of warmup iterations (margined by System.gc()) are due before the allocation profiling begins. (default: 0)");
         VMOptions.addFieldOption("-XX:", "ObjectWarmupThreshold", Profiler.class, "It defines the number of db warmup iterations are due before the allocation profiling begins. (default: 0)");
         VMOptions.addFieldOption("-XX:", "ProfileWindow", Profiler.class, "The number of objects that we want to profile in between the ProfileObjects. (default: 1)");
-        VMOptions.addFieldOption("-XX:", "ProfileObject", Profiler.class, "The name of the Object that the profiler looks for in order to start profiling. (default: 'ProfileObject')");
+        VMOptions.addFieldOption("-XX:", "FlareObject", Profiler.class, "The name of the Object that the profiler looks for in order to start profiling. (default: 'FlareObject')");
         VMOptions.addFieldOption("-XX:", "ValidateAllocationProfiler", Profiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
@@ -427,6 +438,14 @@ public class Profiler {
 
         totalNewSize = totalSurvSize;
         totalSurvSize = 0;
+
+        /**
+         * Check if the current GC is explicit. If yes, increase the iteration counter.
+         */
+        if (isExplicitGC) {
+            iteration ++;
+        }
+        isExplicitGC = false;
 
         profilingCycle++;
 
