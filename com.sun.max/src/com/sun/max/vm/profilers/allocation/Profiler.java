@@ -211,7 +211,7 @@ public class Profiler {
     }
 
     public static boolean warmupFinished() {
-        return iteration >= WarmupThreshold;
+        return iteration > WarmupThreshold;
     }
 
     public static boolean objectWarmupFinished() {
