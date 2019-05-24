@@ -466,28 +466,29 @@ public class Profiler {
     /**
      * This method can be used for actions need to take place right before
      * Allocation Profiler's termination. It is triggered when JavaRunScheme
-     * is being terminated. Currently empty.
+     * is being terminated. Dumps the final profiling cycle which is not
+     * followed by any GC.
      */
     public void terminate() {
-        if (getProfilingCycle() == 1) {
-            findNumaNodes();
 
-            if (!ValidateAllocationProfiler) {
-                dumpBuffer();
-            } else {
-                //in validation mode don't dump buffer
-                Log.print("Cycle ");
-                Log.println(profilingCycle);
+        findNumaNodes();
 
-                Log.print("=> (Profiler Reports): New Objects Size =");
-                Log.print((float) totalNewSize / (1024 * 1024));
-                Log.println(" MB");
+        if (!ValidateAllocationProfiler) {
+            dumpBuffer();
+        } else {
+            //in validation mode don't dump buffer
+            Log.print("Cycle ");
+            Log.println(profilingCycle);
 
-                Log.print("=> (VM Reports): Heap Used Space =");
-                Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
-                Log.println(" MB");
-            }
+            Log.print("=> (Profiler Reports): New Objects Size =");
+            Log.print((float) totalNewSize / (1024 * 1024));
+            Log.println(" MB");
+
+            Log.print("=> (VM Reports): Heap Used Space =");
+            Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
+            Log.println(" MB");
         }
+
         if (VerboseAllocationProfiler) {
             Log.print("(Allocation Profiler): Release Reserved Memory.");
         }
