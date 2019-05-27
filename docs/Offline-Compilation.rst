@@ -24,6 +24,8 @@ To compile offline the ``main`` method of ``Main`` class issue the following com
   .
   1 passed
 
+.. note:: On Mac OS you will need to install binutils (``brew install binutils``) and change your ``PATH`` (``export PATH="/usr/local/opt/binutils/bin:$PATH"``).
+
 - ``mx olc`` invokes the offline compilation
 - ``-cp ./`` adds the current path to the classpath.
   This is necessary for the online compilation to find the class we want to compile.
