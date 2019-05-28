@@ -71,7 +71,13 @@ public interface BootstrapMethod {
                 }
 
                 // Resolve potentially resolvable arguments
-                if (bootstrapArgument instanceof ResolvableConstant) {
+                if (bootstrapArgument instanceof ClassConstant) {
+                    arguments[i] = ((ClassConstant) bootstrapArgument).resolve(pool, bootstrapArgumentIndex).toJava();
+                } else if (bootstrapArgument instanceof FieldRefConstant) {
+                    arguments[i] = ((FieldRefConstant) bootstrapArgument).resolve(pool, bootstrapArgumentIndex).toJava();
+                } else if (bootstrapArgument instanceof MethodRefConstant) {
+                    arguments[i] = ((MethodRefConstant) bootstrapArgument).resolve(pool, bootstrapArgumentIndex).toJava();
+                } else if (bootstrapArgument instanceof ResolvableConstant) {
                     arguments[i] = ((ResolvableConstant) bootstrapArgument).resolve(pool, bootstrapArgumentIndex);
                 } else {
                     assert bootstrapArgument instanceof ValueConstant;
