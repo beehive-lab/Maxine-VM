@@ -922,7 +922,7 @@ public final class ConstantPool implements RiConstantPool {
     }
 
     public MethodActor resolveInvokeSpecial(int cpi) {
-        MethodActor methodActor = classMethodAt(cpi).resolveVirtual(this, cpi);
+        MethodActor methodActor = methodAt(cpi).resolve(this, cpi);
         if (isSpecial(methodActor, holder())) {
             methodActor = holder().superClassActor.findVirtualMethodActor(methodActor);
             if (methodActor == null) {
