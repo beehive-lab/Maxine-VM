@@ -657,8 +657,8 @@ def ignoreTheRestOptions(vmArgs, profilerOptions):
                 del vmArgs[vmArgs.index(arg)+1]
             del vmArgs[vmArgs.index(arg)]
 
-def applyThreadMap():
-    oldFileName = os.environ['MAXINE_LOG_FILE']
+def applynumathreadmap(filename):
+    oldFileName = filename
 
     #open the profiler output file
     oldFile = open(oldFileName, 'r')
@@ -686,18 +686,26 @@ def applyThreadMap():
     #there is no thread 0 so put a garbage value
     threadMap.insert(0, -9)
 
-    print 'Applying Thread Map...'    
+    print 'Applying NUMA Thread Map...'    
     for line in lines:
         threadMapLineMatch = re.findall(threadMapPattern, line)
         recordLineMatch = re.match(recordPattern, line)
         if (threadMapLineMatch):
             # NUMA Thread Map line found
-            # Update NUMA Thread Map
             for item in threadMapLineMatch:
                 threadId = int(item[0])
                 cpu = int(item[1])
                 numaNode = int(item[2])
-                threadMap.insert(threadId, numaNode)
+                # Update NUMA Thread Map
+                if (threadId > len(threadMap)):
+                    while (threadId > len(threadMap)):
+                        threadMap.insert(len(threadMap), -9)
+                    threadMap.insert(threadId, numaNode)
+                elif (threadId == len(threadMap)):
+                    threadMap.insert(threadId, numaNode)
+                else:
+                    threadMap[threadId] = numaNode
+
         elif (recordLineMatch):
             # Allocation Profiler Output line found
             # Apply NUMA Thread map
@@ -708,7 +716,7 @@ def applyThreadMap():
             isAllocation = fields[1]
             uniqueId = fields[2]
             threadId = int(fields[3])
-            threadNumaNode = str(threadMap[threadId])
+            threadNumaNode = threadMap[threadId]
             classOrType = fields[4]
             size = fields[5]
             numaNode = fields[6]
@@ -719,7 +727,7 @@ def applyThreadMap():
             
     newFile.close
 
-    # After NUMA Thread Map has been applied to Allocation Profiler's Output,
+    # After NUMA Thread Map has been applied to the Allocation Profiler's Output,
     # replace the old Allocation Profile's Output file with the new one
 
     # delete the old output
@@ -786,8 +794,8 @@ def allocprofiler(args):
             del vmArgs[index]
             profilerArgs.append('-XX:WarmupThreshold='+num)
 
-        if 'bufferSize' in vmArgs:
-            index = vmArgs.index('bufferSize')
+        if 'buffersize' in vmArgs:
+            index = vmArgs.index('buffersize')
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
@@ -811,12 +819,11 @@ def allocprofiler(args):
     mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
 
     print '=================================================='
-    print 'The execution is finished. Applying NUMA Thread Map...'
-    applyThreadMap()
-    print 'Finished. The results are at:'
-    print  os.getenv('MAXINE_LOG_FILE'),
-    print 'With the following format:'
-    print 'Cycle ; isNewAllocation ; ID ; ThreadId ; Class/Type ; Size ; NUMA Node ; ThreadNUMANode'
+    print 'The execution is finished.'
+    applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
+    print 'Finished.'
+    print '=> Results directory: ',os.getenv('MAXINE_LOG_FILE')
+    print '=> Results format:', 'Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode'
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
@@ -1003,6 +1010,7 @@ def mx_init(suite):
 
     commands = {
         'allocprofiler': [allocprofiler, ''],
+        'applynumathreadmap': [applynumathreadmap, ''],
         'build': [build, '"for help run mx :build -h"'],
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],
