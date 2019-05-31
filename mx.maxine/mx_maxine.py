@@ -658,7 +658,7 @@ def ignoreTheRestOptions(vmArgs, profilerOptions):
             del vmArgs[vmArgs.index(arg)]
 
 def applynumathreadmap(filename):
-    oldFileName = filename
+    oldFileName = filename[0]
 
     #open the profiler output file
     oldFile = open(oldFileName, 'r')
@@ -820,7 +820,7 @@ def allocprofiler(args):
 
     print '=================================================='
     print 'The execution is finished.'
-    applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
+    #applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
     print 'Finished.'
     print '=> Results directory: ',os.getenv('MAXINE_LOG_FILE')
     print '=> Results format:', 'Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode'
