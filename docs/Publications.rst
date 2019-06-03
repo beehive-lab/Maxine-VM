@@ -4,6 +4,10 @@ Papers and Presentations
 This page lists some of the papers, presentations, articles and demos
 that have resulted from the Maxine project and its predecessors.
 
+-  Thomas Shull, Jian Huang, and Josep Torrellas.
+   **AutoPersist: An Easy-To-Use Java NVM Framework Based on Reachability**
+   In the 40th ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI), 2019.
+
 -  Po-An Tsai and Daniel Sanchez.
    **Compress Objects, Not Cache Lines: An Object-Based Compressed Memory Hierarchy.**
    In the 24th International Conference on Architectural Support for Programming Languages and Operating Systems (ASPLOS), 2019.
