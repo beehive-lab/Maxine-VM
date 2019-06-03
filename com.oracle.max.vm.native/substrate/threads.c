@@ -43,10 +43,6 @@
 #include "threadLocals.h"
 #include <sys/mman.h>
 
-#if isa_AMD64
-    #include <numa.h>
-#endif
-
 #if (os_DARWIN || os_LINUX)
 #   include <pthread.h>
 #   include <errno.h>
@@ -60,6 +56,19 @@
 #   include "maxve.h"
     typedef maxve_Thread Thread;
 #define thread_current() (maxve_get_current())
+#endif
+
+#if ! (isa_ARM || isa_AARCH64)
+#   include <numa.h>
+    void log_numa_thread(int threadId){
+
+        // NUMA-aware thread tracking in behalf of Allocation Profiler
+        int cpu = sched_getcpu();
+        int numaNode;
+        numaNode = numa_node_of_cpu(cpu);
+
+        log_println("(Run) Thread %d, CPU %d, Numa Node %d", threadId, cpu, numaNode);
+}
 #endif
 
 /**
@@ -212,16 +221,6 @@ void *thread_self() {
     return (void *) thread_current();
 }
 
-void log_numa_thread(int threadId){
-
-    // NUMA-aware thread tracking in behalf of Allocation Profiler
-    int cpu = sched_getcpu();
-    int numaNode;
-    numaNode = numa_node_of_cpu(cpu);
-
-    log_println("(Run) Thread %d, CPU %d, Numa Node %d", threadId, cpu, numaNode);
-}
-
 /**
  * The start routine called by the native threading library once the new thread starts.
  *
@@ -234,7 +233,7 @@ void *thread_run(void *arg) {
     jint id = tla_load(jint, etla, ID);
     Address nativeThread = (Address) thread_current();
 
-#if (log_NUMA_THREADS && isa_AMD64)
+#if log_NUMA_THREADS
     log_numa_thread(id);
 #endif
 
