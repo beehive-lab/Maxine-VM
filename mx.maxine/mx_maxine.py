@@ -792,7 +792,7 @@ def allocprofiler(args):
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
-            profilerArgs.append('-XX:WarmupThreshold='+num)
+            profilerArgs.append('-XX:ExplicitGCPolicyThreshold='+num)
 
         if 'buffersize' in vmArgs:
             index = vmArgs.index('buffersize')
@@ -820,7 +820,7 @@ def allocprofiler(args):
 
     print '=================================================='
     print 'The execution is finished.'
-    #applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
+    applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
     print 'Finished.'
     print '=> Results directory: ',os.getenv('MAXINE_LOG_FILE')
     print '=> Results format:', 'Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode'
