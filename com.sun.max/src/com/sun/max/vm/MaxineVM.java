@@ -151,9 +151,6 @@ public final class MaxineVM {
         if (isAllocationProfilerInitialized) {
             if (type.contains(Profiler.FlareObject)) {
                 profileObjectCounter++;
-                // for debug
-                //Log.print(" ProfileObject #");
-                //Log.println(profileObjectCounter);
             }
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
                     "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";

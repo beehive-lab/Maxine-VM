@@ -138,10 +138,10 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerDump", Profiler.class, "Dump profiled objects to a file. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class, "Allocation Buffer Size.");
-        VMOptions.addFieldOption("-XX:", "WarmupThreshold", Profiler.class, "The warmup threshold defines the number of warmup iterations (margined by System.gc()) are due before the allocation profiling begins. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "ObjectWarmupThreshold", Profiler.class, "It defines the number of db warmup iterations are due before the allocation profiling begins. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "ProfileWindow", Profiler.class, "The number of objects that we want to profile in between the ProfileObjects. (default: 1)");
-        VMOptions.addFieldOption("-XX:", "FlareObject", Profiler.class, "The name of the Object that the profiler looks for in order to start profiling. (default: 'FlareObject')");
+        VMOptions.addFieldOption("-XX:", "ExplicitGCPolicyThreshold", Profiler.class, "The number of the Explicit GCs to be counted before the Allocation Profiler starts recording (margined by System.gc()) are due before the allocation profiling begins. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "FlareObject", Profiler.class, "The Class of the Object to be sought after by the Allocation Profiler to drive the profiling process. (default: 'FlareObject')");
+        VMOptions.addFieldOption("-XX:", "FlareObjectPolicyThreshold", Profiler.class, "The number of the Flare objects to be counted before the Allocation Profiler starts recording. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "FlareObjectPolicyProfileWindow", Profiler.class, "The number of the Flare objects to be counted before the Allocation Profiler stops recording. (default: 1)");
         VMOptions.addFieldOption("-XX:", "ValidateAllocationProfiler", Profiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
@@ -444,8 +444,8 @@ public class Profiler {
          */
         if (isExplicitGC) {
             iteration++;
+            isExplicitGC = false;
         }
-        isExplicitGC = false;
 
         profilingCycle++;
 
