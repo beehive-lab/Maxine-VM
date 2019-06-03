@@ -85,11 +85,8 @@ public class Profiler {
      * The following two variables are used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The iteration
      * is calculated by the number of System.gc() calls. The MaxineVM.profileThatObject()
-     * method returns false as long as the iteration is below the ExplicitGCPolicyThreshold, which
-     * is given by the user, ignoring any object allocation by that point.
-     *
-     * NOTE: This technique is applicable only for dacapo benchmarks, since the iterations
-     * are margined with explicit System.gc() calls and might not be working for any benchmark suite.
+     * method returns false as long as the iteration counter is below the ExplicitGCPolicyThreshold, which
+     * is given by the user, ignoring any object allocation up to that point.
      */
     public static int ExplicitGCPolicyThreshold;
     public static int iteration = 0;
@@ -109,11 +106,11 @@ public class Profiler {
      * PROFILING POLICY 2: Flare-Object Driven
      * Trigger Event: A Flare-Object Allocation by the Application.
      * The following variable is used to help us ignore the application's
-     * warmup iterations in order to profile only the effective part. The profile-window
-     * is calculated by the number of ProfileObjects. The MaxineVM.profileThatObject()
-     * method returns false as long as the iteration is below the FlareObjectPolicyThreshold, which
-     * is given by the user, ignoring any object allocation by that point. The FlareObjectPolicyProfileWindow (default 1)
-     * indicates how many object allocations we want to profile, between those ProfileObjects.
+     * warmup iterations in order to profile only the effective part. The MaxineVM.profileThatObject()
+     * method returns false as long as the FlareObject counter is below the FlareObjectPolicyThreshold,
+     * which is given by the user, ignoring any object allocation up to that point.
+     * The FlareObjectPolicyProfileWindow (default 1) indicates how many Flare Objects we need
+     * to hit before we stop the profiling .
      */
     public static int FlareObjectPolicyThreshold;
     public static int FlareObjectPolicyProfileWindow = 1;
@@ -138,8 +135,7 @@ public class Profiler {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerDump", Profiler.class, "Dump profiled objects to a file. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", Profiler.class, "Verbose profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "BufferSize", Profiler.class, "Allocation Buffer Size.");
-        VMOptions.addFieldOption("-XX:", "ExplicitGCPolicyThreshold", Profiler.class, "The number of the Explicit GCs to be counted before the Allocation Profiler starts recording (margined by System.gc())" +
-                                "are due before the allocation profiling begins. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "ExplicitGCPolicyThreshold", Profiler.class, "The number of the Explicit GCs to be counted before the Allocation Profiler starts recording. (default: 0)");
         VMOptions.addFieldOption("-XX:", "FlareObject", Profiler.class, "The Class of the Object to be sought after by the Allocation Profiler to drive the profiling process. (default: 'FlareObject')");
         VMOptions.addFieldOption("-XX:", "FlareObjectPolicyThreshold", Profiler.class, "The number of the Flare objects to be counted before the Allocation Profiler starts recording. (default: 0)");
         VMOptions.addFieldOption("-XX:", "FlareObjectPolicyProfileWindow", Profiler.class, "The number of the Flare objects to be counted before the Allocation Profiler stops recording. (default: 1)");
