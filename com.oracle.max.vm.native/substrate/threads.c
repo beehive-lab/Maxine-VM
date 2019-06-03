@@ -58,7 +58,7 @@
 #define thread_current() (maxve_get_current())
 #endif
 
-#if ! (isa_ARM || isa_AARCH64)
+#if log_NUMA_THREADS
 #   include <numa.h>
     void log_numa_thread(int threadId){
 
