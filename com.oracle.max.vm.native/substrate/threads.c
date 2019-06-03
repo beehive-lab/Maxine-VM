@@ -42,7 +42,10 @@
 #include "threads.h"
 #include "threadLocals.h"
 #include <sys/mman.h>
-#include <numa.h>
+
+#if isa_AMD64
+    #include <numa.h>
+#endif
 
 #if (os_DARWIN || os_LINUX)
 #   include <pthread.h>
@@ -231,7 +234,7 @@ void *thread_run(void *arg) {
     jint id = tla_load(jint, etla, ID);
     Address nativeThread = (Address) thread_current();
 
-#if log_NUMA_THREADS
+#if (log_NUMA_THREADS && isa_AMD64)
     log_numa_thread(id);
 #endif
 
