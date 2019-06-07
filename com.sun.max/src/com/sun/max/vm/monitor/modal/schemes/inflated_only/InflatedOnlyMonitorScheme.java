@@ -56,8 +56,8 @@ public class InflatedOnlyMonitorScheme extends ModalMonitorScheme {
     @Override
     public ModalLockwordDecoder getModalLockwordDecoder() {
         return new ModalLockwordDecoder() {
-            public boolean isLockwordInMode(ModalLockword64 modalLockword, Class<? extends ModalLockword64> mode) {
-                return mode == InflatedMonitorLockword64.class;
+            public boolean isLockwordInMode(ModalLockword modalLockword, Class<? extends ModalLockword> mode) {
+                return mode == InflatedMonitorLockword.class;
             }
         };
     }

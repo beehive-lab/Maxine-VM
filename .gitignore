@@ -16,6 +16,12 @@ workingsets.xml
 .idea
 *.pydevproject
 
+# VScode generated
+.vscode/
+
+# Mac OS
+.DS_Store
+
 # Python bytecode
 *.pyc
 
@@ -62,6 +68,7 @@ compilations-*.cfg
 codebuffer.c
 *_errors
 *_output
+olc/
 
 # Libraries
 /lib/*
@@ -69,6 +76,9 @@ codebuffer.c
 !/lib/asm-util-6.0-maxine.jar
 !/lib/okra-1.9.jar
 !/lib/jnumautils-0.1-SNAPSHOT.jar
+
+# Javadoc
+/*/javadoc/
 
 .metadata/*
 .recommenders/*

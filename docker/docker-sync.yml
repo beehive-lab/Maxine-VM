@@ -1,0 +1,10 @@
+version: "2"
+
+options:
+  verbose: true
+syncs:
+  maxine-dev-mx-sync: # tip: add -sync and you keep consistent names as a convention
+    src: '~/.mx'
+  maxine-dev-src-sync: # tip: add -sync and you keep consistent names as a convention
+    src: '../../'
+    sync_excludes: ['*.class']

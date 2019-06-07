@@ -159,7 +159,7 @@ public class Package extends BootImagePackage {
             Extensions.registerClassForReInit("java.util.concurrent.atomic.Striped64");
 
             Extensions.resetField("sun.misc.InnocuousThread", "ACC");
-            Extensions.resetField("sun.misc.InnocuousThread", "THREADGROUP");
+            Extensions.resetField("sun.misc.InnocuousThread", "INNOCUOUSTHREADGROUP");
             Extensions.registerClassForReInit("sun.misc.InnocuousThread");
         }
     }

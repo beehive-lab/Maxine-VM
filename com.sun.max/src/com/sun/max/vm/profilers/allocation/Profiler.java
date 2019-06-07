@@ -74,6 +74,12 @@ public class Profiler {
     public static int totalSurvSize = 0;
 
     /**
+     * A buffer to transform a String object to char array.
+     */
+    private static char[] charArrayBuffer;
+    public static int charArrayBufferLength;
+
+    /**
      * The following two variables are used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The iteration
      * is calculated by the number of System.gc() calls. The MaxineVM.profileThatObject()
@@ -90,12 +96,12 @@ public class Profiler {
     /**
      * The size of the Allocation Profiling Buffer.
      */
-    public int allocBufferSize = MINIMUMBUFFERSIZE;
+    public long allocBufferSize = MINIMUMBUFFERSIZE;
 
     /**
      * The size of each Survivors Profiling Buffer.
      */
-    public int survBufferSize = MINIMUMBUFFERSIZE;
+    public long survBufferSize = MINIMUMBUFFERSIZE;
 
     /**
      * The options a user can pass to the Allocation Profiler.
@@ -146,6 +152,8 @@ public class Profiler {
         survivors1 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No1");
         survivors2 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No2");
 
+        charArrayBuffer = new char[ProfilerBuffer.maxChars];
+
         profilingCycle = 1;
         if (VerboseAllocationProfiler) {
             Log.println("(Allocation Profiler): Initialization Complete.");
@@ -177,6 +185,29 @@ public class Profiler {
     }
 
     /**
+     * This method has the same functionality as the String.toCharArray() but
+     * we avoid the new object creation.
+     * @param str, The String to be converted to char array.
+     */
+    public static char[] asCharArray(String str) {
+        int i = 0;
+        while (i < str.length()) {
+            charArrayBuffer[i] = str.charAt(i);
+            i++;
+        }
+        charArrayBuffer[i] = '\0';
+        charArrayBufferLength = i;
+        return charArrayBuffer;
+    }
+
+    public void printCharArrayBuffer(char[] array, int length) {
+        for (int i = 0; i < length; i++) {
+            Log.print(array[i]);
+        }
+        Log.println("");
+    }
+
+    /**
      * This method is called when a profiled object is allocated.
      */
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
@@ -187,7 +218,10 @@ public class Profiler {
          * said if we lock and disable safepoints it is no longer accessible, thus
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
-        newObjects.record(uniqueId, type, size, address);
+        //transform the object type from String to char[] and pass the charArrayBuffer[] to record
+        charArrayBuffer = asCharArray(type);
+        final int threadId = VmThread.current().id();
+        newObjects.record(uniqueId, threadId, charArrayBuffer, size, address);
         uniqueId++;
         totalNewSize = totalNewSize + size;
         unlock(lockDisabledSafepoints);
@@ -220,13 +254,13 @@ public class Profiler {
 
     public void findNumaNodes() {
         for (int i = 0; i < newObjects.currentIndex; i++) {
-            int node = utilsObject.findNode(newObjects.address[i]);
+            int node = utilsObject.findNode(newObjects.readAddr(i));
             newObjects.setNode(i, node);
         }
     }
 
     /**
-     * We search "from" buffer for survivor objects and store them into "to" buffer.
+     * Search "from" buffer for survivor objects and store them into "to" buffer.
      * @param from the source buffer in which we search for survivor objects.
      * @param to the destination buffer in which we store the survivor objects.
      */
@@ -238,14 +272,21 @@ public class Profiler {
             Log.println(to.buffersName);
         }
         for (int i = 0; i < from.currentIndex; i++) {
-            long address = from.address[i];
+            long address = from.readAddr(i);
+            /*
+            if an object is alive, update both its Virtual Address and
+            NUMA Node before copy it to the survivors buffer
+             */
             if (Heap.isSurvivor(address)) {
-                //object is alive -> update it's address -> copy it to to buffer
+                // update Virtual Address
                 long newAddr = Heap.getForwardedAddress(address);
-                to.record(from.index[i], from.type[i], from.size[i], newAddr, from.node[i]);
-                totalSurvSize = totalSurvSize + from.size[i];
+                // update NUMA Node
+                int node = utilsObject.findNode(newAddr);
+                from.readType(i);
+                // write it to Buffer
+                to.record(from.readId(i), from.readThreadId(i), from.readStringBuffer, from.readSize(i), newAddr, node);
+                totalSurvSize = totalSurvSize + from.readSize(i);
             }
-            from.cleanBufferCell(i);
         }
     }
 
@@ -370,13 +411,45 @@ public class Profiler {
         }
     }
 
+    public void releaseReservedMemory() {
+        newObjects.deallocateAll();
+        survivors1.deallocateAll();
+        survivors2.deallocateAll();
+    }
+
     /**
      * This method can be used for actions need to take place right before
      * Allocation Profiler's termination. It is triggered when JavaRunScheme
      * is being terminated. Currently empty.
      */
     public void terminate() {
+        if (getProfilingCycle() == 1) {
+            findNumaNodes();
 
+            if (!ValidateAllocationProfiler) {
+                dumpBuffer();
+            } else {
+                //in validation mode don't dump buffer
+                Log.print("Cycle ");
+                Log.println(profilingCycle);
+
+                Log.print("=> (Profiler Reports): New Objects Size =");
+                Log.print((float) totalNewSize / (1024 * 1024));
+                Log.println(" MB");
+
+                Log.print("=> (VM Reports): Heap Used Space =");
+                Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
+                Log.println(" MB");
+            }
+        }
+        if (VerboseAllocationProfiler) {
+            Log.print("(Allocation Profiler): Release Reserved Memory.");
+        }
+        releaseReservedMemory();
+
+        if (VerboseAllocationProfiler) {
+            Log.print("(Allocation Profiler): Terminating... Bye!");
+        }
     }
 
     private static VmThread lockOwner;

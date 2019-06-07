@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -18,22 +17,18 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.vm.ext.t1x.armv7;
+package com.sun.max.vm.jdk;
 
-import static com.oracle.max.vm.ext.t1x.Package.*;
-import static com.sun.max.platform.Platform.*;
+import com.sun.max.annotate.ALIAS;
+import sun.launcher.LauncherHelper;
 
-import com.sun.max.config.*;
-import com.sun.max.lang.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
+public final class JDK_sun_launcher_LauncherHelper {
 
-public class Package extends BootImagePackage {
-    @Override
-    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        if (platform().isa == ISA.ARM) {
-            return isT1X(CompilationBroker.optName()) || isT1X(CompilationBroker.baselineName());
-        }
-        return false;
+    private JDK_sun_launcher_LauncherHelper() {
+
     }
+
+    @ALIAS(declaringClass = LauncherHelper.class)
+    public static native void showSettings(boolean printToStderr, String optionFlag, long initialHeapSize,
+                                           long maxHeapSize, long stackSize, boolean isServer);
 }

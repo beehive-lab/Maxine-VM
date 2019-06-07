@@ -48,11 +48,11 @@ public class ObserverThinInflatedMonitorScheme extends ModalMonitorScheme {
     @Override
     public ModalLockwordDecoder getModalLockwordDecoder() {
         return new ModalLockwordDecoder() {
-            public boolean isLockwordInMode(ModalLockword64 modalLockword, Class<? extends ModalLockword64> mode) {
-                if (mode == ThinLockword64.class) {
-                    return ThinLockword64.isThinLockword(modalLockword);
-                } else if (mode == InflatedMonitorLockword64.class) {
-                    return InflatedMonitorLockword64.isInflatedMonitorLockword(modalLockword);
+            public boolean isLockwordInMode(ModalLockword modalLockword, Class<? extends ModalLockword> mode) {
+                if (mode == ThinLockword.class) {
+                    return ThinLockword.isThinLockword(modalLockword);
+                } else if (mode == InflatedMonitorLockword.class) {
+                    return InflatedMonitorLockword.isInflatedMonitorLockword(modalLockword);
                 }
                 return false;
             }

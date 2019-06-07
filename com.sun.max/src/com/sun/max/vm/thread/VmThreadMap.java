@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.thread;
 
@@ -28,6 +26,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.hosted.BootImage.Header;
+import com.sun.max.vm.monitor.modal.modehandlers.lightweight.LightweightLockword;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.VmLock;
@@ -93,7 +92,7 @@ public final class VmThreadMap {
     /**
      * The {@code IDMap} class manages thread IDs and a mapping between thread IDs and
      * the corresponding {@code VmThread} instance.
-     * The id 0 is reserved and never used to aid the modal monitor scheme ({@link ThinLockword64}).
+     * The id 0 is reserved and never used to aid the modal monitor scheme ({@link ThinLockword}).
      *
      * Note that callers of {@link #acquire(VmThread)} or {@link #release(int)} must synchronize explicitly on {@link VmThreadMap#THREAD_LOCK} to ensure that
      * the TERMINATED state is not disturbed during thread tear down.
@@ -128,6 +127,8 @@ public final class VmThreadMap {
             final int length = freeList.length;
             if (nextID >= length) {
                 // grow the free list and initialize the new part
+                assert (length * 2) < (1 << LightweightLockword.THREADID_FIELD_WIDTH) :
+                        "Maxine does not support more than " + ((1 << LightweightLockword.THREADID_FIELD_WIDTH) - 1) + " threads";
                 final int[] newFreeList = Arrays.copyOf(freeList, length * 2);
                 for (int i = length; i < newFreeList.length; i++) {
                     newFreeList[i] = i + 1;

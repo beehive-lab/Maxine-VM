@@ -412,7 +412,7 @@ def inspect(args):
     if mx.get_os() == 'darwin' and not remote:
         # The -E option propagates the environment variables into the sudo process
         mx.run(['sudo', '-E', '-p',
-                'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd, cwd=cwd)
+                'Debugging is a privileged operation on Mac OS X. Please enter your "sudo" password:'] + cmd, cwd=cwd)
     else:
         mx.run(cmd, cwd=cwd, env=ldenv)
 
@@ -623,7 +623,21 @@ def olc(args):
     --- Patterns ---
     {0}"""
 
-    mx.run_java(['-ea', '-esa', '-cp', mx.classpath(), 'com.oracle.max.vm.ext.maxri.Compile'] + args)
+    i = 0
+    insCP = []
+    olcArgs = []
+
+    while i < len(args):
+        arg = args[i]
+        if arg in ['-cp', '-classpath']:
+            insCP += [mx.expand_project_in_class_path_arg(args[i + 1])]
+            i += 1
+        else:
+            olcArgs += [arg]
+        i += 1
+
+    insCP = pathsep.join(insCP)
+    mx.run_java(['-ea', '-esa', '-cp', mx.classpath() + pathsep + insCP, 'com.oracle.max.vm.ext.maxri.Compile'] + olcArgs)
 
 def getEntryOrExitPoint(option, vmArgs):
     index = vmArgs.index(option)
@@ -935,7 +949,7 @@ def mx_init(suite):
         'methodtree': [methodtree, '[options]'],
         'nm': [nm, '[options] [boot image file]', _vm_image],
         'objecttree': [objecttree, '[options]'],
-        'olc': [olc, '[options] patterns...', _patternHelp],
+        'olc': [olc, '[-cp classpath] [options] patterns...', _patternHelp],
         'site': [site, '[options]'],
         't1x': [t1x, '[options] patterns...'],
         't1xgen': [t1xgen, ''],

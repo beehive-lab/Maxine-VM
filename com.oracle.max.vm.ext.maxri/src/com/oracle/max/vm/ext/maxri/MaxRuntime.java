@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -28,6 +28,7 @@ import static com.sun.max.vm.stack.VMFrameLayout.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.ObjDoubleConsumer;
 
 import com.oracle.max.asm.target.aarch64.Aarch64;
 import com.oracle.max.asm.target.amd64.*;
@@ -211,81 +212,30 @@ public class MaxRuntime implements RiRuntime {
     }
 
     public String disassemble(byte[] code, long address) {
-        final Platform platform = Platform.platform();
-        HexCodeFile hcf = new HexCodeFile(code, address, platform.isa.name(), platform.wordWidth().numberOfBits);
-        return HexCodeFileTool.toText(hcf);
+        return ObjdumpDisassembler.disassemble(code, address);
     }
 
     @Override
     public String disassemble(final CiTargetMethod tm) {
-        return disassemble(tm, null);
+        return ObjdumpDisassembler.disassemble(tm, tm.targetCode(), tm.targetCodeSize(), 0);
     }
 
     public String disassemble(CiTargetMethod ciTM, MaxTargetMethod maxTM) {
-        byte[] code = maxTM == null ? Arrays.copyOf(ciTM.targetCode(), ciTM.targetCodeSize()) : maxTM.code();
-        final Platform platform = Platform.platform();
+        final byte[] code;
+        final int codeSize;
+        final long startAddress;
 
-        long startAddress = maxTM == null ? 0L : maxTM.codeStart().toLong();
-        HexCodeFile hcf = new HexCodeFile(code, startAddress, platform.isa.name(), platform.wordWidth().numberOfBits);
-        HexCodeFile.addAnnotations(hcf, ciTM.annotations());
-        addExceptionHandlersComment(ciTM, hcf);
-        CiRegister fp;
-        int refMapToFPOffset;
-        if (platform.isa == ISA.AMD64) {
-            fp = AMD64.rsp;
-            refMapToFPOffset = 0;
-        } else if (platform.isa == ISA.ARM) {
-            fp = ARMV7.r13;
-            refMapToFPOffset = 0;
-        } else if (platform.isa == ISA.Aarch64) {
-            fp = Aarch64.sp;
-            refMapToFPOffset = 0;
-        } else if (platform.isa == ISA.RISCV64) {
-            fp = RISCV64.sp;
-            refMapToFPOffset = 0;
+        if (maxTM == null) {
+            code = ciTM.targetCode();
+            codeSize = ciTM.targetCodeSize();
+            startAddress = 0L;
         } else {
-            throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxRuntime.disassemble(com.sun.cri.ci.CiTargetMethod, com.oracle.max.vm.ext.maxri.MaxTargetMethod)");
-        }
-        RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);
-        for (Safepoint safepoint : ciTM.safepoints) {
-            if (safepoint instanceof Call) {
-                Call call = (Call) safepoint;
-                if (call.debugInfo != null) {
-                    hcf.addComment(Safepoints.safepointPosForCall(call.pcOffset, call.size), CiUtil.append(new StringBuilder(100), call.debugInfo, slotFormatter).toString());
-                }
-                addOperandComment(hcf, call.pcOffset, "{" + call.target + "}");
-            } else {
-                if (safepoint.debugInfo != null) {
-                    hcf.addComment(safepoint.pcOffset, CiUtil.append(new StringBuilder(100), safepoint.debugInfo, slotFormatter).toString());
-                }
-                addOperandComment(hcf, safepoint.pcOffset, "{safepoint}");
-            }
-        }
-        for (DataPatch site : ciTM.dataReferences) {
-            hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
+            code = maxTM.code();
+            codeSize = code.length;
+            startAddress = maxTM.codeStart().toLong();
         }
 
-        return HexCodeFileTool.toText(hcf);
-    }
-
-    private static void addExceptionHandlersComment(CiTargetMethod tm, HexCodeFile hcf) {
-        if (!tm.exceptionHandlers.isEmpty()) {
-            String nl = HexCodeFile.NEW_LINE;
-            StringBuilder buf = new StringBuilder("------ Exception Handlers ------").append(nl);
-            for (CiTargetMethod.ExceptionHandler e : tm.exceptionHandlers) {
-                buf.append("    ").
-                    append(e.pcOffset).append(" -> ").
-                    append(e.handlerPos).
-                    append("  ").append(e.exceptionType == null ? "<any>" : e.exceptionType).
-                    append(nl);
-            }
-            hcf.addComment(0, buf.toString());
-        }
-    }
-
-    private static void addOperandComment(HexCodeFile hcf, int pos, String comment) {
-        String oldValue = hcf.addOperandComment(pos, comment);
-        assert oldValue == null : "multiple comments for operand of instruction at " + pos + ": " + comment + ", " + oldValue;
+        return ObjdumpDisassembler.disassemble(ciTM, code, codeSize, startAddress);
     }
 
     protected static class CachedInvocation {

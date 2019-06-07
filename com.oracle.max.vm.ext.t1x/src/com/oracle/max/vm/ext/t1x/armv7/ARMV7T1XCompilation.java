@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -60,18 +60,12 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     protected final ARMV7MacroAssembler asm;
     private final PatchInfoARMV7 patchInfo;
-    private DebugMethodWriter debugMethodWriter;
-    private static boolean debugMethodsEnabled = false;
 
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new ARMV7MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
-        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
-            debugMethodWriter = new DebugMethodWriter("t1x");
-            debugMethodsEnabled = true;
-        }
     }
 
     @Override
@@ -518,7 +512,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             int a = debugMethodWriter.getNextID();
             asm.movImm32(ConditionFlag.Always, ARMV7.r12, a);
             try {
-                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
+                debugMethodWriter.append(method.holder() + "." + method.name(), a);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -550,7 +544,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.mov(ConditionFlag.Always, false, ARMV7.PC, ARMV7.r8);
         if (T1XOptions.DebugMethods) {
             try {
-                debugMethodWriter.flushDebugMethod();
+                debugMethodWriter.flush();
             } catch (Exception e) {
                 e.printStackTrace();
             }

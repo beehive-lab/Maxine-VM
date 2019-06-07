@@ -222,9 +222,10 @@ public final class JDKInterceptor {
         JDK.java_lang_Terminator,
             "handler",
         JDK.sun_misc_InnocuousThread,
-            new FieldOffsetRecomputation("THREADLOCALS", JDK.java_lang_Thread, "threadLocals"),
-            new FieldOffsetRecomputation("INHERITABLETHREADLOCALS", JDK.java_lang_Thread, "inheritableThreadLocals"),
+            new FieldOffsetRecomputation("THREAD_LOCALS", JDK.java_lang_Thread, "threadLocals"),
+            new FieldOffsetRecomputation("INHERITABLE_THREAD_LOCALS", JDK.java_lang_Thread, "inheritableThreadLocals"),
             new FieldOffsetRecomputation("INHERITEDACCESSCONTROLCONTEXT", JDK.java_lang_Thread, "inheritedAccessControlContext"),
+            new FieldOffsetRecomputation("CONTEXTCLASSLOADER", JDK.java_lang_Thread, "contextClassLoader"),
         JDK.sun_misc_PerfCounter,
             new ValueField("lb", ReferenceValue.from(LongBuffer.allocate(1))).makeNonFinal(),
         JDK.sun_misc_ProxyGenerator,
@@ -545,6 +546,8 @@ public final class JDKInterceptor {
             "instance",
         JDK.sun_misc_SharedSecrets,
             "javaObjectInputStreamAccess",
+        JDK.sun_launcher_LauncherHelper,
+            "appClass",
    };
     // Checkstyle: resume
 

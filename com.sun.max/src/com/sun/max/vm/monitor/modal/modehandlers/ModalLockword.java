@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -32,7 +32,7 @@ import com.sun.max.vm.*;
  * This base class defines only the mode fields; the minimum
  * necessary to allow eventual decoding of the lock word.
  */
-public class ModalLockword64 extends Word {
+public class ModalLockword extends Word {
 
     /*
      * Field layout:
@@ -52,15 +52,15 @@ public class ModalLockword64 extends Word {
     protected static final int MISC_BIT_INDEX = 1;
 
     @HOSTED_ONLY
-    public ModalLockword64(long value) {
+    public ModalLockword(long value) {
         super(value);
     }
 
     /**
-     * Prints the monitor state encoded in a {@code ModalLockword64} to the {@linkplain Log log} stream.
+     * Prints the monitor state encoded in a {@code ModalLockword} to the {@linkplain Log log} stream.
      */
-    public static void log(ModalLockword64 lockword) {
-        Log.print("ModalLockword64: ");
+    public static void log(ModalLockword lockword) {
+        Log.print("ModalLockword: ");
         if (lockword.isInflated()) {
             Log.print("inflated=true");
         } else {
@@ -69,14 +69,14 @@ public class ModalLockword64 extends Word {
     }
 
     /**
-     * Boxing-safe cast of a {@code Word} to a {@code ModalLockword64}.
+     * Boxing-safe cast of a {@code Word} to a {@code ModalLockword}.
      *
      * @param word the word to cast
      * @return the cast word
      */
     @INTRINSIC(UNSAFE_CAST)
-    public static ModalLockword64 from(Word word) {
-        return new ModalLockword64(word.value);
+    public static ModalLockword from(Word word) {
+        return new ModalLockword(word.value);
     }
 
     /**

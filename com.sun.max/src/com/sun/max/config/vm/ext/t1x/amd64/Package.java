@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
+ * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +22,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
+package com.sun.max.config.vm.ext.t1x.amd64;
+
+import static com.sun.max.config.vm.ext.t1x.Package.*;
+import static com.sun.max.platform.Platform.*;
 
 import com.sun.max.config.*;
+import com.sun.max.lang.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
 
-/**
- */
 public class Package extends BootImagePackage {
-
     public Package() {
-        super();
-    }
-
-    @Override
-    public Class[] wordSubclasses() {
-        return new Class[] {BiasedLockword.class, BiasedLockEpoch.class};
+        super("com.oracle.max.vm.ext.t1x.amd64.**");
     }
 
     @Override
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
-        return vmConfiguration.monitorPackage.isSubPackageOf(this.superPackage().superPackage().superPackage());
+        if (platform().isa == ISA.AMD64) {
+            return isT1X(CompilationBroker.optName()) || isT1X(CompilationBroker.baselineName());
+        }
+        return false;
     }
 }

@@ -55,6 +55,11 @@ public final class T1XOptions {
 
     static {
         VMOptions.addFieldOptions("-T1X:", T1XOptions.class, getHelpMap());
+
+        String value = System.getenv("ENABLE_DEBUG_METHODS_ID");
+        if (value != null && !value.isEmpty()) {
+            DebugMethods = true;
+        }
     }
 
     @HOSTED_ONLY

@@ -72,7 +72,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
 
     /**
      * Returns the current thread's id (its VMThreadMap id) in an encoding suitable for
-     * lockwords defined by the ModalLockword64 hierarchy.
+     * lockwords defined by the ModalLockword hierarchy.
      *
      * @return the encoded thread ID
      */
@@ -174,20 +174,20 @@ public abstract class AbstractModeHandler implements ModeHandler {
      * mode transitions and delegation.
      */
     public interface ModeDelegate extends ModeHandler {
-        ModalLockword64 prepareModalLockword(Object object, ModalLockword64 currentLockword);
-        ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword, ModalLockword64 hash);
-        void cancelPreparedModalLockword(ModalLockword64 preparedLockword);
-        boolean delegateMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID);
-        void delegateMonitorExit(Object object, ModalLockword64 lockword);
-        void delegateMonitorNotify(Object object, boolean all, ModalLockword64 lockword);
-        void delegateMonitorWait(Object object, long timeout, ModalLockword64 lockword) throws InterruptedException;
-        DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockword64 lockword, VmThread thread, int lockwordThreadID);
-        int delegateMakeHashcode(Object object, ModalLockword64 lockword);
+        ModalLockword prepareModalLockword(Object object, ModalLockword currentLockword);
+        ModalLockword reprepareModalLockword(ModalLockword preparedLockword, ModalLockword currentLockword, ModalLockword hash);
+        void cancelPreparedModalLockword(ModalLockword preparedLockword);
+        boolean delegateMonitorEnter(Object object, ModalLockword lockword, int lockwordThreadID);
+        void delegateMonitorExit(Object object, ModalLockword lockword);
+        void delegateMonitorNotify(Object object, boolean all, ModalLockword lockword);
+        void delegateMonitorWait(Object object, long timeout, ModalLockword lockword) throws InterruptedException;
+        DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockword lockword, VmThread thread, int lockwordThreadID);
+        int delegateMakeHashcode(Object object, ModalLockword lockword);
         void delegateBeforeGarbageCollection();
         void delegateAfterGarbageCollection();
         /**
          * A tri-state boolean for the return value of
-         * {@link ModeDelegate#delegateThreadHoldsMonitor(Object, ModalLockword64, VmThread, int)}.
+         * {@link ModeDelegate#delegateThreadHoldsMonitor(Object, ModalLockword, VmThread, int)}.
          * This deals with the situation where the locking mode changes while determining
          * whether the current thread owns the lock.
          *

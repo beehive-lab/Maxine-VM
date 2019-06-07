@@ -35,7 +35,7 @@ public class Package extends BootImagePackage {
 
     @Override
     public Class[] wordSubclasses() {
-        return new Class[] {ModalLockword64.class, HashableLockword64.class};
+        return new Class[] {ModalLockword.class, HashableLockword.class};
     }
 
     @Override

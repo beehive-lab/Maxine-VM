@@ -83,6 +83,7 @@ Table of Contents
    Publications
    People
    Debugging
+   Offline-Compilation
    FAQ
    Glossary
    Actors

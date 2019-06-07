@@ -19,7 +19,6 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 package com.sun.max.vm.monitor.modal.sync;
-import com.sun.max.vm.reference.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.platform.*;
@@ -124,14 +123,14 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     public final boolean isHardBound() {
-        return isBound() && (Platform.target().arch.is64bit() ? ObjectAccess.readMisc(boundObject).equals(InflatedMonitorLockword64.boundFromMonitor(this))
-                        : ObjectAccess.readHash(boundObject).equals(InflatedMonitorLockword64.boundFromMonitor(this)));
+        return isBound() && (Platform.target().arch.is64bit() ? ObjectAccess.readMisc(boundObject).equals(InflatedMonitorLockword.boundFromMonitor(this))
+                        : ObjectAccess.readHash(boundObject).equals(InflatedMonitorLockword.boundFromMonitor(this)));
     }
 
     public final void preGCPrepare() {
-        preGCLockword = InflatedMonitorLockword64.boundFromMonitor(this);
+        preGCLockword = InflatedMonitorLockword.boundFromMonitor(this);
         if (Platform.target().arch.is32bit()) {
-            preGCMiscword = InflatedMonitorLockword64.boundFromZero();
+            preGCMiscword = InflatedMonitorLockword.boundFromZero();
         }
     }
 
@@ -141,10 +140,10 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
 
     public final void refreshBoundObject() {
         if (Platform.target().arch.is64bit()) {
-            ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
+            ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword.boundFromMonitor(this));
         } else {
-            ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromZero());
-            ObjectAccess.writeHash(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
+            ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword.boundFromZero());
+            ObjectAccess.writeHash(boundObject, InflatedMonitorLockword.boundFromMonitor(this));
         }
     }
 
