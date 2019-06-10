@@ -238,6 +238,8 @@ public class Profiler {
         Log.println("");
     }
 
+    public static boolean ongoingAllocation = false;
+
     /**
      * This method is called when a profiled object is allocated.
      */
@@ -252,9 +254,22 @@ public class Profiler {
         //transform the object type from String to char[] and pass the charArrayBuffer[] to record
         charArrayBuffer = asCharArray(type);
         final int threadId = VmThread.current().id();
+        //detect recursive allocations if another allocation is ongoing
+        if (ongoingAllocation) {
+            Log.println("Recursive Allocation. ");
+            Log.println(type);
+            MaxineVM.exit(1);
+        }
+        ongoingAllocation = true;
+        //guard allocations ProfilerBuffer from overflow
+        if (newObjects.currentIndex >= newObjects.bufferSize) {
+            Log.print("Allocations Buffer out of bounds. Increase the Buffer Size.");
+            MaxineVM.exit(1);
+        }
         newObjects.record(uniqueId, threadId, charArrayBuffer, size, address);
         uniqueId++;
         totalNewSize = totalNewSize + size;
+        ongoingAllocation = false;
         unlock(lockDisabledSafepoints);
     }
 
@@ -318,6 +333,11 @@ public class Profiler {
                 // update NUMA Node
                 int node = utilsObject.findNode(newAddr);
                 from.readType(i);
+                //guard survivors ProfilerBuffer from overflow
+                if (to.currentIndex >= to.bufferSize) {
+                    Log.print("Survivor Buffer out of bounds! Increase the Buffer Size.");
+                    MaxineVM.exit(1);
+                }
                 // write it to Buffer
                 to.record(from.readId(i), from.readThreadId(i), from.readStringBuffer, from.readSize(i), newAddr, node);
                 totalSurvSize = totalSurvSize + from.readSize(i);
