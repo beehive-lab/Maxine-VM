@@ -342,7 +342,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
-    log_println("ntl blocksize=%p ", ntl->tlBlockSize);
+    log_println("ntl tlblocksize=%p ", ntl->tlBlockSize);
     log_println("method pointer=%p ", method);
 
 #if log_LOADER

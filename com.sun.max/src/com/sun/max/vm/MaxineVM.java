@@ -512,6 +512,7 @@ public final class MaxineVM {
         primordialTLBlock = tlBlock;
         primordialTLBlockSize = tlBlockSize;
         Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + VmThreadLocal.tlaSize().toInt());
+//        Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + 360);
         SafepointPoll.setLatchRegister(etla);
 
         // This one field was not marked by the data prototype for relocation
