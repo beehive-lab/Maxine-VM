@@ -396,6 +396,8 @@ public class Profiler {
             Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
             Log.println(" MB");
 
+            newObjects.printUsage();
+
             Log.println("Garbage Collection");
         }
 
@@ -451,6 +453,9 @@ public class Profiler {
             Log.print("=> (VM Reports): Heap Used Space =");
             Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
             Log.println(" MB\n");
+
+            survivors1.printUsage();
+            survivors2.printUsage();
         }
 
         totalNewSize = totalSurvSize;
@@ -504,6 +509,8 @@ public class Profiler {
             Log.print("=> (VM Reports): Heap Used Space =");
             Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
             Log.println(" MB");
+
+            newObjects.printUsage();
         }
 
         if (VerboseAllocationProfiler) {

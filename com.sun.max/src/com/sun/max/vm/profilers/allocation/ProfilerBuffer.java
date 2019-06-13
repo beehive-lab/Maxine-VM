@@ -279,16 +279,16 @@ public class ProfilerBuffer {
             Log.print(";");
             Log.println(readNode(i));
         }
+    }
 
-        if (Profiler.VerboseAllocationProfiler) {
-            Log.print("(Allocation Profiler): ");
-            Log.print(buffersName);
-            Log.print(" usage = ");
-            Log.print(currentIndex);
-            Log.print(" / ");
-            Log.print(bufferSize);
-            Log.println(". (This number helps in tuning Buffer's size).");
-        }
+    public void printUsage() {
+        Log.print("(Allocation Profiler): ");
+        Log.print(buffersName);
+        Log.print(" usage = ");
+        Log.print(currentIndex);
+        Log.print(" / ");
+        Log.print(bufferSize);
+        Log.println(". (This number helps in tuning Buffer's size).");
     }
 
     public void print(int cycle, int allocation) {
