@@ -130,24 +130,27 @@ public class ProfilerBuffer {
     }
 
     public void writeType(int index, char[] value) {
-        int stringIndex = index * MAX_CHARS;
+        long stringIndex = index * MAX_CHARS;
         int charIndex = 0;
-        int writeIndex = stringIndex + charIndex;
-
+        long writeIndex = stringIndex + charIndex;
         char c;
+        Pointer typePtr = type;
 
         while (charIndex < value.length) {
             c = value[charIndex];
-            if (c == '\0') {
-                type.setChar(writeIndex, c);
-                break;
-            }
-            if (writeIndex < sizeInBytes) {
-                type.setChar(writeIndex, c);
-            } else {
+            if (writeIndex >= sizeInBytes) {
                 Log.print("Off-heap String array overflow detected at index: ");
                 Log.println(writeIndex);
-                Log.println("Suggestion: Increase the Buffer Size (use bufferSize <num> option).");
+                Log.println("Suggestion: Increase the AllocationProfilerBufferSize.");
+                break;
+            }
+            if (writeIndex > Integer.MAX_VALUE) {
+                typePtr = type.plus(Integer.MAX_VALUE);
+                writeIndex -= Integer.MAX_VALUE;
+            }
+            assert writeIndex < Integer.MAX_VALUE;
+            typePtr.setChar((int) writeIndex, c);
+            if (c == '\0') {
                 break;
             }
             charIndex++;
@@ -156,19 +159,23 @@ public class ProfilerBuffer {
     }
 
     public void readType(int index) {
-        int stringIndex = index * MAX_CHARS;
+        long stringIndex = index * MAX_CHARS;
         int charIndex = 0;
-        int readIndex = stringIndex + charIndex;
+        long readIndex = stringIndex + charIndex;
+        char c;
+        Pointer typePtr = type;
 
-        char c = type.getChar(readIndex);
-
-        while (c != '\0') {
+        do {
+            if (readIndex > Integer.MAX_VALUE) {
+                typePtr = type.plus(Integer.MAX_VALUE);
+                readIndex -= Integer.MAX_VALUE;
+            }
+            assert readIndex < Integer.MAX_VALUE;
+            c = typePtr.getChar((int) readIndex);
             readStringBuffer[charIndex] = c;
             charIndex++;
             readIndex = stringIndex + charIndex;
-            c = type.getChar(readIndex);
-        }
-        readStringBuffer[charIndex] = c;
+        } while (c != '\0');
         readStringBufferLength = charIndex;
     }
 
