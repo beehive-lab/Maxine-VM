@@ -212,7 +212,7 @@ public class Profiler {
     }
 
     public static boolean objectWarmupFinished() {
-        return MaxineVM.profileObjectCounter >= FlareObjectPolicyThreshold && MaxineVM.profileObjectCounter <= FlareObjectPolicyThreshold + (FlareObjectPolicyProfileWindow - 1);
+        return MaxineVM.flareObjectCounter >= FlareObjectPolicyThreshold && MaxineVM.flareObjectCounter <= FlareObjectPolicyThreshold + (FlareObjectPolicyProfileWindow - 1);
     }
 
     /**

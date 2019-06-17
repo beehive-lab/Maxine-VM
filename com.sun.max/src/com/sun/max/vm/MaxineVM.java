@@ -119,7 +119,7 @@ public final class MaxineVM {
      */
     private static int exitCode = 0;
 
-    public static int profileObjectCounter = 0;
+    public static int flareObjectCounter = 0;
 
     private static long startupTime;
     private static long startupTimeNano;
@@ -152,7 +152,7 @@ public final class MaxineVM {
         if (isAllocationProfilerInitialized) {
             String type = hub.classActor.name();
             if (type.contains(Profiler.FlareObject)) {
-                profileObjectCounter++;
+                flareObjectCounter++;
             }
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
                     "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
