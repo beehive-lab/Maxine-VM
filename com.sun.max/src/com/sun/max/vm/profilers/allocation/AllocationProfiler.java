@@ -176,7 +176,7 @@ public class AllocationProfiler {
         survivors1 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No1");
         survivors2 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No2");
 
-        charArrayBuffer = new char[ProfilerBuffer.maxChars];
+        charArrayBuffer = new char[ProfilerBuffer.MAX_CHARS];
 
         profilingCycle = 1;
         if (AllocationProfilerVerbose) {

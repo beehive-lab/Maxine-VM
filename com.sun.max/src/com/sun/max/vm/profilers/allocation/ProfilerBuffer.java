@@ -49,13 +49,10 @@ public class ProfilerBuffer {
     public long bufferSize;
     public int currentIndex;
 
-    public final int sizeOfInt = Integer.SIZE / 8;
-    public final int sizeOfLong = Long.SIZE / 8;
-    public static final int sizeOfChar = Character.SIZE / 8;
     /**
      * The maximum Type string length.
      */
-    public static final int maxChars = 200;
+    public static final int MAX_CHARS = 200;
 
     /**
      * A char[] buffer to store a string which is being read from native.
@@ -86,7 +83,7 @@ public class ProfilerBuffer {
         buffersName = name;
         bufferSize = bufSize;
 
-        readStringBuffer = new char[maxChars];
+        readStringBuffer = new char[MAX_CHARS];
         readStringBufferLength = 0;
 
         id = allocateIntArrayOffHeap(bufSize);
@@ -96,7 +93,7 @@ public class ProfilerBuffer {
         node = allocateIntArrayOffHeap(bufSize);
         threadId = allocateIntArrayOffHeap(bufSize);
 
-        allocSize = bufSize * maxChars * sizeOfChar;
+        allocSize = bufSize * MAX_CHARS * Character.BYTES;
         pageSize = 4096;
         numOfAllocPages = allocSize / pageSize + 1;
         sizeInBytes = numOfAllocPages * pageSize;
@@ -106,15 +103,15 @@ public class ProfilerBuffer {
     }
 
     public Pointer allocateIntArrayOffHeap(long size) {
-        return VirtualMemory.allocate(Size.fromLong(size * sizeOfInt), VirtualMemory.Type.DATA);
+        return VirtualMemory.allocate(Size.fromLong(size * Integer.BYTES), VirtualMemory.Type.DATA);
     }
 
     public Pointer allocateLongArrayOffHeap(long size) {
-        return VirtualMemory.allocate(Size.fromLong(size * sizeOfLong), VirtualMemory.Type.DATA);
+        return VirtualMemory.allocate(Size.fromLong(size * Long.BYTES), VirtualMemory.Type.DATA);
     }
 
     public Pointer allocateStringArrayOffHeap(long size) {
-        Pointer space = VirtualMemory.allocate(Size.fromLong(size * (long) maxChars * (long) sizeOfChar), VirtualMemory.Type.DATA);
+        Pointer space = VirtualMemory.allocate(Size.fromLong(size * (long) MAX_CHARS * (long) Character.BYTES), VirtualMemory.Type.DATA);
 
         if (space.isZero()) {
             Log.print(this.buffersName);
@@ -125,15 +122,15 @@ public class ProfilerBuffer {
     }
 
     public void deallocateAll() {
-        VirtualMemory.deallocate(id.asAddress(), Size.fromLong(bufferSize * sizeOfInt), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(type.asAddress(), Size.fromLong(bufferSize * (long) maxChars * (long) sizeOfChar), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(size.asAddress(), Size.fromLong(bufferSize * sizeOfInt), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(address.asAddress(), Size.fromLong(bufferSize * sizeOfLong), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(node.asAddress(), Size.fromLong(bufferSize * sizeOfInt), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(id.asAddress(), Size.fromLong(bufferSize * Integer.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(type.asAddress(), Size.fromLong(bufferSize * (long) MAX_CHARS * (long) Character.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(size.asAddress(), Size.fromLong(bufferSize * Integer.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(address.asAddress(), Size.fromLong(bufferSize * Long.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(node.asAddress(), Size.fromLong(bufferSize * Integer.BYTES), VirtualMemory.Type.DATA);
     }
 
     public void writeType(int index, char[] value) {
-        int stringIndex = index * maxChars;
+        int stringIndex = index * MAX_CHARS;
         int charIndex = 0;
         int writeIndex = stringIndex + charIndex;
 
@@ -159,7 +156,7 @@ public class ProfilerBuffer {
     }
 
     public void readType(int index) {
-        int stringIndex = index * maxChars;
+        int stringIndex = index * MAX_CHARS;
         int charIndex = 0;
         int readIndex = stringIndex + charIndex;
 
