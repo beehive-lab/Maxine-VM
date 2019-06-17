@@ -47,11 +47,11 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.profilers.allocation.AllocationProfiler;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.profilers.allocation.Profiler;
 
 /**
  * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time.
@@ -125,9 +125,9 @@ public final class MaxineVM {
     private static long startupTimeNano;
 
     /**
-     * The Dynamic Profiler object. It's initialized during Java Run Scheme initialization (if it's needed).
+     * The Dynamic AllocationProfiler object. It's initialized during Java Run Scheme initialization (if it's needed).
      */
-    public static Profiler allocationProfiler;
+    public static AllocationProfiler allocationProfiler;
 
     public static boolean isAllocationProfilerInitialized = false;
 
@@ -144,20 +144,20 @@ public final class MaxineVM {
      *
      *  the -XX:ProfileAll option has been used
      *
-     *  In any case we ignore the warmup phase of the application (see {@link Profiler#warmupFinished}).
+     *  In any case we ignore the warmup phase of the application (see {@link AllocationProfiler#warmupFinished}).
      *
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject(Hub hub) {
         if (isAllocationProfilerInitialized) {
             String type = hub.classActor.name();
-            if (type.contains(Profiler.FlareObject)) {
+            if (type.contains(AllocationProfiler.FlareObject)) {
                 flareObjectCounter++;
             }
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
                     "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            return (profilerTLA == 1 || Profiler.profileAll()) && Profiler.warmupFinished() && Profiler.objectWarmupFinished();
+            return (profilerTLA == 1 || AllocationProfiler.profileAll()) && AllocationProfiler.warmupFinished() && AllocationProfiler.objectWarmupFinished();
         }
         return false;
     }
