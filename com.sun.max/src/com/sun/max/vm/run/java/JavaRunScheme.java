@@ -264,7 +264,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     MaxineVM.isAllocationProfilerInitialized = true;
                     float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
 
-                    if (AllocationProfiler.ValidateAllocationProfiler) {
+                    if (AllocationProfiler.AllocationProfilerDebug) {
                         Log.println("*===================================================*\n" +
                             "* Allocation Profiler is on validation mode.\n" +
                             "*===================================================*\n" +

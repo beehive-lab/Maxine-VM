@@ -63,12 +63,10 @@ public class AllocationProfiler {
      */
     public JNumaUtils utilsObject;
 
-    private static boolean AllocationProfilerPrintHistogram;
     private static boolean AllocationProfilerAll;
-    private static boolean AllocationProfilerDump;
-    public static boolean VerboseAllocationProfiler;
-    public static int BufferSize;
-    public static boolean ValidateAllocationProfiler;
+    public static boolean AllocationProfilerVerbose;
+    public static int AllocationProfilerBufferSize;
+    public static boolean AllocationProfilerDebug;
 
     public static int totalNewSize = 0;
     public static int totalSurvSize = 0;
@@ -85,10 +83,10 @@ public class AllocationProfiler {
      * The following two variables are used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The iteration
      * is calculated by the number of System.gc() calls. The MaxineVM.profileThatObject()
-     * method returns false as long as the iteration counter is below the ExplicitGCPolicyThreshold, which
+     * method returns false as long as the iteration counter is below the AllocationProfilerExplicitGCThreshold, which
      * is given by the user, ignoring any object allocation up to that point.
      */
-    public static int ExplicitGCPolicyThreshold;
+    public static int AllocationProfilerExplicitGCThreshold;
     public static int iteration = 0;
 
     /**
@@ -107,14 +105,14 @@ public class AllocationProfiler {
      * Trigger Event: A Flare-Object Allocation by the Application.
      * The following variable is used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The MaxineVM.profileThatObject()
-     * method returns false as long as the FlareObject counter is below the FlareObjectPolicyThreshold,
+     * method returns false as long as the AllocationProfilerFlareObject counter is below the AllocationProfilerFlareAllocationThreshold,
      * which is given by the user, ignoring any object allocation up to that point.
-     * The FlareObjectPolicyProfileWindow (default 1) indicates how many Flare Objects we need
-     * to hit before we stop the profiling .
+     * The AllocationProfilerFlareProfileWindow (default 1) indicates how many Flare Objects we need
+     * to allocate before we stop the profiling.
      */
-    public static int FlareObjectPolicyThreshold;
-    public static int FlareObjectPolicyProfileWindow = 1;
-    public static String FlareObject = "FlareObject";
+    public static int AllocationProfilerFlareAllocationThreshold;
+    public static int AllocationProfilerFlareProfileWindow = 1;
+    public static String AllocationProfilerFlareObject = "AllocationProfilerFlareObject";
 
     public final static int MINIMUMBUFFERSIZE = 500000;
     /**
@@ -132,48 +130,47 @@ public class AllocationProfiler {
      */
     static {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", AllocationProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerDump", AllocationProfiler.class, "Dump profiled objects to a file. (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "VerboseAllocationProfiler", AllocationProfiler.class, "Verbose profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "BufferSize", AllocationProfiler.class, "Allocation Buffer Size.");
-        VMOptions.addFieldOption("-XX:", "ExplicitGCPolicyThreshold", AllocationProfiler.class, "The number of the Explicit GCs to be counted before the Allocation Profiler starts recording. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "FlareObject", AllocationProfiler.class, "The Class of the Object to be sought after by the Allocation Profiler to drive the profiling process. (default: 'FlareObject')");
-        VMOptions.addFieldOption("-XX:", "FlareObjectPolicyThreshold", AllocationProfiler.class, "The number of the Flare objects to be counted before the Allocation Profiler starts recording. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "FlareObjectPolicyProfileWindow", AllocationProfiler.class, "The number of the Flare objects to be counted before the Allocation Profiler stops recording. (default: 1)");
-        VMOptions.addFieldOption("-XX:", "ValidateAllocationProfiler", AllocationProfiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerVerbose", AllocationProfiler.class, "Verbose allocation profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerBufferSize", AllocationProfiler.class, "Allocation Profiler's Buffer Size.");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerExplicitGCThreshold", AllocationProfiler.class, "The number of the Explicit GCs to be performed before the Allocation Profiler starts recording. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareObject", AllocationProfiler.class, "The Class of the Object to be sought after by the Allocation Profiler to drive the profiling process. (default: 'AllocationProfilerFlareObject')");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareAllocationThreshold", AllocationProfiler.class, "The number of the Flare objects to be allocated before the Allocation Profiler starts recording. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareProfileWindow", AllocationProfiler.class, "The number of the Flare objects to be allocated before the Allocation Profiler stops recording. (default: 1)");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerDebug", AllocationProfiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
     public AllocationProfiler() {
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): AllocationProfiler Initialization.");
         }
 
-        if (BufferSize != 0) {
-            if (BufferSize < MINIMUMBUFFERSIZE) {
+        if (AllocationProfilerBufferSize != 0) {
+            if (AllocationProfilerBufferSize < MINIMUMBUFFERSIZE) {
                 Log.print("WARNING: Small Buffer Size. Minimum Buffer Size applied! (=");
                 Log.print(MINIMUMBUFFERSIZE);
                 Log.println(")");
                 allocBufferSize = MINIMUMBUFFERSIZE;
                 survBufferSize = MINIMUMBUFFERSIZE;
             } else {
-                allocBufferSize = BufferSize;
-                survBufferSize = BufferSize;
+                allocBufferSize = AllocationProfilerBufferSize;
+                survBufferSize = AllocationProfilerBufferSize;
             }
         }
 
         newObjects = new ProfilerBuffer(allocBufferSize, "New Objects Buffer");
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): JNumaUtils Initialization.");
         }
         // Initialize a JNumaUtils object. We need to allocate it early because it is going to be used when allocation is disabled.
         utilsObject = new JNumaUtils();
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Force Native Methods's resolution.");
         }
         resolveNativeMethods();
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Initialize the Survivor Objects AllocationProfiler Buffers.");
         }
         survivors1 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No1");
@@ -182,7 +179,7 @@ public class AllocationProfiler {
         charArrayBuffer = new char[ProfilerBuffer.maxChars];
 
         profilingCycle = 1;
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Initialization Complete.");
 
             Log.print("(Allocation Profiler): Start Profiling. [Cycle ");
@@ -208,11 +205,11 @@ public class AllocationProfiler {
     }
 
     public static boolean warmupFinished() {
-        return iteration > ExplicitGCPolicyThreshold || ExplicitGCPolicyThreshold == 0;
+        return iteration > AllocationProfilerExplicitGCThreshold || AllocationProfilerExplicitGCThreshold == 0;
     }
 
     public static boolean objectWarmupFinished() {
-        return MaxineVM.flareObjectCounter >= FlareObjectPolicyThreshold && MaxineVM.flareObjectCounter <= FlareObjectPolicyThreshold + (FlareObjectPolicyProfileWindow - 1);
+        return MaxineVM.flareObjectCounter >= AllocationProfilerFlareAllocationThreshold && MaxineVM.flareObjectCounter <= AllocationProfilerFlareAllocationThreshold + (AllocationProfilerFlareProfileWindow - 1);
     }
 
     /**
@@ -278,7 +275,7 @@ public class AllocationProfiler {
      */
     public void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.print("==== Profiling Cycle ");
             Log.print(profilingCycle);
             Log.println(" ====");
@@ -289,7 +286,7 @@ public class AllocationProfiler {
 
     public void dumpSurvivors() {
         final boolean lockDisabledSafepoints = lock();
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.print("==== Survivors Cycle ");
             Log.print(profilingCycle);
             Log.println(" ====");
@@ -315,7 +312,7 @@ public class AllocationProfiler {
      * @param to the destination buffer in which we store the survivor objects.
      */
     public void storeSurvivors(ProfilerBuffer from, ProfilerBuffer to) {
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.print("(Allocation Profiler): Copy Survived Objects from ");
             Log.print(from.buffersName);
             Log.print(" to ");
@@ -372,7 +369,7 @@ public class AllocationProfiler {
      */
     public void preGCActions() {
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Entering Pre-GC Phase.");
             Log.print("(Allocation Profiler): Cycle ");
             Log.print(getProfilingCycle());
@@ -381,7 +378,7 @@ public class AllocationProfiler {
 
         findNumaNodes();
 
-        if (!ValidateAllocationProfiler) {
+        if (!AllocationProfilerDebug) {
             dumpBuffer();
         } else {
             //in validation mode don't dump buffer
@@ -401,11 +398,11 @@ public class AllocationProfiler {
             Log.println("Garbage Collection");
         }
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Dump AllocationProfiler Buffer. [pre-GC phase]");
         }
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Leaving Pre-GC Phase.");
         }
     }
@@ -415,34 +412,34 @@ public class AllocationProfiler {
      */
     public void postGCActions() {
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Entering Post-GC Phase.");
         }
 
         profileSurvivors();
 
         if ((profilingCycle % 2) == 0) {
-            if (VerboseAllocationProfiler) {
+            if (AllocationProfilerVerbose) {
                 Log.println("(Allocation Profiler): Clean-up Survivor1 Buffer. [post-gc phase]");
             }
             survivors1.resetBuffer();
         } else {
-            if (VerboseAllocationProfiler) {
+            if (AllocationProfilerVerbose) {
                 Log.println("(Allocation Profiler): Clean-up Survivor2 Buffer. [post-gc phase]");
             }
             survivors2.resetBuffer();
         }
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Clean-up AllocationProfiler Buffer. [post-gc phase]");
         }
         newObjects.resetBuffer();
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Dump Survivors Buffer. [pre-GC phase]");
         }
 
-        if (!ValidateAllocationProfiler) {
+        if (!AllocationProfilerDebug) {
             dumpSurvivors();
         } else {
             //in validation mode don't dump buffer
@@ -471,7 +468,7 @@ public class AllocationProfiler {
 
         profilingCycle++;
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Leaving Post-GC Phase.");
             Log.print("(Allocation Profiler): Start Profiling. [Cycle ");
             Log.print(getProfilingCycle());
@@ -495,7 +492,7 @@ public class AllocationProfiler {
 
         findNumaNodes();
 
-        if (!ValidateAllocationProfiler) {
+        if (!AllocationProfilerDebug) {
             dumpBuffer();
         } else {
             //in validation mode don't dump buffer
@@ -513,12 +510,12 @@ public class AllocationProfiler {
             newObjects.printUsage();
         }
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.print("(Allocation Profiler): Release Reserved Memory.");
         }
         releaseReservedMemory();
 
-        if (VerboseAllocationProfiler) {
+        if (AllocationProfilerVerbose) {
             Log.print("(Allocation Profiler): Terminating... Bye!");
         }
     }

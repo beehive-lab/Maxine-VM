@@ -785,25 +785,25 @@ def allocprofiler(args):
         #enable/disable verbosity
         if 'verbose' in vmArgs:
             del vmArgs[vmArgs.index('verbose')]
-            profilerArgs.append('-XX:+VerboseAllocationProfiler')
+            profilerArgs.append('-XX:+AllocationProfilerVerbose')
 
         if 'warmup' in vmArgs:
             index = vmArgs.index('warmup')
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
-            profilerArgs.append('-XX:ExplicitGCPolicyThreshold='+num)
+            profilerArgs.append('-XX:AllocationProfilerExplicitGCThreshold='+num)
 
         if 'buffersize' in vmArgs:
             index = vmArgs.index('buffersize')
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
-            profilerArgs.append('-XX:BufferSize='+num)
+            profilerArgs.append('-XX:AllocationProfilerBufferSize='+num)
 
         if 'validate' in vmArgs:
             del vmArgs[vmArgs.index('validate')]
-            profilerArgs.append('-XX:+ValidateAllocationProfiler')
+            profilerArgs.append('-XX:+AllocationProfilerDebug')
 
     print '=================================================='
     print '== Launching Maxine VM with Allocation Profiler =='
