@@ -79,7 +79,7 @@ class RecordBuffer {
     long sizeInBytes;
     long endAddr;
 
-    public RecordBuffer(long bufSize, String name) {
+    RecordBuffer(long bufSize, String name) {
         buffersName = name;
         bufferSize = bufSize;
 
@@ -102,15 +102,15 @@ class RecordBuffer {
         currentIndex = 0;
     }
 
-    public Pointer allocateIntArrayOffHeap(long size) {
+    private Pointer allocateIntArrayOffHeap(long size) {
         return VirtualMemory.allocate(Size.fromLong(size * Integer.BYTES), VirtualMemory.Type.DATA);
     }
 
-    public Pointer allocateLongArrayOffHeap(long size) {
+    private Pointer allocateLongArrayOffHeap(long size) {
         return VirtualMemory.allocate(Size.fromLong(size * Long.BYTES), VirtualMemory.Type.DATA);
     }
 
-    public Pointer allocateStringArrayOffHeap(long size) {
+    private Pointer allocateStringArrayOffHeap(long size) {
         Pointer space = VirtualMemory.allocate(Size.fromLong(size * (long) MAX_CHARS * (long) Character.BYTES), VirtualMemory.Type.DATA);
 
         if (space.isZero()) {
@@ -121,7 +121,7 @@ class RecordBuffer {
         return space;
     }
 
-    public void deallocateAll() {
+    void deallocateAll() {
         VirtualMemory.deallocate(id.asAddress(), Size.fromLong(bufferSize * Integer.BYTES), VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(type.asAddress(), Size.fromLong(bufferSize * (long) MAX_CHARS * (long) Character.BYTES), VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(size.asAddress(), Size.fromLong(bufferSize * Integer.BYTES), VirtualMemory.Type.DATA);
@@ -129,7 +129,7 @@ class RecordBuffer {
         VirtualMemory.deallocate(node.asAddress(), Size.fromLong(bufferSize * Integer.BYTES), VirtualMemory.Type.DATA);
     }
 
-    public void writeType(int index, char[] value) {
+    private void writeType(int index, char[] value) {
         long stringIndex = index * MAX_CHARS;
         int charIndex = 0;
         long writeIndex = stringIndex + charIndex;
@@ -158,7 +158,7 @@ class RecordBuffer {
         }
     }
 
-    public void readType(int index) {
+    void readType(int index) {
         long stringIndex = index * MAX_CHARS;
         int charIndex = 0;
         long readIndex = stringIndex + charIndex;
@@ -179,7 +179,7 @@ class RecordBuffer {
         readStringBufferLength = charIndex;
     }
 
-    public void writeId(int index, int value) {
+    private void writeId(int index, int value) {
         id.setInt(index, value);
     }
 
@@ -187,35 +187,35 @@ class RecordBuffer {
         return id.getInt(index);
     }
 
-    public void writeSize(int index, int value) {
+    private void writeSize(int index, int value) {
         size.setInt(index, value);
     }
 
-    public int readSize(int index) {
+    int readSize(int index) {
         return size.getInt(index);
     }
 
-    public void writeAddr(int index, long value) {
+    private void writeAddr(int index, long value) {
         address.setLong(index, value);
     }
 
-    public long readAddr(int index) {
+    long readAddr(int index) {
         return address.getLong(index);
     }
 
-    public void writeNode(int index, int value) {
+    private void writeNode(int index, int value) {
         node.setInt(index, value);
     }
 
-    public int readNode(int index) {
+    private int readNode(int index) {
         return node.getInt(index);
     }
 
-    public void writeThreadId(int index, int value) {
+    private void writeThreadId(int index, int value) {
         threadId.setInt(index, value);
     }
 
-    public int readThreadId(int index) {
+    int readThreadId(int index) {
         return threadId.getInt(index);
     }
 
@@ -243,7 +243,7 @@ class RecordBuffer {
     }
 
 
-    public void setNode(int index, int node) {
+    void setNode(int index, int node) {
         writeNode(index, node);
     }
 
@@ -253,7 +253,7 @@ class RecordBuffer {
      * @param cycle
      * @param allocation
      */
-    public void dumpToStdOut(int cycle, int allocation) {
+    private void dumpToStdOut(int cycle, int allocation) {
         for (int i = 0; i < currentIndex; i++) {
             Log.print(cycle);
             Log.print(";");
@@ -285,7 +285,7 @@ class RecordBuffer {
         }
     }
 
-    public void printUsage() {
+    void printUsage() {
         Log.print("(Allocation Profiler): ");
         Log.print(buffersName);
         Log.print(" usage = ");
@@ -307,7 +307,7 @@ class RecordBuffer {
         writeNode(i, -1);
     }
 
-    public void resetBuffer() {
+    void resetBuffer() {
         currentIndex = 0;
     }
 }
