@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2016, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -60,14 +60,14 @@
 
 #if log_NUMA_THREADS
 #   include <numa.h>
-    void log_numa_thread(int threadId){
+void log_numa_thread(int threadId){
 
-        // NUMA-aware thread tracking in behalf of Allocation Profiler
-        int cpu = sched_getcpu();
-        int numaNode;
-        numaNode = numa_node_of_cpu(cpu);
+    // NUMA-aware thread tracking in behalf of Allocation Profiler
+    int cpu = sched_getcpu();
+    int numaNode;
+    numaNode = numa_node_of_cpu(cpu);
 
-        log_println("(Run) Thread %d, CPU %d, Numa Node %d", threadId, cpu, numaNode);
+    log_println("(Run) Thread %d, CPU %d, Numa Node %d", threadId, cpu, numaNode);
 }
 #endif
 
