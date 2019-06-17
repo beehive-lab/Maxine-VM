@@ -49,14 +49,14 @@ public class AllocationProfiler {
     /**
      * The AllocationProfiler Buffer for newly allocated objects.
      */
-    public static ProfilerBuffer newObjects;
+    public static AllocationProfilerBuffer newObjects;
 
     /**
      * The AllocationProfiler Buffers for survivor objects. We use two identical buffers because
      * allocation is disabled at the point we need to move the data in a clean buffer.
      */
-    public static ProfilerBuffer survivors1;
-    public static ProfilerBuffer survivors2;
+    public static AllocationProfilerBuffer survivors1;
+    public static AllocationProfilerBuffer survivors2;
 
     /**
      * The external JNumaUtils library object.
@@ -157,7 +157,7 @@ public class AllocationProfiler {
             }
         }
 
-        newObjects = new ProfilerBuffer(allocBufferSize, "New Objects Buffer");
+        newObjects = new AllocationProfilerBuffer(allocBufferSize, "New Objects Buffer");
 
         if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): JNumaUtils Initialization.");
@@ -173,10 +173,10 @@ public class AllocationProfiler {
         if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Initialize the Survivor Objects AllocationProfiler Buffers.");
         }
-        survivors1 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No1");
-        survivors2 = new ProfilerBuffer(survBufferSize, "Survivors Buffer No2");
+        survivors1 = new AllocationProfilerBuffer(survBufferSize, "Survivors Buffer No1");
+        survivors2 = new AllocationProfilerBuffer(survBufferSize, "Survivors Buffer No2");
 
-        charArrayBuffer = new char[ProfilerBuffer.MAX_CHARS];
+        charArrayBuffer = new char[AllocationProfilerBuffer.MAX_CHARS];
 
         profilingCycle = 1;
         if (AllocationProfilerVerbose) {
@@ -258,7 +258,7 @@ public class AllocationProfiler {
             MaxineVM.exit(1);
         }
         ongoingAllocation = true;
-        //guard allocations ProfilerBuffer from overflow
+        //guard AllocationProfilerBuffer from overflow
         if (newObjects.currentIndex >= newObjects.bufferSize) {
             Log.print("Allocations Buffer out of bounds. Increase the Buffer Size.");
             MaxineVM.exit(1);
@@ -311,7 +311,7 @@ public class AllocationProfiler {
      * @param from the source buffer in which we search for survivor objects.
      * @param to the destination buffer in which we store the survivor objects.
      */
-    public void storeSurvivors(ProfilerBuffer from, ProfilerBuffer to) {
+    public void storeSurvivors(AllocationProfilerBuffer from, AllocationProfilerBuffer to) {
         if (AllocationProfilerVerbose) {
             Log.print("(Allocation Profiler): Copy Survived Objects from ");
             Log.print(from.buffersName);
@@ -330,7 +330,7 @@ public class AllocationProfiler {
                 // update NUMA Node
                 int node = utilsObject.findNode(newAddr);
                 from.readType(i);
-                //guard survivors ProfilerBuffer from overflow
+                //guard survivors AllocationProfilerBuffer from overflow
                 if (to.currentIndex >= to.bufferSize) {
                     Log.print("Survivor Buffer out of bounds! Increase the Buffer Size.");
                     MaxineVM.exit(1);
