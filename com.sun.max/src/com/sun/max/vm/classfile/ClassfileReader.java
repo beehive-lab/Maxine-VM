@@ -125,36 +125,24 @@ public final class ClassfileReader {
     }
 
     /**
-     * Parses a Java identifier at a given offset of a string.
+     * Parses an Unqualified Name as defined in $4.2.2 of the JVM spec 8 at a given offset of a string.
      *
      * @param string the string to test
      * @param offset the offset at which a legal field or type identifier should occur
-     * @return the first character after the legal identifier or -1 if there is no legal identifier at {@code offset}
+     * @return the first character after the legal unqualified name or -1 if there is no legal unqualified name at
+     *         {@code offset}
      */
-    public static int parseIdentifier(String string, int offset) {
+    private static int parseUnqualifiedName(String string, int offset, boolean isMethod) {
         boolean isFirstChar = true;
         char ch;
         int i;
         for (i = offset; i != string.length(); i++, isFirstChar = false) {
             ch = string.charAt(i);
-            if (ch < 128) {
-                // Quick check for ASCII
-                if ((ch >= 'a' && ch <= 'z') ||
-                    (ch >= 'A' && ch <= 'Z') ||
-                    (ch == '_' || ch == '$') ||
-                    (!isFirstChar && ch >= '0' && ch <= '9')) {
-                    continue;
-                }
-
+            if (ch == '.' || ch == ';' ||
+                ch == '[' || ch == '/' ||
+                (isMethod && (ch == '<' || ch == '>'))) {
                 break;
             }
-            if (Character.isJavaIdentifierStart(ch)) {
-                continue;
-            }
-            if (!isFirstChar && Character.isJavaIdentifierPart(ch)) {
-                continue;
-            }
-            break;
         }
         return isFirstChar ? -1 : i;
     }
@@ -172,7 +160,7 @@ public final class ClassfileReader {
     }
 
     public static boolean isValidFieldName(Utf8Constant name) {
-        return parseIdentifier(name.string, 0) == name.string.length();
+        return parseUnqualifiedName(name.string, 0, false) == name.string.length();
     }
 
     public static boolean isValidMethodName(Utf8Constant name, boolean allowClinit) {
@@ -182,7 +170,7 @@ public final class ClassfileReader {
         if (allowClinit && name.equals(SymbolTable.CLINIT)) {
             return true;
         }
-        return parseIdentifier(name.string, 0) == name.string.length();
+        return parseUnqualifiedName(name.string, 0, true) == name.string.length();
     }
 
     /**

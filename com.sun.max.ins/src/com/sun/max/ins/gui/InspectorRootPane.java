@@ -118,16 +118,18 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
         }
         for (int i = 0; i < n; i++) {
             final Graphics g = pane.getGraphics();
-            g.setPaintMode();
-            g.setColor(borderFlashColor);
-            for (int r = 0; r < 5; r++) {
-                g.drawRect(r, r, pane.getWidth() - (r * 2), pane.getHeight() - (r * 2));
+            if (g != null) {
+                g.setPaintMode();
+                g.setColor(borderFlashColor);
+                for (int r = 0; r < 5; r++) {
+                    g.drawRect(r, r, pane.getWidth() - (r * 2), pane.getHeight() - (r * 2));
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+                g.dispose();
             }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-            }
-            g.dispose();
             invalidate();
             repaint();
         }

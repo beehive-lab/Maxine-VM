@@ -35,7 +35,7 @@ public class AccessControllerTest {
         } catch (PrivilegedActionException ex) {
             ex.printStackTrace();
         }
-        assertEquals(res, "Oracle Corporation");
+        assertEquals(res, System.getProperty("java.vendor"));
     }
 
 }
