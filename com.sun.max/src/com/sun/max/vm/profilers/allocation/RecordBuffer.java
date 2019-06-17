@@ -36,7 +36,7 @@ import com.sun.max.vm.Log;
  * -Address: the object's address in the Heap.
  * -Node: the physical NUMA node where the object is placed.
  */
-public class AllocationProfilerBuffer {
+class RecordBuffer {
 
     Pointer id;
     Pointer type;
@@ -79,7 +79,7 @@ public class AllocationProfilerBuffer {
     long sizeInBytes;
     long endAddr;
 
-    public AllocationProfilerBuffer(long bufSize, String name) {
+    public RecordBuffer(long bufSize, String name) {
         buffersName = name;
         bufferSize = bufSize;
 
