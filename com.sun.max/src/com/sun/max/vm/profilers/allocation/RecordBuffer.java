@@ -136,7 +136,7 @@ class RecordBuffer {
                 Log.println("Suggestion: Increase the AllocationProfilerBufferSize.");
                 break;
             }
-            type.plus(writeIndex).setChar(c);
+            type.plus(writeIndex * Character.BYTES).setChar(c);
             if (c == '\0') {
                 break;
             }
@@ -152,7 +152,7 @@ class RecordBuffer {
         char c;
 
         do {
-            c = type.plus(readIndex).getChar();
+            c = type.plus(readIndex * Character.BYTES).getChar();
             readStringBuffer[charIndex] = c;
             charIndex++;
             readIndex = stringIndex + charIndex;
