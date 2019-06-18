@@ -87,7 +87,7 @@ class RecordBuffer {
          * The mmap sys call allocates space in memory page batches.
          * Memory page size in linux is 4kB.
          */
-        final long allocSize = bufSize * MAX_CHARS * Character.BYTES;
+        final long allocSize = (long) bufSize * MAX_CHARS * Character.BYTES;
         final long pageSize = 4096;
         final long numOfAllocPages = allocSize / pageSize + 1;
         StringBufferSizeInBytes = numOfAllocPages * pageSize;
