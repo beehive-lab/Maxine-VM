@@ -130,9 +130,9 @@ class RecordBuffer {
 
         while (charIndex < value.length) {
             c = value[charIndex];
-            if (writeIndex >= StringBufferSizeInBytes) {
+            if (writeIndex * Character.BYTES >= StringBufferSizeInBytes) {
                 Log.print("Off-heap String array overflow detected at index: ");
-                Log.println(writeIndex);
+                Log.println(writeIndex * Character.BYTES);
                 Log.println("Suggestion: Increase the AllocationProfilerBufferSize.");
                 break;
             }
@@ -208,6 +208,12 @@ class RecordBuffer {
         writeSize(currentIndex, size);
         writeAddr(currentIndex, address);
         currentIndex++;
+        if (currentIndex >= bufferSize) {
+            Log.print("Off-heap Record Buffer overflow detected at index: ");
+            Log.println(currentIndex);
+            Log.println("Suggestion: Increase the AllocationProfilerBufferSize.");
+            System.exit(1);
+        }
     }
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
