@@ -118,12 +118,12 @@ public class AllocationProfiler {
     /**
      * The size of the Allocation Profiling Buffer.
      */
-    public long allocBufferSize = MINIMUMBUFFERSIZE;
+    public int allocBufferSize = MINIMUMBUFFERSIZE;
 
     /**
      * The size of each Survivors Profiling Buffer.
      */
-    public long survBufferSize = MINIMUMBUFFERSIZE;
+    public int survBufferSize = MINIMUMBUFFERSIZE;
 
     /**
      * The options a user can pass to the Allocation Profiler.

@@ -46,7 +46,7 @@ class RecordBuffer {
     private Pointer threadId;
 
     String buffersName;
-    public long bufferSize;
+    public int bufferSize;
     int currentIndex;
 
     /**
@@ -66,7 +66,7 @@ class RecordBuffer {
 
     private long StringBufferSizeInBytes;
 
-    RecordBuffer(long bufSize, String name) {
+    RecordBuffer(int bufSize, String name) {
         buffersName = name;
         bufferSize = bufSize;
 
