@@ -223,7 +223,7 @@ class RecordBuffer {
      * @param cycle
      * @param allocation
      */
-    private void dumpToStdOut(int cycle, int allocation) {
+    public void print(int cycle, int allocation) {
         for (int i = 0; i < currentIndex; i++) {
             Log.print(cycle);
             Log.print(";");
@@ -263,10 +263,6 @@ class RecordBuffer {
         Log.print(" / ");
         Log.print(bufferSize);
         Log.println(". (This number helps in tuning Buffer's size).");
-    }
-
-    public void print(int cycle, int allocation) {
-        dumpToStdOut(cycle, allocation);
     }
 
     public void cleanBufferCell(int i) {
