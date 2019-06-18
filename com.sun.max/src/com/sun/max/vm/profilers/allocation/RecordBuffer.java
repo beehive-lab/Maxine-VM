@@ -38,53 +38,39 @@ import com.sun.max.vm.Log;
  */
 class RecordBuffer {
 
-    Pointer id;
-    Pointer type;
-    Pointer size;
-    Pointer address;
-    Pointer node;
-    Pointer threadId;
+    private Pointer id;
+    private Pointer type;
+    private Pointer size;
+    private Pointer address;
+    private Pointer node;
+    private Pointer threadId;
 
-    public String buffersName;
+    String buffersName;
     public long bufferSize;
-    public int currentIndex;
+    int currentIndex;
 
     /**
      * The maximum Type string length.
      */
-    public static final int MAX_CHARS = 200;
+    static final int MAX_CHARS = 200;
 
     /**
      * A char[] buffer to store a string which is being read from native.
      */
-    public char[] readStringBuffer;
-    public int readStringBufferLength;
+    char[] readStringBuffer;
 
     /**
      * A primitive representation of null string.
      */
-    public static final char[] nullValue = {'n', 'u', 'l', 'l', '\0'};
+    private static final char[] nullValue = {'n', 'u', 'l', 'l', '\0'};
 
-    /**
-     * Off-heap String array useful values.
-     * Since the end address is not available, we need to calculate it.
-     * The VirtualMemory.allocate() method calls the mmap sys call under the hood,
-     * so the space requests need to be in bytes.
-     * The mmap sys call allocates space in memory page batches.
-     * Memory page size in linux is 4kB.
-     */
-    long allocSize;
-    long pageSize;
-    long numOfAllocPages;
-    long sizeInBytes;
-    long endAddr;
+    private long StringBufferSizeInBytes;
 
     RecordBuffer(long bufSize, String name) {
         buffersName = name;
         bufferSize = bufSize;
 
         readStringBuffer = new char[MAX_CHARS];
-        readStringBufferLength = 0;
 
         id = allocateIntArrayOffHeap(bufSize);
         type = allocateStringArrayOffHeap(bufSize);
@@ -93,25 +79,32 @@ class RecordBuffer {
         node = allocateIntArrayOffHeap(bufSize);
         threadId = allocateIntArrayOffHeap(bufSize);
 
-        allocSize = bufSize * MAX_CHARS * Character.BYTES;
-        pageSize = 4096;
-        numOfAllocPages = allocSize / pageSize + 1;
-        sizeInBytes = numOfAllocPages * pageSize;
-        endAddr = type.toLong() + sizeInBytes;
+        /**
+         * Off-heap String array useful values.
+         * Since the end address is not available, we need to calculate it.
+         * The VirtualMemory.allocate() method calls the mmap sys call under the hood,
+         * so the space requests need to be in bytes.
+         * The mmap sys call allocates space in memory page batches.
+         * Memory page size in linux is 4kB.
+         */
+        final long allocSize = bufSize * MAX_CHARS * Character.BYTES;
+        final long pageSize = 4096;
+        final long numOfAllocPages = allocSize / pageSize + 1;
+        StringBufferSizeInBytes = numOfAllocPages * pageSize;
 
         currentIndex = 0;
     }
 
     private Pointer allocateIntArrayOffHeap(long size) {
-        return VirtualMemory.allocate(Size.fromLong(size * Integer.BYTES), VirtualMemory.Type.DATA);
+        return VirtualMemory.allocate(Size.fromLong(size).times(Integer.BYTES), VirtualMemory.Type.DATA);
     }
 
     private Pointer allocateLongArrayOffHeap(long size) {
-        return VirtualMemory.allocate(Size.fromLong(size * Long.BYTES), VirtualMemory.Type.DATA);
+        return VirtualMemory.allocate(Size.fromLong(size).times(Long.BYTES), VirtualMemory.Type.DATA);
     }
 
     private Pointer allocateStringArrayOffHeap(long size) {
-        Pointer space = VirtualMemory.allocate(Size.fromLong(size * (long) MAX_CHARS * (long) Character.BYTES), VirtualMemory.Type.DATA);
+        Pointer space = VirtualMemory.allocate(Size.fromLong(size).times(MAX_CHARS).times(Character.BYTES), VirtualMemory.Type.DATA);
 
         if (space.isZero()) {
             Log.print(this.buffersName);
@@ -122,11 +115,11 @@ class RecordBuffer {
     }
 
     void deallocateAll() {
-        VirtualMemory.deallocate(id.asAddress(), Size.fromLong(bufferSize * Integer.BYTES), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(type.asAddress(), Size.fromLong(bufferSize * (long) MAX_CHARS * (long) Character.BYTES), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(size.asAddress(), Size.fromLong(bufferSize * Integer.BYTES), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(address.asAddress(), Size.fromLong(bufferSize * Long.BYTES), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(node.asAddress(), Size.fromLong(bufferSize * Integer.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(id.asAddress(), Size.fromLong(bufferSize).times(Integer.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(type.asAddress(), Size.fromLong(bufferSize).times(MAX_CHARS).times(Character.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(size.asAddress(), Size.fromLong(bufferSize).times(Integer.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(address.asAddress(), Size.fromLong(bufferSize).times(Long.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(node.asAddress(), Size.fromLong(bufferSize).times(Integer.BYTES), VirtualMemory.Type.DATA);
     }
 
     private void writeType(int index, char[] value) {
@@ -134,22 +127,16 @@ class RecordBuffer {
         int charIndex = 0;
         long writeIndex = stringIndex + charIndex;
         char c;
-        Pointer typePtr = type;
 
         while (charIndex < value.length) {
             c = value[charIndex];
-            if (writeIndex >= sizeInBytes) {
+            if (writeIndex >= StringBufferSizeInBytes) {
                 Log.print("Off-heap String array overflow detected at index: ");
                 Log.println(writeIndex);
                 Log.println("Suggestion: Increase the AllocationProfilerBufferSize.");
                 break;
             }
-            if (writeIndex > Integer.MAX_VALUE) {
-                typePtr = type.plus(Integer.MAX_VALUE);
-                writeIndex -= Integer.MAX_VALUE;
-            }
-            assert writeIndex < Integer.MAX_VALUE;
-            typePtr.setChar((int) writeIndex, c);
+            type.plus(writeIndex).setChar(c);
             if (c == '\0') {
                 break;
             }
@@ -163,20 +150,13 @@ class RecordBuffer {
         int charIndex = 0;
         long readIndex = stringIndex + charIndex;
         char c;
-        Pointer typePtr = type;
 
         do {
-            if (readIndex > Integer.MAX_VALUE) {
-                typePtr = type.plus(Integer.MAX_VALUE);
-                readIndex -= Integer.MAX_VALUE;
-            }
-            assert readIndex < Integer.MAX_VALUE;
-            c = typePtr.getChar((int) readIndex);
+            c = type.plus(readIndex).getChar();
             readStringBuffer[charIndex] = c;
             charIndex++;
             readIndex = stringIndex + charIndex;
         } while (c != '\0');
-        readStringBufferLength = charIndex;
     }
 
     private void writeId(int index, int value) {
@@ -203,7 +183,7 @@ class RecordBuffer {
         return address.getLong(index);
     }
 
-    private void writeNode(int index, int value) {
+    void writeNode(int index, int value) {
         node.setInt(index, value);
     }
 
@@ -233,18 +213,8 @@ class RecordBuffer {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int id, int threadId, char[] type, int size, long address, int node) {
-        writeId(currentIndex, id);
-        writeThreadId(currentIndex, threadId);
-        writeType(currentIndex, type);
-        writeSize(currentIndex, size);
-        writeAddr(currentIndex, address);
         writeNode(currentIndex, node);
-        currentIndex++;
-    }
-
-
-    void setNode(int index, int node) {
-        writeNode(index, node);
+        record(id, threadId, type, size, address);
     }
 
     /**

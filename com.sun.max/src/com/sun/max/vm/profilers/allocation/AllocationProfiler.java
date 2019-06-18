@@ -302,7 +302,7 @@ public class AllocationProfiler {
     public void findNumaNodes() {
         for (int i = 0; i < newObjects.currentIndex; i++) {
             int node = utilsObject.findNode(newObjects.readAddr(i));
-            newObjects.setNode(i, node);
+            newObjects.writeNode(i, node);
         }
     }
 
