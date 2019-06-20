@@ -149,7 +149,9 @@ public final class MaxineVM {
     public static boolean profileThatObject(Hub hub) {
         if (allocationProfiler != null) {
             String type = hub.classActor.name();
-            if (type.contains(AllocationProfiler.AllocationProfilerFlareObject)) {
+            if (AllocationProfiler.AllocationProfilerFlareAllocationThreshold != 0
+                && (AllocationProfiler.AllocationProfilerFlareAllocationThreshold + AllocationProfiler.AllocationProfilerFlareProfileWindow < flareObjectCounter)
+                && type.contains(AllocationProfiler.AllocationProfilerFlareObject)) {
                 flareObjectCounter++;
             }
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null || AllocationProfiler.profileAll() :
