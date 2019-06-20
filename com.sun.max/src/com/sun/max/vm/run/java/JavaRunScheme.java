@@ -261,7 +261,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     float beforeAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
                     // Initialize Allocation Profiler
                     MaxineVM.allocationProfiler = new AllocationProfiler();
-                    MaxineVM.isAllocationProfilerInitialized = true;
                     float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
 
                     if (AllocationProfiler.AllocationProfilerDebug) {

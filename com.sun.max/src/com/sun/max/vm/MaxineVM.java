@@ -129,8 +129,6 @@ public final class MaxineVM {
      */
     public static AllocationProfiler allocationProfiler;
 
-    public static boolean isAllocationProfilerInitialized = false;
-
     /**
      * This method is used to guard object allocation code sections.
      *
@@ -149,7 +147,7 @@ public final class MaxineVM {
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject(Hub hub) {
-        if (isAllocationProfilerInitialized) {
+        if (allocationProfiler != null) {
             String type = hub.classActor.name();
             if (type.contains(AllocationProfiler.AllocationProfilerFlareObject)) {
                 flareObjectCounter++;

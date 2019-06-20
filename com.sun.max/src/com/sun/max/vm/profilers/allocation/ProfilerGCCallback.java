@@ -37,7 +37,7 @@ public class ProfilerGCCallback implements Heap.GCCallback {
     @Override
     public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
 
-        if (!MaxineVM.isAllocationProfilerInitialized || !MaxineVM.isRunning()) {
+        if (MaxineVM.allocationProfiler == null || !MaxineVM.isRunning()) {
             return;
         }
 
