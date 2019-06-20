@@ -24,7 +24,9 @@ import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.memory.VirtualMemory;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Size;
+import com.sun.max.vm.Intrinsics;
 import com.sun.max.vm.Log;
+
 /**
  * This class implements any buffer used by the Allocation Profiler to keep track of the objects.
  *
@@ -44,6 +46,8 @@ class RecordBuffer {
     private Pointer addresses;
     private Pointer nodes;
     private Pointer threadIds;
+    private Pointer timestamps;
+    private Pointer coreIDs;
 
     String buffersName;
     public int bufferSize;
@@ -78,6 +82,8 @@ class RecordBuffer {
         addresses = allocateLongArrayOffHeap(bufSize);
         nodes = allocateIntArrayOffHeap(bufSize);
         threadIds = allocateIntArrayOffHeap(bufSize);
+        timestamps = allocateLongArrayOffHeap(bufSize);
+        coreIDs = allocateIntArrayOffHeap(bufSize);
 
         /**
          * Off-heap String array useful values.
@@ -123,6 +129,8 @@ class RecordBuffer {
         VirtualMemory.deallocate(sizes.asAddress(), intSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(addresses.asAddress(), longSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(nodes.asAddress(), intSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(timestamps.asAddress(), longSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(coreIDs.asAddress(), intSize, VirtualMemory.Type.DATA);
     }
 
     private void writeType(int index, char[] value) {
@@ -201,6 +209,10 @@ class RecordBuffer {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int id, int threadId, char[] type, int size, long address) {
+        final long timestamp = Intrinsics.rdtsc();
+        final int  coreID    = Intrinsics.rdtscp();
+        writeLong(timestamps, currentIndex, timestamp);
+        writeInt(coreIDs, currentIndex, coreID);
         writeInt(ids, currentIndex, id);
         writeInt(threadIds, currentIndex, threadId);
         writeType(currentIndex, type);
@@ -256,7 +268,11 @@ class RecordBuffer {
             }
             Log.print(readInt(sizes, i));
             Log.print(";");
-            Log.println(readInt(nodes, i));
+            Log.print(readInt(nodes, i));
+            Log.print(";");
+            Log.print(readLong(timestamps, i));
+            Log.print(";");
+            Log.println(readInt(coreIDs, i));
         }
     }
 
@@ -276,6 +292,8 @@ class RecordBuffer {
         writeInt(sizes, i, 0);
         writeLong(addresses, i, 0L);
         writeInt(nodes, i, -1);
+        writeLong(timestamps, i, 0L);
+        writeInt(coreIDs, i, Integer.MIN_VALUE);
     }
 
     void resetBuffer() {
