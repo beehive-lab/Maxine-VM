@@ -21,11 +21,14 @@ package com.sun.max.vm.profilers.allocation;
 
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
+import com.sun.max.lang.ISA;
 import com.sun.max.memory.VirtualMemory;
+import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Size;
 import com.sun.max.vm.Intrinsics;
 import com.sun.max.vm.Log;
+import com.sun.max.vm.runtime.FatalError;
 
 /**
  * This class implements any buffer used by the Allocation Profiler to keep track of the objects.
@@ -209,6 +212,9 @@ class RecordBuffer {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int id, int threadId, char[] type, int size, long address) {
+        if (Platform.platform().isa != ISA.AMD64) {
+            throw FatalError.unimplemented("RecordBuffer.record");
+        }
         final long timestamp = Intrinsics.rdtsc();
         final int  coreID    = Intrinsics.rdtscp();
         writeLong(timestamps, currentIndex, timestamp);

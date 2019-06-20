@@ -389,16 +389,6 @@ public class T1XIntrinsicTemplateSource {
     }
 
     @T1X_INTRINSIC_TEMPLATE
-    public static long com_sun_max_vm_Intrinsics$rdtsc$() {
-        return com.sun.max.vm.Intrinsics.rdtsc();
-    }
-
-    @T1X_INTRINSIC_TEMPLATE
-    public static int com_sun_max_vm_Intrinsics$rdtscp$() {
-        return com.sun.max.vm.Intrinsics.rdtscp();
-    }
-
-    @T1X_INTRINSIC_TEMPLATE
     public static long com_sun_max_vm_intrinsics_Infopoints$here$() {
         return com.sun.max.vm.intrinsics.Infopoints.here();
     }
