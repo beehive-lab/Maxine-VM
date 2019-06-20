@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
@@ -545,7 +545,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     @HOSTED_ONLY
     private static final Set<String> templateIntrinsicIDs = new HashSet<String>(
-                    Arrays.asList(UCMP_AT, UCMP_AE, UCMP_BT, UCMP_BE, UDIV, UREM, LSB, MSB, PREAD_OFF, PREAD_IDX, PWRITE_OFF, PWRITE_IDX, PCMPSWP, HERE, PAUSE));
+                    Arrays.asList(UCMP_AT, UCMP_AE, UCMP_BT, UCMP_BE, UDIV, UREM, LSB, MSB, PREAD_OFF, PREAD_IDX, PWRITE_OFF, PWRITE_IDX, PCMPSWP, HERE, PAUSE, RDTSCP, RDTSC));
 
     /**
      * List of intrinsic that T1X cannot handle, i.e., methods that call these intrinsics lead to a bailout.

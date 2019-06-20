@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.c1x;
 
@@ -250,6 +248,22 @@ public class MaxineIntrinsicImplementations {
         }
     }
 
+    public static class RdtscIntrinsic implements C1XIntrinsicImpl {
+        @Override
+        public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
+            assert args.length == 0;
+            return b.append(new Rdtsc());
+        }
+    }
+
+    public static class RdtscpIntrinsic implements C1XIntrinsicImpl {
+        @Override
+        public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
+            assert args.length == 0;
+            return b.append(new Rdtscp());
+        }
+    }
+
     public static void initialize(IntrinsicImpl.Registry registry) {
         registry.add(LSB, new BitIntrinsic(LIROpcode.Lsb));
         registry.add(MSB, new BitIntrinsic(LIROpcode.Msb));
@@ -276,5 +290,8 @@ public class MaxineIntrinsicImplementations {
         registry.add(ALLOCA, new AllocaIntrinsic());
 
         registry.add(CMP_BYTECODE, new CompareBytecodeIntrinsic());
+
+        registry.add(RDTSC, new RdtscIntrinsic());
+        registry.add(RDTSCP, new RdtscpIntrinsic());
     }
 }

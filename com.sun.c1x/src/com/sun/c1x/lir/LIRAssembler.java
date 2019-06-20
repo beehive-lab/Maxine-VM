@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -317,6 +317,12 @@ public abstract class LIRAssembler {
             case Breakpoint:
                 emitBreakpoint();
                 break;
+            case Rdtsc:
+                emitRdtsc(op.result());
+                break;
+            case Rdtscp:
+                emitRdtscp(op.result());
+                break;
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -475,6 +481,10 @@ public abstract class LIRAssembler {
     protected abstract void emitMonitorAddress(int monitor, CiValue dst);
 
     protected abstract void emitPause();
+
+    protected abstract void emitRdtsc(CiValue result);
+
+    protected abstract void emitRdtscp(CiValue result);
 
     protected abstract void emitStackAllocate(StackBlock src, CiValue dst);
 
