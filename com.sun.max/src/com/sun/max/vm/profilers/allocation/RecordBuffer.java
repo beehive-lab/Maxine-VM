@@ -38,12 +38,12 @@ import com.sun.max.vm.Log;
  */
 class RecordBuffer {
 
-    private Pointer id;
-    private Pointer type;
-    private Pointer size;
-    private Pointer address;
-    private Pointer node;
-    private Pointer threadId;
+    private Pointer ids;
+    private Pointer types;
+    private Pointer sizes;
+    private Pointer addresses;
+    private Pointer nodes;
+    private Pointer threadIds;
 
     String buffersName;
     public int bufferSize;
@@ -72,12 +72,12 @@ class RecordBuffer {
 
         readStringBuffer = new char[MAX_CHARS];
 
-        id = allocateIntArrayOffHeap(bufSize);
-        type = allocateStringArrayOffHeap(bufSize);
-        size = allocateIntArrayOffHeap(bufSize);
-        address = allocateLongArrayOffHeap(bufSize);
-        node = allocateIntArrayOffHeap(bufSize);
-        threadId = allocateIntArrayOffHeap(bufSize);
+        ids = allocateIntArrayOffHeap(bufSize);
+        types = allocateStringArrayOffHeap(bufSize);
+        sizes = allocateIntArrayOffHeap(bufSize);
+        addresses = allocateLongArrayOffHeap(bufSize);
+        nodes = allocateIntArrayOffHeap(bufSize);
+        threadIds = allocateIntArrayOffHeap(bufSize);
 
         /**
          * Off-heap String array useful values.
@@ -95,16 +95,17 @@ class RecordBuffer {
         currentIndex = 0;
     }
 
-    private Pointer allocateIntArrayOffHeap(long size) {
-        return VirtualMemory.allocate(Size.fromLong(size).times(Integer.BYTES), VirtualMemory.Type.DATA);
+    private Pointer allocateIntArrayOffHeap(int size) {
+        return VirtualMemory.allocate(Size.fromInt(size).times(Integer.BYTES), VirtualMemory.Type.DATA);
     }
 
-    private Pointer allocateLongArrayOffHeap(long size) {
-        return VirtualMemory.allocate(Size.fromLong(size).times(Long.BYTES), VirtualMemory.Type.DATA);
+    private Pointer allocateLongArrayOffHeap(int size) {
+        return VirtualMemory.allocate(Size.fromInt(size).times(Long.BYTES), VirtualMemory.Type.DATA);
     }
 
-    private Pointer allocateStringArrayOffHeap(long size) {
-        Pointer space = VirtualMemory.allocate(Size.fromLong(size).times(MAX_CHARS).times(Character.BYTES), VirtualMemory.Type.DATA);
+    private Pointer allocateStringArrayOffHeap(int size) {
+        Pointer space = VirtualMemory.allocate(Size.fromInt(size).times(MAX_CHARS).times(Character.BYTES),
+                VirtualMemory.Type.DATA);
 
         if (space.isZero()) {
             Log.print(this.buffersName);
@@ -115,11 +116,13 @@ class RecordBuffer {
     }
 
     void deallocateAll() {
-        VirtualMemory.deallocate(id.asAddress(), Size.fromLong(bufferSize).times(Integer.BYTES), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(type.asAddress(), Size.fromLong(bufferSize).times(MAX_CHARS).times(Character.BYTES), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(size.asAddress(), Size.fromLong(bufferSize).times(Integer.BYTES), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(address.asAddress(), Size.fromLong(bufferSize).times(Long.BYTES), VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(node.asAddress(), Size.fromLong(bufferSize).times(Integer.BYTES), VirtualMemory.Type.DATA);
+        final Size intSize = Size.fromInt(bufferSize).times(Integer.BYTES);
+        final Size longSize = Size.fromInt(bufferSize).times(Long.BYTES);
+        VirtualMemory.deallocate(ids.asAddress(), intSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(types.asAddress(), Size.fromLong(bufferSize).times(MAX_CHARS).times(Character.BYTES), VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(sizes.asAddress(), intSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(addresses.asAddress(), longSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(nodes.asAddress(), intSize, VirtualMemory.Type.DATA);
     }
 
     private void writeType(int index, char[] value) {
@@ -136,7 +139,7 @@ class RecordBuffer {
                 Log.println("Suggestion: Increase the AllocationProfilerBufferSize.");
                 break;
             }
-            type.plus(writeIndex * Character.BYTES).setChar(c);
+            types.plus(writeIndex * Character.BYTES).setChar(c);
             if (c == '\0') {
                 break;
             }
@@ -152,61 +155,57 @@ class RecordBuffer {
         char c;
 
         do {
-            c = type.plus(readIndex * Character.BYTES).getChar();
+            c = types.plus(readIndex * Character.BYTES).getChar();
             readStringBuffer[charIndex] = c;
             charIndex++;
             readIndex = stringIndex + charIndex;
         } while (c != '\0');
     }
 
-    private void writeId(int index, int value) {
-        id.setInt(index, value);
-    }
-
     public int readId(int index) {
-        return id.getInt(index);
-    }
-
-    private void writeSize(int index, int value) {
-        size.setInt(index, value);
+        return readInt(ids, index);
     }
 
     int readSize(int index) {
-        return size.getInt(index);
-    }
-
-    private void writeAddr(int index, long value) {
-        address.setLong(index, value);
+        return readInt(sizes, index);
     }
 
     long readAddr(int index) {
-        return address.getLong(index);
+        return readLong(addresses, index);
     }
 
     void writeNode(int index, int value) {
-        node.setInt(index, value);
+        writeInt(nodes, index, value);
     }
 
-    private int readNode(int index) {
-        return node.getInt(index);
+    private void writeInt(Pointer pointer, int index, int value) {
+        pointer.setInt(index, value);
     }
 
-    private void writeThreadId(int index, int value) {
-        threadId.setInt(index, value);
+    private void writeLong(Pointer pointer, int index, long value) {
+        pointer.setLong(index, value);
+    }
+
+    private int readInt(Pointer pointer, int index) {
+        return pointer.getInt(index);
+    }
+
+    private long readLong(Pointer pointer, int index) {
+        return pointer.getLong(index);
     }
 
     int readThreadId(int index) {
-        return threadId.getInt(index);
+        return readInt(threadIds, index);
     }
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int id, int threadId, char[] type, int size, long address) {
-        writeId(currentIndex, id);
-        writeThreadId(currentIndex, threadId);
+        writeInt(ids, currentIndex, id);
+        writeInt(threadIds, currentIndex, threadId);
         writeType(currentIndex, type);
-        writeSize(currentIndex, size);
-        writeAddr(currentIndex, address);
+        writeInt(sizes, currentIndex, size);
+        writeLong(addresses, currentIndex, address);
         currentIndex++;
         if (currentIndex >= bufferSize) {
             Log.print("Off-heap Record Buffer overflow detected at index: ");
@@ -237,10 +236,10 @@ class RecordBuffer {
             Log.print(allocation);
             Log.print(";");
 
-            Log.print(readId(i));
+            Log.print(readInt(ids, i));
             Log.print(";");
 
-            Log.print(readThreadId(i));
+            Log.print(readInt(threadIds, i));
             Log.print(";");
 
             // read and store the string in the readStringBuffer.
@@ -255,9 +254,9 @@ class RecordBuffer {
             if (readStringBuffer[j - 1] != ';') {
                 Log.print(";");
             }
-            Log.print(readSize(i));
+            Log.print(readInt(sizes, i));
             Log.print(";");
-            Log.println(readNode(i));
+            Log.println(readInt(nodes, i));
         }
     }
 
@@ -272,11 +271,11 @@ class RecordBuffer {
     }
 
     public void cleanBufferCell(int i) {
-        writeId(i, 0);
+        writeInt(ids, i, 0);
         writeType(i, nullValue);
-        writeSize(i, 0);
-        writeAddr(i, 0);
-        writeNode(i, -1);
+        writeInt(sizes, i, 0);
+        writeLong(addresses, i, 0L);
+        writeInt(nodes, i, -1);
     }
 
     void resetBuffer() {
