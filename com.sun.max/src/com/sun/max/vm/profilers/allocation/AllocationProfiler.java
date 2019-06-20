@@ -255,7 +255,7 @@ public class AllocationProfiler {
         if (ongoingAllocation) {
             Log.println("Recursive Allocation. ");
             Log.println(type);
-            MaxineVM.exit(1);
+            throw FatalError.unexpected("Recursive Allocation.");
         }
         ongoingAllocation = true;
         //guard RecordBuffer from overflow
