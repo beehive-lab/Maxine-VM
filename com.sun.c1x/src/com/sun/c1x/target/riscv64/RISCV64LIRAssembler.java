@@ -47,6 +47,7 @@ import com.sun.cri.xir.XirTemplate;
 import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.Word;
 import com.sun.max.vm.compiler.CompilationBroker;
+import com.sun.max.vm.runtime.FatalError;
 
 import java.util.Map;
 
@@ -126,6 +127,16 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitPause() {
         masm.pause();
+    }
+
+    @Override
+    public void emitGetTicks(CiValue result) {
+        throw FatalError.unimplemented("RISCV64LIRGenerator.emitGetTicks");
+    }
+
+    @Override
+    public void emitGetCpuID(CiValue result) {
+        throw FatalError.unimplemented("RISCV64LIRGenerator.emitGetCpuID");
     }
 
     @Override

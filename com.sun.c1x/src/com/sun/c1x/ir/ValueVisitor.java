@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -95,4 +95,6 @@ public abstract class ValueVisitor {
     public abstract void visitUnsafePutRaw(UnsafePutRaw i);
     public abstract void visitUnsignedCompareOp(UnsignedCompareOp i);
     public abstract void visitIfBit(IfBit i);
+    public abstract void visitGetTicks(GetTicks i);
+    public abstract void visitGetCpuID(GetCpuID i);
 }

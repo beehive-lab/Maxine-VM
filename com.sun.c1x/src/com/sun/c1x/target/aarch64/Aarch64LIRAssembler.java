@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -44,6 +44,7 @@ import com.sun.cri.xir.CiXirAssembler.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.Word;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.runtime.FatalError;
 
 public final class Aarch64LIRAssembler extends LIRAssembler {
 
@@ -116,6 +117,16 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitPause() {
         masm.pause();
+    }
+
+    @Override
+    protected void emitGetTicks(CiValue result) {
+        throw FatalError.unimplemented("Aarch64LIRAssembler.emitGetTicks");
+    }
+
+    @Override
+    protected void emitGetCpuID(CiValue result) {
+        throw FatalError.unimplemented("Aarch64LIRAssembler.emitGetCpuID");
     }
 
     @Override

@@ -657,7 +657,84 @@ def ignoreTheRestOptions(vmArgs, profilerOptions):
                 del vmArgs[vmArgs.index(arg)+1]
             del vmArgs[vmArgs.index(arg)]
 
+def applynumathreadmap(filename):
+    oldFileName = filename[0]
 
+    #open the profiler output file
+    oldFile = open(oldFileName, 'r')
+    lines = oldFile.readlines()
+    oldFile.close
+
+    #open a new file for profiler output with numa thread map applied
+    newFileName = os.getcwd()+"/tmp.csv"
+    
+    newFile = open(newFileName, 'a')
+    #with the following format
+    newFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type/Class;Size;NumaNode\n')
+
+    #thread map regex
+    threadMapPattern = r'\(Run\)\sThread\s([0-9]+)\,\sCPU\s([0-9]+),\sNuma\sNode\s([0-9]+)'
+
+    #object allocation regex
+    #Format: 
+    #Cycle ; is New Allocation ; ID ; Thread id ; Class/Type ; Size ; NUMA Node
+    recordPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[^\;.]*\;[0-9]+\;[0-9]+'
+
+    #index     - content
+    #thread id - numa node
+    threadMap = []
+    #there is no thread 0 so put a garbage value
+    threadMap.insert(0, -9)
+
+    print 'Applying NUMA Thread Map...'    
+    for line in lines:
+        threadMapLineMatch = re.findall(threadMapPattern, line)
+        recordLineMatch = re.match(recordPattern, line)
+        if (threadMapLineMatch):
+            # NUMA Thread Map line found
+            for item in threadMapLineMatch:
+                threadId = int(item[0])
+                cpu = int(item[1])
+                numaNode = int(item[2])
+                # Update NUMA Thread Map
+                if (threadId > len(threadMap)):
+                    while (threadId > len(threadMap)):
+                        threadMap.insert(len(threadMap), -9)
+                    threadMap.insert(threadId, numaNode)
+                elif (threadId == len(threadMap)):
+                    threadMap.insert(threadId, numaNode)
+                else:
+                    threadMap[threadId] = numaNode
+
+        elif (recordLineMatch):
+            # Allocation Profiler Output line found
+            # Apply NUMA Thread map
+            index = int(recordLineMatch.group(1))
+            fields = line.split(';')
+
+            cycle = fields[0]
+            isAllocation = fields[1]
+            uniqueId = fields[2]
+            threadId = int(fields[3])
+            threadNumaNode = threadMap[threadId]
+            classOrType = fields[4]
+            size = fields[5]
+            numaNode = fields[6]
+
+            # Create the New Line
+            newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + str(threadId) + ';' + str(threadNumaNode) + ';' + classOrType + ';' + size + ';' + numaNode
+            newFile.write(newLine)
+            
+    newFile.close
+
+    # After NUMA Thread Map has been applied to the Allocation Profiler's Output,
+    # replace the old Allocation Profile's Output file with the new one
+
+    # delete the old output
+    os.unlink(oldFileName)
+    # replace with the new output
+    shutil.move(newFileName, oldFileName)
+    
 def allocprofiler(args):
     """launch Maxine VM with Allocation Profiler
 
@@ -682,7 +759,7 @@ def allocprofiler(args):
     profilerArgs = []
 
     nativeLib = 'jnumautils-0.1-SNAPSHOT.jar'
-    jnumautils = join('-Xbootclasspath/p:lib/', nativeLib)
+    jnumautils = ''.join(['-Xbootclasspath/p:', os.environ['MAXINE_HOME'], '/lib/', nativeLib])
     profilerArgs.append(jnumautils)
 
     profilerOptions = ['all', 'entry', 'exit', 'log', 'verbose']
@@ -708,25 +785,25 @@ def allocprofiler(args):
         #enable/disable verbosity
         if 'verbose' in vmArgs:
             del vmArgs[vmArgs.index('verbose')]
-            profilerArgs.append('-XX:+VerboseAllocationProfiler')
+            profilerArgs.append('-XX:+AllocationProfilerVerbose')
 
         if 'warmup' in vmArgs:
             index = vmArgs.index('warmup')
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
-            profilerArgs.append('-XX:WarmupThreshold='+num)
+            profilerArgs.append('-XX:AllocationProfilerExplicitGCThreshold='+num)
 
-        if 'bufferSize' in vmArgs:
-            index = vmArgs.index('bufferSize')
+        if 'buffersize' in vmArgs:
+            index = vmArgs.index('buffersize')
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
-            profilerArgs.append('-XX:BufferSize='+num)
+            profilerArgs.append('-XX:AllocationProfilerBufferSize='+num)
 
         if 'validate' in vmArgs:
             del vmArgs[vmArgs.index('validate')]
-            profilerArgs.append('-XX:+ValidateAllocationProfiler')
+            profilerArgs.append('-XX:+AllocationProfilerDebug')
 
     print '=================================================='
     print '== Launching Maxine VM with Allocation Profiler =='
@@ -740,6 +817,13 @@ def allocprofiler(args):
     print '=================================================='
 
     mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
+
+    print '=================================================='
+    print 'The execution is finished.'
+    applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
+    print 'Finished.'
+    print '=> Results directory: ',os.getenv('MAXINE_LOG_FILE')
+    print '=> Results format:', 'Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode'
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
@@ -926,6 +1010,7 @@ def mx_init(suite):
 
     commands = {
         'allocprofiler': [allocprofiler, ''],
+        'applynumathreadmap': [applynumathreadmap, ''],
         'build': [build, '"for help run mx :build -h"'],
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],

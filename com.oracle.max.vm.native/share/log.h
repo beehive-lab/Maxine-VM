@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -83,6 +83,8 @@ extern void log_flush(void);
 #define log_THREADS (log_ALL || 0)
 #define log_TELE (log_ALL || 0)
 #define log_MMAP (log_ALL || 0)
+// log_NUMA_THREADS can be used only on non-ARM architectures
+#define log_NUMA_THREADS (!isa_ARM && 0)
 
 #if log_JVMNI
 #define jvmni_log_println log_println

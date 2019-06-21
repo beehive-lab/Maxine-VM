@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -2132,7 +2132,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
-            if (MaxineVM.profileThatObject()) {
+            if (MaxineVM.profileThatObject(hub)) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub, cell);
             }
         }
@@ -2142,7 +2142,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
-            if (MaxineVM.profileThatObject()) {
+            if (MaxineVM.profileThatObject(hub)) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub, cell);
             }
         }

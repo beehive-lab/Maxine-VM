@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
@@ -2981,5 +2981,22 @@ public class AMD64Assembler extends AbstractAssembler {
 
     public void fstp(int i) {
         emitx87(0xDD, 0xD8, i);
+    }
+
+    /**
+     * Reads time-stamp counter into EDX:EAX.
+     */
+    public void rdtsc() {
+        emitByte(0x0F);
+        emitByte(0x31);
+    }
+
+    /**
+     * Reads 64-bit time-stamp counter and IA32_TSC_AUX value into EDX:EAX and ECX.
+     */
+    public void rdtscp() {
+        emitByte(0x0F);
+        emitByte(0x01);
+        emitByte(0xF9);
     }
 }

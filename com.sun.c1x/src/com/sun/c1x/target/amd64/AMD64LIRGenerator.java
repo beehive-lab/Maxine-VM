@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -636,6 +636,18 @@ public class AMD64LIRGenerator extends LIRGenerator {
         lir.testbit(address, CiConstant.forInt(i.bitNo));
         lir.branch(i.condition == Condition.EQ ? Condition.AE : Condition.BT, CiKind.Int, i.trueSuccessor());
         lir.jump(i.falseSuccessor());
+    }
+
+    @Override
+    public void visitGetTicks(GetTicks x) {
+        CiValue result = createResultVariable(x);
+        lir.getTicks(result);
+    }
+
+    @Override
+    public void visitGetCpuID(GetCpuID x) {
+        CiValue result = createResultVariable(x);
+        lir.getCpuID(result);
     }
 
     @Override

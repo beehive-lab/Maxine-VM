@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -56,8 +56,7 @@ import com.sun.cri.xir.CiXirAssembler.XirParameter;
 import com.sun.cri.xir.CiXirAssembler.XirRegister;
 import com.sun.cri.xir.CiXirAssembler.XirTemp;
 import com.sun.cri.xir.*;
-import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
-import com.sun.max.vm.classfile.constant.ConstantPool;
+import com.sun.max.vm.runtime.FatalError;
 
 /**
  * This class traverses the HIR instructions and generates LIR instructions from them.
@@ -699,6 +698,16 @@ public abstract class LIRGenerator extends ValueVisitor {
     @Override
     public void visitBreakpointTrap(BreakpointTrap i) {
         lir.breakpoint();
+    }
+
+    @Override
+    public void visitGetTicks(GetTicks i) {
+        throw FatalError.unimplemented("LIRGenerator.visitGetTicks");
+    }
+
+    @Override
+    public void visitGetCpuID(GetCpuID i) {
+        throw FatalError.unimplemented("LIRGenerator.visitGetCpuID");
     }
 
     protected CiAddress getAddressForPointerOp(PointerOp x, CiKind kind, CiValue pointer) {

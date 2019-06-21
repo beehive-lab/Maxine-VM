@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -21,11 +21,9 @@
 package com.sun.max.vm.jdk;
 
 import com.sun.max.annotate.*;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.HeapScheme.GCRequest;
-import com.sun.max.vm.profilers.allocation.Profiler;
+import com.sun.max.vm.profilers.allocation.AllocationProfiler;
 
 /**
  * Implements method substitutions for {@link java.lang.Runtime java.lang.Runtime}.
@@ -78,7 +76,7 @@ public final class JDK_java_lang_Runtime {
     @SUBSTITUTE
     private void gc() {
         if (!Heap.gcDisabled()) {
-            Profiler.iteration++;
+            AllocationProfiler.isExplicitGC = true;
             final GCRequest gcRequest = GCRequest.clearedGCRequest();
             gcRequest.explicit = true;
             Heap.collectGarbage();
