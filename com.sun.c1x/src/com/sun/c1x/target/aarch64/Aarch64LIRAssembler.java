@@ -120,13 +120,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitRdtsc(CiValue result) {
-        throw FatalError.unimplemented("Aarch64LIRAssembler.emitRdtsc");
+    protected void emitGetTicks(CiValue result) {
+        throw FatalError.unimplemented("Aarch64LIRAssembler.emitGetTicks");
     }
 
     @Override
-    protected void emitRdtscp(CiValue result) {
-        throw FatalError.unimplemented("Aarch64LIRAssembler.emitRdtscp");
+    protected void emitGetCpuID(CiValue result) {
+        throw FatalError.unimplemented("Aarch64LIRAssembler.emitGetCpuID");
     }
 
     @Override

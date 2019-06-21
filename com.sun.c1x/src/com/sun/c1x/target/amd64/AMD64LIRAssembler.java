@@ -130,8 +130,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitRdtsc(CiValue result) {
         // rdtsc changes rax and rdx so we need to store them
+    protected void emitGetTicks(CiValue result) {
         if (result.asRegister() != AMD64.rax) {
             masm.push(AMD64.rax);
         }
@@ -151,8 +151,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitRdtscp(CiValue result) {
         // rdtscp changes rax, rdx, and rcx so we need to store them
+    protected void emitGetCpuID(CiValue result) {
         if (result.asRegister() != AMD64.rax) {
             masm.push(AMD64.rax);
         }

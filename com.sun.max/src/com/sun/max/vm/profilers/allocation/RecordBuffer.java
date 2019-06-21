@@ -215,8 +215,8 @@ class RecordBuffer {
         if (Platform.platform().isa != ISA.AMD64) {
             throw FatalError.unimplemented("RecordBuffer.record");
         }
-        final long timestamp = Intrinsics.rdtsc();
-        final int  coreID    = Intrinsics.rdtscp();
+        final long timestamp = Intrinsics.getTicks();
+        final int  coreID    = Intrinsics.getCpuID();
         writeLong(timestamps, currentIndex, timestamp);
         writeInt(coreIDs, currentIndex, coreID);
         writeInt(ids, currentIndex, id);

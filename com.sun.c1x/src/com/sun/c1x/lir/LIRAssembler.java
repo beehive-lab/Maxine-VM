@@ -317,11 +317,11 @@ public abstract class LIRAssembler {
             case Breakpoint:
                 emitBreakpoint();
                 break;
-            case Rdtsc:
-                emitRdtsc(op.result());
+            case GetTicks:
+                emitGetTicks(op.result());
                 break;
-            case Rdtscp:
-                emitRdtscp(op.result());
+            case GetCpuID:
+                emitGetCpuID(op.result());
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -482,9 +482,9 @@ public abstract class LIRAssembler {
 
     protected abstract void emitPause();
 
-    protected abstract void emitRdtsc(CiValue result);
+    protected abstract void emitGetTicks(CiValue result);
 
-    protected abstract void emitRdtscp(CiValue result);
+    protected abstract void emitGetCpuID(CiValue result);
 
     protected abstract void emitStackAllocate(StackBlock src, CiValue dst);
 

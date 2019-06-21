@@ -124,13 +124,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    protected void emitRdtsc(CiValue result) {
-        throw FatalError.unimplemented("ARMV7LIRAssembler.emitRdtsc");
+    protected void emitGetTicks(CiValue result) {
+        throw FatalError.unimplemented("ARMV7LIRAssembler.emitGetTicks");
     }
 
     @Override
-    protected void emitRdtscp(CiValue result) {
-        throw FatalError.unimplemented("ARMV7LIRAssembler.emitRdtscp");
+    protected void emitGetCpuID(CiValue result) {
+        throw FatalError.unimplemented("ARMV7LIRAssembler.emitGetCpuID");
     }
 
     @Override

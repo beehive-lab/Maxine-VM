@@ -1344,9 +1344,9 @@ public final class TeleInterpreter {
             throw TeleError.unexpected("Cannot interpret pointer writes remotely");
         } else if (intrinsic == MEMBAR) {
             throw TeleError.unexpected("Unsupported intrinsic: " + intrinsic);
-        } else if (intrinsic == RDTSC) {
+        } else if (intrinsic == GET_TICKS) {
             throw TeleError.unexpected("Unsupported intrinsic: " + intrinsic);
-        } else if (intrinsic == RDTSCP) {
+        } else if (intrinsic == GET_CPU_ID) {
             throw TeleError.unexpected("Unsupported intrinsic: " + intrinsic);
         } else if (intrinsic == PAUSE) {
             // Nothing to do, since it can be no-op.

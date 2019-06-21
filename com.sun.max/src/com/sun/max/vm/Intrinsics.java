@@ -81,15 +81,15 @@ public class Intrinsics {
     public static native boolean readLatchBit(@INTRINSIC.Constant int offset, @INTRINSIC.Constant int bit);
 
     /**
-     * @see MaxineIntrinsicIDs#RDTSC
+     * @see MaxineIntrinsicIDs#GET_TICKS
      */
-    @INTRINSIC(RDTSC)
-    public static native long rdtsc();
+    @INTRINSIC(GET_TICKS)
+    public static native long getTicks();
 
     /**
-     * @see MaxineIntrinsicIDs#RDTSCP
+     * @see MaxineIntrinsicIDs#GET_CPU_ID
      */
-    @INTRINSIC(RDTSCP)
-    public static native int rdtscp();
+    @INTRINSIC(GET_CPU_ID)
+    public static native int getCpuID();
 
 }

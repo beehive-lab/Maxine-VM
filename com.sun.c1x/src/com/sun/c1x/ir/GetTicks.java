@@ -23,22 +23,22 @@ package com.sun.c1x.ir;
 import com.oracle.max.criutils.LogStream;
 import com.sun.cri.ci.CiKind;
 
-public final class Rdtscp extends Instruction {
+public final class GetTicks extends Instruction {
 
     /**
-     * Creates a {@link Rdtscp} instance.
+     * Creates a {@link GetTicks} instance.
      */
-    public Rdtscp() {
-        super(CiKind.Int);
+    public GetTicks() {
+        super(CiKind.Long);
     }
 
     @Override
     public void accept(ValueVisitor v) {
-        v.visitRdtscp(this);
+        v.visitGetTicks(this);
     }
 
     @Override
     public void print(LogStream out) {
-        out.print("rdtscp");
+        out.print("getTicks");
     }
 }

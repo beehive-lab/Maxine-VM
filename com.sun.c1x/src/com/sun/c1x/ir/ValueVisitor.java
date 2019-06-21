@@ -95,6 +95,6 @@ public abstract class ValueVisitor {
     public abstract void visitUnsafePutRaw(UnsafePutRaw i);
     public abstract void visitUnsignedCompareOp(UnsignedCompareOp i);
     public abstract void visitIfBit(IfBit i);
-    public abstract void visitRdtsc(Rdtsc rdtsc);
-    public abstract void visitRdtscp(Rdtscp rdtscp);
+    public abstract void visitGetTicks(GetTicks i);
+    public abstract void visitGetCpuID(GetCpuID i);
 }

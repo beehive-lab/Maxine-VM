@@ -130,13 +130,13 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
     }
 
     @Override
-    public void emitRdtsc(CiValue result) {
-        throw FatalError.unimplemented("RISCV64LIRGenerator.emitRdtsc");
+    public void emitGetTicks(CiValue result) {
+        throw FatalError.unimplemented("RISCV64LIRGenerator.emitGetTicks");
     }
 
     @Override
-    public void emitRdtscp(CiValue result) {
-        throw FatalError.unimplemented("RISCV64LIRGenerator.emitRdtscp");
+    public void emitGetCpuID(CiValue result) {
+        throw FatalError.unimplemented("RISCV64LIRGenerator.emitGetCpuID");
     }
 
     @Override

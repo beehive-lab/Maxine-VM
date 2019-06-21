@@ -639,15 +639,15 @@ public class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public void visitRdtsc(Rdtsc x) {
+    public void visitGetTicks(GetTicks x) {
         CiValue result = createResultVariable(x);
-        lir.rdtsc(result);
+        lir.getTicks(result);
     }
 
     @Override
-    public void visitRdtscp(Rdtscp x) {
+    public void visitGetCpuID(GetCpuID x) {
         CiValue result = createResultVariable(x);
-        lir.rdtscp(result);
+        lir.getCpuID(result);
     }
 
     @Override

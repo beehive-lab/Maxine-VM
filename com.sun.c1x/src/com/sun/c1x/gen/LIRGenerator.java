@@ -56,8 +56,6 @@ import com.sun.cri.xir.CiXirAssembler.XirParameter;
 import com.sun.cri.xir.CiXirAssembler.XirRegister;
 import com.sun.cri.xir.CiXirAssembler.XirTemp;
 import com.sun.cri.xir.*;
-import com.sun.max.vm.classfile.constant.ClassMethodRefConstant;
-import com.sun.max.vm.classfile.constant.ConstantPool;
 import com.sun.max.vm.runtime.FatalError;
 
 /**
@@ -703,13 +701,13 @@ public abstract class LIRGenerator extends ValueVisitor {
     }
 
     @Override
-    public void visitRdtsc(Rdtsc rdtsc) {
-        throw FatalError.unimplemented("LIRGenerator.visitRdtsc");
+    public void visitGetTicks(GetTicks i) {
+        throw FatalError.unimplemented("LIRGenerator.visitGetTicks");
     }
 
     @Override
-    public void visitRdtscp(Rdtscp rdtscp) {
-        throw FatalError.unimplemented("LIRGenerator.visitRdtscp");
+    public void visitGetCpuID(GetCpuID i) {
+        throw FatalError.unimplemented("LIRGenerator.visitGetCpuID");
     }
 
     protected CiAddress getAddressForPointerOp(PointerOp x, CiKind kind, CiValue pointer) {

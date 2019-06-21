@@ -23,22 +23,22 @@ package com.sun.c1x.ir;
 import com.oracle.max.criutils.LogStream;
 import com.sun.cri.ci.CiKind;
 
-public final class Rdtsc extends Instruction {
+public final class GetCpuID extends Instruction {
 
     /**
-     * Creates a {@link Rdtsc} instance.
+     * Creates a {@link GetCpuID} instance.
      */
-    public Rdtsc() {
-        super(CiKind.Long);
+    public GetCpuID() {
+        super(CiKind.Int);
     }
 
     @Override
     public void accept(ValueVisitor v) {
-        v.visitRdtsc(this);
+        v.visitGetCpuID(this);
     }
 
     @Override
     public void print(LogStream out) {
-        out.print("rdtsc");
+        out.print("getCpuID");
     }
 }

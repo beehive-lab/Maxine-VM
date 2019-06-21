@@ -105,6 +105,6 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitUnsafePutRaw(UnsafePutRaw i) { visit(i); }
     @Override public void visitUnsignedCompareOp(UnsignedCompareOp i) { visit(i); }
     @Override public void visitIfBit(IfBit i) { visit(i); }
-    @Override public void visitRdtsc(Rdtsc i) { visit(i); }
-    @Override public void visitRdtscp(Rdtscp i) { visit(i); }
+    @Override public void visitGetTicks(GetTicks i) { visit(i); }
+    @Override public void visitGetCpuID(GetCpuID i) { visit(i); }
 }

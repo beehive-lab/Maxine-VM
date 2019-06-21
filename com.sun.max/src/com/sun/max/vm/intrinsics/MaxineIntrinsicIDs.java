@@ -314,8 +314,8 @@ public class MaxineIntrinsicIDs {
      */
     public static final String CMP_BYTECODE = p + "CMP_BYTECODE";
 
-    public static final String RDTSC = p + "RDTSC";
-    public static final String RDTSCP = p + "RDTSCP";
+    public static final String GET_TICKS = p + "GET_TICKS";
+    public static final String GET_CPU_ID = p + "GET_CPU_ID";
 
     /**
      * A vehicle for testing snippets.

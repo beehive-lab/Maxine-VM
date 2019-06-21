@@ -550,7 +550,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     /**
      * List of intrinsic that T1X cannot handle, i.e., methods that call these intrinsics lead to a bailout.
      */
-    public static final Set<String> unsafeIntrinsicIDs = new HashSet<String>(Arrays.asList(READREG, WRITEREG, IFLATCHBITREAD, SAFEPOINT_POLL, HERE, INFO, BREAKPOINT_TRAP, ALLOCA, MEMBAR, RDTSCP, RDTSC));
+    public static final Set<String> unsafeIntrinsicIDs = new HashSet<String>(Arrays.asList(READREG, WRITEREG, IFLATCHBITREAD, SAFEPOINT_POLL, HERE, INFO, BREAKPOINT_TRAP, ALLOCA, MEMBAR, GET_CPU_ID, GET_TICKS));
 
     @HOSTED_ONLY
     private static final Class[] templateIntrinsicClasses = {

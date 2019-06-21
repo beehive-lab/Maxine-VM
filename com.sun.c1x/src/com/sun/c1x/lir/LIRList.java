@@ -306,12 +306,12 @@ public final class LIRList {
         append(new LIROp0(LIROpcode.Breakpoint));
     }
 
-    public void rdtsc(CiValue result) {
-        append(new LIROp0(LIROpcode.Rdtsc, result, null));
+    public void getTicks(CiValue result) {
+        append(new LIROp0(LIROpcode.GetTicks, result, null));
     }
 
-    public void rdtscp(CiValue result) {
-        append(new LIROp0(LIROpcode.Rdtscp, result, null));
+    public void getCpuID(CiValue result) {
+        append(new LIROp0(LIROpcode.GetCpuID, result, null));
     }
 
     public void testbit(CiAddress address, CiValue bitNo) {

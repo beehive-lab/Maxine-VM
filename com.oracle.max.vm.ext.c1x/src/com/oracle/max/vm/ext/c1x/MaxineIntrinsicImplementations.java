@@ -248,19 +248,19 @@ public class MaxineIntrinsicImplementations {
         }
     }
 
-    public static class RdtscIntrinsic implements C1XIntrinsicImpl {
+    public static class GetTicksIntrinsic implements C1XIntrinsicImpl {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
             assert args.length == 0;
-            return b.append(new Rdtsc());
+            return b.append(new GetTicks());
         }
     }
 
-    public static class RdtscpIntrinsic implements C1XIntrinsicImpl {
+    public static class GetCpuIDIntrinsic implements C1XIntrinsicImpl {
         @Override
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
             assert args.length == 0;
-            return b.append(new Rdtscp());
+            return b.append(new GetCpuID());
         }
     }
 
@@ -291,7 +291,7 @@ public class MaxineIntrinsicImplementations {
 
         registry.add(CMP_BYTECODE, new CompareBytecodeIntrinsic());
 
-        registry.add(RDTSC, new RdtscIntrinsic());
-        registry.add(RDTSCP, new RdtscpIntrinsic());
+        registry.add(GET_TICKS, new GetTicksIntrinsic());
+        registry.add(GET_CPU_ID, new GetCpuIDIntrinsic());
     }
 }
