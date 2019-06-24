@@ -196,6 +196,11 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
         }
     }
 
+    @Override
+    public Address getHeapStartAddress() {
+        return null;
+    }
+
     @INLINE
     public void writeBarrier(Reference from, Reference to) {
     }

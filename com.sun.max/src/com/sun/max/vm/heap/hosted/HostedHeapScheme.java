@@ -134,6 +134,11 @@ public class HostedHeapScheme extends HeapSchemeAdaptor {
     }
 
     @Override
+    public Address getHeapStartAddress() {
+        return null;
+    }
+
+    @Override
     public void enableCustomAllocation(Address customAllocator) {
         FatalError.unexpected("Non implemented");
     }

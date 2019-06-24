@@ -487,6 +487,11 @@ public interface HeapScheme extends VMScheme {
      */
     void walkHeap(CallbackCellVisitor visitor);
 
+    /**
+     *
+     */
+    Address getHeapStartAddress();
+
     /*
      * Logging support.
      */

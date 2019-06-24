@@ -865,6 +865,11 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     }
 
     @Override
+    public Address getHeapStartAddress() {
+        return null;
+    }
+
+    @Override
     public boolean pin(Object object) {
         return false;
     }

@@ -23,6 +23,7 @@ package com.sun.max.vm.profilers.allocation;
 import com.sun.max.memory.VirtualMemory;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Size;
+import com.sun.max.vm.Log;
 
 public class HeapBoundariesBuffer {
 
@@ -30,11 +31,15 @@ public class HeapBoundariesBuffer {
 
     public int bufferSize;
 
+    int currentIndex;
+
     HeapBoundariesBuffer(int bufSize) {
 
         bufferSize = bufSize;
 
         pages = allocateIntArrayOffHeap(bufSize);
+
+        currentIndex = 0;
 
     }
 
@@ -61,5 +66,24 @@ public class HeapBoundariesBuffer {
 
     void writeNumaNode(int index, int value) {
         writeInt(pages, index, value);
+        currentIndex++;
+    }
+
+    void resetBuffer() {
+        currentIndex = 0;
+    }
+
+    public void print(int profilingCycle) {
+        Log.println("HEAP BOUNDARIES:");
+        Log.println("=================");
+        for (int i = 0; i < currentIndex; i++) {
+            for (int j = 0; j < 20; j++) {
+                Log.print(readNumaNode(i));
+                Log.print(" ");
+            }
+            Log.println("|");
+        }
+        Log.println("\n=================");
+        resetBuffer();
     }
 }

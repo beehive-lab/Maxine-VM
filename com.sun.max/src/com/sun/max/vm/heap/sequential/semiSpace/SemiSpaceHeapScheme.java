@@ -1175,6 +1175,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         visitCells(visitor);
     }
 
+    @Override
+    public Address getHeapStartAddress() {
+        return toSpace.start();
+    }
+
     public boolean pin(Object object) {
         return false;
     }

@@ -397,6 +397,11 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public Address getHeapStartAddress() {
+        return null;
+    }
+
     @INLINE
     @Override
     public boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec) {
