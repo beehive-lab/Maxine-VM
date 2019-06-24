@@ -34,6 +34,7 @@ import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
 
 import static com.sun.max.vm.MaxineVM.isHosted;
+import static com.sun.max.vm.MaxineVM.vm;
 
 public class AllocationProfiler {
 
@@ -56,6 +57,11 @@ public class AllocationProfiler {
      */
     public static RecordBuffer survivors1;
     public static RecordBuffer survivors2;
+
+    /**
+     * The Buffer who keeps track of the physical NUMA node of any virtual memory page allocated for the JVM Heap.
+     */
+    public static HeapBoundariesBuffer heapPages;
 
     private static boolean AllocationProfilerAll;
     public static boolean AllocationProfilerVerbose;
@@ -163,6 +169,12 @@ public class AllocationProfiler {
 
         charArrayBuffer = new char[RecordBuffer.MAX_CHARS];
 
+        if (AllocationProfilerVerbose) {
+            Log.println("(Allocation Profiler): Initialize the Heap Boundaries Buffer.");
+        }
+
+        initializeHeapBoundariesBuffer();
+
         profilingCycle = 1;
         if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Initialization Complete.");
@@ -171,6 +183,16 @@ public class AllocationProfiler {
             Log.print(getProfilingCycle());
             Log.println("]");
         }
+    }
+
+    public void initializeHeapBoundariesBuffer() {
+        // get heap size
+
+        // find number of virtual pages
+
+        // define heap boundaries buffer size
+
+        // initilize buffer
     }
 
     public int getProfilingCycle() {
