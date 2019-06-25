@@ -94,7 +94,7 @@ public final class RISCV64Address extends CiAddress {
      * extendType has to be null for every addressingMode except EXTENDED_REGISTER_OFFSET.
      */
     public static RISCV64Address createAddress(CiKind kind, AddressingMode addressingMode, CiRegister base, CiRegister offset,
-                                             int immediate, boolean isScaled, RISCV64Assembler.ExtendType extendType) {
+                                               int immediate, boolean isScaled, RISCV64Assembler.ExtendType extendType) {
         return new RISCV64Address(kind, base.asValue(), offset.asValue(), immediate, isScaled, extendType, addressingMode);
     }
 
@@ -155,13 +155,13 @@ public final class RISCV64Address extends CiAddress {
      *         [<< log2(memory_transfer_size)]
      */
     public RISCV64Address createExtendedRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled,
-                                                                   RISCV64Assembler.ExtendType extendType) {
+                                                              RISCV64Assembler.ExtendType extendType) {
         return new RISCV64Address(CiKind.Int, base.asValue(), offset.asValue(), 0, scaled, extendType, AddressingMode.EXTENDED_REGISTER_OFFSET);
     }
 
 
     private RISCV64Address(CiKind kind, CiValue base, CiValue offset, int immediate, boolean scaled,
-                         RISCV64Assembler.ExtendType extendType, AddressingMode addressingMode) {
+                           RISCV64Assembler.ExtendType extendType, AddressingMode addressingMode) {
         super(kind, base, offset);
         this.base = base.asRegister();
         this.offset = offset.asRegister();
@@ -239,23 +239,18 @@ public final class RISCV64Address extends CiAddress {
     }
 
     /**
-     * @return immediate in correct representation for the given addressing mode. For example in case
-     *         of <code>addressingMode ==IMMEDIATE_UNSCALED </code> the value will be returned as the 9bit signed
-     *         representation.
+     * @return immediate in correct representation for the given addressing mode.
      */
     public int getImmediate() {
         switch (addressingMode) {
             case IMMEDIATE_UNSCALED:
             case IMMEDIATE_POST_INDEXED:
             case IMMEDIATE_PRE_INDEXED:
-                // 9-bit signed value
-                return immediate & NumUtil.getNbitNumberInt(9);
             case IMMEDIATE_SCALED:
-                // Unsigned value can be returned as-is.
-                return immediate;
             case PC_LITERAL:
-                // 21-bit signed value, but lower 2 bits are always 0 and are shifted out.
-                return (immediate >> 2) & NumUtil.getNbitNumberInt(19);
+                return RISCV64MacroAssembler.isAimm(immediate) ?
+                        immediate & NumUtil.getNbitNumberInt(12) :
+                        immediate & NumUtil.getNbitNumberInt(11);
             default:
                 throw new Error("should not reach here!! Should only be called for addressing modes that use immediate values.");
 

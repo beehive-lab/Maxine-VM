@@ -186,7 +186,7 @@ public class Stubs {
         }
         final int index = tmpindex;
         assert stub.is(VirtualTrampoline) ? (virtualTrampolines.size() > index && virtualTrampolines.get(index) == stub)
-                        : (interfaceTrampolines.size() > index && interfaceTrampolines.get(index) == stub);
+                : (interfaceTrampolines.size() > index && interfaceTrampolines.get(index) == stub);
         return index;
     }
 
@@ -595,7 +595,7 @@ public class Stubs {
             final int frameToCSA = csl.frameOffsetToCSA;
 
             // TODO INFINITE LOOP
-//            asm.jal(RISCV64.zero, 0);
+            asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -609,7 +609,7 @@ public class Stubs {
             asm.save(csl, frameToCSA);
 
             CiValue[] args = resolveInvokeBasicCallArgs;
-            asm.ldr(64, args[1].asRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameSize));
+            asm.ldru(64, args[1].asRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameSize));
 
             asm.alignForPatchableDirectCall(asm.codeBuffer.position());
             int callPos = asm.codeBuffer.position();
@@ -830,7 +830,7 @@ public class Stubs {
             final int frameToCSA = csl.frameOffsetToCSA;
 
             // TODO INFINITE LOOP
-//            asm.jal(RISCV64.zero, -4);
+            asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -857,7 +857,7 @@ public class Stubs {
             asm.mov(args[1].asRegister(), index);
 
             // load the return address into the third arg register
-            asm.ldr(64, args[2].asRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameSize));
+            asm.ldru(64, args[2].asRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameSize));
 
             asm.alignForPatchableDirectCall(asm.codeBuffer.position());
             int callPos = asm.codeBuffer.position();
@@ -1126,7 +1126,7 @@ public class Stubs {
             int frameToCSA = csl.frameOffsetToCSA;
 
             // TODO INFINITE LOOP
-//            asm.jal(RISCV64.zero, -4);
+            asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -1384,7 +1384,7 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
             // TODO INFINITE LOOP
-//            asm.jal(RISCV64.zero, -4);
+            asm.jal(RISCV64.zero, 0);
 
             // the very first instruction must save the flags.
             // we save them twice and overwrite the first copy with the trap instruction/return address.
@@ -1399,23 +1399,23 @@ public class Stubs {
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
-            asm.ldr(64, registerConfig.getScratchRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_LATCH_REGISTER.offset));
+            asm.ldru(64, registerConfig.getScratchRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_LATCH_REGISTER.offset));
             asm.str(64, registerConfig.getScratchRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameToCSA + csl.offsetOf(latch)));
 
             // write the return address pointer to the end of the frame
-            asm.ldr(64, registerConfig.getScratchRegister1(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_INSTRUCTION_POINTER.offset));
+            asm.ldru(64, registerConfig.getScratchRegister1(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), RISCV64.rsp, frameSize));
             asm.str(64, registerConfig.getScratchRegister1(), RISCV64Address.createBaseRegisterOnlyAddress(registerConfig.getScratchRegister()));
 
             // load the trap number from the thread locals into the first parameter register
-            asm.ldr(64, args[0].asRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_NUMBER.offset));
+            asm.ldru(64, args[0].asRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_NUMBER.offset));
             // also save the trap number into the trap frame
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), RISCV64.rsp, frameToCSA + RISCV64TrapFrameAccess.TRAP_NUMBER_OFFSET));
             asm.str(64, args[0].asRegister(), RISCV64Address.createBaseRegisterOnlyAddress(registerConfig.getScratchRegister()));
             // load the trap frame pointer into the second parameter register
             asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), RISCV64.rsp, frameToCSA));
             // load the fault address from the thread locals into the third parameter register
-            asm.ldr(64, args[2].asRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_FAULT_ADDRESS.offset));
+            asm.ldru(64, args[2].asRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_FAULT_ADDRESS.offset));
 
             asm.alignForPatchableDirectCall(asm.codeBuffer.position());
             int callPos = asm.codeBuffer.position();
@@ -1669,7 +1669,7 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(0);
 
             // TODO INFINITE LOOP
-//            asm.jal(RISCV64.zero, 0);
+            asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -1819,7 +1819,7 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(0);
 
             // TODO INFINITE LOOP
-//            asm.jal(RISCV64.zero, 0);
+            asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -2321,7 +2321,7 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
             // TODO INFINITE LOOP
-//            asm.jal(RISCV64.zero, 0);
+            asm.jal(RISCV64.zero, 0);
 
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
@@ -2349,7 +2349,7 @@ public class Stubs {
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            asm.ldr(64, arg0, RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.ldru(64, arg0, RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, DEOPT_RETURN_ADDRESS_OFFSET));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
@@ -2721,7 +2721,7 @@ public class Stubs {
             int cfo = frameSize + target().stackAlignment; // Caller frame offset
 
             // TODO INFINITE LOOP
-//            asm.jal(RISCV64.zero, 0);
+            asm.jal(RISCV64.zero, 0);
 
             String runtimeRoutineName;
             if (kind == null) {
@@ -2759,7 +2759,7 @@ public class Stubs {
                 } else if (kind.isDouble()) {
                     asm.fldr(64, arg4, src);
                 } else {
-                    asm.ldr(64, arg4, src);
+                    asm.ldru(64, arg4, src);
                 }
             }
 
@@ -2767,7 +2767,7 @@ public class Stubs {
             CiRegister arg0 = args[0].asRegister();
             asm.mov(asm.scratchRegister, RISCV64.sp);
             asm.addi(asm.scratchRegister, asm.scratchRegister, cfo + DEOPT_RETURN_ADDRESS_OFFSET);
-            asm.ldr(64, arg0, RISCV64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldru(64, arg0, RISCV64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
@@ -2851,7 +2851,7 @@ public class Stubs {
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(),
-                            false).locations;
+                    false).locations;
 
             // Copy callee save area address into arg 0 (i.e. 'csa')
             CiRegister arg0 = args[0].asRegister();
@@ -2904,7 +2904,7 @@ public class Stubs {
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(),
-                            false).locations;
+                    false).locations;
 
             // Copy callee save area address into arg 0 (i.e. 'csa')
             CiRegister arg0 = args[0].asRegister();
@@ -3004,7 +3004,7 @@ public class Stubs {
             int frameToCSA = csl.frameOffsetToCSA;
 
             // TODO INFINITE LOOP
-//            masm.jal(RISCV64.zero, 0);
+            masm.jal(RISCV64.zero, 0);
 
 
             for (int i = 0; i < prologueSize; ++i) {

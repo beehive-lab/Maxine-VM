@@ -675,7 +675,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
 
             // The baseline method will have popped the args off the stack so now
             // RSP is pointing to the RIP of the OPT caller.
-            masm.jal(RISCV64.ra, 0);
+            masm.ret();
             final byte [] code = masm.codeBuffer.close(true);
             String description = Type.OPT2BASELINE + "-Adapter" + sig;
             return new Opt2BaselineAdapter(this, description, adapterFrameSize, code, callPos, callSize);
@@ -705,8 +705,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
                 default :
                     throw ProgramError.unexpected("Bad case");
             }
-            throw new UnsupportedOperationException("Unimplemented");
-//            masm.store(reg, masm.getAddressInFrame(RISCV64.sp, offset32), storeKind);
+            masm.store(reg, masm.getAddressInFrame(RISCV64.sp, offset32), storeKind);
         }
 
         protected void adapt(RISCV64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
@@ -765,7 +764,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
      */
     void stackCopy(RISCV64MacroAssembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         final int size = kind.stackKind.width.numberOfBits;
-        asm.ldr(size, scratch, asm.getAddressInFrame(RISCV64.sp, sourceStackOffset));
+        asm.ldru(size, scratch, asm.getAddressInFrame(RISCV64.sp, sourceStackOffset));
         asm.str(size, scratch, asm.getAddressInFrame(RISCV64.sp, destStackOffset));
     }
 

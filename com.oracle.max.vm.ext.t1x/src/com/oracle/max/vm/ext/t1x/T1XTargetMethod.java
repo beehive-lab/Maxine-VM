@@ -861,7 +861,7 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     private Pointer adjustSPForHandler(Pointer fp) {
-        if (isAMD64() || isARM() || isAARCH64()) {
+        if (isAMD64() || isARM() || isAARCH64() || isRISCV64()) {
             // The Java operand stack of the T1X method that handles the exception is cleared
             // when unwinding. The T1X generated handler is responsible for loading the
             // exception from VmThreadLocal.EXCEPTION_OBJECT to the operand stack.

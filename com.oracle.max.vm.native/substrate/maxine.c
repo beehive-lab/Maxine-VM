@@ -513,7 +513,7 @@ void maxine_cache_flush(char *start, int length) {
     asm volatile("isb ");
     asm volatile("dsb ");
     asm volatile("dmb ");
-#elif isa_AARCH64
+#elif isa_AARCH64 || isa_RISCV64
     char * end = start + length;
     __builtin___clear_cache(start, end);
 #endif
