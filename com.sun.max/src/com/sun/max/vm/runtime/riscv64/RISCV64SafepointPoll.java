@@ -49,8 +49,8 @@ public final class RISCV64SafepointPoll extends SafepointPoll {
     @HOSTED_ONLY
     @Override
     protected byte[] createCode() {
-        final RISCV64Assembler asm = new RISCV64Assembler(target(), null);
-        asm.ld(LATCH_REGISTER, LATCH_REGISTER, 0);
+        final RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), null);
+        asm.ldru(64, LATCH_REGISTER, RISCV64Address.createBaseRegisterOnlyAddress(LATCH_REGISTER));
         return asm.codeBuffer.close(true);
     }
 }

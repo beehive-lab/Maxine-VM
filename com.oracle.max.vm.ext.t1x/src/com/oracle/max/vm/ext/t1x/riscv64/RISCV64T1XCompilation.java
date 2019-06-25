@@ -195,7 +195,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         asm.auipc(scratch, 0);
         asm.addi(scratch, scratch, 0); // this gets patched by fixup
         asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
-        asm.ldr(64, dst, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
+        asm.ldru(64, dst, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
     }
 
     @Override
@@ -870,13 +870,34 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 asm.auipc(scratch, 0);
                 asm.addi(scratch, scratch, dispFromCodeStart - pos);
                 asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
-                asm.ldr(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
+                asm.ldru(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
                 // pattern must be compatible with RISCV64InstructionDecoder.patchRelativeInstruction
-                byte[] pattern = asm.codeBuffer.close(true);
-                byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
-                if (Arrays.equals(pattern, instr)) {
+                byte[] patternAddi = asm.codeBuffer.close(true);
+
+                asm = new RISCV64MacroAssembler(target(), null);
+                asm.auipc(scratch, 0);
+                int[] movInstr = RISCV64MacroAssembler.mov32BitConstantHelper(scratch1, dispFromCodeStart - pos);
+                for (int i = 0; i < movInstr.length; i++ ) {
+                    if (movInstr[i] != 0) {
+                        asm.codeBuffer.emitInt(movInstr[i]);
+                    } else {
+                        asm.codeBuffer.emitInt(RISCV64MacroAssembler.addImmediateHelper(RISCV64.x0, RISCV64.x0, 0));
+                    }
+                }
+                asm.add(scratch, scratch, scratch1);
+                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - 4);
+                asm.ldru(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
+                byte[] patternMov32BitConstant = asm.codeBuffer.close(true);
+
+                byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + patternAddi.length);
+                if (Arrays.equals(patternAddi, instr)) {
                     result = Arrays.copyOf(result, result.length + 1);
                     result[result.length - 1] = pos;
+                } else {
+                    if (Arrays.equals(patternMov32BitConstant, instr)) {
+                        result = Arrays.copyOf(result, result.length + 1);
+                        result[result.length - 1] = pos;
+                    }
                 }
             }
         }

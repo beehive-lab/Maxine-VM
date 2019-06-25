@@ -207,7 +207,7 @@ public final class Platform {
                         inlineObjects,
                         false,
                         false,
-                        hasIDiv());
+                        true);
     }
 
     private static final Pattern NON_REGEX_TEST_PATTERN = Pattern.compile("\\w+");
@@ -558,7 +558,7 @@ public final class Platform {
         map.put("darwin-arm", new Platform(CPU.ARMV7, OS.DARWIN, Ints.K * 4, 32));
         map.put("linux-aarch64", new Platform(CPU.Aarch64, OS.LINUX, Ints.K * 8, 32));
         map.put("linux-riscv32", new Platform(CPU.RISCV32, OS.LINUX, Ints.K * 4, 32));
-        map.put("linux-riscv64", new Platform(CPU.RISCV64, OS.LINUX, Ints.K * 8, 32));
+        map.put("linux-riscv64", new Platform(CPU.RISCV64, OS.LINUX, Ints.K * 4, 32));
         Supported = Collections.unmodifiableMap(map);
         Default = map.get("linux-amd64");
     }

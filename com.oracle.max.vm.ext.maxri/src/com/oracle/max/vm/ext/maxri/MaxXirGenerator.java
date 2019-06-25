@@ -32,6 +32,7 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -60,6 +61,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.aarch64.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.runtime.arm.*;
+import com.sun.max.vm.runtime.riscv64.RISCV64SafepointPoll;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -206,12 +208,16 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     public MaxXirGenerator(boolean printXirTemplates) {
         this.printXirTemplates = printXirTemplates;
-        if (platform().cpu == CPU.ARMV7) {
+        if (platform().target.arch.isARM()) {
             this.LATCH_REGISTER = ARMSafepointPoll.LATCH_REGISTER;
         } else if (platform().target.arch.isAarch64()) {
             this.LATCH_REGISTER = Aarch64SafepointPoll.LATCH_REGISTER;
-        } else {
+        } else if (platform().target.arch.isX86()) {
             this.LATCH_REGISTER = AMD64SafepointPoll.LATCH_REGISTER;
+        } else if (platform().target.arch.isRISCV64()) {
+            this.LATCH_REGISTER = RISCV64SafepointPoll.LATCH_REGISTER;
+        } else {
+            throw FatalError.unexpected("Unexpected target architecture");
         }
     }
 
