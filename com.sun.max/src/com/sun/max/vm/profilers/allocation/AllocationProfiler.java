@@ -175,7 +175,6 @@ public class AllocationProfiler {
         if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Initialize the Heap Boundaries Buffer.");
         }
-
         initializeHeapBoundariesBuffer();
 
         profilingCycle = 1;
@@ -189,13 +188,9 @@ public class AllocationProfiler {
     }
 
     public void initializeHeapBoundariesBuffer() {
-        // get heap size
         int pageSize = 4096;
-        // define heap boundaries buffer size
         int bufSize = Heap.maxSize().dividedBy(pageSize).toInt();
-        // initilize buffer
         heapPages = new HeapBoundariesBuffer(bufSize);
-
     }
 
     public int getProfilingCycle() {
@@ -303,7 +298,7 @@ public class AllocationProfiler {
 
     public void dumpHeapBoundaries() {
         final boolean lockDisabledSafepoints = lock();
-        heapPages.print(profilingCycle);
+        heapPages.printStats(profilingCycle);
         unlock(lockDisabledSafepoints);
     }
 
@@ -320,8 +315,8 @@ public class AllocationProfiler {
     /**
      * Find the NUMA Node for each virtual memory page of the JVM Heap.
      */
-    public void findPageNumaNode() {
-        Address startAddress   = vm().config.heapScheme().getHeapStartAddress();
+    public void findNumaNodeForPages() {
+        Address startAddress = vm().config.heapScheme().getHeapStartAddress();
         Address currentAddress = startAddress;
         int     index          = 0;
         while (vm().config.heapScheme().contains(currentAddress)) {
@@ -329,6 +324,14 @@ public class AllocationProfiler {
             heapPages.writeNumaNode(index, node);
             index++;
             currentAddress = currentAddress.plus(4096);
+            //update stats
+            if (node >= 0) {
+                int count = heapPages.readStats(node);
+                heapPages.writeStats(node, count + 1);
+            } else {
+                int count = heapPages.readStats(HeapBoundariesBuffer.maxNumaNodes);
+                heapPages.writeStats(HeapBoundariesBuffer.maxNumaNodes, count + 1);
+            }
         }
 
     }
@@ -404,12 +407,10 @@ public class AllocationProfiler {
         }
 
         findObjectNumaNode();
-
-        findPageNumaNode();
-
-        dumpHeapBoundaries();
+        findNumaNodeForPages();
 
         if (!AllocationProfilerDebug) {
+            dumpHeapBoundaries();
             dumpBuffer();
         } else {
             //in validation mode don't dump buffer
@@ -511,6 +512,7 @@ public class AllocationProfiler {
         newObjects.deallocateAll();
         survivors1.deallocateAll();
         survivors2.deallocateAll();
+        heapPages.deallocateAll();
     }
 
     /**
@@ -522,8 +524,7 @@ public class AllocationProfiler {
     public void terminate() {
 
         findObjectNumaNode();
-
-        findPageNumaNode();
+        findNumaNodeForPages();
 
         if (!AllocationProfilerDebug) {
             dumpHeapBoundaries();

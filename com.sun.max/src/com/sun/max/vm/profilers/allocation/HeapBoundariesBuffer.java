@@ -27,20 +27,31 @@ import com.sun.max.vm.Log;
 
 public class HeapBoundariesBuffer {
 
-    private Pointer pages;
+    /**
+     * virtualPages:
+     * An off-heap array to store the NUMA Node id of each virtual memory page.
+     *
+     * heapBoundariesStats:
+     * An off-heap array to store the stats of the amount of allocated pages per numa node.
+     * Its length is equal to the max NUMA Node id, plus one to store the number of still untouched pages.
+     * Despite all virtual pages are already allocated by the OS and dedicated to their JVM instance
+     * they are not mapped to physical memory until they have at least one of their bytes written.
+     * Given that, the NUMA system call used to get the NUMA node of a virtual address returns -14 for
+     * the still untouched pages.
+     */
+    private Pointer virtualPages;
+    private Pointer heapBoundariesStats;
 
-    public int bufferSize;
+    int bufferSize;
+    int pagesCurrentIndex;
 
-    int currentIndex;
+    static final int maxNumaNodes = 36;
 
     HeapBoundariesBuffer(int bufSize) {
-
         bufferSize = bufSize;
-
-        pages = allocateIntArrayOffHeap(bufSize);
-
-        currentIndex = 0;
-
+        virtualPages = allocateIntArrayOffHeap(bufSize);
+        heapBoundariesStats = allocateIntArrayOffHeap(maxNumaNodes + 1);
+        resetBuffer();
     }
 
     private Pointer allocateIntArrayOffHeap(int size) {
@@ -49,7 +60,8 @@ public class HeapBoundariesBuffer {
 
     void deallocateAll() {
         final Size intSize = Size.fromInt(bufferSize).times(Integer.BYTES);
-        VirtualMemory.deallocate(pages.asAddress(), intSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(virtualPages.asAddress(), intSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(heapBoundariesStats.asAddress(), intSize, VirtualMemory.Type.DATA);
     }
 
     private void writeInt(Pointer pointer, int index, int value) {
@@ -61,29 +73,56 @@ public class HeapBoundariesBuffer {
     }
 
     public int readNumaNode(int index) {
-        return readInt(pages, index);
+        return readInt(virtualPages, index);
+    }
+
+    public int readStats(int index) {
+        return readInt(heapBoundariesStats, index);
+    }
+
+    void writeStats(int index, int value) {
+        writeInt(heapBoundariesStats, index, value);
     }
 
     void writeNumaNode(int index, int value) {
-        writeInt(pages, index, value);
-        currentIndex++;
+        writeInt(virtualPages, index, value);
+        pagesCurrentIndex++;
     }
 
     void resetBuffer() {
-        currentIndex = 0;
+        pagesCurrentIndex = 0;
+
+        for (int i = 0; i <= maxNumaNodes; i++) {
+            writeStats(i, 0);
+        }
     }
 
     public void print(int profilingCycle) {
         Log.println("HEAP BOUNDARIES:");
         Log.println("=================");
-        for (int i = 0; i < currentIndex; i++) {
-            for (int j = 0; j < 20; j++) {
-                Log.print(readNumaNode(i));
-                Log.print(" ");
+        for (int i = 1; i < pagesCurrentIndex; i++) {
+            Log.print(readNumaNode(i));
+            Log.print(" ");
+            if (i % 20 == 0) {
+                Log.println("|");
             }
-            Log.println("|");
         }
         Log.println("\n=================");
         resetBuffer();
+    }
+
+    public void printStats(int profilingCycle) {
+        for (int i = 0; i <= maxNumaNodes; i++) {
+            int count = readStats(i);
+            if (count > 0) {
+                Log.print("(heapBoundaries);");
+                Log.print(profilingCycle);
+                Log.print(";");
+                Log.print(i);
+                Log.print(";");
+                Log.print(count);
+                Log.println(";");
+            }
+        }
     }
 }
