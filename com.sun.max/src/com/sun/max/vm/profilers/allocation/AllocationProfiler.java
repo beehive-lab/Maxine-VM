@@ -33,7 +33,6 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
-import com.sun.max.vm.runtime.Throw;
 import com.sun.max.vm.thread.VmThread;
 
 import static com.sun.max.vm.MaxineVM.isHosted;
@@ -64,7 +63,7 @@ public class AllocationProfiler {
     /**
      * The Buffer who keeps track of the physical NUMA node of any virtual memory page allocated for the JVM Heap.
      */
-    public static HeapBoundariesBuffer heapPages;
+    public static VirtualPagesBuffer heapPages;
 
     private static boolean AllocationProfilerAll;
     public static boolean AllocationProfilerVerbose;
@@ -190,7 +189,7 @@ public class AllocationProfiler {
     public void initializeHeapBoundariesBuffer() {
         int pageSize = 4096;
         int bufSize = Heap.maxSize().dividedBy(pageSize).toInt();
-        heapPages = new HeapBoundariesBuffer(bufSize);
+        heapPages = new VirtualPagesBuffer(bufSize);
     }
 
     public int getProfilingCycle() {
@@ -304,11 +303,33 @@ public class AllocationProfiler {
 
     /**
      * Find the NUMA Node for each allocated Object.
+     * For every object, find the virtual memory page where the object is placed and get its physical NUMA Node.
      */
     public void findObjectNumaNode() {
+        int pageSize = 4096;
+        long objectAddress;
+        long firstPageAddress = heapPages.readAddr(0);
+        int pageIndex;
+        int maxPageIndex = heapPages.pagesCurrentIndex;
         for (int i = 0; i < newObjects.currentIndex; i++) {
-            int node = NUMALib.numaNodeOfAddress(newObjects.readAddr(i));
+            objectAddress = newObjects.readAddr(i);
+            pageIndex = (int) (objectAddress - firstPageAddress) / pageSize;
+            if (pageIndex > maxPageIndex) {
+                Log.println("Heap Ranges Overflow");
+                MaxineVM.exit(1);
+            }
+            int node = heapPages.readNumaNode(pageIndex);
             newObjects.writeNode(i, node);
+
+            if (VirtualPagesBuffer.debug) {
+                Log.print("object in address ");
+                Log.print(objectAddress);
+                Log.print(" found in range ");
+                Log.print(pageIndex);
+                Log.print(" [");
+                Log.print(heapPages.readAddr(pageIndex));
+                Log.println("]");
+            }
         }
     }
 
@@ -316,11 +337,19 @@ public class AllocationProfiler {
      * Find the NUMA Node for each virtual memory page of the JVM Heap.
      */
     public void findNumaNodeForPages() {
+        assert vm().config.heapScheme() instanceof SemiSpaceHeapScheme;
         Address startAddress = vm().config.heapScheme().getHeapStartAddress();
         Address currentAddress = startAddress;
         int     index          = 0;
         while (vm().config.heapScheme().contains(currentAddress)) {
             int node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
+            if (VirtualPagesBuffer.debug) {
+                Log.print("write starting address ");
+                Log.print(currentAddress.toLong());
+                Log.print(" of range ");
+                Log.println(index);
+            }
+            heapPages.writeAddr(index, currentAddress.toLong());
             heapPages.writeNumaNode(index, node);
             index++;
             currentAddress = currentAddress.plus(4096);
@@ -329,8 +358,8 @@ public class AllocationProfiler {
                 int count = heapPages.readStats(node);
                 heapPages.writeStats(node, count + 1);
             } else {
-                int count = heapPages.readStats(HeapBoundariesBuffer.maxNumaNodes);
-                heapPages.writeStats(HeapBoundariesBuffer.maxNumaNodes, count + 1);
+                int count = heapPages.readStats(VirtualPagesBuffer.maxNumaNodes);
+                heapPages.writeStats(VirtualPagesBuffer.maxNumaNodes, count + 1);
             }
         }
 
@@ -406,8 +435,8 @@ public class AllocationProfiler {
             Log.println(" Profiling Is Now Complete. [pre-GC phase]");
         }
 
-        findObjectNumaNode();
         findNumaNodeForPages();
+        findObjectNumaNode();
 
         if (!AllocationProfilerDebug) {
             dumpHeapBoundaries();
@@ -523,8 +552,8 @@ public class AllocationProfiler {
      */
     public void terminate() {
 
-        findObjectNumaNode();
         findNumaNodeForPages();
+        findObjectNumaNode();
 
         if (!AllocationProfilerDebug) {
             dumpHeapBoundaries();
