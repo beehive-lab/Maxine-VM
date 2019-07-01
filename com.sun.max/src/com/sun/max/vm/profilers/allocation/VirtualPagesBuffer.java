@@ -72,9 +72,10 @@ public class VirtualPagesBuffer {
     void deallocateAll() {
         final Size intSize = Size.fromInt(bufferSize).times(Integer.BYTES);
         final Size longSize = Size.fromInt(bufferSize).times(Long.BYTES);
+        final Size statsSize = Size.fromInt(maxNumaNodes + 1).times(Integer.BYTES);
         VirtualMemory.deallocate(startAddresses.asAddress(), longSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(numaNodes.asAddress(), intSize, VirtualMemory.Type.DATA);
-        VirtualMemory.deallocate(heapBoundariesStats.asAddress(), intSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(heapBoundariesStats.asAddress(), statsSize, VirtualMemory.Type.DATA);
     }
 
     private void writeInt(Pointer pointer, int index, int value) {
