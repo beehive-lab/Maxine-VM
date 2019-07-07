@@ -390,11 +390,12 @@ public class RegisterConfigs {
                 allocatable = new CiRegister[] {
                     /* RISCV64.x1 returnAddress,  RISCV64.x2 stackPointer,  RISCV64.x3 globalPointer,
                     RISCV64.x4 threadPointer */
-                    RISCV64.x5,  RISCV64.x6,  RISCV64.x7,
+//                    RISCV64.x5,  RISCV64.x6,  /* RISCV64.x7, reserved for 32 bit jumps */
+                    RISCV64.x5,  RISCV64.x6, RISCV64.x7,
                     /* RISCV64.x8 framePointer, */
                     RISCV64.x9, RISCV64.x10, RISCV64.x11, RISCV64.x12, RISCV64.x13, RISCV64.x14, RISCV64.x15,
                     RISCV64.x16, RISCV64.x17, RISCV64.x18, RISCV64.x19, RISCV64.x20, RISCV64.x21, RISCV64.x22, RISCV64.x23,
-                    RISCV64.x24, RISCV64.x25, /* RISCV64.x26, latch */ RISCV64.x27, RISCV64.x30,
+                    RISCV64.x24, RISCV64.x25, /* RISCV64.x26, latch */ RISCV64.x27, /*RISCV64.x28 scratch, RISCV64.x29 scratch, RISCV64.x30 reserved for 32 bit jumps , */
 
                     RISCV64.f0,  RISCV64.f1,  RISCV64.f2,  RISCV64.f3,  RISCV64.f4,  RISCV64.f5,  RISCV64.f6,  RISCV64.f7,
                     RISCV64.f8,  RISCV64.f9,  RISCV64.f10, RISCV64.f11, RISCV64.f12, RISCV64.f13, RISCV64.f14, RISCV64.f15,

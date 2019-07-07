@@ -311,7 +311,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     protected int callDirect(int receiverStackIndex) {
         if (receiverStackIndex >= 0) {
-            peekObject(RISCV64.a1, receiverStackIndex);
+            peekObject(RISCV64.a0, receiverStackIndex);
         }
         alignDirectCall(buf.position());
         int causePos = buf.position();
@@ -324,11 +324,11 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
         if (receiverStackIndex >= 0) {
-            if (target == RISCV64.a1) {
+            if (target == RISCV64.a0) {
                 asm.mov(asm.scratchRegister, target);
                 target = asm.scratchRegister;
             }
-            peekObject(RISCV64.a1, receiverStackIndex);
+            peekObject(RISCV64.a0, receiverStackIndex);
         }
         int causePos = buf.position();
         asm.call(target);
@@ -423,8 +423,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     protected void emitEpilogue() {
         // rewind stack pointer
         asm.add(RISCV64.sp, RISCV64.fp, framePointerAdjustment());
-        asm.pop(64, RISCV64.fp);
-        asm.pop(64, RISCV64.ra);
+        asm.pop(64, RISCV64.fp, true);
+        asm.pop(64, RISCV64.ra, true);
         asm.add(RISCV64.sp, RISCV64.sp, frame.sizeOfParameters());
         asm.ret(RISCV64.ra);
         if (T1XOptions.DebugMethods) {
@@ -475,7 +475,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
         asm.mov64BitConstant(scratch, lowMatch);
 
-        asm.pop(32, scratch1); // Pop index from stack
+        asm.pop(32, scratch1, false); // Pop index from stack
 
         // Jump to default target if index is not within the jump table
         startBlock(ts.defaultTarget());
@@ -488,9 +488,9 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         asm.sub(scratch1, scratch1, scratch);
 
         // mov64BitConstant uses scratch1...
-        asm.push(32, scratch1);
+        asm.push(64, scratch1);
         asm.mov64BitConstant(scratch, highMatch - lowMatch);
-        asm.pop(32, scratch1);
+        asm.pop(64, scratch1, true);
 
         pos = buf.position();
         // Check if index is higher than highMatch and branch
@@ -551,7 +551,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 jmp(0);
             }
         } else {
-            asm.pop(32, scratch);  // Pop the key we are looking for
+            asm.pop(32, scratch, false);  // Pop the key we are looking for
 
             asm.push(64, RISCV64.s3); // Use s3/x19 as the loop counter
             asm.push(64, RISCV64.s4); // Use s4/x20 as the current key
@@ -572,8 +572,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             asm.sub(RISCV64.s3, RISCV64.s3, 2);              // decrement loop counter (1 pair at a time)
             jcc(ConditionFlag.GE, loopPos, RISCV64.s3, RISCV64.zr);                         // iterate again if >= 0
             startBlock(ls.defaultTarget());                         // No match, jump to default target
-            asm.pop(64, RISCV64.s4);                                   // after restoring registers r20
-            asm.pop(64, RISCV64.s3);                                   // and r19.
+            asm.pop(64, RISCV64.s4, true);                                   // after restoring registers r20
+            asm.pop(64, RISCV64.s3, true);                                   // and r19.
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
             jmp(0);
 
@@ -589,8 +589,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             asm.add(scratch1, scratch2, scratch1);
             asm.load(scratch, RISCV64Address.createBaseRegisterOnlyAddress(scratch1), CiKind.Int);
             asm.add(scratch, scratch, scratch2);
-            asm.pop(64, RISCV64.s4);
-            asm.pop(64, RISCV64.s3);
+            asm.pop(64, RISCV64.s4, true);
+            asm.pop(64, RISCV64.s3, true);
             asm.jalr(RISCV64.zr, scratch, 0);
             int lookupTablePos = buf.position();
 
@@ -845,7 +845,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 // create a PC relative address in scratch
                 final long offset = dispFromCodeStart - dispPos;
                 buf.setPosition(dispPos + 4);
-                if (NumUtil.isSignedNbit(21, offset)) {
+                if (RISCV64MacroAssembler.isArithmeticImmediate(offset)) {
                     asm.addi(scratch, scratch, (int) offset);
                     asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 } else {

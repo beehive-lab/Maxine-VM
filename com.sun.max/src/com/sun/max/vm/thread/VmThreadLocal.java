@@ -591,6 +591,9 @@ public class VmThreadLocal implements FormatWithToString {
         this.nature = nature;
         this.index = VALUES.size();
         this.offset = index * Word.size();
+
+//        System.out.println("VMThreadLocal name " + name + " offset is " + offset);
+
         VALUES.add(this);
         this.description = description;
         this.declaration = findDeclaration(name, new Throwable().getStackTrace());
