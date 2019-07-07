@@ -628,7 +628,7 @@ public class Stubs {
             // pop this method's frame
             asm.addi(RISCV64.sp, RISCV64.sp, frameSize);
             // restore linkRegister
-            asm.pop(64, RISCV64.ra);
+            asm.pop(64, RISCV64.ra, true);
 
             // jump to the resolved method
             asm.jalr(RISCV64.zero, registerConfig.getScratchRegister1(), 0);
@@ -874,7 +874,7 @@ public class Stubs {
             asm.restore(csl, frameToCSA);
 
             asm.addi(RISCV64.sp, RISCV64.sp, frameSize);
-            asm.pop(64, RISCV64.ra);
+            asm.pop(64, RISCV64.ra, true);
 
             // Jump to the entry point of the resolved method
             asm.jalr(RISCV64.zero, registerConfig.getScratchRegister1(), 0);
@@ -1167,7 +1167,7 @@ public class Stubs {
             asm.add(RISCV64.sp, RISCV64.sp, frameSize);
 
             // Pop the link register
-            asm.pop(64, RISCV64.ra);
+            asm.pop(64, RISCV64.ra, true);
 
             // re-execute the static call. Now that the call has been patched we need to return to the beginning of the
             // patched call site, thus we need to subtract from the link register the size of the segment preparing the call
@@ -1426,7 +1426,7 @@ public class Stubs {
 
             // now pop the flags register off the stack before returning
             asm.addi(RISCV64.sp, RISCV64.sp, frameSize - platform().target.stackAlignment);
-            asm.pop(64, registerConfig.getScratchRegister());
+            asm.pop(64, registerConfig.getScratchRegister(), true);
             asm.ret();
 
             byte[] code = asm.codeBuffer.close(true);
@@ -2015,33 +2015,37 @@ public class Stubs {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
             long disp = runtimeRoutine.address().toLong();
 
-            // first write nops to make sure previous patches have not left any slli/srli instructions
-            int nop = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x0, RISCV64.x0, 0);
-            for (int i = 0; i < 10; i++) {
-                patchAddr.writeInt(i * 4, nop);
-            }
-
             // move disp >>> 32 in scratch1
-            int[] instructions = RISCV64MacroAssembler.mov32BitConstantHelper(RISCV64.x29, (int) (disp >>> 32));
-            for (int i = 0; i < instructions.length; i++) {
-                if (instructions[i] != 0) {
-                    patchAddr.writeInt(i * 4, instructions[i]);
-                }
+            int ldips32 = (int) (disp >>> 32);
+            int luiImmediate = ldips32;
+            if ((ldips32 & 0xFFF) >>> 11 != 0b0) {
+                luiImmediate = ldips32 - (ldips32 | 0xFFFFF000);
             }
+            int instr = RISCV64MacroAssembler.loadUpperImmediateHelper(RISCV64.x29, luiImmediate);
+            patchAddr.writeInt(0, instr);
+
+            // addi(dst, dst, ldips32);
+            instr = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x29, RISCV64.x29, ldips32);
+            patchAddr.writeInt(4, instr);
 
             int shiftLeftInstr = RISCV64MacroAssembler.shiftLeftLogicImmediateHelper(RISCV64.x29, RISCV64.x29, 32);
-            patchAddr.writeInt(16, shiftLeftInstr);
+            patchAddr.writeInt(8, shiftLeftInstr);
 
             // move disp & 0xFFFF in scratch
-            instructions = RISCV64MacroAssembler.mov32BitConstantHelper(RISCV64.x28, (int) disp);
-            for (int i = 0; i < instructions.length; i++) {
-                if (instructions[i] != 0) {
-                    patchAddr.writeInt(20 + i * 4, instructions[i]);
-                }
+            int rdips32 = (int) disp;
+            luiImmediate = rdips32;
+            if ((rdips32 & 0xFFF) >>> 11 != 0b0) {
+                luiImmediate = rdips32 - (rdips32 | 0xFFFFF000);
             }
+            instr = RISCV64MacroAssembler.loadUpperImmediateHelper(RISCV64.x28, luiImmediate);
+            patchAddr.writeInt(12, instr);
+
+            // addi(dst, dst, ldips32);
+            instr = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x28, RISCV64.x28, rdips32);
+            patchAddr.writeInt(16, instr);
 
             int addInstr = RISCV64MacroAssembler.addSubInstructionHelper(RISCV64.x28, RISCV64.x28, RISCV64.x29, false);
-            patchAddr.writeInt(36, addInstr);
+            patchAddr.writeInt(20, addInstr);
 
             // TODO is this also necessary for RISCV?
             // ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 16);

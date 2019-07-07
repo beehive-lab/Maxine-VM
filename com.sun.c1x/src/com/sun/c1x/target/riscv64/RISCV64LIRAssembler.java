@@ -483,8 +483,8 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             } else {
                 acond = convertConditionEmitBranch(op.cond());
             }
-            masm.mov64BitConstant(scratchRegister, 0);
-            masm.branchConditionally(acond, RISCV64.x31, scratchRegister, op.label());
+//            masm.mov64BitConstant(scratchRegister, 0);
+            masm.branchConditionally(acond, RISCV64.x31, RISCV64.zero, op.label());
         }
     }
 
@@ -675,8 +675,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         } else {
             // conditional move not available, use emit a branch and move
             Label skip = new Label();
-            masm.mov64BitConstant(scratchRegister, 0);
-            masm.branchConditionally(acond, RISCV64.x31, scratchRegister, skip);
+            masm.branchConditionally(acond, RISCV64.x31, RISCV64.zero, skip);
             if (other.isRegister()) {
                 reg2reg(other, result);
             } else if (other.isStackSlot()) {
@@ -1042,13 +1041,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Int: {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
-                        // reg1 - Integer.MIN_VALUE results into integer overflow. We need a special case for this comparison.
-                        masm.mov64BitConstant(scratchRegister, Integer.MIN_VALUE);
-                        masm.mov32BitConstant(RISCV64.x31, 1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, opr2.asRegister(), continueLabel);
-                        // Integer.MIN_VALUE - opr2 results into integer overflow. We need a special case for this comparison.
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, reg1, continueLabel);
 
                         // a > b
                         masm.mov32BitConstant(scratchRegister, 1);
@@ -1069,13 +1061,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Long: {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
-                        // reg1 - Long.MIN_VALUE results into long overflow. We need a special case for this comparison.
-                        masm.mov64BitConstant(scratchRegister, Long.MIN_VALUE);
-                        masm.mov32BitConstant(RISCV64.x31, 1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, opr2.asRegister(), continueLabel);
-                        // Long.MIN_VALUE - opr2 results into long overflow. We need a special case for this comparison.
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, reg1, continueLabel);
 
                         // a > b
                         masm.mov32BitConstant(scratchRegister, 1);
@@ -1150,14 +1135,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Object: {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
-                        // reg1 - Long.MIN_VALUE results into long overflow. We need a special case for this comparison.
-                        masm.mov64BitConstant(scratchRegister, Long.MIN_VALUE);
-                        masm.load(scratchRegister1, frameMap.toStackAddress(opr2Slot), opr1.kind);
-                        masm.mov32BitConstant(RISCV64.x31, 1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, scratchRegister1, continueLabel);
-                        // Long.MIN_VALUE - opr2 results into long overflow. We need a special case for this comparison.
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, reg1, continueLabel);
 
                         // a > b
                         masm.mov32BitConstant(scratchRegister, 1);
@@ -1224,14 +1201,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
-                        // reg1 - Integer.MIN_VALUE results into integer overflow. We need a special case for this comparison.
-                        masm.mov64BitConstant(scratchRegister, Integer.MIN_VALUE);
                         masm.mov32BitConstant(scratchRegister1, c.asInt());
-                        masm.mov32BitConstant(RISCV64.x31, 1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, scratchRegister1, continueLabel);
-                        // Integer.MIN_VALUE - opr2 results into integer overflow. We need a special case for this comparison.
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, reg1, continueLabel);
 
                         // a > b
                         masm.mov32BitConstant(scratchRegister, 1);
@@ -1289,15 +1259,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         Label continueLabel = new Label();
                         Label lessThanLabel = new Label();
                         masm.mov64BitConstant(scratchRegister, c.asLong());
-                        // Equivalent of masm.mov64BitConstant(scratchRegister, Long.MIN_VALUE)
-                        masm.mov32BitConstant(scratchRegister1, Integer.MIN_VALUE);
-                        masm.slli(scratchRegister1, scratchRegister1, 32);
-                        // reg1 - Long.MIN_VALUE results into long overflow. We need a special case for this comparison.
-                        masm.mov32BitConstant(RISCV64.x31, 1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister1, scratchRegister, continueLabel);
-                        // Long.MIN_VALUE - opr2 results into long overflow. We need a special case for this comparison.
-                        masm.mov32BitConstant(RISCV64.x31, -1);
-                        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister1, reg1, continueLabel);
 
                         // a > b
                         masm.mov32BitConstant(scratchRegister1, 1);
@@ -1325,15 +1286,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                             movoop(scratchRegister1, c);
                             Label continueLabel = new Label();
                             Label lessThanLabel = new Label();
-                            // Equivalent of masm.mov64BitConstant(scratchRegister, Long.MIN_VALUE)
-                            masm.mov32BitConstant(scratchRegister, Integer.MIN_VALUE);
-                            masm.slli(scratchRegister, scratchRegister, 32);
-                            // reg1 - Long.MIN_VALUE results into long overflow. We need a special case for this comparison.
-                            masm.mov32BitConstant(RISCV64.x31, 1);
-                            masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, scratchRegister1, continueLabel);
-                            // Long.MIN_VALUE - opr2 results into long overflow. We need a special case for this comparison.
-                            masm.mov32BitConstant(RISCV64.x31, -1);
-                            masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister, reg1, continueLabel);
 
                             // a > b
                             masm.mov32BitConstant(scratchRegister, 1);
@@ -1969,8 +1921,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     assert offset.isConstant() && bit.isConstant();
                     assert false;
                     masm.crashme();
-                    masm.mov32BitConstant(scratchRegister, 0);
-                    masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.GE, RISCV64.x31, scratchRegister, label);
+                    masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.GE, RISCV64.x31, RISCV64.zero, label);
                     break;
                 }
                 case Bind: {
@@ -2066,12 +2017,12 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     CiValue result = operands[inst.result.index];
                     if (result.isRegister()) {
                         if (result.asRegister().isCpu()) {
-                            masm.pop(64, result.asRegister());
+                            masm.pop(64, result.asRegister(), true);
                         } else {
                             masm.fpop(64, result.asRegister());
                         }
                     } else {
-                        masm.pop(64, scratchRegister);
+                        masm.pop(64, scratchRegister, true);
                         moveOp(scratchRegister.asValue(), result, result.kind, null, true);
                     }
                     break;
@@ -2128,8 +2079,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
-        masm.mov32BitConstant(scratchRegister, 0);
-        masm.branchConditionally(cflag, RISCV64.x31, scratchRegister, new Label(label.getPatchPositions(), label.positionCopy()));
+//        masm.mov32BitConstant(scratchRegister, 0);
+//        masm.branchConditionally(cflag, RISCV64.x31, RISCV64.zero, new Label(label.getPatchPositions(), label.positionCopy()));
+        masm.branchConditionally(cflag, RISCV64.x31, RISCV64.zero, label);
         masm.nop(3);
     }
 
@@ -2231,8 +2183,12 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
     }
 
     public void directJmp(Object target) {
+        if (true) {
+            throw Util.unimplemented();
+        }
+
         int before = masm.codeBuffer.position();
-        masm.b(0);
+//        masm.b(0);
         int after = masm.codeBuffer.position();
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();

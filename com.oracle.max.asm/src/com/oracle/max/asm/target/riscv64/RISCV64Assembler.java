@@ -96,7 +96,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs2
      * @param funct7
      */
-    private void rtype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
+    private void rtype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7, int pos) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.getEncoding() >> 5 == 0;
         assert rs1.getEncoding() >> 5 == 0;
@@ -107,8 +107,18 @@ public class RISCV64Assembler extends AbstractAssembler {
         instruction |= rs1.getEncoding() << 15;
         instruction |= rs2.getEncoding() << 20;
         instruction |= funct7 << 25;
-        emitInt(instruction);
+
+        if (pos == -1) {
+            emitInt(instruction);
+        } else {
+            emitInt(instruction, pos);
+        }
     }
+
+    private void rtype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, CiRegister rs2, int funct7) {
+        rtype(opcode, rd, funct3, rs1, rs2, funct7, -1);
+    }
+
 
     /**
      * Emits an instruction of type I-type.
@@ -583,6 +593,10 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     public void add(CiRegister rd, CiRegister rs1, CiRegister rs2) {
         rtype(ADD, rd, 0, rs1, rs2, 0);
+    }
+
+    public void add(CiRegister rd, CiRegister rs1, CiRegister rs2, int pos) {
+        rtype(ADD, rd, 0, rs1, rs2, 0, pos);
     }
 
     /**

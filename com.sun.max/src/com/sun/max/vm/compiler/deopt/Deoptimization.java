@@ -845,7 +845,7 @@ public class Deoptimization extends VmOperation {
         cont.setFP(info, WordUtil.archConstant(info.callerFP));
 
         int slotsSize = info.slotsSize();
-        int linkRegisterSlotSize = target().arch.isAarch64() ? JVMS_SLOT_SIZE : STACK_SLOT_SIZE;
+        int linkRegisterSlotSize = target().arch.isAarch64() || target().arch.isRISCV64() ? JVMS_SLOT_SIZE : STACK_SLOT_SIZE;
         Pointer slotsAddrs = sp.plus(tm.frameSize() + linkRegisterSlotSize).minus(slotsSize);
         info.slotsAddr = slotsAddrs;
 

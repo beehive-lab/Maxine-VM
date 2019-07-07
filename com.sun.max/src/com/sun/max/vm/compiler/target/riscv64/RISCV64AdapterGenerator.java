@@ -373,10 +373,10 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             masm.mov(RISCV64.sp, RISCV64.fp);
 
             // and the caller's frame pointer,
-            masm.pop(64, RISCV64.fp);
+            masm.pop(64, RISCV64.fp, true);
 
             // and the baseline return address.
-            masm.pop(64, RISCV64.ra);
+            masm.pop(64, RISCV64.ra, true);
 
             // roll the stack pointer back before the first argument on the caller's stack.
             masm.add(RISCV64.sp, RISCV64.sp, baselineArgsSize);

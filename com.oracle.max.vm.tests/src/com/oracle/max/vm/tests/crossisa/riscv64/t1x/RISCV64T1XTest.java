@@ -577,7 +577,7 @@ public class RISCV64T1XTest extends MaxTestCase {
 
         for (int i = 0; i < 4; i++) {
             theCompiler.do_loadTests(i, Kind.INT);
-            masm.pop(64, RISCV64.x29);
+            masm.pop(64, RISCV64.x29, false);
             masm.mov32BitConstant(RISCV64.x29, 100 + i);
             masm.push(64, RISCV64.x29);
             theCompiler.do_storeTests(i, Kind.INT);
@@ -585,7 +585,7 @@ public class RISCV64T1XTest extends MaxTestCase {
 
         theCompiler.do_loadTests(4, Kind.LONG);
         masm.addi(RISCV64.sp, RISCV64.sp, 16);
-        masm.pop(64, RISCV64.x29);
+        masm.pop(64, RISCV64.x29, false);
         masm.mov32BitConstant(RISCV64.x29, (int) (172L & 0xffff)); //172
         masm.push(64, RISCV64.x29);
         masm.addi(RISCV64.sp, RISCV64.sp, -16);
@@ -596,9 +596,9 @@ public class RISCV64T1XTest extends MaxTestCase {
         theCompiler.do_loadTests(4, Kind.LONG);
 
         masm.addi(RISCV64.sp, RISCV64.sp, 16);
-        masm.pop(64, RISCV64.cpuRegisters[(int) longPair.first]);
+        masm.pop(64, RISCV64.cpuRegisters[(int) longPair.first], false);
         for (int i = pairs.size() - 1; i >= 0; i--) {
-            masm.pop(64, RISCV64.cpuRegisters[(int) pairs.get(i).first]);
+            masm.pop(64, RISCV64.cpuRegisters[(int) pairs.get(i).first], false);
         }
 
         theCompiler.emitEpilogueTests();
@@ -680,7 +680,7 @@ public class RISCV64T1XTest extends MaxTestCase {
         });
 
         for (int i = pairs.size() - 1; i >= 0; i--) {
-            masm.pop(64, RISCV64.cpuRegisters[(int) pairs.get(i).first]);
+            masm.pop(64, RISCV64.cpuRegisters[(int) pairs.get(i).first], false);
         }
 
         long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
@@ -1155,7 +1155,7 @@ public class RISCV64T1XTest extends MaxTestCase {
             initialiseFrameForCompilation(instructions, "(I)I");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, instructions);
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.pop(32, RISCV64.x5);
+            masm.pop(32, RISCV64.x5, false);
             long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
             assert (registerValues[4] & 0xFFFFFFFFL) == (expectedValues[5] & 0xFFFFFFFFL) : "Failed incorrect value " + Long.toString(registerValues[4], 16) + " exp " + Long.toString(expectedValues[5], 16);
             theCompiler.cleanup();
