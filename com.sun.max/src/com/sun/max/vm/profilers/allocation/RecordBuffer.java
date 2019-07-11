@@ -137,7 +137,7 @@ class RecordBuffer {
     }
 
     private void writeType(int index, char[] value) {
-        long stringIndex = index * MAX_CHARS;
+        long stringIndex = (long) index * MAX_CHARS;
         int charIndex = 0;
         long writeIndex = stringIndex + charIndex;
         char c;
@@ -160,7 +160,7 @@ class RecordBuffer {
     }
 
     void readType(int index) {
-        long stringIndex = index * MAX_CHARS;
+        long stringIndex = (long) index * MAX_CHARS;
         int charIndex = 0;
         long readIndex = stringIndex + charIndex;
         char c;
