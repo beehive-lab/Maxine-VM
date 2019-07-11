@@ -439,8 +439,11 @@ public class AllocationProfiler {
             Log.println(" Profiling Is Now Complete. [pre-GC phase]");
         }
 
-        findNumaNodeForPages();
-        findObjectNumaNode();
+        // guard libnuma sys call usage during non-profiling cycles
+        if (newObjects.currentIndex > 0) {
+            findNumaNodeForPages();
+            findObjectNumaNode();
+        }
 
         if (!AllocationProfilerDebug) {
             dumpHeapBoundaries();
@@ -556,8 +559,11 @@ public class AllocationProfiler {
      */
     public void terminate() {
 
-        findNumaNodeForPages();
-        findObjectNumaNode();
+        // guard libnuma sys call usage during non-profiling cycles
+        if (newObjects.currentIndex > 0) {
+            findNumaNodeForPages();
+            findObjectNumaNode();
+        }
 
         if (!AllocationProfilerDebug) {
             dumpHeapBoundaries();
