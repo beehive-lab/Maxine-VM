@@ -313,12 +313,16 @@ public class AllocationProfiler {
         int maxPageIndex = heapPages.pagesCurrentIndex;
         for (int i = 0; i < newObjects.currentIndex; i++) {
             objectAddress = newObjects.readAddr(i);
+            // safe for heap up to 8TB
             pageIndex = (int) (objectAddress - firstPageAddress) / pageSize;
             if (pageIndex > maxPageIndex) {
                 Log.println("Heap Ranges Overflow");
                 MaxineVM.exit(1);
             }
             int node = heapPages.readNumaNode(pageIndex);
+            // compare the calculated object numa node with the libnuma system
+            // call returned value for validation (note: increased overhead)
+            assert node == NUMALib.numaNodeOfAddress(newObjects.readAddr(i));
             newObjects.writeNode(i, node);
 
             if (VirtualPagesBuffer.debug) {
