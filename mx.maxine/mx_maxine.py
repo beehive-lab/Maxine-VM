@@ -671,15 +671,15 @@ def applynumathreadmap(filename):
     
     newFile = open(newFileName, 'a')
     #with the following format
-    newFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type/Class;Size;NumaNode\n')
+    newFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type/Class;Size;NumaNode;Timestamp;CoreID\n')
 
     #thread map regex
     threadMapPattern = r'\(Run\)\sThread\s([0-9]+)\,\sCPU\s([0-9]+),\sNuma\sNode\s([0-9]+)'
 
     #object allocation regex
     #Format: 
-    #Cycle ; is New Allocation ; ID ; Thread id ; Class/Type ; Size ; NUMA Node
-    recordPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[^\;.]*\;[0-9]+\;[0-9]+'
+    #Cycle ; is New Allocation ; ID ; Thread id ; Class/Type ; Size ; NUMA Node ; Timestamp
+    recordPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[^\;.]*\;[0-9]+\;[0-9]+\;[0-9]+\;[0-9]'
 
     #index     - content
     #thread id - numa node
@@ -721,9 +721,11 @@ def applynumathreadmap(filename):
             classOrType = fields[4]
             size = fields[5]
             numaNode = fields[6]
+            timestamp = fields[7]
+            coreid = fields[8]
 
             # Create the New Line
-            newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + str(threadId) + ';' + str(threadNumaNode) + ';' + classOrType + ';' + size + ';' + numaNode
+            newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + str(threadId) + ';' + str(threadNumaNode) + ';' + classOrType + ';' + size + ';' + numaNode + ';' + timestamp + ';' + coreid
             newFile.write(newLine)
             
     newFile.close
