@@ -132,6 +132,7 @@ class RecordBuffer {
         VirtualMemory.deallocate(sizes.asAddress(), intSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(addresses.asAddress(), longSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(nodes.asAddress(), intSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(threadIds.asAddress(), intSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(timestamps.asAddress(), longSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(coreIDs.asAddress(), intSize, VirtualMemory.Type.DATA);
     }
