@@ -154,5 +154,6 @@ public class VirtualPagesBuffer {
                 Log.println(";");
             }
         }
+        resetBuffer();
     }
 }
