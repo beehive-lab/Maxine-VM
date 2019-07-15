@@ -661,6 +661,11 @@ def ignoreTheRestOptions(vmArgs, profilerOptions):
 def applynumathreadmap(filename):
     oldFileName = filename[0]
 
+    #extract the benchmark name
+    #we assume that the file name follows the following format
+    #benchmark_allocprofiler_out.csv
+    benchmark = oldFileName.split(".")[0].split("_")[0]
+
     #open the profiler output file
     oldFile = open(oldFileName, 'r')
     lines = oldFile.readlines()
@@ -668,13 +673,21 @@ def applynumathreadmap(filename):
 
     #open a new file for profiler output with numa thread map applied
     newFileName = os.getcwd()+"/tmp.csv"
-    
+
     newFile = open(newFileName, 'a')
     #with the following format
     newFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type/Class;Size;NumaNode;Timestamp;CoreID\n')
 
     #thread map regex
     threadMapPattern = r'\(Run\)\sThread\s([0-9]+)\,\sCPU\s([0-9]+),\sNuma\sNode\s([0-9]+)'
+
+    #open a new file for heap boundaries
+    hbFileName = os.getcwd()+'/'+benchmark+'_heap_boundaries.csv'
+    hbNewFile = open(hbFileName, 'w')
+    hbNewFile.write('Cycle;NumaNode;NumOfPages\n')
+
+    #heap boundaries regex
+    heapBoundariesPattern = r'\(heapBoundaries\)+\;[0-9]+\;[0-9]+\;[0-9]'
 
     #object allocation regex
     #Format: 
@@ -690,6 +703,7 @@ def applynumathreadmap(filename):
     print('Applying NUMA Thread Map...')
     for line in lines:
         threadMapLineMatch = re.findall(threadMapPattern, line)
+        heapBoundariesLineMatch = re.match(heapBoundariesPattern, line)
         recordLineMatch = re.match(recordPattern, line)
         if (threadMapLineMatch):
             # NUMA Thread Map line found
@@ -722,13 +736,24 @@ def applynumathreadmap(filename):
             size = fields[5]
             numaNode = fields[6]
             timestamp = fields[7]
-            coreid = fields[8]
+            coreid = int(fields[8]) % 128
 
             # Create the New Line
-            newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + str(threadId) + ';' + str(threadNumaNode) + ';' + classOrType + ';' + size + ';' + numaNode + ';' + timestamp + ';' + coreid
-            newFile.write(newLine)
+            newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + str(threadId) + ';' + str(threadNumaNode) + ';' + classOrType + ';' + size + ';' + numaNode + ';' + timestamp + ';' + str(coreid)
+            newFile.write(newLine + '\n')
+
+        elif (heapBoundariesLineMatch):
+            # Heap Boundaries line found
+            fields = line.split(';')
+            cycle = fields[1]
+            numaNode = fields[2]
+            numOfPages = fields[3]
+            #write on the heap boundaries file
+            hbNewLine = cycle + ';' + numaNode + ';' + numOfPages
+            hbNewFile.write(hbNewLine + '\n')
             
     newFile.close
+    hbNewFile.close
 
     # After NUMA Thread Map has been applied to the Allocation Profiler's Output,
     # replace the old Allocation Profile's Output file with the new one
@@ -822,7 +847,7 @@ def allocprofiler(args):
     applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
     print('Finished.')
     print('=> Results directory: ' + os.getenv('MAXINE_LOG_FILE'))
-    print('=> Results format: Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode')
+    print('=> Results format: Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode; TimeStamp; CoreId')
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
