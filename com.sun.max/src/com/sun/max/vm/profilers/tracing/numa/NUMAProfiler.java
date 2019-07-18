@@ -146,12 +146,12 @@ public class NUMAProfiler {
      * The NUMAProfilerFlareProfileWindow (default 1) indicates how many Flare Objects we need
      * to allocate before we stop the profiling.
      */
-    @SuppressWarnings("unused")
-    private static int    NUMAProfilerFlareAllocationThreshold;
+    public static  String NUMAProfilerFlareAllocationThresholds = "0";
+    private static int[]  flareAllocationThresholds;
     @SuppressWarnings("FieldCanBeLocal")
-    private static int    NUMAProfilerFlareProfileWindow = 1;
+    private static int    NUMAProfilerFlareProfileWindow        = 1;
     @SuppressWarnings("FieldCanBeLocal")
-    private static String NUMAProfilerFlareObject        = "NUMAProfilerFlareObject";
+    private static String NUMAProfilerFlareObject               = "NUMAProfilerFlareObject";
 
     private static final int MINIMUMBUFFERSIZE = 500000;
 
@@ -188,7 +188,11 @@ public class NUMAProfiler {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerBufferSize", NUMAProfiler.class, "NUMAProfiler's Buffer Size.");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerExplicitGCThreshold", NUMAProfiler.class, "The number of the Explicit GCs to be performed before the NUMAProfiler starts recording. (default: 0)");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareObject", NUMAProfiler.class, "The Class of the Object to be sought after by the NUMAProfiler to drive the profiling process. (default: 'AllocationProfilerFlareObject')");
-        VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareAllocationThreshold", NUMAProfiler.class, "The number of the Flare objects to be allocated before the NUMAProfiler starts recording. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareAllocationThresholds", NUMAProfiler.class,
+                "The number of the Flare objects to be allocated before the NUMAProfiler starts recording. " +
+                "Multiple \"windows\" may be profiled by providing a comma separated list, " +
+                "e.g. \"100,200,500\" will profile for NUMAProfilerFlareProfileWindow Flare object allocations " +
+                "after the 100th, the 200th, and the 500th Flare object allocation. (default: \"0\")");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareProfileWindow", NUMAProfiler.class, "The number of the Flare objects to be allocated before the NUMAProfiler stops recording. (default: 1)");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerDebug", NUMAProfiler.class, "Print information to help in NUMAProfiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerIncludeFinalization", NUMAProfiler.class, "Include memory accesses performed due to Finalization. (default: false)", MaxineVM.Phase.PRISTINE);
@@ -208,6 +212,12 @@ public class NUMAProfiler {
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): NUMAProfiler Initialization.");
+        }
+
+        String[] thresholds = NUMAProfilerFlareAllocationThresholds.split(",");
+        flareAllocationThresholds = new int[thresholds.length];
+        for (int i = 0; i < thresholds.length; i++) {
+            flareAllocationThresholds[i] = Integer.parseInt(thresholds[i]);
         }
 
         int survivorBufferSize = MINIMUMBUFFERSIZE;
@@ -283,22 +293,24 @@ public class NUMAProfiler {
      * @param hub
      */
     public static void checkForFlareObject(Hub hub) {
-        if (MaxineVM.useNUMAProfiler) {
+        if (MaxineVM.useNUMAProfiler && !NUMAProfilerFlareAllocationThresholds.equals("0")) {
             String type = hub.classActor.name();
-            if (NUMAProfilerFlareAllocationThreshold != 0 &&
-                            (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow > flareObjectCounter) &&
-                            type.contains(NUMAProfilerFlareObject)) {
+            if (type.contains(NUMAProfilerFlareObject)) {
                 flareObjectCounter++;
-                if (flareObjectCounter == NUMAProfilerFlareAllocationThreshold) {
-                    if (NUMAProfilerVerbose) {
-                        Log.println("(NUMA Profiler): Enable profiling due to flare object allocation");
+                for (int i = 0; i < flareAllocationThresholds.length; i++) {
+                    if (flareObjectCounter == flareAllocationThresholds[i]) {
+                        if (NUMAProfilerVerbose) {
+                            Log.print("(NUMA Profiler): Enable profiling due to flare object allocation ");
+                            Log.println(flareObjectCounter);
+                        }
+                        enableProfiling();
+                    } else if (flareObjectCounter == (flareAllocationThresholds[i] + NUMAProfilerFlareProfileWindow)) {
+                        if (NUMAProfilerVerbose) {
+                            Log.print("(NUMA Profiler): Disable profiling due to flare object allocation ");
+                            Log.println(flareObjectCounter);
+                        }
+                        disableProfiling();
                     }
-                    enableProfiling();
-                } else if (flareObjectCounter == (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow)) {
-                    if (NUMAProfilerVerbose) {
-                        Log.println("(NUMA Profiler): Disable profiling due to flare object allocation");
-                    }
-                    disableProfiling();
                 }
             }
         }
