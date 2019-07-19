@@ -659,12 +659,16 @@ def ignoreTheRestOptions(vmArgs, profilerOptions):
             del vmArgs[vmArgs.index(arg)]
 
 def applynumathreadmap(filename):
-    oldFileName = filename[0]
+    if type(filename) == list:
+        oldFileName = os.path.abspath(filename[0])
+    else:
+        oldFileName = os.path.abspath(filename)
 
     #extract the benchmark name
     #we assume that the file name follows the following format
     #benchmark_allocprofiler_out.csv
-    benchmark = oldFileName.split(".")[0].split("_")[0]
+    benchmark = os.path.basename(oldFileName).split('.')[0].split('_')[0]
+    path = os.path.dirname(oldFileName)
 
     #open the profiler output file
     oldFile = open(oldFileName, 'r')
@@ -672,17 +676,17 @@ def applynumathreadmap(filename):
     oldFile.close
 
     #open a new file for profiler output with numa thread map applied
-    newFileName = os.getcwd()+"/tmp.csv"
+    newFileName = path+'/tmp.csv'
 
     newFile = open(newFileName, 'a')
     #with the following format
-    newFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type/Class;Size;NumaNode;Timestamp;CoreID\n')
+    newFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type;Size;NumaNode;Timestamp;CoreID\n')
 
     #thread map regex
     threadMapPattern = r'\(Run\)\sThread\s([0-9]+)\,\sCPU\s([0-9]+),\sNuma\sNode\s([0-9]+)'
 
     #open a new file for heap boundaries
-    hbFileName = os.getcwd()+'/'+benchmark+'_heap_boundaries.csv'
+    hbFileName = path+'/'+benchmark+'_heap_boundaries.csv'
     hbNewFile = open(hbFileName, 'w')
     hbNewFile.write('Cycle;NumaNode;NumOfPages\n')
 
@@ -844,7 +848,7 @@ def allocprofiler(args):
 
     print('==================================================')
     print('The execution is finished.')
-    applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
+    applynumathreadmap(os.path.basename(os.getenv('MAXINE_LOG_FILE')))
     print('Finished.')
     print('=> Results directory: ' + os.getenv('MAXINE_LOG_FILE'))
     print('=> Results format: Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode; TimeStamp; CoreId')
