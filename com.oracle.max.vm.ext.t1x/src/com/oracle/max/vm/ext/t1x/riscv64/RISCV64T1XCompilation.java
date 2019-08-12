@@ -34,6 +34,7 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.vm.Log;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.DebugMethodWriter;
@@ -42,6 +43,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.riscv64.RISCV64JVMSFrameLayout;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
+import com.sun.xml.internal.bind.v2.util.FatalAdapter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -445,22 +447,22 @@ public class RISCV64T1XCompilation extends T1XCompilation {
      */
     @Override
     protected void do_preVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
-        // XXX Test me
-        throw new UnsupportedOperationException("Unimplemented");
-//        if (fieldActor.isVolatile()) {
-//            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
-//            asm.dmb(isWrite ? BarrierKind.STORE_STORE : BarrierKind.LOAD_LOAD);
-//        }
+        // TODO DOUBLE CHECK THIS IS CORRECT
+        if (fieldActor.isVolatile()) {
+            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
+            asm.fence(0b1111, 0b1111);
+            asm.fencei();
+        }
     }
 
     @Override
     protected void do_postVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
-        // XXX Test me
-        throw new UnsupportedOperationException("Unimplemented");
-//        if (fieldActor.isVolatile()) {
-//            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
-//            asm.dmb(isWrite ? BarrierKind.STORE_LOAD : BarrierKind.LOAD_STORE);
-//        }
+        // TODO DOUBLE CHECK THIS IS CORRECT
+        if (fieldActor.isVolatile()) {
+            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
+            asm.fence(0b1111, 0b1111);
+            asm.fencei();
+        }
     }
 
     @Override
@@ -482,7 +484,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         int pos = buf.position();
         // Check if index is lower than lowMatch and branch
         patchInfo.addJCC(RISCV64MacroAssembler.ConditionFlag.LT, pos, ts.defaultTarget(), scratch1, scratch);
-        jcc(RISCV64MacroAssembler.ConditionFlag.LT, 0, scratch1, scratch);
+        jcc(RISCV64MacroAssembler.ConditionFlag.LT, 0, scratch1, scratch, true);
 
         // index = index - lowMatch
         asm.sub(scratch1, scratch1, scratch);
@@ -495,7 +497,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         pos = buf.position();
         // Check if index is higher than highMatch and branch
         patchInfo.addJCC(RISCV64MacroAssembler.ConditionFlag.GT, pos, ts.defaultTarget(), scratch1, scratch);
-        jcc(RISCV64MacroAssembler.ConditionFlag.GT, 0, scratch1, scratch);
+        jcc(RISCV64MacroAssembler.ConditionFlag.GT, 0, scratch1, scratch, true);
         pos = buf.position();
 
         /*
@@ -545,10 +547,10 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             } else if (targetBCI <= bci) {
                 int target = bciToPos[targetBCI];
                 assert target != 0;
-                jmp(target);
+                jmp(target, false);
             } else {
                 patchInfo.addJMP(buf.position(), targetBCI);
-                jmp(0);
+                jmp(0, true);
             }
         } else {
             asm.pop(32, scratch, false);  // Pop the key we are looking for
@@ -570,12 +572,12 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             int branchPos = buf.position();
             asm.beq(scratch, RISCV64.s4, 0);                             // break out of loop
             asm.sub(RISCV64.s3, RISCV64.s3, 2);              // decrement loop counter (1 pair at a time)
-            jcc(ConditionFlag.GE, loopPos, RISCV64.s3, RISCV64.zr);                         // iterate again if >= 0
+            jcc(ConditionFlag.GE, loopPos, RISCV64.s3, RISCV64.zr, false);                         // iterate again if >= 0
             startBlock(ls.defaultTarget());                         // No match, jump to default target
             asm.pop(64, RISCV64.s4, true);                                   // after restoring registers r20
             asm.pop(64, RISCV64.s3, true);                                   // and r19.
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
-            jmp(0);
+            jmp(0, true);
 
             // Patch b instruction above
             int branchTargetPos = buf.position();
@@ -631,101 +633,126 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             return;
         }
 
+        CiRegister reg1 = null, reg2 = null;
         switch (opcode) {
             case Bytecodes.IFEQ:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.lui(scratch2, 0);
+                reg1 = scratch;
+                reg2 = RISCV64.zero;
                 cc = ConditionFlag.EQ;
                 break;
             case Bytecodes.IFNE:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.lui(scratch2, 0);
+                reg1 = scratch;
+                reg2 = RISCV64.zero;
                 cc = ConditionFlag.NE;
                 break;
             case Bytecodes.IFLE:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.lui(scratch2, 0);
+                reg1 = scratch;
+                reg2 = RISCV64.zero;
                 cc = ConditionFlag.LE;
                 break;
             case Bytecodes.IFLT:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.lui(scratch2, 0);
+                reg1 = scratch;
+                reg2 = RISCV64.zero;
                 cc = ConditionFlag.LT;
                 break;
             case Bytecodes.IFGE:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.lui(scratch2, 0);
+                reg1 = scratch;
+                reg2 = RISCV64.zero;
                 cc = ConditionFlag.GE;
                 break;
             case Bytecodes.IFGT:
                 peekInt(scratch, 0);
                 decStack(1);
-                asm.lui(scratch2, 0);
+                reg1 = scratch;
+                reg2 = RISCV64.zero;
                 cc = ConditionFlag.GT;
                 break;
             case Bytecodes.IF_ICMPEQ:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
+                reg1 = scratch;
+                reg2 = scratch2;
                 cc = ConditionFlag.EQ;
                 break;
             case Bytecodes.IF_ICMPNE:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
+                reg1 = scratch;
+                reg2 = scratch2;
                 cc = ConditionFlag.NE;
                 break;
             case Bytecodes.IF_ICMPGE:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
+                reg1 = scratch;
+                reg2 = scratch2;
                 cc = ConditionFlag.GE;
                 break;
             case Bytecodes.IF_ICMPGT:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
+                reg1 = scratch;
+                reg2 = scratch2;
                 cc = ConditionFlag.GT;
                 break;
             case Bytecodes.IF_ICMPLE:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
+                reg1 = scratch;
+                reg2 = scratch2;
                 cc = ConditionFlag.LE;
                 break;
             case Bytecodes.IF_ICMPLT:
                 peekInt(scratch, 1);
                 peekInt(scratch2, 0);
                 decStack(2);
+                reg1 = scratch;
+                reg2 = scratch2;
                 cc = ConditionFlag.LT;
                 break;
             case Bytecodes.IF_ACMPEQ:
                 peekObject(scratch, 1);
                 peekObject(scratch2, 0);
                 decStack(2);
+                reg1 = scratch;
+                reg2 = scratch2;
                 cc = ConditionFlag.EQ;
                 break;
             case Bytecodes.IF_ACMPNE:
                 peekObject(scratch, 1);
                 peekObject(scratch2, 0);
                 decStack(2);
+                reg1 = scratch;
+                reg2 = scratch2;
                 cc = ConditionFlag.NE;
                 break;
             case Bytecodes.IFNULL:
                 peekObject(scratch, 0);
-                assignObject(scratch2, null);
                 decStack(1);
+                reg1 = scratch;
+                reg2 = RISCV64.zero;
                 cc = ConditionFlag.EQ;
                 break;
             case Bytecodes.IFNONNULL:
                 peekObject(scratch, 0);
-                assignObject(scratch2, null);
                 decStack(1);
+                reg1 = scratch;
+                reg2 = RISCV64.zero;
                 cc = ConditionFlag.NE;
                 break;
             case Bytecodes.GOTO:
@@ -744,18 +771,18 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 patchInfo.addJMP(pos, targetBCI);
                 // For now we assume that the target is within a range which
                 // can be represented with a signed 21bit offset.
-                jmp(buf.position());
+                jmp(buf.position(), true);
             } else {
-                patchInfo.addJCC(cc, pos, targetBCI, scratch, scratch2);
-                jcc(cc, 0, scratch, scratch2);
+                patchInfo.addJCC(cc, pos, targetBCI, reg1, reg2);
+                jcc(cc, 0, reg1, reg2, true);
             }
         } else {
             // backward branch
             final int target = bciToPos[targetBCI];
             if (cc == null) {
-                jmp(target);
+                jmp(target, false);
             } else {
-                jcc(cc, target, scratch, scratch2);
+                jcc(cc, target, reg1, reg2, false);
             }
         }
     }
@@ -765,9 +792,14 @@ public class RISCV64T1XCompilation extends T1XCompilation {
      * 28bit range of the program counter.
      * @param target
      */
-    protected void jmp(int target) {
-        asm.b(target - buf.position());
+    protected void jmp(int target, boolean addPatchNops) {
+        if (addPatchNops) {
+            asm.nop(2);
+        } else {
+            asm.b(target - buf.position());
+        }
     }
+
     /**
      * Conditional branch to target. Branch immediate takes a signed 12bit address so we can
      * only branch to +-4Kib of the program counter with the branch instruction alone.
@@ -777,15 +809,22 @@ public class RISCV64T1XCompilation extends T1XCompilation {
      * @param rs1
      * @param rs2
      */
-    protected void jcc(ConditionFlag cc, int target, CiRegister rs1, CiRegister rs2) {
-        switch (cc) {
-            case NE: asm.bne(rs1, rs2, target - buf.position()); break;
-            case LT: asm.blt(rs1, rs2, target - buf.position()); break;
-            case LE: asm.ble(rs1, rs2, target - buf.position()); break;
-            case GT: asm.bgt(rs1, rs2, target - buf.position()); break;
-            case GE: asm.bge(rs1, rs2, target - buf.position()); break;
-            case EQ: asm.beq(rs1, rs2, target - buf.position()); break;
-            default: throw new UnsupportedOperationException("Operation not supported for condition flag " + cc.name());
+    protected void jcc(ConditionFlag cc, int target, CiRegister rs1, CiRegister rs2, boolean addPatchNops) {
+        if (addPatchNops) {
+            asm.nop(3);
+        } else {
+            if (RISCV64MacroAssembler.isArithmeticImmediate(target - buf.position())) {
+                asm.emitConditionalBranch(cc, rs1, rs2, target - buf.position());
+            } else {
+                asm.emitConditionalBranch(cc.negate(), rs1, rs2, 3 * RISCV64MacroAssembler.INSTRUCTION_SIZE);
+                int offset = target - buf.position();
+                if ((offset & 0xFFF) >>> 11 == 0b0) {
+                    asm.auipc(RISCV64.x30, offset);
+                } else {
+                    asm.auipc(RISCV64.x30, offset - (offset | 0xFFFFF000));
+                }
+                asm.jalr(RISCV64.zero, RISCV64.x30, offset);
+            }
         }
     }
 
@@ -809,14 +848,14 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 CiRegister rs1 = RISCV64.cpuRegisters[data[i++]];
                 CiRegister rs2 = RISCV64.cpuRegisters[data[i++]];
                 buf.setPosition(pos);
-                jcc(cc, target, rs1, rs2);
+                jcc(cc, target, rs1, rs2, false);
             } else if (tag == PatchInfoRISCV64.JMP) {
                 int pos = data[i++];
                 int targetBCI = data[i++];
                 int target = bciToPos[targetBCI];
                 assert target != 0;
                 buf.setPosition(pos);
-                jmp(target);
+                jmp(target, false);
             } else if (tag == PatchInfoRISCV64.JUMP_TABLE_ENTRY) {
                 int pos = data[i++];
                 int jumpTablePos = data[i++];
@@ -849,8 +888,11 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                     asm.addi(scratch, scratch, (int) offset);
                     asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
                 } else {
+                    if ((int) offset != offset) {
+                        throw FatalError.unexpected("Offset for patching is larger than 32 bits");
+                    }
                     int startPos = buf.position();
-                    asm.mov64BitConstant(scratch1, offset);
+                    asm.mov32BitConstant(scratch1, (int) offset);
                     asm.add(64, scratch, scratch, scratch1);
                     int endPos = buf.position();
                     assert endPos - startPos <= RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS * RISCV64MacroAssembler.INSTRUCTION_SIZE : endPos - startPos;

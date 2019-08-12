@@ -151,6 +151,10 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public int getAlignNopTimes(int modulus, int codeBufferPosition) {
+        return (modulus - (codeBufferPosition % modulus)) / 4;
+    }
+
     /**
      * When patching up Labels we have to know what kind of code to generate.
      */
@@ -563,7 +567,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
         // check if comparison set the NV flag to 1. If it did, the denominator is NaN --> crash
         csrrci(scratchRegister, 0x001, 0);
-        branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, crashLabel);
+        branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, crashLabel1);
         push(64, scratchRegister1);
 
         // numerator
@@ -714,9 +718,10 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
-    // TODO Implement memory barriers !
+
     public void membar(int barriers) {
-//        throw new UnsupportedOperationException("Unimplemented");
+        fence(0b1111, 0b1111);
+        fencei();
     }
 
     /**
@@ -724,23 +729,31 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      *
      * @param size
      * @param newValue
-     * @param cmpValue
+     * @param compareValue
      * @param address
      */
-    public void cas(int size, CiRegister newValue, CiRegister cmpValue, RISCV64Address address) {
+    public void cas(int size, CiRegister newValue, CiRegister compareValue, RISCV64Address address) {
         //TODO At the moment we don't know how to implement memory barriers in RISC-V.
         // This implementation must be changed to be atmoic and use a memory barrier.
         // See Aarch64MacroAssembler.cas() for example of implementation
 
-        assert scratchRegister != cmpValue;
-        assert newValue != cmpValue;
+        assert scratchRegister != compareValue;
+        assert newValue != compareValue;
+
+        CiRegister cmpVal;
+        if (size != 64) {
+            slli(scratchRegister1, compareValue, 64 - size);
+            srli(scratchRegister1, scratchRegister1, 64 - size);
+            cmpVal = scratchRegister1;
+        } else {
+            cmpVal = compareValue;
+        }
 
         Label notEqualTocmpValue = new Label();
-
         ldru(size, scratchRegister, address);
-        branchConditionally(ConditionFlag.NE, cmpValue, scratchRegister, notEqualTocmpValue);
+        branchConditionally(ConditionFlag.NE, cmpVal, scratchRegister, notEqualTocmpValue);
         str(size, newValue, address);
-        mov(scratchRegister, cmpValue); // set scratch register to the cmp value to indicate success
+        mov(scratchRegister, cmpVal); // set scratch register to the cmp value to indicate success
 
         bind(notEqualTocmpValue);
     }
@@ -768,7 +781,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             and(scratchRegister, src, scratchRegister1);
             branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, end);
         }
-        add(dst, dst, 1);
+        addi(dst, dst, 1);
         if (scratchAlreadyUsed) {
             pop(64, scratchRegister1, true);
         }
@@ -876,10 +889,19 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             assert delta == (int) delta;
             super.addi(dest, source, (int) delta);
         } else {
-            assert dest != scratchRegister;
-            assert source != scratchRegister;
-            mov(scratchRegister, delta);
-            add(dest, source, scratchRegister);
+            CiRegister reg;
+            if (dest.number != source.number && dest.number != scratchRegister1.number) {
+                reg = dest;
+            } else {
+                reg = RISCV64.x30;
+            }
+//            } else if (dest.number == source.number && dest.number != scratchRegister.number && dest.number != scratchRegister1.number) {
+//                reg = scratchRegister;
+//            } else {
+//                throw new UnsupportedOperationException("scratchRegister already in use!");
+//            }
+            mov(reg, delta);
+            add(dest, source, reg);
         }
     }
 
@@ -900,7 +922,16 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     // TODO Handle case where offset is too large for a single branch immediate instruction.
     //  Also, when adding this case, make sure to fix patching as well.
     public void b(int offset) {
-//        b(offset, -1);
+        if (is20BitArithmeticImmediate(offset)) {
+            jal(RISCV64.zero, offset);
+        } else {
+            if ((offset & 0xFFF) >>> 11 == 0b0) {
+                auipc(RISCV64.x30, offset);
+            } else {
+                auipc(RISCV64.x30, offset - (offset | 0xFFFFF000));
+            }
+            jalr(RISCV64.zero, RISCV64.x30, offset);
+        }
     }
 
     public void b(int offset, int pos) {
@@ -1095,11 +1126,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
-    private void emitConditionalBranch(ConditionFlag condition, CiRegister rs1, CiRegister rs2, int offset) {
+    public void emitConditionalBranch(ConditionFlag condition, CiRegister rs1, CiRegister rs2, int offset) {
         emitConditionalBranch(condition, rs1, rs2, offset, -1);
     }
 
-    private void emitConditionalBranch(ConditionFlag condition, CiRegister rs1, CiRegister rs2, int offset, int position) {
+    public void emitConditionalBranch(ConditionFlag condition, CiRegister rs1, CiRegister rs2, int offset, int position) {
         switch (condition) {
             case EQ:
                 beq(rs1, rs2, offset, position);
@@ -1134,6 +1165,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case AL:
                 b(offset, position);
                 break;
+            default:
+                throw new UnsupportedOperationException("Unimplemented");
         }
     }
 
@@ -1159,17 +1192,40 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 if (NumUtil.isSignedNbit(12, displacement)) {
                     sd(frameRegister, r, displacement);
                 } else {
-                    mov(scratchRegister1, displacement);
-                    add(scratchRegister1, frameRegister, scratchRegister1);
-                    sd(scratchRegister1, r, 0);
+                    mov(scratchRegister, displacement);
+                    add(scratchRegister, frameRegister, scratchRegister);
+                    sd(scratchRegister, r, 0);
                 }
             } else {
                 if (NumUtil.isSignedNbit(12, displacement)) {
                     fsd(frameRegister, r, displacement);
                 } else {
-                    mov(scratchRegister1, displacement);
-                    add(scratchRegister1, frameRegister, scratchRegister1);
-                    fsd(scratchRegister1, r, 0);
+                    mov(scratchRegister, displacement);
+                    add(scratchRegister, frameRegister, scratchRegister);
+                    fsd(scratchRegister, r, 0);
+                }
+            }
+        }
+    }
+
+    public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
+        for (CiRegister r : csl.registers) {
+            int displacement = csl.offsetOf(r) + frameToCSA;
+            if (r.isCpu()) {
+                if (NumUtil.isSignedNbit(12, displacement)) {
+                    ldru(64, r, frameRegister, displacement);
+                } else {
+                    mov(scratchRegister, displacement);
+                    add(scratchRegister, frameRegister, scratchRegister);
+                    ldru(64, r, scratchRegister, 0);
+                }
+            } else if (r.isFpu()) {
+                if (NumUtil.isSignedNbit(12, displacement)) {
+                    fld(r, frameRegister, displacement);
+                } else {
+                    mov(scratchRegister, displacement);
+                    add(scratchRegister, frameRegister, scratchRegister);
+                    fld(r, scratchRegister, 0);
                 }
             }
         }
@@ -1195,29 +1251,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         jalr(RISCV64.ra, scratchRegister, 0);
         after = codeBuffer.position();
         assert RIP_CALL_INSTRUCTION_SIZE == after - before : after - before;
-    }
-
-    public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
-        for (CiRegister r : csl.registers) {
-            int displacement = csl.offsetOf(r) + frameToCSA;
-            if (r.isCpu()) {
-                if (NumUtil.isSignedNbit(12, displacement)) {
-                    ldru(64, r, frameRegister, displacement);
-                } else {
-                    mov(scratchRegister1, displacement);
-                    add(scratchRegister1, frameRegister, scratchRegister1);
-                    ldru(64, r, scratchRegister1, 0);
-                }
-            } else if (r.isFpu()) {
-                if (NumUtil.isSignedNbit(12, displacement)) {
-                    fld(r, frameRegister, displacement);
-                } else {
-                    mov(scratchRegister1, displacement);
-                    add(scratchRegister1, frameRegister, scratchRegister1);
-                    fld(r, scratchRegister1, 0);
-                }
-            }
-        }
     }
 
     public final void ret() {
@@ -1538,7 +1571,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             return RISCV64Address.createUnscaledImmediateAddress(frameRegister, displacement);
         } else {
             // Use scratch register to hold frame base + offset
-            mov(scratchRegister1, displacement);
+            mov32BitConstant(scratchRegister1, displacement);
             add(scratchRegister1, frameRegister, scratchRegister1);
             return RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister1);
         }
@@ -1573,7 +1606,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 return RISCV64Address.createUnscaledImmediateAddress(base, disp);
             } else {
                 assert base.number != scratchRegister1.number;
-                mov64BitConstant(scratchRegister1, disp);
+                mov32BitConstant(scratchRegister1, disp);
                 add(scratchRegister1, base, scratchRegister1);
                 return RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister1);
             }
@@ -1606,7 +1639,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         assert base.isValid();
 
         if (disp != 0) {
-            if (isAimm(Math.abs(disp))) {
+            if (isArithmeticImmediate(disp)) {
                 add(dest, base, disp);
             } else {
                 mov32BitConstant(dest, disp);
@@ -1634,8 +1667,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      *            RSP).
      */
     public void bangStackWithOffset(int offset) {
-        mov32BitConstant(scratchRegister, offset);
-        sub(scratchRegister, RISCV64.sp, scratchRegister);
+        sub(scratchRegister, RISCV64.sp, offset);
         str(64, RISCV64.a0, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister));
     }
 
