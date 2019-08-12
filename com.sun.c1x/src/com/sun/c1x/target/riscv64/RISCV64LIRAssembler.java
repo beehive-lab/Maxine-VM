@@ -505,7 +505,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         CiValue dest = op.result();
         switch (op.opcode) {
             case I2L:
-                masm.mov(dest.asRegister(), src.asRegister());
+                masm.addiw(dest.asRegister(), src.asRegister(), 0);
                 break;
             case L2I:
                 masm.mov64BitConstant(scratchRegister, 0xFFFFFFFFL);
@@ -599,52 +599,8 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitConditionalMove(Condition condition, CiValue opr1, CiValue opr2, CiValue result) {
-        RISCV64MacroAssembler.ConditionFlag acond;
-        RISCV64MacroAssembler.ConditionFlag ncond;
-        switch (condition) {
-            case EQ:
-                acond = RISCV64MacroAssembler.ConditionFlag.EQ;
-                ncond = RISCV64MacroAssembler.ConditionFlag.NE;
-                break;
-            case NE:
-                ncond = RISCV64MacroAssembler.ConditionFlag.EQ;
-                acond = RISCV64MacroAssembler.ConditionFlag.NE;
-                break;
-            case LT:
-                acond = RISCV64MacroAssembler.ConditionFlag.LT;
-                ncond = RISCV64MacroAssembler.ConditionFlag.GE;
-                break;
-            case LE:
-                acond = RISCV64MacroAssembler.ConditionFlag.LE;
-                ncond = RISCV64MacroAssembler.ConditionFlag.GT;
-                break;
-            case GE:
-                acond = RISCV64MacroAssembler.ConditionFlag.GE;
-                ncond = RISCV64MacroAssembler.ConditionFlag.LT;
-                break;
-            case GT:
-                acond = RISCV64MacroAssembler.ConditionFlag.GT;
-                ncond = RISCV64MacroAssembler.ConditionFlag.LE;
-                break;
-            case BE:
-                acond = RISCV64MacroAssembler.ConditionFlag.LEU;
-                ncond = RISCV64MacroAssembler.ConditionFlag.GTU;
-                break;
-            case BT:
-                acond = RISCV64MacroAssembler.ConditionFlag.LTU;
-                ncond = RISCV64MacroAssembler.ConditionFlag.GEU;
-                break;
-            case AE:
-                acond = RISCV64MacroAssembler.ConditionFlag.GEU;
-                ncond = RISCV64MacroAssembler.ConditionFlag.LTU;
-                break;
-            case AT:
-                acond = RISCV64MacroAssembler.ConditionFlag.GTU;
-                ncond = RISCV64MacroAssembler.ConditionFlag.LEU;
-                break;
-            default:
-                throw Util.shouldNotReachHere();
-        }
+        RISCV64MacroAssembler.ConditionFlag acond = convertConditionEmitBranch(condition);
+        RISCV64MacroAssembler.ConditionFlag ncond = acond.negate();
 
         CiValue def = opr1; // assume left operand as default
         CiValue other = opr2;

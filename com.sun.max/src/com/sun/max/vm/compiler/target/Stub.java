@@ -179,7 +179,7 @@ public final class Stub extends TargetMethod {
         }
         if (!isHosted()) {
             linkDirectCalls();
-            if (platform().target.arch.isARM() || platform().target.arch.isAarch64()) {
+            if (platform().target.arch.isARM() || platform().target.arch.isAarch64() || platform().target.arch.isRISCV64()) {
                 ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
             }
         }

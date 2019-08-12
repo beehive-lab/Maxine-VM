@@ -241,11 +241,11 @@ endif
 
 ifeq ($(OS),linux)
     # AAA
-    # ifneq "$(findstring def, $(origin CC))" ""
-    #     # origin of CC is either undefined or default, so set it here
-    #     CC = gcc
-    # endif
-    # CC = aarch64-linux-gnu-gcc
+#     ifneq "$(findstring def, $(origin CC))" ""
+#         # origin of CC is either undefined or default, so set it here
+#         CC = gcc
+#     endif
+#     CC = aarch64-linux-gnu-gcc
     CC = riscv64-linux-gnu-gcc
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
