@@ -597,7 +597,7 @@ public class Stubs {
             // TODO INFINITE LOOP
 //            Log.println("INFINITE LOOP");
 //            asm.nop();
-            asm.jal(RISCV64.zero, 0);
+//            asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
