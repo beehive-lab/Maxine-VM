@@ -587,6 +587,9 @@ public final class MaxineVM {
     }
 
     @C_FUNCTION
+    public static native void reachedMeDummy();
+
+    @C_FUNCTION
     public static native long arithmeticldiv(long x, long y);
 
     @C_FUNCTION

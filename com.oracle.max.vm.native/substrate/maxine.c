@@ -183,6 +183,11 @@ static void* loadSymbol(void* handle, const char* symbol) {
     return result;
 }
 
+//TODO DON'T FORGET TO REMOVE THIS
+void reachedMeDummy() {
+    log_println("CALLED reachedMeDummy function");
+}
+
 #if os_DARWIN || os_SOLARIS || os_LINUX
 
 #include <netinet/in.h>
