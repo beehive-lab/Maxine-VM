@@ -633,7 +633,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             return;
         }
 
-        CiRegister reg1 = null, reg2 = null;
+        CiRegister reg1 = null;
+        CiRegister reg2 = null;
         switch (opcode) {
             case Bytecodes.IFEQ:
                 peekInt(scratch, 0);
@@ -919,7 +920,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 asm = new RISCV64MacroAssembler(target(), null);
                 asm.auipc(scratch, 0);
                 int[] movInstr = RISCV64MacroAssembler.mov32BitConstantHelper(scratch1, dispFromCodeStart - pos);
-                for (int i = 0; i < movInstr.length; i++ ) {
+                for (int i = 0; i < movInstr.length; i++) {
                     if (movInstr[i] != 0) {
                         asm.codeBuffer.emitInt(movInstr[i]);
                     } else {

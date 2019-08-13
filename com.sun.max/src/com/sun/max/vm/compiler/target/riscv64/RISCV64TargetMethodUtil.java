@@ -89,7 +89,7 @@ public final class RISCV64TargetMethodUtil {
         final int offset = jumpAndLinkExtractDisplacement(instruction);
         assert offset == CALL_TRAMPOLINE1_OFFSET || offset == CALL_TRAMPOLINE2_OFFSET : offset;
 
-        if(!(offset == CALL_TRAMPOLINE1_OFFSET || offset == CALL_TRAMPOLINE2_OFFSET)) {
+        if (!(offset == CALL_TRAMPOLINE1_OFFSET || offset == CALL_TRAMPOLINE2_OFFSET)) {
             throw FatalError.unexpected("Not a trampoline offset !");
         }
 
@@ -151,7 +151,7 @@ public final class RISCV64TargetMethodUtil {
         // Patch the JAL to jump to the new trampoline
         instruction = jumpAndLinkImmediateHelper(RISCV64.zero, offset);
         patchSite.writeInt(0, instruction);
-        
+
         ARMTargetMethodUtil.maxine_cache_flush(patchSite, RIP_CALL_INSTRUCTION_SIZE);
     }
 

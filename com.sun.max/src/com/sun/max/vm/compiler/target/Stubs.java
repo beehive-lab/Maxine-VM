@@ -2054,7 +2054,7 @@ public class Stubs {
             patchAddr.writeInt(20, addInstr);
 
             // TODO is this also necessary for RISCV?
-             ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 24);
+            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 24);
         }
     }
 
