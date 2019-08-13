@@ -123,9 +123,6 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
         thread_getStackInfo(&stackBase, &stackSize);
     }
 
-    log_println("stack base = %p ", stackBase);
-    log_println("stack size = %p ", stackSize);
-
     /* See diagram at top of threadLocals.h */
     const int triggerPageSize = pageSize;
     Size stackWords = stackSize / sizeof(Address);
@@ -143,11 +140,6 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
             return tlBlock;
         }
     }
-
-    log_println("tlBlock right after alloc = %p ", tlBlock);
-    log_println("sysconf page size === %d", sysconf(_SC_PAGESIZE));
-    log_println("virtualMemory_getPageSize = %d", pageSize);
-    log_println("sizeof(Address) = %d", sizeof(Address));
 
     TLA ttla = tlBlock + pageSize - sizeof(Address);
     TLA etla  = ttla + tlaSize;
@@ -354,11 +346,10 @@ void tla_initialize(int tlaSize) {
     int error = pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
     #if log_THREADS
         log_println("tla_initialize: pthread_key_create returned code = %d", error);
-
+    #endif
     if (error != 0) {
         log_exit(-1, "tla_initialize: pthread_key_create returned non zero code = %d", error);
     }
-    #endif
 #elif os_SOLARIS
     thr_keycreate(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
 #elif os_MAXVE

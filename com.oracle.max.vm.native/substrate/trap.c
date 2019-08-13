@@ -483,9 +483,6 @@ SignalHandlerFunction userSignalHandler = (SignalHandlerFunction) userSignalHand
  * Implementation of com.sun.max.vm.runtime.Trap.nativeInitialize().
  */
 void nativeTrapInitialize(Address javaTrapStub) {
-
-    log_println("nativeTrapInitialize substrate method called");
-
     /* This function must be called on the primordial thread. */
     c_ASSERT(tla_load(int, tla_current(), ID) == PRIMORDIAL_THREAD_ID);
 

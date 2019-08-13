@@ -207,7 +207,7 @@ public final class Platform {
                         inlineObjects,
                         false,
                         false,
-                        true);
+                        hasIDiv());
     }
 
     private static final Pattern NON_REGEX_TEST_PATTERN = Pattern.compile("\\w+");
