@@ -205,19 +205,19 @@ public class RISCV64T1XTest extends MaxTestCase {
         masm.mov(RISCV64.x5, 0);
         masm.mov(RISCV64.x6, Long.MAX_VALUE);
         masm.mov(RISCV64.x7, Long.MIN_VALUE);
-        masm.mov(RISCV64.x30, Integer.MIN_VALUE);
+        masm.mov(RISCV64.x28, Integer.MIN_VALUE);
         masm.mov(RISCV64.x31, -1);
 
         masm.increment32(RISCV64.x5, 1);
         masm.increment32(RISCV64.x6, 1);
         masm.increment32(RISCV64.x7, -1);
-        masm.increment32(RISCV64.x30, Integer.MAX_VALUE);
+        masm.increment32(RISCV64.x28, Integer.MAX_VALUE);
         masm.increment32(RISCV64.x31, Integer.MIN_VALUE);
 
         expectedValues[4] = 1;
         expectedValues[5] = Long.MIN_VALUE;
         expectedValues[6] = Long.MAX_VALUE;
-        expectedValues[29] = -1;
+        expectedValues[27] = -1;
         expectedValues[30] = (long) Integer.MIN_VALUE - 1;
 
         long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
@@ -228,7 +228,7 @@ public class RISCV64T1XTest extends MaxTestCase {
         assert simulatedValues[4] == expectedValues[4] : String.format("Register %d %d expected %d ", 5, simulatedValues[4], expectedValues[4]);
         assert simulatedValues[5] == expectedValues[5] : String.format("Register %d %d expected %d ", 6, simulatedValues[5], expectedValues[5]);
         assert simulatedValues[6] == expectedValues[6] : String.format("Register %d %d expected %d ", 7, simulatedValues[6], expectedValues[6]);
-        assert simulatedValues[29] == expectedValues[29] : String.format("Register %d %d expected %d ", 30, simulatedValues[29], expectedValues[29]);
+        assert simulatedValues[27] == expectedValues[27] : String.format("Register %d %d expected %d ", 28, simulatedValues[27], expectedValues[27]);
         assert simulatedValues[30] == expectedValues[30] : String.format("Register %d %d expected %d ", 31, simulatedValues[30], expectedValues[30]);
     }
 
