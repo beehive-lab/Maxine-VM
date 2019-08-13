@@ -537,25 +537,10 @@ public final class MaxineVM {
         startupTime = System.currentTimeMillis();
         startupTimeNano = System.nanoTime();
 
-//        Log.println("before vm() call");
         MaxineVM vm = vm();
-//        Log.println("after vm() call");
         vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
-//        Log.println("after vmCondig().initializeSchemes call");
-
-//        if (vm() == null) {
-//            Log.println("vm() in NULL");
-//        } else {
-//            Log.println("vm() != NULL");
-//        }
-//        if (vm().stubs == null) {
-//            Log.println("vm().stubs is NULL");
-//        } else {
-//            Log.println("vm().stubs != NULL");
-//        }
 
         vm().stubs.intialize();
-//        Log.println("after vm().stubs.initialize() call");
         vm.phase = Phase.PRISTINE;
 
         VMOptions.parsePristine(argc, argv);

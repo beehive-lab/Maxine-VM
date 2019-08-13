@@ -116,9 +116,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 switch (type) {
                     case BRANCH_NONZERO: {
                         throw new UnsupportedOperationException("Unimplemented");
-//                        CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
-//                        emitConditionalBranch(ConditionFlag.NE, cmp, scratchRegister1, branchOffset, branch);
-//                        break;
                     }
                     case BRANCH_ZERO: {
                         assert codeBuffer.getShort(branch + 2) == 0;
@@ -895,11 +892,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             } else {
                 reg = RISCV64.x30;
             }
-//            } else if (dest.number == source.number && dest.number != scratchRegister.number && dest.number != scratchRegister1.number) {
-//                reg = scratchRegister;
-//            } else {
-//                throw new UnsupportedOperationException("scratchRegister already in use!");
-//            }
             mov(reg, delta);
             add(dest, source, reg);
         }

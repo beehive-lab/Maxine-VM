@@ -210,7 +210,6 @@ public abstract class StackFrameWalker {
                             break;
                         }
                     } else if (lastJavaCalleeMethodActor == null) {
-//                        MaxineVM.reachedMeDummy();
                         FatalError.unexpected("Unrecognized target method without a class method actor!");
                     } else {
                         Log.print("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point: ");
@@ -218,7 +217,6 @@ public abstract class StackFrameWalker {
                         Log.print(lastJavaCalleeMethodActor.descriptor().string);
                         Log.print(" in ");
                         Log.println(lastJavaCalleeMethodActor.holder().name.string);
-//                        MaxineVM.reachedMeDummy();
                         if (!FatalError.inFatalError()) {
                             FatalError.unexpected("Native code called/entered a Java method that is not a JNI function, a Java trap stub or a VM/thread entry point");
                         } else {

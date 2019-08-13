@@ -494,7 +494,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             } else {
                 acond = convertConditionEmitBranch(op.cond());
             }
-//            masm.mov64BitConstant(scratchRegister, 0);
             masm.branchConditionally(acond, RISCV64.x31, RISCV64.zero, op.label());
         }
     }
@@ -1245,11 +1244,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Object: {
                         if (c.isNull()) {
                             masm.and(RISCV64.x31, reg1, reg1);
-//                            masm.sub(64, RISCV64.x31, reg1, RISCV64.zero);
                         } else {
-//                            movoop(scratchRegister, c);
-//                            masm.sub(64, RISCV64.x31, reg1, scratchRegister);
-
                             movoop(scratchRegister1, c);
                             Label continueLabel = new Label();
                             Label lessThanLabel = new Label();
@@ -2046,8 +2041,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
-//        masm.mov32BitConstant(scratchRegister, 0);
-//        masm.branchConditionally(cflag, RISCV64.x31, RISCV64.zero, new Label(label.getPatchPositions(), label.positionCopy()));
         masm.branchConditionally(cflag, RISCV64.x31, RISCV64.zero, label);
         masm.nop(3);
     }

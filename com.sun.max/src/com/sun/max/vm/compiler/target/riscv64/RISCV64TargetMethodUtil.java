@@ -81,18 +81,8 @@ public final class RISCV64TargetMethodUtil {
         Pointer callSitePointer = callSite.toPointer();
         int instruction = callSitePointer.readInt(0);
         assert isJumpInstruction(instruction) : instruction;
-
-        if (!isJumpInstruction(instruction)) {
-            throw FatalError.unexpected("Not a jump instruction !");
-        }
-
         final int offset = jumpAndLinkExtractDisplacement(instruction);
         assert offset == CALL_TRAMPOLINE1_OFFSET || offset == CALL_TRAMPOLINE2_OFFSET : offset;
-
-        if (!(offset == CALL_TRAMPOLINE1_OFFSET || offset == CALL_TRAMPOLINE2_OFFSET)) {
-            throw FatalError.unexpected("Not a trampoline offset !");
-        }
-
         callSitePointer = callSitePointer.plus(offset);
         int displacement = getDisplacementFromTrampoline(callSitePointer);
         final CodePointer branchSite = callSite.plus(CALL_BRANCH_OFFSET);
@@ -122,7 +112,6 @@ public final class RISCV64TargetMethodUtil {
         int instruction = patchSite.readInt(0);
         int offset = jumpAndLinkExtractDisplacement(instruction);
         // The bimm offset must either point to one of the two trampolines or outside of them
-        FatalError.check((offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET), "Offset different: " + offset);
         assert (offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET) : offset;
         // Get the offset of the unused trampoline
         offset = offset == CALL_TRAMPOLINE1_OFFSET ? CALL_TRAMPOLINE2_OFFSET : CALL_TRAMPOLINE1_OFFSET;
@@ -209,7 +198,6 @@ public final class RISCV64TargetMethodUtil {
      * @return the target of the call prior to patching
      */
     public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
-
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
@@ -222,22 +210,6 @@ public final class RISCV64TargetMethodUtil {
             }
         }
         return oldTarget;
-    }
-
-    private static String getCodeMessage(byte[] code, int callOffset) {
-
-        StringBuilder failMessage = new StringBuilder();
-
-        for (int i = 0; i < code.length - 4; i = i + 4) {
-            int instr = extractInstruction(code, i);
-            if (i == callOffset) {
-                failMessage.append("-> ");
-            }
-
-            failMessage.append("instr[" + i + "] = " + Integer.toHexString(instr) + "\n");
-        }
-
-        return failMessage.toString();
     }
 
     /**
@@ -257,14 +229,7 @@ public final class RISCV64TargetMethodUtil {
         int instruction = extractInstruction(code, callOffset);
         int offset = jumpAndLinkExtractDisplacement(instruction);
         // The bimm offset must either point to one of the two trampolines or outside of them
-
-//        new Exception().printStackTrace(System.out);
-//        Log.println(getCodeMessage(code, callOffset));
-
-//        assert (offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET) : offset;
-        FatalError.check((offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET), "Offset different: " + offset);
-
-
+        assert (offset == CALL_TRAMPOLINE1_OFFSET) || (offset == CALL_TRAMPOLINE2_OFFSET) : offset;
         // Get the offset of the unused trampoline
         offset = offset == CALL_TRAMPOLINE1_OFFSET ? CALL_TRAMPOLINE2_OFFSET : CALL_TRAMPOLINE1_OFFSET;
         final int trampolineOffset = callOffset + offset;

@@ -34,7 +34,6 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.Log;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.DebugMethodWriter;
@@ -43,7 +42,6 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.riscv64.RISCV64JVMSFrameLayout;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-import com.sun.xml.internal.bind.v2.util.FatalAdapter;
 
 import java.util.ArrayList;
 import java.util.Arrays;

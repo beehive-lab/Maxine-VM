@@ -459,8 +459,8 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
     tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.regs[26]);
     ucontext->uc_mcontext.regs[26] = (Address) dtla;
 #elif isa_RISCV64
-    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.__gregs[30]);
-    ucontext->uc_mcontext.__gregs[30] = (Address) dtla;
+    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.__gregs[26]);
+    ucontext->uc_mcontext.__gregs[26] = (Address) dtla;
 #else
     c_UNIMPLEMENTED();
 #endif

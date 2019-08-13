@@ -390,7 +390,6 @@ public class RegisterConfigs {
                 allocatable = new CiRegister[] {
                     /* RISCV64.x1 returnAddress,  RISCV64.x2 stackPointer,  RISCV64.x3 globalPointer,
                     RISCV64.x4 threadPointer */
-//                    RISCV64.x5,  RISCV64.x6,  /* RISCV64.x7, reserved for 32 bit jumps */
                     RISCV64.x5,  RISCV64.x6, RISCV64.x7,
                     /* RISCV64.x8 framePointer, */
                     RISCV64.x9, RISCV64.x10, RISCV64.x11, RISCV64.x12, RISCV64.x13, RISCV64.x14, RISCV64.x15,

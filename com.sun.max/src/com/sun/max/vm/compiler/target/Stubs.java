@@ -594,11 +594,6 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             final int frameToCSA = csl.frameOffsetToCSA;
 
-            // TODO INFINITE LOOP
-//            Log.println("INFINITE LOOP");
-//            asm.nop();
-//            asm.jal(RISCV64.zero, 0);
-
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -830,10 +825,6 @@ public class Stubs {
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             int frameSize = target().alignFrameSize(csl.size);
             final int frameToCSA = csl.frameOffsetToCSA;
-
-            // TODO INFINITE LOOP
-//            Log.println("INFINITE LOOP");
-//            asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
@@ -1128,8 +1119,6 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
 
-            //TODO INFINITE LOOP
-//            asm.jal(RISCV64.zero, 0);
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -1384,8 +1373,6 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
             // TODO INFINITE LOOP
-//            Log.println("INFINITE LOOP");
-//            asm.nop();
             asm.jal(RISCV64.zero, 0);
 
             // the very first instruction must save the flags.
@@ -1671,8 +1658,6 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(0);
 
             // TODO INFINITE LOOP
-//            Log.println("INFINITE LOOP");
-//            asm.nop();
             asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
@@ -1823,8 +1808,6 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(0);
 
             // TODO INFINITE LOOP
-//            Log.println("INFINITE LOOP");
-//            asm.nop();
             asm.jal(RISCV64.zero, 0);
 
             for (int i = 0; i < prologueSize; ++i) {
@@ -2053,7 +2036,6 @@ public class Stubs {
             int addInstr = RISCV64MacroAssembler.addSubInstructionHelper(RISCV64.x28, RISCV64.x28, RISCV64.x29, false);
             patchAddr.writeInt(20, addInstr);
 
-            // TODO is this also necessary for RISCV?
             ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 24);
         }
     }
@@ -2331,8 +2313,6 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
             // TODO INFINITE LOOP
-//            Log.println("INFINITE LOOP");
-//            asm.nop();
             asm.jal(RISCV64.zero, 0);
 
             String runtimeRoutineName = "deoptimize" + kind.name();
@@ -2733,8 +2713,6 @@ public class Stubs {
             int cfo = frameSize + target().stackAlignment; // Caller frame offset
 
             // TODO INFINITE LOOP
-//            Log.println("INFINITE LOOP");
-//            asm.nop();
             asm.jal(RISCV64.zero, 0);
 
             String runtimeRoutineName;
@@ -3018,8 +2996,6 @@ public class Stubs {
             int frameToCSA = csl.frameOffsetToCSA;
 
             // TODO INFINITE LOOP
-//            Log.println("INFINITE LOOP");
-//            masm.nop();
             masm.jal(RISCV64.zero, 0);
 
 

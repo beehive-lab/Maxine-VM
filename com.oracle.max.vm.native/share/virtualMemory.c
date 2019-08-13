@@ -102,7 +102,7 @@ static Address check_mmap_result(void *result) {
     return ((Address) (result == (void *) MAP_FAILED ? ALLOC_FAILED : result));
 }
 
-#if defined(arm) // || defined(riscv64)
+#if defined(arm)
   static int attempt = 0;
   static Address allocAddress = 0x0;
 #endif
@@ -113,7 +113,7 @@ static Address check_mmap_result(void *result) {
  * Use PROT_NONE if protNone is true, otherwise set all protection (i.e., allow any type of access).
  */
 Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type) {
-#if defined(arm) // || defined(riscv64)
+#if defined(arm)
     //We have to make sure that in ARM 32 bit archs we always allocate in positive memory addresses.
     if(attempt == 0) {
         attempt++;
@@ -146,7 +146,7 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
 					protNone==JNI_TRUE ? "none" : "all",
 					result);
 #endif
-#if defined(arm) // || defined(riscv64)
+#if defined(arm)
   address =  check_mmap_result(result);
   allocAddress = address + size;
   return address;
@@ -157,7 +157,7 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
 
 
 Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
-#if defined(arm) // || defined(riscv64)
+#if defined(arm)
     Address address = 0x0;
     if(attempt == 0) {
         attempt++;

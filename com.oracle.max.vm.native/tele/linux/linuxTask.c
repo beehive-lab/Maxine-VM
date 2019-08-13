@@ -1028,16 +1028,8 @@ Java_com_sun_max_tele_debug_linux_LinuxDumpThreadAccess_taskRegisters(JNIEnv *en
                 jbyteArray stateRegisters, jint stateRegistersLength) {
     prstatus_t * prstatus = (prstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer_status));
     elf_fpregset_t *fpregset = (elf_fpregset_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer_fpreg));
-    // user_fpregs_structure
-    //TODO check this actually works
     return copyRegisters(env, class, (user_regs_structure *) &prstatus->pr_reg[0], (user_fpregs_structure *) &fpregset,
                     integerRegisters, integerRegistersLength,
                     floatingPointRegisters, floatingPointRegistersLength,
                     stateRegisters, stateRegistersLength);
-
-
-    // return copyRegisters(env, class, (user_regs_structure *) &prstatus->pr_reg[0], fpregset,
-    //                 integerRegisters, integerRegistersLength,
-    //                 floatingPointRegisters, floatingPointRegistersLength,
-    //                 stateRegisters, stateRegistersLength);
 }

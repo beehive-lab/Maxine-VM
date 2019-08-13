@@ -62,7 +62,6 @@ static Address allocateThreadLocalBlock(size_t tlBlockSize) {
 	return (Address) maxve_virtualMemory_allocate(tlBlockSize, DATA_VM);
 #else
 	c_ASSERT(tlBlockSize < 100000000);
-	// return (Address) valloc(tlBlockSize);
     return (Address) aligned_alloc(4096, tlBlockSize);
 #endif
 }
