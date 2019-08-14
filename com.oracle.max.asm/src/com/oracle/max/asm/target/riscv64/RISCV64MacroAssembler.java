@@ -1379,7 +1379,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BASE_REGISTER_ONLY:
                 ldr(srcSize, rt, address.getBase(), 0);
                 break;
-            case IMMEDIATE_UNSCALED:
+            case IMMEDIATE:
                 ldr(srcSize, rt, address.getBase(), address.getImmediate());
                 break;
             case IMMEDIATE_PRE_INDEXED: {
@@ -1409,7 +1409,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BASE_REGISTER_ONLY:
                 ldru(srcSize, rt, address.getBase(), 0);
                 break;
-            case IMMEDIATE_UNSCALED:
+            case IMMEDIATE:
                 ldru(srcSize, rt, address.getBase(), address.getImmediate());
                 break;
             case IMMEDIATE_PRE_INDEXED: {
@@ -1432,7 +1432,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BASE_REGISTER_ONLY:
                 fldr(srcSize, rt, a.getBase(), 0);
                 break;
-            case IMMEDIATE_UNSCALED:
+            case IMMEDIATE:
                 fldr(srcSize, rt, a.getBase(), a.getImmediate());
                 break;
             case IMMEDIATE_PRE_INDEXED: {
@@ -1455,7 +1455,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BASE_REGISTER_ONLY:
                 str(srcSize, a.getBase(), rt, 0);
                 break;
-            case IMMEDIATE_UNSCALED:
+            case IMMEDIATE:
                 str(srcSize, a.getBase(), rt, a.getImmediate());
                 break;
             case IMMEDIATE_PRE_INDEXED: {
@@ -1478,7 +1478,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             case BASE_REGISTER_ONLY:
                 fstr(srcSize, a.getBase(), rt, 0);
                 break;
-            case IMMEDIATE_UNSCALED:
+            case IMMEDIATE:
                 fstr(srcSize, a.getBase(), rt, a.getImmediate());
                 break;
             case IMMEDIATE_PRE_INDEXED: {
@@ -1560,7 +1560,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
     public RISCV64Address getAddressInFrame(CiRegister frameRegister, int displacement) {
         if (NumUtil.isSignedNbit(12, displacement)) {
-            return RISCV64Address.createUnscaledImmediateAddress(frameRegister, displacement);
+            return RISCV64Address.createImmediateAddress(frameRegister, displacement);
         } else {
             // Use scratch register to hold frame base + offset
             mov32BitConstant(scratchRegister1, displacement);
@@ -1595,7 +1595,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
         if (disp != 0) {
             if (NumUtil.isSignedNbit(12, disp)) {
-                return RISCV64Address.createUnscaledImmediateAddress(base, disp);
+                return RISCV64Address.createImmediateAddress(base, disp);
             } else {
                 assert base.number != scratchRegister1.number;
                 mov32BitConstant(scratchRegister1, disp);

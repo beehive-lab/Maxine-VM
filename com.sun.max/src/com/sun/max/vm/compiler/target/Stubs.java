@@ -606,7 +606,7 @@ public class Stubs {
             asm.save(csl, frameToCSA);
 
             CiValue[] args = resolveInvokeBasicCallArgs;
-            asm.ldru(64, args[1].asRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameSize));
+            asm.ldru(64, args[1].asRegister(), RISCV64Address.createImmediateAddress(RISCV64.sp, frameSize));
 
             asm.alignForPatchableDirectCall(asm.codeBuffer.position());
             int callPos = asm.codeBuffer.position();
@@ -851,7 +851,7 @@ public class Stubs {
             asm.mov(args[1].asRegister(), index);
 
             // load the return address into the third arg register
-            asm.ldru(64, args[2].asRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameSize));
+            asm.ldru(64, args[2].asRegister(), RISCV64Address.createImmediateAddress(RISCV64.sp, frameSize));
 
             asm.alignForPatchableDirectCall(asm.codeBuffer.position());
             int callPos = asm.codeBuffer.position();
@@ -1388,23 +1388,23 @@ public class Stubs {
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
-            asm.ldru(64, registerConfig.getScratchRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_LATCH_REGISTER.offset));
-            asm.str(64, registerConfig.getScratchRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameToCSA + csl.offsetOf(latch)));
+            asm.ldru(64, registerConfig.getScratchRegister(), RISCV64Address.createImmediateAddress(latch, TRAP_LATCH_REGISTER.offset));
+            asm.str(64, registerConfig.getScratchRegister(), RISCV64Address.createImmediateAddress(RISCV64.sp, frameToCSA + csl.offsetOf(latch)));
 
             // write the return address pointer to the end of the frame
-            asm.ldru(64, registerConfig.getScratchRegister1(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_INSTRUCTION_POINTER.offset));
+            asm.ldru(64, registerConfig.getScratchRegister1(), RISCV64Address.createImmediateAddress(latch, TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), RISCV64.rsp, frameSize));
             asm.str(64, registerConfig.getScratchRegister1(), RISCV64Address.createBaseRegisterOnlyAddress(registerConfig.getScratchRegister()));
 
             // load the trap number from the thread locals into the first parameter register
-            asm.ldru(64, args[0].asRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_NUMBER.offset));
+            asm.ldru(64, args[0].asRegister(), RISCV64Address.createImmediateAddress(latch, TRAP_NUMBER.offset));
             // also save the trap number into the trap frame
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), RISCV64.rsp, frameToCSA + RISCV64TrapFrameAccess.TRAP_NUMBER_OFFSET));
             asm.str(64, args[0].asRegister(), RISCV64Address.createBaseRegisterOnlyAddress(registerConfig.getScratchRegister()));
             // load the trap frame pointer into the second parameter register
             asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), RISCV64.rsp, frameToCSA));
             // load the fault address from the thread locals into the third parameter register
-            asm.ldru(64, args[2].asRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_FAULT_ADDRESS.offset));
+            asm.ldru(64, args[2].asRegister(), RISCV64Address.createImmediateAddress(latch, TRAP_FAULT_ADDRESS.offset));
 
             asm.alignForPatchableDirectCall(asm.codeBuffer.position());
             int callPos = asm.codeBuffer.position();
@@ -2341,7 +2341,7 @@ public class Stubs {
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            asm.ldru(64, arg0, RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.ldru(64, arg0, RISCV64Address.createImmediateAddress(RISCV64.sp, DEOPT_RETURN_ADDRESS_OFFSET));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
