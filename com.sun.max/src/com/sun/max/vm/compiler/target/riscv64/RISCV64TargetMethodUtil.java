@@ -141,7 +141,7 @@ public final class RISCV64TargetMethodUtil {
         instruction = jumpAndLinkImmediateHelper(RISCV64.zero, offset);
         patchSite.writeInt(0, instruction);
 
-        ARMTargetMethodUtil.maxine_cache_flush(patchSite, RIP_CALL_INSTRUCTION_SIZE);
+        MaxineVM.maxine_cache_flush(patchSite, RIP_CALL_INSTRUCTION_SIZE);
     }
 
     private static void writeJump(Pointer patchSite, CodePointer target) {

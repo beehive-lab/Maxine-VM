@@ -192,8 +192,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         int index = objectLiterals.size();
         objectLiterals.add(value);
         patchInfo.addObjectLiteral(buf.position(), index);
-        asm.auipc(scratch, 0);
-        asm.addi(scratch, scratch, 0); // this gets patched by fixup
+        asm.auipc(scratch, 0); // this gets patched by fixup
         asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
         asm.ldru(64, dst, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
     }
@@ -413,7 +412,6 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         objectLiterals.add(T1XTargetMethod.PROTECTED);
         int dispPos = buf.position();
         asm.auipc(scratch, 0); // this gets patched by fixup
-        asm.addi(scratch, scratch, 0);
         asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
         asm.str(64, RISCV64.zr, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
@@ -449,7 +447,6 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         if (fieldActor.isVolatile()) {
             boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
             asm.fence(0b1111, 0b1111);
-            asm.fencei();
         }
     }
 
@@ -459,7 +456,6 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         if (fieldActor.isVolatile()) {
             boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
             asm.fence(0b1111, 0b1111);
-            asm.fencei();
         }
     }
 
@@ -788,11 +784,12 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
     /**
      * Jump (unconditionally branch) to a target address. The target address must be within a
-     * 28bit range of the program counter.
+     * 32 bit range of the program counter.
      * @param target
      */
     protected void jmp(int target, boolean addPatchNops) {
         if (addPatchNops) {
+            // Patching this might use 2 instructions if the offset is larger than 20 bits
             asm.nop(2);
         } else {
             asm.b(target - buf.position());
@@ -802,7 +799,6 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     /**
      * Conditional branch to target. Branch immediate takes a signed 12bit address so we can
      * only branch to +-4Kib of the program counter with the branch instruction alone.
-     * TODO: enable conditional branching to a 32bit PC offset.
      * @param cc
      * @param target
      * @param rs1
@@ -810,6 +806,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
      */
     protected void jcc(ConditionFlag cc, int target, CiRegister rs1, CiRegister rs2, boolean addPatchNops) {
         if (addPatchNops) {
+            // Patching this might use 3 instructions if the offset is larger than 12 bits
             asm.nop(3);
         } else {
             if (RISCV64MacroAssembler.isArithmeticImmediate(target - buf.position())) {
@@ -817,12 +814,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             } else {
                 asm.emitConditionalBranch(cc.negate(), rs1, rs2, 3 * RISCV64MacroAssembler.INSTRUCTION_SIZE);
                 int offset = target - buf.position();
-                if ((offset & 0xFFF) >>> 11 == 0b0) {
-                    asm.auipc(RISCV64.x30, offset);
-                } else {
-                    asm.auipc(RISCV64.x30, offset - (offset | 0xFFFFF000));
-                }
-                asm.jalr(RISCV64.zero, RISCV64.x30, offset);
+                asm.insert32BitJump(offset);
             }
         }
     }
@@ -885,7 +877,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 buf.setPosition(dispPos + 4);
                 if (RISCV64MacroAssembler.isArithmeticImmediate(offset)) {
                     asm.addi(scratch, scratch, (int) offset);
-                    asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+                    asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - 1);
                 } else {
                     if ((int) offset != offset) {
                         throw FatalError.unexpected("Offset for patching is larger than 32 bits");
@@ -910,7 +902,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), null);
                 asm.auipc(scratch, 0);
                 asm.addi(scratch, scratch, dispFromCodeStart - pos);
-                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS);
+                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - 1);
                 asm.ldru(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
                 // pattern must be compatible with RISCV64InstructionDecoder.patchRelativeInstruction
                 byte[] patternAddi = asm.codeBuffer.close(true);
@@ -926,7 +918,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                     }
                 }
                 asm.add(scratch, scratch, scratch1);
-                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - 4);
+                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - 5);
                 asm.ldru(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
                 byte[] patternMov32BitConstant = asm.codeBuffer.close(true);
 

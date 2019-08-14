@@ -348,7 +348,7 @@ static void mapHeapAndCode(int fd) {
 #endif
     theCode = theHeap + theHeader->heapSize;
     theCodeEnd = theCode + theHeader->codeSize;
-    #if log_LOADER
+#if log_LOADER
     log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %u",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
     log_println("boot heap start at %p", theHeap);
     log_println("boot heap end at %p ", theHeap + theHeader->heapSize);

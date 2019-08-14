@@ -230,9 +230,6 @@ public final class ARMTargetMethodUtil {
         return false;
     }
 
-    @C_FUNCTION
-    public static native void maxine_cache_flush(Pointer start, int length);
-
     /**
      * Thread safe patching of the displacement field in a direct call.
      *
@@ -281,7 +278,7 @@ public final class ARMTargetMethodUtil {
                 callSitePointer.writeByte(13, (byte) ((instruction >> 8) & 0xff));
                 callSitePointer.writeByte(14, (byte) ((instruction >> 16) & 0xff));
                 callSitePointer.writeByte(15, (byte) ((instruction >> 24) & 0xff));
-                maxine_cache_flush(callSitePointer, 24);
+                MaxineVM.maxine_cache_flush(callSitePointer, 24);
             }
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
@@ -340,7 +337,7 @@ public final class ARMTargetMethodUtil {
                 callSitePointer.writeByte(13, (byte) ((instruction >> 8) & 0xff));
                 callSitePointer.writeByte(14, (byte) ((instruction >> 16) & 0xff));
                 callSitePointer.writeByte(15, (byte) ((instruction >> 24) & 0xff));
-                maxine_cache_flush(callSitePointer, 24);
+                MaxineVM.maxine_cache_flush(callSitePointer, 24);
             }
         }
     }

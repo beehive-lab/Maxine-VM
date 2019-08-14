@@ -126,7 +126,7 @@ public final class Aarch64TargetMethodUtil {
         patchSite.writeInt(CALL_BRANCH_OFFSET, unconditionalBranchRegInstructionHelper(r16, isLinked));
         // Patch the branch immediate to jump to the new trampoline
         patchSite.writeInt(0, unconditionalBranchImmInstructionHelper(offset, false));
-        ARMTargetMethodUtil.maxine_cache_flush(patchSite, RIP_CALL_INSTRUCTION_SIZE);
+        MaxineVM.maxine_cache_flush(patchSite, RIP_CALL_INSTRUCTION_SIZE);
     }
 
     private static void writeJump(Pointer patchSite, CodePointer target) {

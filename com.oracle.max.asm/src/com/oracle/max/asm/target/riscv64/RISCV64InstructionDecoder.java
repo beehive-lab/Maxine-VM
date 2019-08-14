@@ -36,9 +36,9 @@ public final class RISCV64InstructionDecoder {
 
         pos += 4; //skip asm.auipc(scratch, 0);
 
-        //Nop the addi and the following nops
+        //Nop everything except the asm.auipc(scratch, 0);
         int instruction = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x0, RISCV64.x0, 0);
-        for (int i = 0; i < RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS + 1; i++) {
+        for (int i = 0; i < RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS; i++) {
             writeInstruction(code, pos + i * RISCV64MacroAssembler.INSTRUCTION_SIZE, instruction);
         }
 
@@ -53,6 +53,8 @@ public final class RISCV64InstructionDecoder {
                     writeInstruction(code, pos + i * RISCV64MacroAssembler.INSTRUCTION_SIZE, instruction);
                 }
             }
+            assert pos / RISCV64MacroAssembler.INSTRUCTION_SIZE + mov32BitConstantInstructions.length <=
+                    RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS;
             instruction = RISCV64MacroAssembler.addSubInstructionHelper(RISCV64.x28, RISCV64.x28, RISCV64.x29, false);
             writeInstruction(code, pos + mov32BitConstantInstructions.length * RISCV64MacroAssembler.INSTRUCTION_SIZE, instruction);
         }

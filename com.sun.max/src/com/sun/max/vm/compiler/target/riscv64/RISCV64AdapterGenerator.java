@@ -57,6 +57,8 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
 
     final CiRegister scratch;
 
+    private static final int PUSH_RETURN_ADDRESS_SIZE = 2 * INSTRUCTION_SIZE;
+
     static {
         if (MaxineVM.vm().compilationBroker.needsAdapters()) {
             new Baseline2Opt();
@@ -87,7 +89,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
              */
             @Override
             public int callOffsetInPrologue() {
-                return 2 * INSTRUCTION_SIZE;
+                return PUSH_RETURN_ADDRESS_SIZE;
             }
 
             @Override
@@ -276,7 +278,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
         /**
          * The size in bytes of the prologue, see {@link Baseline2Opt#emitPrologue(Object, Adapter)}.
          */
-        public static final int PROLOGUE_SIZE = RIP_CALL_INSTRUCTION_SIZE + 2 * INSTRUCTION_SIZE;
+        public static final int PROLOGUE_SIZE = RIP_CALL_INSTRUCTION_SIZE + PUSH_RETURN_ADDRESS_SIZE;
 
         @Override
         public int prologueSizeForCallee(ClassMethodActor callee) {
@@ -291,9 +293,8 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
          * <pre>
          *     +0:  subi(RISCV64.sp, RISCV64.sp, 16)
          *     +4:  str(64, RISCV64.sp, RISCV64.ra, 0)
-         *     +4:  jalr <adapter>
-         *     +8:  nop
-         *     +12: nop
+         *     +8:  jalr <adapter>
+         *     +12:  nop
          *     +16: nop
          *     +20: nop
          *     +24: nop
@@ -302,7 +303,8 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
          *     +36: nop
          *     +40: nop
          *     +44: nop
-         *     +48: optimised method body
+         *     +48: nop
+         *     +52: optimised method body
          * </pre>
          */
         @Override
@@ -456,7 +458,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
         /**
          * The offset in the prologue of the call to the adapter.
          */
-        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + 2 * INSTRUCTION_SIZE;
+        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + PUSH_RETURN_ADDRESS_SIZE;
 
         static final int PROLOGUE_SIZE = CALL_OFFSET_IN_PROLOGUE + RIP_CALL_INSTRUCTION_SIZE;
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = OPTIMIZED_ENTRY_POINT.offset();

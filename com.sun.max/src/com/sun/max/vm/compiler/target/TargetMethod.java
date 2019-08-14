@@ -859,7 +859,7 @@ public abstract class TargetMethod extends MemoryRegion {
             if (referenceLiterals != null) {
                 codePreAmble = codePreAmble + (referenceLiterals.length * 4);
             }
-            ARMTargetMethodUtil.maxine_cache_flush(CodePointer.from(codeStart.minus(codePreAmble)).toPointer(), codeLength() + codePreAmble);
+            MaxineVM.maxine_cache_flush(CodePointer.from(codeStart.minus(codePreAmble)).toPointer(), codeLength() + codePreAmble);
         }
     }
 

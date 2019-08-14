@@ -579,6 +579,9 @@ public final class MaxineVM {
     }
 
     @C_FUNCTION
+    public static native void maxine_cache_flush(Pointer start, int length);
+
+    @C_FUNCTION
     public static native long arithmeticldiv(long x, long y);
 
     @C_FUNCTION

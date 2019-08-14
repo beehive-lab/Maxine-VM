@@ -1880,7 +1880,7 @@ public class Stubs {
             patchAddr.writeInt(0, instruction);
             instruction = ARMV7Assembler.movtHelper(ConditionFlag.Always, ARMV7.r12, (disp >> 16) & 0xffff);
             patchAddr.writeInt(4, instruction);
-            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 8);
+            MaxineVM.maxine_cache_flush(patchAddr, 8);
         }
     }
 
@@ -1967,7 +1967,7 @@ public class Stubs {
                 }
             }
 
-            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 16);
+            MaxineVM.maxine_cache_flush(patchAddr, 16);
         }
     }
 
@@ -2036,7 +2036,7 @@ public class Stubs {
             int addInstr = RISCV64MacroAssembler.addSubInstructionHelper(RISCV64.x28, RISCV64.x28, RISCV64.x29, false);
             patchAddr.writeInt(20, addInstr);
 
-            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 24);
+            MaxineVM.maxine_cache_flush(patchAddr, 24);
         }
     }
 

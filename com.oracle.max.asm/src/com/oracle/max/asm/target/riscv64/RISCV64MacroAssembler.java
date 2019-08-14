@@ -64,6 +64,20 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         return displacement | (0xFFF << 20);
     }
 
+    /**
+     * Because RISC-V conditional branching only supports 12 bit signed offsets and unconditional
+     * branching supports 20 bit signed offsets, the simple solution was to move the 32 bit offset into a register,
+     * and then add a conditional jump with the negated condition to go past the direct 32 bit jump.
+     * The following is an example of two equivalent cases, the first when the offset is 12 bit signed, and the second when the offset is 32 bit signed:
+     * 12 bit signed:
+     * +0: beq rs1, rs2, offset
+     *
+     * 32 bit signed:
+     * +0: bneq rs1, rs2, +12
+     * +4: auipc x30, offset (takes the upper 20 bits)
+     * +8: jalr x30, offset (takes the lower 20 bits)
+     * +12: past jump instruction (we jump here if the initial condition doesn't hold)
+    */
     @Override
     protected void patchJumpTarget(int branch, int target) {
         int branchOffset = target - branch;
@@ -76,16 +90,12 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 if (isArithmeticImmediate(branchOffset)) {
                     emitConditionalBranch(cf, rs1, rs2, branchOffset, branch);
                 } else {
+                    // We can't negate ConditionFlag.AL
                     if (cf != ConditionFlag.AL) {
                         emitConditionalBranch(cf.negate(), rs1, rs2, 3 * INSTRUCTION_SIZE, branch - 2 * INSTRUCTION_SIZE);
                     }
                     branchOffset += INSTRUCTION_SIZE;
-                    if ((branchOffset  & 0xFFF) >>> 11 == 0b0) {
-                        auipc(RISCV64.x30, branchOffset, branch - INSTRUCTION_SIZE);
-                    } else {
-                        auipc(RISCV64.x30, branchOffset - (branchOffset | 0xFFFFF000), branch - INSTRUCTION_SIZE);
-                    }
-                    jalr(RISCV64.zero, RISCV64.x30, branchOffset, branch);
+                    insert32BitJumpAtPosition(branchOffset, branch);
                 }
                 break;
             }
@@ -102,43 +112,45 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     jal(RISCV64.zero, branchOffset, branch);
                 } else {
                     branchOffset += INSTRUCTION_SIZE;
-                    if ((branchOffset & 0xFFF) >>> 11 == 0b0) {
-                        auipc(RISCV64.x30, branchOffset, branch - INSTRUCTION_SIZE);
-                    } else {
-                        auipc(RISCV64.x30, branchOffset - (branchOffset | 0xFFFFF000), branch - INSTRUCTION_SIZE);
-                    }
-                    jalr(RISCV64.zero, RISCV64.x30, branchOffset, branch);
+                    insert32BitJumpAtPosition(branchOffset, branch);
                 }
                 break;
             }
             case BRANCH_NONZERO:
-            case BRANCH_ZERO:
-                switch (type) {
-                    case BRANCH_NONZERO: {
-                        throw new UnsupportedOperationException("Unimplemented");
-                    }
-                    case BRANCH_ZERO: {
-                        assert codeBuffer.getShort(branch + 2) == 0;
-                        CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
-                        if (isArithmeticImmediate(branchOffset)) {
-                            emitConditionalBranch(ConditionFlag.EQ, cmp, RISCV64.zero, branchOffset, branch);
-                        } else {
-                            emitConditionalBranch(ConditionFlag.EQ.negate(), cmp, RISCV64.zero, 3 * INSTRUCTION_SIZE, branch - 2 * INSTRUCTION_SIZE);
-                            branchOffset += INSTRUCTION_SIZE;
-                            if ((branchOffset  & 0xFFF) >>> 11 == 0b0) {
-                                auipc(RISCV64.x30, branchOffset, branch - INSTRUCTION_SIZE);
-                            } else {
-                                auipc(RISCV64.x30, branchOffset - (branchOffset | 0xFFFFF000), branch - INSTRUCTION_SIZE);
-                            }
-                            jalr(RISCV64.zero, RISCV64.x30, branchOffset, branch);
-                        }
-                        break;
-                    }
+                throw new UnsupportedOperationException("Unimplemented");
+            case BRANCH_ZERO: {
+                assert codeBuffer.getShort(branch + 2) == 0;
+                CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
+                if (isArithmeticImmediate(branchOffset)) {
+                    emitConditionalBranch(ConditionFlag.EQ, cmp, RISCV64.zero, branchOffset, branch);
+                } else {
+                    emitConditionalBranch(ConditionFlag.EQ.negate(), cmp, RISCV64.zero, 3 * INSTRUCTION_SIZE, branch - 2 * INSTRUCTION_SIZE);
+                    branchOffset += INSTRUCTION_SIZE;
+                    insert32BitJumpAtPosition(branchOffset, branch);
                 }
                 break;
+            }
             default:
                 throw new IllegalArgumentException();
         }
+    }
+
+    public void insert32BitJump(int address) {
+        if ((address & 0xFFF) >>> 11 == 0b0) {
+            auipc(RISCV64.x30, address);
+        } else {
+            auipc(RISCV64.x30, address - (address | 0xFFFFF000));
+        }
+        jalr(RISCV64.zero, RISCV64.x30, address);
+    }
+
+    private void insert32BitJumpAtPosition(int address, int position) {
+        if ((address & 0xFFF) >>> 11 == 0b0) {
+            auipc(RISCV64.x30, address, position - INSTRUCTION_SIZE);
+        } else {
+            auipc(RISCV64.x30, address - (address | 0xFFFFF000), position - INSTRUCTION_SIZE);
+        }
+        jalr(RISCV64.zero, RISCV64.x30, address, position);
     }
 
     public void align(int modulus) {
@@ -736,9 +748,10 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
         assert scratchRegister != compareValue;
         assert newValue != compareValue;
+        assert size <= 64;
 
         CiRegister cmpVal;
-        if (size != 64) {
+        if (size < 64) {
             slli(scratchRegister1, compareValue, 64 - size);
             srli(scratchRegister1, scratchRegister1, 64 - size);
             cmpVal = scratchRegister1;
@@ -843,6 +856,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             int offset = label.position() - codeBuffer.position();
             emitConditionalBranch(RISCV64MacroAssembler.ConditionFlag.EQ, cmp, RISCV64.zero, offset);
         } else {
+            // When the label is unbound, we are not sure if we are going to need 1 or 3 instructions when patching (depends on the offset size).
             nop(2);
             label.addPatchAt(codeBuffer.position());
             int regEncoding = cmp.getEncoding();
@@ -911,18 +925,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         add(reg, reg, delta);
     }
 
-    // TODO Handle case where offset is too large for a single branch immediate instruction.
-    //  Also, when adding this case, make sure to fix patching as well.
     public void b(int offset) {
         if (is20BitArithmeticImmediate(offset)) {
             jal(RISCV64.zero, offset);
         } else {
-            if ((offset & 0xFFF) >>> 11 == 0b0) {
-                auipc(RISCV64.x30, offset);
-            } else {
-                auipc(RISCV64.x30, offset - (offset | 0xFFFFF000));
-            }
-            jalr(RISCV64.zero, RISCV64.x30, offset);
+            insert32BitJump(offset);
         }
     }
 
@@ -930,12 +937,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         if (is20BitArithmeticImmediate(offset)) {
             jal(RISCV64.zero, offset, pos);
         } else {
-            if ((offset & 0xFFF) >>> 11 == 0b0) {
-                auipc(RISCV64.x30, offset, pos);
-            } else {
-                auipc(RISCV64.x30, offset - (offset | 0xFFFFF000), pos);
-            }
-            jalr(RISCV64.zero, RISCV64.x30, offset, pos + INSTRUCTION_SIZE);
+            insert32BitJumpAtPosition(offset, pos + INSTRUCTION_SIZE);
         }
     }
 
@@ -945,21 +947,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      * @param label
      */
     public void b(Label label) {
-        // TODO Handle case where offset is too large for a single
-        // branch immediate instruction.
         if (label.isBound()) {
             int offset = label.position() - codeBuffer.position();
-            if (is20BitArithmeticImmediate(offset)) {
-                jal(RISCV64.zero, offset);
-            } else {
-                if ((offset & 0xFFF) >>> 11 == 0b0) {
-                    auipc(RISCV64.x30, offset);
-                } else {
-                    auipc(RISCV64.x30, offset - (offset | 0xFFFFF000));
-                }
-                jalr(RISCV64.zero, RISCV64.x30, offset);
-            }
+            b(offset);
         } else {
+            // When the label is unbound, we are not sure if we are going to need 1 or 2 instructions when patching (depends on the offset size).
             nop();
             label.addPatchAt(codeBuffer.position());
             emitByte(PatchLabelKind.BRANCH_UNCONDITIONALLY.encoding);
@@ -1068,6 +1060,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
+    public void setLessThanFloatingPoint(CiRegister rd, CiRegister rs1, CiRegister rs2, boolean isDouble) {
+        if (isDouble) {
+            fltd(rd, rs1, rs2);
+        } else {
+            flts(rd, rs1, rs2);
+        }
+    }
+
     public void bgt(CiRegister rs1, CiRegister rs2, int imm32) {
         blt(rs2, rs1, imm32);
     }
@@ -1100,16 +1100,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     emitConditionalBranch(condition.negate(), rs1, rs2, 3 * INSTRUCTION_SIZE);
                     offset -= INSTRUCTION_SIZE;
                 }
-
-                if ((offset & 0xFFF) >>> 11 == 0b0) {
-                    auipc(RISCV64.x30, offset);
-                } else {
-                    auipc(RISCV64.x30, offset - (offset | 0xFFFFF000));
-                }
-                jalr(RISCV64.zero, RISCV64.x30, offset);
+                insert32BitJump(offset);
             }
         } else {
-            nop(2); // If we need to apply the case above when patching
+            // When the label is unbound, we are not sure if we are going to need 1 or 3 instructions when patching (depends on the offset size).
+            nop(2);
             label.addPatchAt(codeBuffer.position());
             emitByte(PatchLabelKind.BRANCH_CONDITIONALLY.encoding);
             emitByte(condition.encoding);
@@ -1273,7 +1268,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
     public final void crashme() {
         mov(scratchRegister, 0);
-        ldru(64, scratchRegister, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister));
+        ldr(64, scratchRegister, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister));
         insertForeverLoop();
     }
 
@@ -1649,7 +1644,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
     public void nullCheck(CiRegister r) {
         RISCV64Address address = RISCV64Address.createBaseRegisterOnlyAddress(r);
-        ldru(64, RISCV64.zr, address);
+        ldr(64, RISCV64.zr, address);
     }
 
     /**
