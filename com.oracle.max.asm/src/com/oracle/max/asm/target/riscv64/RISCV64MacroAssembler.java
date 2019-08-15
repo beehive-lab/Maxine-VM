@@ -43,6 +43,8 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     private static final int PATCH_BRANCH_CONDITIONALLY_NOPS = 2;
     private static final int PATCH_BRANCH_UNCONDITIONALLY_NOPS = 1;
 
+    private static int nopInstructionEncoding = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x0, RISCV64.x0, 0);
+
     public RISCV64MacroAssembler(CiTarget target) {
         super(target);
     }
@@ -92,6 +94,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         PatchLabelKind type = PatchLabelKind.fromEncoding(codeBuffer.getByte(branch));
         switch (type) {
             case BRANCH_CONDITIONALLY: {
+                assertIfNops(branch - PATCH_BRANCH_CONDITIONALLY_NOPS * INSTRUCTION_SIZE, PATCH_BRANCH_CONDITIONALLY_NOPS);
                 ConditionFlag cf = ConditionFlag.fromEncoding(codeBuffer.getByte(branch + 1));
                 CiRegister rs1 = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 2) & 0b11111];
                 CiRegister rs2 = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 3) & 0b11111];
@@ -102,9 +105,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     if (cf != ConditionFlag.AL) {
                         emitConditionalBranch(cf.negate(), rs1, rs2, 3 * INSTRUCTION_SIZE, branch - 2 * INSTRUCTION_SIZE);
                     }
-                    // Adjust branchOffset to compensate with the fact that auipc will use PC(jalr) - INSTRUCTION_SIZE
-                    branchOffset += INSTRUCTION_SIZE;
-                    insert32BitJumpAtPosition(branchOffset, branch);
+                    insert32BitJumpForPatch(branchOffset, branch);
                 }
                 break;
             }
@@ -115,34 +116,38 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 break;
             }
             case BRANCH_UNCONDITIONALLY: {
+                assertIfNops(branch - PATCH_BRANCH_UNCONDITIONALLY_NOPS * INSTRUCTION_SIZE, PATCH_BRANCH_UNCONDITIONALLY_NOPS);
                 assert codeBuffer.getByte(branch + 1) == 0;
                 assert codeBuffer.getShort(branch + 2) == 0;
                 if (is20BitArithmeticImmediate(branchOffset)) {
                     jal(RISCV64.zero, branchOffset, branch);
                 } else {
-                    // Adjust branchOffset to compensate with the fact that auipc will use PC(jalr) - INSTRUCTION_SIZE
-                    branchOffset += INSTRUCTION_SIZE;
-                    insert32BitJumpAtPosition(branchOffset, branch);
+                    insert32BitJumpForPatch(branchOffset, branch);
                 }
                 break;
             }
             case BRANCH_NONZERO:
                 throw new UnsupportedOperationException("Unimplemented");
             case BRANCH_ZERO: {
+                assertIfNops(branch - PATCH_BRANCH_CONDITIONALLY_NOPS * INSTRUCTION_SIZE, PATCH_BRANCH_CONDITIONALLY_NOPS);
                 assert codeBuffer.getShort(branch + 2) == 0;
                 CiRegister cmp = RISCV64.cpuRegisters[codeBuffer.getByte(branch + 1) & 0b11111];
                 if (isArithmeticImmediate(branchOffset)) {
                     emitConditionalBranch(ConditionFlag.EQ, cmp, RISCV64.zero, branchOffset, branch);
                 } else {
                     emitConditionalBranch(ConditionFlag.EQ.negate(), cmp, RISCV64.zero, 3 * INSTRUCTION_SIZE, branch - 2 * INSTRUCTION_SIZE);
-                    // Adjust branchOffset to compensate with the fact that auipc will use PC(jalr) - INSTRUCTION_SIZE
-                    branchOffset += INSTRUCTION_SIZE;
-                    insert32BitJumpAtPosition(branchOffset, branch);
+                    insert32BitJumpForPatch(branchOffset, branch);
                 }
                 break;
             }
             default:
                 throw new IllegalArgumentException();
+        }
+    }
+
+    public void assertIfNops(int startPos, int numberOfNops) {
+        for (int i = 0; i < numberOfNops; i++) {
+            assert codeBuffer.getInt(startPos  + i * INSTRUCTION_SIZE) == nopInstructionEncoding;
         }
     }
 
@@ -153,6 +158,12 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             auipc(RISCV64.x30, address - (address | 0xFFFFF000));
         }
         jalr(RISCV64.zero, RISCV64.x30, address);
+    }
+
+    private void insert32BitJumpForPatch(int address, int position) {
+        // Adjust address to compensate with the fact that auipc will use PC(jalr) - INSTRUCTION_SIZE
+        address += INSTRUCTION_SIZE;
+        insert32BitJumpAtPosition(address, position);
     }
 
     private void insert32BitJumpAtPosition(int address, int position) {

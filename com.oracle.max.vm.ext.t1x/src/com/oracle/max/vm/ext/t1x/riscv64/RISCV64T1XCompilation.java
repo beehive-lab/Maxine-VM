@@ -836,6 +836,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 int targetBCI = data[i++];
                 int target = bciToPos[targetBCI];
                 assert target != 0;
+                asm.assertIfNops(pos, PATCH_BRANCH_CONDITIONALLY_NOPS);
                 CiRegister rs1 = RISCV64.cpuRegisters[data[i++]];
                 CiRegister rs2 = RISCV64.cpuRegisters[data[i++]];
                 buf.setPosition(pos);
@@ -844,6 +845,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 int pos = data[i++];
                 int targetBCI = data[i++];
                 int target = bciToPos[targetBCI];
+                asm.assertIfNops(pos, PATCH_BRANCH_UNCONDITIONALLY_NOPS);
                 assert target != 0;
                 buf.setPosition(pos);
                 jmp(target, false);
