@@ -29,7 +29,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.StackFrameCursor;
 import com.sun.max.vm.stack.StackFrameWalker;

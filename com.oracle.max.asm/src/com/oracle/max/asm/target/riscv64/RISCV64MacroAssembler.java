@@ -35,6 +35,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public static final int CALL_TRAMPOLINE2_OFFSET = INSTRUCTION_SIZE * (CALL_TRAMPOLINE_INSTRUCTIONS + 1);
     public static final int CALL_BRANCH_OFFSET = RIP_CALL_INSTRUCTION_SIZE - INSTRUCTION_SIZE;
 
+    /**
+     * Same variables are declared in RISCV64T1XCompilation. However the values here are decremented by one because
+     * MacroAssembler patching is done using the codebuffer as opposed to a separate data buffer as in T1X.
+     * Therefore, we use less patch nops to include the extra instructions needed.
+     */
+    private static final int PATCH_BRANCH_CONDITIONALLY_NOPS = 2;
+    private static final int PATCH_BRANCH_UNCONDITIONALLY_NOPS = 1;
+
     public RISCV64MacroAssembler(CiTarget target) {
         super(target);
     }
@@ -94,6 +102,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     if (cf != ConditionFlag.AL) {
                         emitConditionalBranch(cf.negate(), rs1, rs2, 3 * INSTRUCTION_SIZE, branch - 2 * INSTRUCTION_SIZE);
                     }
+                    // Adjust branchOffset to compensate with the fact that auipc will use PC(jalr) - INSTRUCTION_SIZE
                     branchOffset += INSTRUCTION_SIZE;
                     insert32BitJumpAtPosition(branchOffset, branch);
                 }
@@ -111,6 +120,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 if (is20BitArithmeticImmediate(branchOffset)) {
                     jal(RISCV64.zero, branchOffset, branch);
                 } else {
+                    // Adjust branchOffset to compensate with the fact that auipc will use PC(jalr) - INSTRUCTION_SIZE
                     branchOffset += INSTRUCTION_SIZE;
                     insert32BitJumpAtPosition(branchOffset, branch);
                 }
@@ -125,6 +135,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                     emitConditionalBranch(ConditionFlag.EQ, cmp, RISCV64.zero, branchOffset, branch);
                 } else {
                     emitConditionalBranch(ConditionFlag.EQ.negate(), cmp, RISCV64.zero, 3 * INSTRUCTION_SIZE, branch - 2 * INSTRUCTION_SIZE);
+                    // Adjust branchOffset to compensate with the fact that auipc will use PC(jalr) - INSTRUCTION_SIZE
                     branchOffset += INSTRUCTION_SIZE;
                     insert32BitJumpAtPosition(branchOffset, branch);
                 }
@@ -857,7 +868,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             emitConditionalBranch(RISCV64MacroAssembler.ConditionFlag.EQ, cmp, RISCV64.zero, offset);
         } else {
             // When the label is unbound, we are not sure if we are going to need 1 or 3 instructions when patching (depends on the offset size).
-            nop(2);
+            nop(PATCH_BRANCH_CONDITIONALLY_NOPS);
             label.addPatchAt(codeBuffer.position());
             int regEncoding = cmp.getEncoding();
             emitByte(PatchLabelKind.BRANCH_ZERO.encoding);
@@ -937,6 +948,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         if (is20BitArithmeticImmediate(offset)) {
             jal(RISCV64.zero, offset, pos);
         } else {
+            // insert32BitJumpAtPosition will insert auipc at pos - INSTRUCTION_SIZE
             insert32BitJumpAtPosition(offset, pos + INSTRUCTION_SIZE);
         }
     }
@@ -952,7 +964,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             b(offset);
         } else {
             // When the label is unbound, we are not sure if we are going to need 1 or 2 instructions when patching (depends on the offset size).
-            nop();
+            nop(PATCH_BRANCH_UNCONDITIONALLY_NOPS);
             label.addPatchAt(codeBuffer.position());
             emitByte(PatchLabelKind.BRANCH_UNCONDITIONALLY.encoding);
             emitByte(0);
@@ -1104,7 +1116,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             }
         } else {
             // When the label is unbound, we are not sure if we are going to need 1 or 3 instructions when patching (depends on the offset size).
-            nop(2);
+            nop(PATCH_BRANCH_CONDITIONALLY_NOPS);
             label.addPatchAt(codeBuffer.position());
             emitByte(PatchLabelKind.BRANCH_CONDITIONALLY.encoding);
             emitByte(condition.encoding);

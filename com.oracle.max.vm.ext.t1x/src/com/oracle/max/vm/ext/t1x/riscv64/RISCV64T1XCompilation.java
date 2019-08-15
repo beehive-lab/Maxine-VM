@@ -790,7 +790,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     protected void jmp(int target, boolean addPatchNops) {
         if (addPatchNops) {
             // Patching this might use 2 instructions if the offset is larger than 20 bits
-            asm.nop(2);
+            asm.nop(PATCH_BRANCH_UNCONDITIONALLY_NOPS);
         } else {
             asm.b(target - buf.position());
         }
@@ -807,7 +807,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     protected void jcc(ConditionFlag cc, int target, CiRegister rs1, CiRegister rs2, boolean addPatchNops) {
         if (addPatchNops) {
             // Patching this might use 3 instructions if the offset is larger than 12 bits
-            asm.nop(3);
+            asm.nop(PATCH_BRANCH_CONDITIONALLY_NOPS);
         } else {
             if (RISCV64MacroAssembler.isArithmeticImmediate(target - buf.position())) {
                 asm.emitConditionalBranch(cc, rs1, rs2, target - buf.position());
@@ -918,7 +918,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                     }
                 }
                 asm.add(scratch, scratch, scratch1);
-                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - 5);
+                // movInstr.length + RISCV64MacroAssembler.INSTRUCTION_SIZE to account for the mov32bitConstant and add above.
+                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - (movInstr.length + RISCV64MacroAssembler.INSTRUCTION_SIZE));
                 asm.ldru(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
                 byte[] patternMov32BitConstant = asm.codeBuffer.close(true);
 
@@ -936,6 +937,15 @@ public class RISCV64T1XCompilation extends T1XCompilation {
         }
         return result;
     }
+
+
+    /**
+     * Same variables are declared in RISCV64MacroAssembler. However the values here are incremented by one because
+     * T1X patching is done using PatchInfoRISCV64 which has it's own data array and does not use the
+     * codebuffer to hold patch data. Therefore, we have to include the codebuffer data in our nops.
+     */
+    private static final int PATCH_BRANCH_CONDITIONALLY_NOPS = 3;
+    private static final int PATCH_BRANCH_UNCONDITIONALLY_NOPS = 2;
 
     static class PatchInfoRISCV64 extends PatchInfo {
 

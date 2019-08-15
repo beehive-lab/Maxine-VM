@@ -53,8 +53,8 @@ public final class RISCV64InstructionDecoder {
                     writeInstruction(code, pos + i * RISCV64MacroAssembler.INSTRUCTION_SIZE, instruction);
                 }
             }
-            assert pos / RISCV64MacroAssembler.INSTRUCTION_SIZE + mov32BitConstantInstructions.length <=
-                    RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS;
+            assert mov32BitConstantInstructions.length <=
+                    RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - 1;
             instruction = RISCV64MacroAssembler.addSubInstructionHelper(RISCV64.x28, RISCV64.x28, RISCV64.x29, false);
             writeInstruction(code, pos + mov32BitConstantInstructions.length * RISCV64MacroAssembler.INSTRUCTION_SIZE, instruction);
         }
