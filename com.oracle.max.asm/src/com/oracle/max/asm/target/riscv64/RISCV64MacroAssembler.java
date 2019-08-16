@@ -43,7 +43,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     private static final int PATCH_BRANCH_CONDITIONALLY_NOPS = 2;
     private static final int PATCH_BRANCH_UNCONDITIONALLY_NOPS = 1;
 
-    private static int nopInstructionEncoding = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x0, RISCV64.x0, 0);
+    private static final int nopInstructionEncoding = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x0, RISCV64.x0, 0);
 
     public RISCV64MacroAssembler(CiTarget target) {
         super(target);
