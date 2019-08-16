@@ -65,6 +65,8 @@ boolean task_read_registers(pid_t tid,
         struct user_fpregs osFloatRegisters;
 #elif defined __aarch64__
         struct user_fpsimd_struct osFloatRegisters;
+#elif  defined(__riscv64__) || defined(riscv64) || defined(RISCV64)
+        struct user_fpsimd_struct osFloatRegisters;
 #else
         struct user_fpregs_struct osFloatRegisters;
 #endif
@@ -106,6 +108,8 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
 #ifdef __arm__
         Address stackPointer = (Address) canonicalIntegerRegisters.r13;
 #elif defined __aarch64__
+        Address stackPointer = (Address) canonicalStateRegisters.sp;
+#elif defined(__riscv64__) || defined(riscv64) || defined(RISCV64)
         Address stackPointer = (Address) canonicalStateRegisters.sp;
 #else
         Address stackPointer = (Address) canonicalIntegerRegisters.rsp;

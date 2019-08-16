@@ -107,6 +107,9 @@ ifeq ($(TARGETOS),Linux)
     ifeq ($(TARGETISA), aarch64)
         ISA := aarch64
     endif
+    ifeq ($(TARGETISA), riscv64)
+        ISA := riscv64
+    endif
     ifeq ($(TARGETISA), armv7l)
         ISA := arm
         OTHER_CFLAGS := -marm -O0 -g -mcpu=cortex-a9

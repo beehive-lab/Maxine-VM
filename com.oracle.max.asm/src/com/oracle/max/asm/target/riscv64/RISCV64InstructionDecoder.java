@@ -34,14 +34,37 @@ public final class RISCV64InstructionDecoder {
         assert pos + RISCV64MacroAssembler.INSTRUCTION_SIZE *
                 RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS <= code.length;
 
-        int instruction = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x28, RISCV64.x28,  offset);
-
         pos += 4; //skip asm.auipc(scratch, 0);
 
-        code[pos] = (byte) (instruction & 0xFF);
-        code[pos + 1] = (byte) ((instruction >> 8) & 0xFF);
-        code[pos + 2] = (byte) ((instruction >> 16) & 0xFF);
-        code[pos + 3] = (byte) ((instruction >> 24) & 0xFF);
+        //Nop everything except the asm.auipc(scratch, 0);
+        int instruction = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x0, RISCV64.x0, 0);
+        for (int i = 0; i < RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS; i++) {
+            writeInstruction(code, pos + i * RISCV64MacroAssembler.INSTRUCTION_SIZE, instruction);
+        }
+
+        if (RISCV64MacroAssembler.isArithmeticImmediate(offset)) {
+            instruction = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x28, RISCV64.x28,  offset);
+            writeInstruction(code, pos, instruction);
+        } else {
+            int[] mov32BitConstantInstructions = RISCV64MacroAssembler.mov32BitConstantHelper(RISCV64.x29, offset);
+            for (int i = 0; i < mov32BitConstantInstructions.length; i++) {
+                instruction = mov32BitConstantInstructions[i];
+                if (instruction != 0) { // fill in with asm.nop() if mov32BitConstant did not need those instructions
+                    writeInstruction(code, pos + i * RISCV64MacroAssembler.INSTRUCTION_SIZE, instruction);
+                }
+            }
+            assert mov32BitConstantInstructions.length <=
+                    RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - 1;
+            instruction = RISCV64MacroAssembler.addSubInstructionHelper(RISCV64.x28, RISCV64.x28, RISCV64.x29, false);
+            writeInstruction(code, pos + mov32BitConstantInstructions.length * RISCV64MacroAssembler.INSTRUCTION_SIZE, instruction);
+        }
+    }
+
+    private static void writeInstruction(byte[] code, int offset, int instruction) {
+        code[offset + 0] = (byte) (instruction       & 0xFF);
+        code[offset + 1] = (byte) (instruction >> 8  & 0xFF);
+        code[offset + 2] = (byte) (instruction >> 16 & 0xFF);
+        code[offset + 3] = (byte) (instruction >> 24 & 0xFF);
     }
 }
 

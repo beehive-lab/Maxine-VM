@@ -95,6 +95,8 @@ Java_com_sun_max_platform_Platform_nativeGetISA(JNIEnv *env, jclass c)
     return (*env)->NewStringUTF(env, "ARM");
 #elif isa_AARCH64
     return (*env)->NewStringUTF(env, "Aarch64");
+#elif isa_RISCV64
+    return (*env)->NewStringUTF(env, "Riscv64");
 #else
 #   error
 #endif

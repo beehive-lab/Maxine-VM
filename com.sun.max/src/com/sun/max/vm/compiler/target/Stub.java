@@ -34,6 +34,7 @@ import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.code.CodeManager.*;
@@ -179,8 +180,8 @@ public final class Stub extends TargetMethod {
         }
         if (!isHosted()) {
             linkDirectCalls();
-            if (platform().target.arch.isARM() || platform().target.arch.isAarch64()) {
-                ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
+            if (platform().target.arch.isARM() || platform().target.arch.isAarch64() || platform().target.arch.isRISCV64()) {
+                MaxineVM.maxine_cache_flush(codeStart().toPointer(), code().length);
             }
         }
     }

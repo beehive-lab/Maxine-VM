@@ -525,6 +525,8 @@ public final class JDK_java_lang_System {
                 return "x86";
             case SPARC:
                 return (Word.width() == 64) ? "sparcv9" : "sparc";
+            case RISCV64:
+                return "riscv64";
             default:
                 FatalError.unimplemented("com.sun.max.vm.jdk.JDK_java_lang_System.getISA");
                 break;
@@ -549,6 +551,8 @@ public final class JDK_java_lang_System {
                 return "x86";
             case SPARC:
                 return (Word.width() == 64) ? "sparcv9" : "sparc";
+            case RISCV64:
+                return "riscv64";
             default:
                 FatalError.unimplemented("com.sun.max.vm.jdk.JDK_java_lang_System.getISAList");
                 break;

@@ -140,6 +140,7 @@ public final class RISCV64TargetMethodUtil {
         instruction = jumpAndLinkImmediateHelper(RISCV64.zero, offset);
         patchSite.writeInt(0, instruction);
 
+        MaxineVM.maxine_cache_flush(patchSite, RIP_CALL_INSTRUCTION_SIZE);
     }
 
     private static void writeJump(Pointer patchSite, CodePointer target) {
@@ -270,6 +271,7 @@ public final class RISCV64TargetMethodUtil {
      */
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
         CodePointer callSite = tm.codeAt(callOffset);
+
         if (MaxineVM.isHosted()) {
             long disp64 = target.toLong() - callSite.plus(CALL_BRANCH_OFFSET).toLong();
             int disp32 = (int) disp64;
@@ -296,7 +298,7 @@ public final class RISCV64TargetMethodUtil {
 
         long disp64 = target.toLong() - branchSitePointer.toLong();
         int disp32 = (int) disp64;
-        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range: " + disp64);
         patchCallTrampoline(callSitePointer, disp32, isLinked);
 
         return oldTarget;
@@ -346,8 +348,8 @@ public final class RISCV64TargetMethodUtil {
         // Skip the saved link register. Skip stackAlignment bytes since the push is 16-byte aligned as well
         Pointer callerSP = ripPointer.plus(Platform.target().stackAlignment);
         Pointer callerFP;
-        if (!csa.isZero() && csl.contains(RISCV64.fp.getEncoding())) {
-            callerFP = sfw.readWord(csa, csl.offsetOf(RISCV64.fp.getEncoding())).asPointer();
+        if (!csa.isZero() && csl.contains(RISCV64.fp.number)) {
+            callerFP = sfw.readWord(csa, csl.offsetOf(RISCV64.fp.number)).asPointer();
         } else {
             callerFP = current.fp();
         }

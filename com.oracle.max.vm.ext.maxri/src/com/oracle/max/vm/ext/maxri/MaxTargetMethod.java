@@ -151,8 +151,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (!isHosted()) {
             if (install) {
                 linkDirectCalls();
-                if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64()) {
-                    ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
+                if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64() || Platform.target().arch.isRISCV64()) {
+                    MaxineVM.maxine_cache_flush(codeStart().toPointer(), code().length);
                 }
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset
@@ -753,7 +753,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     @NEVER_INLINE
     public static void unwindToCalleeEpilogue(CodePointer catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
         // Overwrite return address of callee with catch address
-        final int slotSize = target().arch.isAarch64() ? JVMSFrameLayout.JVMS_SLOT_SIZE : Word.size();
+        final int slotSize = target().arch.isAarch64() || target().arch.isRISCV64() ? JVMSFrameLayout.JVMS_SLOT_SIZE : Word.size();
         final Pointer returnAddressPointer = stackPointer.minus(slotSize);
         returnAddressPointer.setWord(catchAddress.toAddress());
 

@@ -32,109 +32,75 @@ import com.sun.cri.ci.*;
  * - Pre-indexed: base + immediate offset are written back to base register, value used in instruction is base + offset
  * - Post-indexed: base + offset (immediate or register) are written back to base register,
  * value used in instruction is base only
- * - Literal: PC + 19-bit signed word aligned offset
  * <p>
  * Not all addressing modes are supported for all instructions.
  */
 public final class RISCV64Address extends CiAddress {
     // Placeholder for addresses that get patched later.
-    public static final RISCV64Address Placeholder = new RISCV64Address(CiKind.Illegal, RISCV64.zr.asValue(), RISCV64.zr.asValue(), 0, false, null, AddressingMode.PC_LITERAL);
+    public static final RISCV64Address Placeholder = new RISCV64Address(CiKind.Illegal, RISCV64.x31.asValue(), 0, AddressingMode.BASE_REGISTER_ONLY);
     private static final long serialVersionUID = 2306820231108443722L;
 
     public enum AddressingMode {
         /**
-         * base + uimm12 << log2(memory_transfer_size).
+         * base + imm12.
          */
-        IMMEDIATE_SCALED,
-        /**
-         * base + imm9.
-         */
-        IMMEDIATE_UNSCALED,
+        IMMEDIATE,
         /**
          * base.
          */
         BASE_REGISTER_ONLY,
         /**
-         * base + offset [<< log2(memory_transfer_size)].
-         */
-        REGISTER_OFFSET,
-        /**
-         * base + extend(offset) [<< log2(memory_transfer_size)].
-         */
-        EXTENDED_REGISTER_OFFSET,
-        /**
-         * PC + imm21 (word aligned).
-         */
-        PC_LITERAL,
-        /**
          * address = base.
-         * base is updated to base + imm9
+         * base is updated to base + imm12
          */
         IMMEDIATE_POST_INDEXED,
         /**
          * address = base + imm9.
-         * base is updated to base + imm9
+         * base is updated to base + imm12
          */
         IMMEDIATE_PRE_INDEXED,
     }
 
     private final CiRegister base;
-    private final CiRegister offset;
     private final int immediate;
-    /**
-     * Should register offset be scaled or not.
-     */
-    private final boolean scaled;
-    private final RISCV64Assembler.ExtendType extendType;
     private final AddressingMode addressingMode;
 
     /**
      * General address generation mechanism. Accepted values for all parameters depend on the addressingMode.
      * Null is never accepted for a register, if an addressMode doesn't use a register the register has to be the zero-register.
-     * extendType has to be null for every addressingMode except EXTENDED_REGISTER_OFFSET.
      */
-    public static RISCV64Address createAddress(CiKind kind, AddressingMode addressingMode, CiRegister base, CiRegister offset,
-                                             int immediate, boolean isScaled, RISCV64Assembler.ExtendType extendType) {
-        return new RISCV64Address(kind, base.asValue(), offset.asValue(), immediate, isScaled, extendType, addressingMode);
+    public static RISCV64Address createAddress(CiKind kind, AddressingMode addressingMode, CiRegister base,
+                                               int immediate) {
+        return new RISCV64Address(kind, base.asValue(), immediate, addressingMode);
     }
 
     /**
      * @param base may not be null or the zero-register.
-     * @param imm9 Signed 9 bit immediate value.
+     * @param imm9 Signed 12 bit immediate value.
      * @return RISCV64Address specifying a post-indexed immediate address pointing to base.
-     *         After ldr/str instruction, base is updated to point to base + imm9
+     *         After ldr/str instruction, base is updated to point to base + imm12
      */
     public static RISCV64Address createPostIndexedImmediateAddress(CiRegister base, int imm9) {
-        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_POST_INDEXED);
+        return new RISCV64Address(CiKind.Int, base.asValue(), imm9, AddressingMode.IMMEDIATE_POST_INDEXED);
     }
 
     /**
      * @param base may not be null or the zero-register.
-     * @param imm9 Signed 9 bit immediate value.
-     * @return RISCV64Address specifying a pre-indexed immediate address pointing to base + imm9.
-     *         After ldr/str instruction, base is updated to point to base + imm9
+     * @param imm12 Signed 12 bit immediate value.
+     * @return RISCV64Address specifying a pre-indexed immediate address pointing to base + imm12.
+     *         After ldr/str instruction, base is updated to point to base + imm12
      */
-    public static RISCV64Address createPreIndexedImmediateAddress(CiRegister base, int imm9) {
-        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_PRE_INDEXED);
-    }
-
-    /**
-     * @param base  may not be null or the zero-register.
-     * @param imm12 Unsigned 12 bit immediate value. This is scaled by the word access size. This means if this
-     *              address is used to load/store a word, the immediate is shifted by 2 (log2Ceil(4)).
-     * @return RISCV64Address specifying a signed address of the form base + imm12 << log2(memory_transfer_size).
-     */
-    public static RISCV64Address createScaledImmediateAddress(CiRegister base, int imm12) {
-        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), imm12, true, null, AddressingMode.IMMEDIATE_SCALED);
+    public static RISCV64Address createPreIndexedImmediateAddress(CiRegister base, int imm12) {
+        return new RISCV64Address(CiKind.Int, base.asValue(), imm12, AddressingMode.IMMEDIATE_PRE_INDEXED);
     }
 
     /**
      * @param base may not be null or the zero-register.
-     * @param imm9 Signed 9 bit immediate value.
-     * @return RISCV64Address specifying an unscaled immediate address of the form base + imm9
+     * @param imm12 Signed 12 bit immediate value.
+     * @return RISCV64Address specifying an unscaled immediate address of the form base + imm12
      */
-    public static RISCV64Address createUnscaledImmediateAddress(CiRegister base, int imm9) {
-        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_UNSCALED);
+    public static RISCV64Address createImmediateAddress(CiRegister base, int imm12) {
+        return new RISCV64Address(CiKind.Int, base.asValue(), imm12, AddressingMode.IMMEDIATE);
     }
 
     /**
@@ -142,88 +108,30 @@ public final class RISCV64Address extends CiAddress {
      * @return RISCV64Address specifying the address pointed to by base.
      */
     public static RISCV64Address createBaseRegisterOnlyAddress(CiRegister base) {
-        return new RISCV64Address(CiKind.Int, base.asValue(), RISCV64.zr.asValue(), 0, false, null, AddressingMode.REGISTER_OFFSET);
+        return new RISCV64Address(CiKind.Int, base.asValue(), 0, AddressingMode.BASE_REGISTER_ONLY);
     }
 
-    /**
-     * @param base       may not be null or the zero-register.
-     * @param offset     Word register specifying some offset, optionally scaled by the memory_transfer_size.
-     *                   May not be null or the stackpointer.
-     * @param scaled     Specifies whether offset should be scaled by memory_transfer_size or not.
-     * @param extendType Describes whether register is zero- or sign-extended. May not be null.
-     * @return RISCV64Address specifying an extended register offset of the form base + extendType(offset)
-     *         [<< log2(memory_transfer_size)]
-     */
-    public RISCV64Address createExtendedRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled,
-                                                                   RISCV64Assembler.ExtendType extendType) {
-        return new RISCV64Address(CiKind.Int, base.asValue(), offset.asValue(), 0, scaled, extendType, AddressingMode.EXTENDED_REGISTER_OFFSET);
-    }
-
-
-    private RISCV64Address(CiKind kind, CiValue base, CiValue offset, int immediate, boolean scaled,
-                         RISCV64Assembler.ExtendType extendType, AddressingMode addressingMode) {
-        super(kind, base, offset);
+    private RISCV64Address(CiKind kind, CiValue base, int immediate, AddressingMode addressingMode) {
+        super(kind, base, immediate);
         this.base = base.asRegister();
-        this.offset = offset.asRegister();
-        if ((addressingMode == AddressingMode.REGISTER_OFFSET || addressingMode == AddressingMode.EXTENDED_REGISTER_OFFSET)
-                && offset.equals(zr.asValue())) {
-            this.addressingMode = AddressingMode.BASE_REGISTER_ONLY;
-        } else {
-            this.addressingMode = addressingMode;
-        }
+        this.addressingMode = addressingMode;
         this.immediate = immediate;
-        this.scaled = scaled;
-        this.extendType = extendType;
         verify();
     }
 
     private void verify() {
         assert addressingMode != null;
-        assert RISCV64.isIntReg(base) && RISCV64.isIntReg(offset);
+        assert RISCV64.isIntReg(base);
         switch (addressingMode) {
-            case IMMEDIATE_SCALED:
-                assert !base.equals(zr);
-                assert offset.equals(zr);
-                assert extendType == null;
-                assert NumUtil.isUnsignedNbit(12, immediate);
-                break;
-            case IMMEDIATE_UNSCALED:
-                assert !base.equals(zr);
-                assert offset.equals(zr);
-                assert extendType == null;
-                assert NumUtil.isSignedNbit(12, immediate);
-                break;
             case BASE_REGISTER_ONLY:
-                assert !base.equals(zr);
-                assert offset.equals(zr);
-                assert extendType == null;
-                assert immediate == 0;
+                assert !base.equals(zr) : base.number;
+                assert immediate == 0 : immediate;
                 break;
-            case REGISTER_OFFSET:
-                assert !base.equals(zr);
-                assert RISCV64.isGeneralPurposeReg(offset);
-                assert extendType == null;
-                assert immediate == 0;
-                break;
-            case EXTENDED_REGISTER_OFFSET:
-                assert !base.equals(zr);
-                assert RISCV64.isGeneralPurposeReg(offset);
-                assert extendType == RISCV64Assembler.ExtendType.SXTW || extendType == RISCV64Assembler.ExtendType.UXTW;
-                assert immediate == 0;
-                break;
-            case PC_LITERAL:
-                assert base.equals(zr);
-                assert offset.equals(zr);
-                assert extendType == null;
-                assert NumUtil.isSignedNbit(21, immediate);
-                assert (immediate & 0x3) == 0;
-                break;
+            case IMMEDIATE:
             case IMMEDIATE_POST_INDEXED:
             case IMMEDIATE_PRE_INDEXED:
                 assert !base.equals(zr);
-                assert offset.equals(zr);
-                assert extendType == null;
-                assert NumUtil.isSignedNbit(9, immediate);
+                assert NumUtil.isSignedNbit(12, immediate);
                 break;
             default:
                 throw new Error("should not reach here");
@@ -234,56 +142,21 @@ public final class RISCV64Address extends CiAddress {
         return base;
     }
 
-    public CiRegister getOffset() {
-        return offset;
-    }
-
     /**
-     * @return immediate in correct representation for the given addressing mode. For example in case
-     *         of <code>addressingMode ==IMMEDIATE_UNSCALED </code> the value will be returned as the 9bit signed
-     *         representation.
+     * @return immediate in correct representation for the given addressing mode.
      */
     public int getImmediate() {
         switch (addressingMode) {
-            case IMMEDIATE_UNSCALED:
+            case IMMEDIATE:
             case IMMEDIATE_POST_INDEXED:
             case IMMEDIATE_PRE_INDEXED:
-                // 9-bit signed value
-                return immediate & NumUtil.getNbitNumberInt(9);
-            case IMMEDIATE_SCALED:
-                // Unsigned value can be returned as-is.
-                return immediate;
-            case PC_LITERAL:
-                // 21-bit signed value, but lower 2 bits are always 0 and are shifted out.
-                return (immediate >> 2) & NumUtil.getNbitNumberInt(19);
+                return RISCV64MacroAssembler.isAimm(immediate) ?
+                        immediate & NumUtil.getNbitNumberInt(12) :
+                        immediate & NumUtil.getNbitNumberInt(11);
             default:
                 throw new Error("should not reach here!! Should only be called for addressing modes that use immediate values.");
 
         }
-    }
-
-    /**
-     * @return Raw immediate as a 32-bit signed value.
-     */
-    public int getImmediateRaw() {
-        switch (addressingMode) {
-            case IMMEDIATE_UNSCALED:
-            case IMMEDIATE_SCALED:
-            case IMMEDIATE_POST_INDEXED:
-            case IMMEDIATE_PRE_INDEXED:
-            case PC_LITERAL:
-                return immediate;
-            default:
-                throw new Error("should not reach here!! Should only be called for addressing modes that use immediate values.");
-        }
-    }
-
-    public boolean isScaled() {
-        return scaled;
-    }
-
-    public RISCV64Assembler.ExtendType getExtendType() {
-        return extendType;
     }
 
     public AddressingMode getAddressingMode() {
@@ -291,29 +164,11 @@ public final class RISCV64Address extends CiAddress {
     }
 
     public String toString(int log2TransferSize) {
-        int shiftVal = scaled ? log2TransferSize : 0;
         switch (addressingMode) {
-            case IMMEDIATE_SCALED:
-                return String.format("[X%d, %d]", base.getEncoding(), immediate << log2TransferSize);
-            case IMMEDIATE_UNSCALED:
+            case IMMEDIATE:
                 return String.format("[X%d, %d]", base.getEncoding(), immediate);
             case BASE_REGISTER_ONLY:
                 return String.format("[X%d]", base.getEncoding());
-            case EXTENDED_REGISTER_OFFSET:
-                if (shiftVal != 0) {
-                    return String.format("[X%d, W%d, %s %d]", base.getEncoding(), offset.getEncoding(), extendType.name(), shiftVal);
-                } else {
-                    return String.format("[X%d, W%d, %s]", base.getEncoding(), offset.getEncoding(), extendType.name());
-                }
-            case REGISTER_OFFSET:
-                if (shiftVal != 0) {
-                    return String.format("[X%d, X%d, LSL %d]", base.getEncoding(), offset.getEncoding(), shiftVal);
-                } else {
-                    // LSL 0 may be optional, but still encoded differently so we always leave it off
-                    return String.format("[X%d, X%d]", base.getEncoding(), offset.getEncoding());
-                }
-            case PC_LITERAL:
-                return String.format(".%s%d", immediate >= 0 ? "+" : "", immediate);
             case IMMEDIATE_POST_INDEXED:
                 return String.format("[X%d],%d", base.getEncoding(), immediate);
             case IMMEDIATE_PRE_INDEXED:

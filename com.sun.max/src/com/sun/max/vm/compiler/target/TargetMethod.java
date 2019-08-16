@@ -851,7 +851,7 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     public void cleanCache() {
-        if (!MaxineVM.isHosted() && (platform().target.arch.isARM() || platform().target.arch.isAarch64())) {
+        if (!MaxineVM.isHosted() && (platform().target.arch.isARM() || platform().target.arch.isAarch64() || platform().target.arch.isRISCV64())) {
             int codePreAmble = 0;
             if (scalarLiterals != null) {
                 codePreAmble = scalarLiterals.length;
@@ -859,7 +859,7 @@ public abstract class TargetMethod extends MemoryRegion {
             if (referenceLiterals != null) {
                 codePreAmble = codePreAmble + (referenceLiterals.length * 4);
             }
-            ARMTargetMethodUtil.maxine_cache_flush(CodePointer.from(codeStart.minus(codePreAmble)).toPointer(), codeLength() + codePreAmble);
+            MaxineVM.maxine_cache_flush(CodePointer.from(codeStart.minus(codePreAmble)).toPointer(), codeLength() + codePreAmble);
         }
     }
 

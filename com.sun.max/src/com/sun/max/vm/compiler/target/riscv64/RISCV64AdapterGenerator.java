@@ -57,6 +57,8 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
 
     final CiRegister scratch;
 
+    private static final int PUSH_RETURN_ADDRESS_SIZE = 2 * INSTRUCTION_SIZE;
+
     static {
         if (MaxineVM.vm().compilationBroker.needsAdapters()) {
             new Baseline2Opt();
@@ -87,7 +89,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
              */
             @Override
             public int callOffsetInPrologue() {
-                return 5 * INSTRUCTION_SIZE;
+                return PUSH_RETURN_ADDRESS_SIZE;
             }
 
             @Override
@@ -276,7 +278,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
         /**
          * The size in bytes of the prologue, see {@link Baseline2Opt#emitPrologue(Object, Adapter)}.
          */
-        public static final int PROLOGUE_SIZE = RIP_CALL_INSTRUCTION_SIZE + 2 * INSTRUCTION_SIZE;
+        public static final int PROLOGUE_SIZE = RIP_CALL_INSTRUCTION_SIZE + PUSH_RETURN_ADDRESS_SIZE;
 
         @Override
         public int prologueSizeForCallee(ClassMethodActor callee) {
@@ -289,13 +291,20 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
          * The body of the method starts at the {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}.
          * The assembler code is as follows:
          * <pre>
-         *     +0:  str lr, [sp,#-16]!
-         *     +4:  nop
-         *     +8:  nop
-         *     +12: nop
+         *     +0:  subi(RISCV64.sp, RISCV64.sp, 16)
+         *     +4:  str(64, RISCV64.sp, RISCV64.ra, 0)
+         *     +8:  jalr <adapter>
+         *     +12:  nop
          *     +16: nop
-         *     +20: bl <adapter>
-         *     +24: optimised method body
+         *     +20: nop
+         *     +24: nop
+         *     +28: nop
+         *     +32: nop
+         *     +36: nop
+         *     +40: nop
+         *     +44: nop
+         *     +48: nop
+         *     +52: optimised method body
          * </pre>
          */
         @Override
@@ -373,10 +382,10 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             masm.mov(RISCV64.sp, RISCV64.fp);
 
             // and the caller's frame pointer,
-            masm.pop(64, RISCV64.fp);
+            masm.pop(64, RISCV64.fp, true);
 
             // and the baseline return address.
-            masm.pop(64, RISCV64.ra);
+            masm.pop(64, RISCV64.ra, true);
 
             // roll the stack pointer back before the first argument on the caller's stack.
             masm.add(RISCV64.sp, RISCV64.sp, baselineArgsSize);
@@ -449,7 +458,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
         /**
          * The offset in the prologue of the call to the adapter.
          */
-        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + 5 * INSTRUCTION_SIZE;
+        private static final int CALL_OFFSET_IN_PROLOGUE = OPTIMIZED_ENTRY_POINT.offset() + PUSH_RETURN_ADDRESS_SIZE;
 
         static final int PROLOGUE_SIZE = CALL_OFFSET_IN_PROLOGUE + RIP_CALL_INSTRUCTION_SIZE;
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = OPTIMIZED_ENTRY_POINT.offset();
@@ -476,7 +485,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
 
             /**
              * See comments in AMD64AdapterGenerator.
-             * @param walker
+             * @param cursor
              * @return
              */
             @HOSTED_ONLY
@@ -622,15 +631,14 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
                 copyIfOutputStream(masm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
-            Label end = new Label();
-            masm.b(end);
+            int nopTimes = masm.getAlignNopTimes(OPTIMIZED_ENTRY_POINT.offset(), masm.codeBuffer.position() + INSTRUCTION_SIZE);
+            masm.jal(RISCV64.zero, (nopTimes + 3) * INSTRUCTION_SIZE + RIP_CALL_INSTRUCTION_SIZE);
             // Pad with nops up to the OPT entry point
             masm.align(OPTIMIZED_ENTRY_POINT.offset());
             // stack the return address in the caller, i.e. the instruction following the branch to
             // here in the optimised caller.
             masm.push(64, RISCV64.ra);
             masm.call();
-            masm.bind(end);
             int size = masm.codeBuffer.position();
             assert size == PROLOGUE_SIZE : "Bad prologue";
             copyIfOutputStream(masm.codeBuffer, out);
@@ -670,12 +678,12 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             int callPos = masm.codeBuffer.position();
             // The branch to this adapter is from the method prologue, the link register
             // contains the address of the baseline method body, go there.
-            masm.jal(RISCV64.ra, 0);
+            masm.jalr(RISCV64.ra, RISCV64.ra, 0);
             int callSize = masm.codeBuffer.position() - callPos;
 
             // The baseline method will have popped the args off the stack so now
             // RSP is pointing to the RIP of the OPT caller.
-            masm.jal(RISCV64.ra, 0);
+            masm.ret();
             final byte [] code = masm.codeBuffer.close(true);
             String description = Type.OPT2BASELINE + "-Adapter" + sig;
             return new Opt2BaselineAdapter(this, description, adapterFrameSize, code, callPos, callSize);
@@ -705,8 +713,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
                 default :
                     throw ProgramError.unexpected("Bad case");
             }
-            throw new UnsupportedOperationException("Unimplemented");
-//            masm.store(reg, masm.getAddressInFrame(RISCV64.sp, offset32), storeKind);
+            masm.store(reg, masm.getAddressInFrame(RISCV64.sp, offset32), storeKind);
         }
 
         protected void adapt(RISCV64MacroAssembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize) {
@@ -765,7 +772,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
      */
     void stackCopy(RISCV64MacroAssembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         final int size = kind.stackKind.width.numberOfBits;
-        asm.ldr(size, scratch, asm.getAddressInFrame(RISCV64.sp, sourceStackOffset));
+        asm.ldru(size, scratch, asm.getAddressInFrame(RISCV64.sp, sourceStackOffset));
         asm.str(size, scratch, asm.getAddressInFrame(RISCV64.sp, destStackOffset));
     }
 
