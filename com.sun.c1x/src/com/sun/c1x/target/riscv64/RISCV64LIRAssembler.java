@@ -418,7 +418,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         // Set scratch to address of jump table
         int adrPos = buf.position();
         masm.auipc(scratchRegister, 0);
-        masm.add(scratchRegister, scratchRegister, 0);
+        masm.add(64, scratchRegister, scratchRegister, 0);
 
         // Load jump table entry into value and jump to it
         masm.slli(value, value, 2); // Shift left by 2 to make offset in bytes
@@ -432,7 +432,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
         int jumpTablePos = buf.position();
         buf.setPosition(adrPos + 4);
-        masm.add(scratchRegister, scratchRegister, jumpTablePos - adrPos);
+        masm.add(64, scratchRegister, scratchRegister, jumpTablePos - adrPos);
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
@@ -671,10 +671,10 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 final long delta = ((CiConstant) right).asLong();
                 switch (code) {
                     case Add:
-                        masm.add(dest.asRegister(), lreg, delta);
+                        masm.add(size, dest.asRegister(), lreg, delta);
                         break;
                     case Sub:
-                        masm.sub(dest.asRegister(), lreg, delta);
+                        masm.sub(size, dest.asRegister(), lreg, delta);
                         break;
                     default:
                         throw Util.shouldNotReachHere();

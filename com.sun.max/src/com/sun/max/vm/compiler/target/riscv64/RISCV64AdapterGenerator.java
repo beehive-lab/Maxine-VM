@@ -342,7 +342,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             masm.mov(RISCV64.fp, RISCV64.sp);
 
             // allocate the adapter frame
-            masm.sub(RISCV64.sp, RISCV64.sp, adapterFrameSize);
+            masm.sub(64, RISCV64.sp, RISCV64.sp, adapterFrameSize);
             adapterFrameSize += BASELINE_SLOT_SIZE; // Account for the slot holding the FP
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
@@ -388,7 +388,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             masm.pop(64, RISCV64.ra, true);
 
             // roll the stack pointer back before the first argument on the caller's stack.
-            masm.add(RISCV64.sp, RISCV64.sp, baselineArgsSize);
+            masm.add(64, RISCV64.sp, RISCV64.sp, baselineArgsSize);
             masm.jalr(RISCV64.zero, RISCV64.ra, 0);
 
             final byte[] code = masm.codeBuffer.close(true);
@@ -661,7 +661,7 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
             // entry to the main body of the baseline callee) and one at [SP] is the return address in the OPT caller.
 
             // adjust stack pointer to accommodate baseline args
-            masm.sub(RISCV64.sp, RISCV64.sp, adapterFrameSize);
+            masm.sub(64, RISCV64.sp, RISCV64.sp, adapterFrameSize);
             adapterFrameSize += BASELINE_SLOT_SIZE; // Add the RIP slot (16-byte aligned)
 
             int baselineStackOffset = 0;

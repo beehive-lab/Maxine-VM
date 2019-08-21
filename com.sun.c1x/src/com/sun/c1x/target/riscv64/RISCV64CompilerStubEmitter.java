@@ -161,7 +161,7 @@ public class RISCV64CompilerStubEmitter extends CompilerStubEmitter {
         }
         asm.push(64, RISCV64.ra);
         final int frameSize = frameSize();
-        asm.sub(RISCV64.sp, RISCV64.sp, frameSize);
+        asm.sub(64, RISCV64.sp, RISCV64.sp, frameSize);
         tasm.setFrameSize(frameSize);
         comp.frameMap().setFrameSize(frameSize);
         asm.save(csl, csl.frameOffsetToCSA);
@@ -177,7 +177,7 @@ public class RISCV64CompilerStubEmitter extends CompilerStubEmitter {
         asm.restore(csl, frameToCSA);
 
         // Restore rsp
-        asm.add(RISCV64.sp, RISCV64.sp, frameSize());
+        asm.add(64, RISCV64.sp, RISCV64.sp, frameSize());
         asm.ret();
     }
 
