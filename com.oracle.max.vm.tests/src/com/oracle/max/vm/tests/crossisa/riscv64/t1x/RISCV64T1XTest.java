@@ -203,8 +203,8 @@ public class RISCV64T1XTest extends MaxTestCase {
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.codeBuffer.reset();
         masm.mov(RISCV64.x5, 0);
-        masm.mov(RISCV64.x6, Long.MAX_VALUE);
-        masm.mov(RISCV64.x7, Long.MIN_VALUE);
+        masm.mov(RISCV64.x6, Integer.MAX_VALUE);
+        masm.mov(RISCV64.x7, Integer.MIN_VALUE);
         masm.mov(RISCV64.x28, Integer.MIN_VALUE);
         masm.mov(RISCV64.x31, -1);
 
@@ -215,10 +215,10 @@ public class RISCV64T1XTest extends MaxTestCase {
         masm.increment32(RISCV64.x31, Integer.MIN_VALUE);
 
         expectedValues[4] = 1;
-        expectedValues[5] = Long.MIN_VALUE;
-        expectedValues[6] = Long.MAX_VALUE;
+        expectedValues[5] = Integer.MIN_VALUE;
+        expectedValues[6] = Integer.MAX_VALUE;
         expectedValues[27] = -1;
-        expectedValues[30] = (long) Integer.MIN_VALUE - 1;
+        expectedValues[30] = Integer.MAX_VALUE;
 
         long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
         for (int i = 0; i < 31; i++) {
