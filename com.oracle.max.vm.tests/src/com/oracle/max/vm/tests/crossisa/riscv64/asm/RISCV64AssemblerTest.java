@@ -949,12 +949,12 @@ public class RISCV64AssemblerTest {
     public void bLabel() {
         Label loop = new Label();
 
-        asm.add(t1, zero, 0);
-        asm.add(t2, zero, 4);
+        asm.add(64, t1, zero, 0);
+        asm.add(64, t2, zero, 4);
 
         asm.bind(loop);
 
-        asm.add(t1, t1, 1);
+        asm.add(64, t1, t1, 1);
         asm.branchConditionally(ConditionFlag.LT, t1, t2, loop);
 
         tester.setExpectedValue(t1, 0x4);

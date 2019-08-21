@@ -29,7 +29,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 15;
     public static final int INSTRUCTION_SIZE = 4;
 
-    public static final int CALL_TRAMPOLINE_INSTRUCTIONS = 8;
+    public static final int CALL_TRAMPOLINE_INSTRUCTIONS = 6;
     public static final int RIP_CALL_INSTRUCTION_SIZE = ((2 * CALL_TRAMPOLINE_INSTRUCTIONS) + 1) * INSTRUCTION_SIZE;
     public static final int CALL_TRAMPOLINE1_OFFSET = INSTRUCTION_SIZE;
     public static final int CALL_TRAMPOLINE2_OFFSET = INSTRUCTION_SIZE * (CALL_TRAMPOLINE_INSTRUCTIONS + 1);
@@ -261,6 +261,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public void mov32BitConstant(CiRegister dst, int imm32) {
         // Any change made to this function must also be applied to mov32BitConstantHelper
         // Any change made to this function must also be applied to RISCV64TargetMethodUtil::getDisplacementFromTrampoline
+        // Any change made to this function must also be applied to RISCV64DeoptStubPatch::apply
         if (imm32 == 0) {
             and(dst, RISCV64.x0, RISCV64.x0);
             return;
@@ -269,18 +270,17 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         if ((imm32 & 0xFFF) >>> 11 == 0b0) {
             lui(dst, imm32);
         } else {
-            lui(dst, (imm32 + (0b1 << 12)) & 0xFFFFF000);
+            lui(dst, imm32 - (imm32 | 0xFFFFF000));
         }
-        addi(dst, dst, imm32);
-
         if (imm32 > 0) {
-            slli(dst, dst, 32);
-            srli(dst, dst, 32);
+            addiw(dst, dst, imm32);
+        } else {
+            addi(dst, dst, imm32);
         }
     }
 
     public static int[] mov32BitConstantHelper(CiRegister dst, int imm32) {
-        int[] instructions = new int[4];
+        int[] instructions = new int[2];
 
         if (imm32 == 0) {
             // and(dst, RISCV64.x0, RISCV64.x0);
@@ -294,16 +294,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             instructions[0] = LUI.getValue() | dst.number << 7 | (imm32 & 0xFFFFF000);
         } else {
             // lui(dst, (imm32 + (0b1 << 12)) & 0xFFFFF000);
-            instructions[0] = LUI.getValue() | dst.number << 7 | ((imm32 + (0b1 << 12)) & 0xFFFFF000);
+            instructions[0] = LUI.getValue() | dst.number << 7 | ((imm32 - (imm32 | 0xFFFFF000)) & 0xFFFFF000);
         }
-        // addi(dst, dst, imm32);
-        instructions[1] = COMP.getValue() | dst.number << 7 | 0 << 12 | dst.number << 15 | imm32 << 20;
-
         if (imm32 > 0) {
-            // slli(dst, dst, 32);
-            instructions[2] = COMP.getValue() | dst.number << 7 | 1 << 12 | dst.number << 15 | 32 << 20;
-            // srli(dst, dst, 32);
-            instructions[3] = COMP.getValue() | dst.number << 7 | 5 << 12 | dst.number << 15 | 32 << 20;
+            // addiw(dst, dst, imm32);
+            instructions[1] = COMP64.getValue() | dst.number << 7 | 0 << 12 | dst.number << 15 | imm32 << 20;
+        } else {
+            // addi(dst, dst, imm32);
+            instructions[1] = COMP.getValue() | dst.number << 7 | 0 << 12 | dst.number << 15 | imm32 << 20;
         }
 
         return instructions;
@@ -319,6 +317,10 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
     public static int addImmediateHelper(CiRegister rd, CiRegister rs,  int imm12) {
         return COMP.getValue() | rd.getEncoding() << 7 | 0 << 12 | rs.getEncoding() << 15 | imm12 << 20;
+    }
+
+    public static int addImmediateWordHelper(CiRegister rd, CiRegister rs, int imm12) {
+        return COMP64.getValue() | rd.getEncoding() << 7 | 0 << 12 | rs.getEncoding() << 15 | imm12 << 20;
     }
 
     public static int addSubInstructionHelper(CiRegister rd, CiRegister rs1, CiRegister rs2, boolean isNegative) {
@@ -424,6 +426,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
 
         mov64BitConstant(rd, imm);
+    }
+
+    public void addi(int size, CiRegister dst, CiRegister rs1, int immediate) {
+        if (size == 32) {
+            super.addiw(dst, rs1, immediate);
+        } else {
+            super.addi(dst, rs1, immediate);
+        }
     }
 
     public void add(int size, CiRegister rd, CiRegister rs1, CiRegister rs2) {
@@ -854,7 +864,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
             and(scratchRegister, src, scratchRegister1);
             branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, end);
         }
-        add(dst, dst, 1);
+        addi(dst, dst, 1);
         if (scratchAlreadyUsed) {
             pop(64, scratchRegister1, true);
         }
@@ -915,12 +925,12 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         return NumUtil.isInt(Math.abs(imm)) && ((int) imm >= 0 ? NumUtil.isUnsignedNbit(19, (int) imm) : NumUtil.isSignedNbit(20, (int) imm));
     }
 
-    public void add(CiRegister dest, CiRegister source, long delta) {
+    public void add(int size, CiRegister dest, CiRegister source, long delta) {
         if (delta == 0) {
             mov(dest, source);
         } else if (isArithmeticImmediate(delta)) {
             assert delta == (int) delta;
-            super.addi(dest, source, (int) delta);
+            addi(size, dest, source, (int) delta);
         } else {
             CiRegister reg;
             if (dest.number != source.number && dest.number != scratchRegister1.number) {
@@ -929,12 +939,12 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                 reg = RISCV64.x30;
             }
             mov(reg, delta);
-            add(dest, source, reg);
+            add(size, dest, source, reg);
         }
     }
 
-    public void sub(CiRegister dest, CiRegister source, long delta) {
-        add(dest, source, -delta);
+    public void sub(int size, CiRegister dest, CiRegister source, long delta) {
+        add(size, dest, source, -delta);
     }
 
     /**
@@ -944,7 +954,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      * @param delta
      */
     public void increment32(CiRegister reg, int delta) {
-        add(reg, reg, delta);
+        add(32, reg, reg, delta);
     }
 
     public void b(int offset) {
@@ -1247,14 +1257,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         // Trampoline 1
         auipc(scratchRegister1, 0);
         addi(scratchRegister1, scratchRegister1, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE1_OFFSET);
-        nop(4); // mov32BitConstant(scratchRegister, 0);
+        nop(2); // mov32BitConstant(scratchRegister, 0);
         add(64, scratchRegister, scratchRegister1, scratchRegister);
 
         jal(RISCV64.zero, CALL_TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE); // Jump to last branch
         // Trampoline 2
         auipc(scratchRegister1, 0);
         addi(scratchRegister1, scratchRegister1, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE2_OFFSET);
-        nop(4); // mov32BitConstant(scratchRegister, 0);
+        nop(2); // mov32BitConstant(scratchRegister, 0);
         add(64, scratchRegister, scratchRegister1, scratchRegister);
         int after = codeBuffer.position();
         assert CALL_BRANCH_OFFSET == after - before : after - before;
@@ -1650,7 +1660,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
 
         if (disp != 0) {
             if (isArithmeticImmediate(disp)) {
-                add(dest, base, disp);
+                add(64, dest, base, disp);
             } else {
                 mov32BitConstant(dest, disp);
                 add(dest, dest, base);
@@ -1677,7 +1687,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      *            RSP).
      */
     public void bangStackWithOffset(int offset) {
-        sub(scratchRegister, RISCV64.sp, offset);
+        sub(64, scratchRegister, RISCV64.sp, offset);
         str(64, RISCV64.a0, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister));
     }
 

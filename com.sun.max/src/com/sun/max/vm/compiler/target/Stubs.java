@@ -1153,7 +1153,7 @@ public class Stubs {
             asm.restore(csl, frameToCSA);
 
             // undo the frame
-            asm.add(RISCV64.sp, RISCV64.sp, frameSize);
+            asm.add(64, RISCV64.sp, RISCV64.sp, frameSize);
 
             // Pop the link register
             asm.pop(64, RISCV64.ra, true);
@@ -2013,8 +2013,14 @@ public class Stubs {
             int instr = RISCV64MacroAssembler.loadUpperImmediateHelper(RISCV64.x29, luiImmediate);
             patchAddr.writeInt(0, instr);
 
-            // addi(dst, dst, ldips32);
-            instr = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x29, RISCV64.x29, ldips32);
+            if (ldips32 > 0) {
+                // addiw(dst, dst, ldisp32);
+                instr = RISCV64MacroAssembler.addImmediateWordHelper(RISCV64.x29, RISCV64.x29, ldips32);
+            } else {
+                // addi(dst, dst, ldips32);
+                instr = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x29, RISCV64.x29, ldips32);
+            }
+
             patchAddr.writeInt(4, instr);
 
             int shiftLeftInstr = RISCV64MacroAssembler.shiftLeftLogicImmediateHelper(RISCV64.x29, RISCV64.x29, 32);
@@ -2029,8 +2035,13 @@ public class Stubs {
             instr = RISCV64MacroAssembler.loadUpperImmediateHelper(RISCV64.x28, luiImmediate);
             patchAddr.writeInt(12, instr);
 
-            // addi(dst, dst, ldips32);
-            instr = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x28, RISCV64.x28, rdips32);
+            if (rdips32 > 0) {
+                // addiw(dst, dst, rdips32);
+                instr = RISCV64MacroAssembler.addImmediateWordHelper(RISCV64.x28, RISCV64.x28, rdips32);
+            } else {
+                // addi(dst, dst, rdips32);
+                instr = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x28, RISCV64.x28, rdips32);
+            }
             patchAddr.writeInt(16, instr);
 
             int addInstr = RISCV64MacroAssembler.addSubInstructionHelper(RISCV64.x28, RISCV64.x28, RISCV64.x29, false);

@@ -154,9 +154,7 @@ public final class Safepoints {
 
     private static final int CAUSE_OFFSET_SHIFT;
     static {
-        if (Platform.target().arch.isRISCV64()) {
-            CAUSE_OFFSET_SHIFT = 21;
-        } else if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64()) {
+        if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64() || Platform.target().arch.isRISCV64()) {
             CAUSE_OFFSET_SHIFT = 22;
         } else {
             CAUSE_OFFSET_SHIFT = 25;
