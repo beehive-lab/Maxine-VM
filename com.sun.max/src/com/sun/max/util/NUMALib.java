@@ -22,9 +22,40 @@ package com.sun.max.util;
 import com.sun.max.annotate.*;
 
 public class NUMALib {
+
+    private int numOfCores;
+
+    /**
+     * This array holds the configuration. The index is the core/cpu id and the value is the numa node of the core/cpu.
+     */
+    private int[] coreToNUMANodeMap;
+
+    public NUMALib() {
+        numOfCores = numaConfiguredCPUs();
+        assert numOfCores >= Runtime.getRuntime().availableProcessors();
+
+        coreToNUMANodeMap = new int[numOfCores];
+
+        for (int i = 0; i < numOfCores; i++) {
+            coreToNUMANodeMap[i] = numaNodeOfCPU(i);
+            assert coreToNUMANodeMap[i] >= 0 : "Core ID: " + i + " is on NUMA node: " + coreToNUMANodeMap[i];
+        }
+    }
+
+    @INLINE
+    public int getNUMANodeOfCPU(int coreId) {
+        return coreToNUMANodeMap[coreId];
+    }
+
     @C_FUNCTION
     public static native int numalib_available();
 
     @C_FUNCTION
     public static native int numaNodeOfAddress(long address);
+
+    @C_FUNCTION
+    public static native int numaConfiguredCPUs();
+
+    @C_FUNCTION
+    public static native int numaNodeOfCPU(int cpuID);
 }

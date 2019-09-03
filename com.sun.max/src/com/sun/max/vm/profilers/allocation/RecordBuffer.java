@@ -217,7 +217,7 @@ class RecordBuffer {
             throw FatalError.unimplemented("RecordBuffer.record");
         }
         final long timestamp = Intrinsics.getTicks();
-        final int  coreID    = Intrinsics.getCpuID();
+        final int  coreID    = Intrinsics.getCpuID() % 128;
         writeLong(timestamps, currentIndex, timestamp);
         writeInt(coreIDs, currentIndex, coreID);
         writeInt(ids, currentIndex, id);
@@ -243,7 +243,7 @@ class RecordBuffer {
 
     /**
      * Allocation Profiler Output format.
-     * Cycle; isAllocation; UniqueId; ThreadId; Type/Class; Size; NumaNode
+     * Cycle; isAllocation; UniqueId; ThreadId; ThreadNumaNode; Type/Class; Size; NumaNode; TimeStamp; CoreId
      * @param cycle
      * @param allocation
      */
@@ -259,6 +259,10 @@ class RecordBuffer {
             Log.print(";");
 
             Log.print(readInt(threadIds, i));
+            Log.print(";");
+
+            //threadNumaNode
+            Log.print(AllocationProfiler.numaConfig.getNUMANodeOfCPU(readInt(coreIDs, i)));
             Log.print(";");
 
             // read and store the string in the readStringBuffer.

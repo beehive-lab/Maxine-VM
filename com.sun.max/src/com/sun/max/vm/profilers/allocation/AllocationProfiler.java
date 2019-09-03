@@ -128,6 +128,11 @@ public class AllocationProfiler {
     public int survBufferSize = MINIMUMBUFFERSIZE;
 
     /**
+     * The underlying hardware configuration.
+     */
+    public static NUMALib numaConfig;
+
+    /**
      * The options a user can pass to the Allocation Profiler.
      */
     static {
@@ -175,6 +180,8 @@ public class AllocationProfiler {
             Log.println("(Allocation Profiler): Initialize the Heap Boundaries Buffer.");
         }
         initializeHeapBoundariesBuffer();
+
+        numaConfig = new NUMALib();
 
         profilingCycle = 1;
         if (AllocationProfilerVerbose) {
