@@ -838,6 +838,15 @@ def allocprofiler(args):
             del vmArgs[vmArgs.index('validate')]
             profilerArgs.append('-XX:+AllocationProfilerDebug')
 
+        if 'stella' in vmArgs:
+            del vmArgs[vmArgs.index('stella')]
+            profilerArgs.append('-XX:AllocationProfilerHWConfig=1')
+        elif 'numascale' in vmArgs:
+            del vmArgs[vmArgs.index('numascale')]
+            profilerArgs.append('-XX:AllocationProfilerHWConfig=2')
+        else:
+            profilerArgs.append('-XX:AllocationProfilerHWConfig=0')
+
     print('==================================================')
     print('== Launching Maxine VM with Allocation Profiler ==')
     print('==================================================')
