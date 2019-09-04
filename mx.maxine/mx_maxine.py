@@ -658,7 +658,7 @@ def ignoreTheRestOptions(vmArgs, profilerOptions):
                 del vmArgs[vmArgs.index(arg)+1]
             del vmArgs[vmArgs.index(arg)]
 
-def applynumathreadmap(filename):
+def allocProfilerOutputProcessing(filename):
     if type(filename) == list:
         oldFileName = os.path.abspath(filename[0])
     else:
@@ -696,7 +696,7 @@ def applynumathreadmap(filename):
     #object allocation regex
     #Format: 
     #Cycle ; is New Allocation ; ID ; Thread id ; Class/Type ; Size ; NUMA Node ; Timestamp
-    recordPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[^\;.]*\;[0-9]+\;[0-9]+\;[0-9]+\;[0-9]'
+    recordPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[0-9]+\;[^\;.]*\;[0-9]+\;[0-9]+\;[0-9]+\;[0-9]'
 
     #index     - content
     #thread id - numa node
@@ -704,7 +704,8 @@ def applynumathreadmap(filename):
     #there is no thread 0 so put a garbage value
     threadMap.insert(0, -9)
 
-    print('Applying NUMA Thread Map...')
+    print('\n=> Processing AllocProfiler\'s Output:')
+    print('Generating Object Allocation Trace and Heap Boundaries Trace...')
     for line in lines:
         threadMapLineMatch = re.findall(threadMapPattern, line)
         heapBoundariesLineMatch = re.match(heapBoundariesPattern, line)
@@ -734,17 +735,17 @@ def applynumathreadmap(filename):
             cycle = fields[0]
             isAllocation = fields[1]
             uniqueId = fields[2]
-            threadId = int(fields[3])
-            threadNumaNode = threadMap[threadId]
-            classOrType = fields[4]
-            size = fields[5]
-            numaNode = fields[6]
-            timestamp = fields[7]
-            coreid = int(fields[8]) % 128
+            threadId = fields[3]
+            threadNumaNode = fields[4]
+            classOrType = fields[5]
+            size = fields[6]
+            numaNode = fields[7]
+            timestamp = fields[8]
+            coreid = fields[9]
 
             # Create the New Line
-            newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + str(threadId) + ';' + str(threadNumaNode) + ';' + classOrType + ';' + size + ';' + numaNode + ';' + timestamp + ';' + str(coreid)
-            newFile.write(newLine + '\n')
+            newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + threadId + ';' + threadNumaNode + ';' + classOrType + ';' + size + ';' + numaNode + ';' + timestamp + ';' + coreid
+            newFile.write(newLine)
 
         elif (heapBoundariesLineMatch):
             # Heap Boundaries line found
@@ -767,6 +768,10 @@ def applynumathreadmap(filename):
     # replace with the new output
     shutil.move(newFileName, oldFileName)
     
+    print('The Output Processing is Finished.\n')
+    print('=> Results directory:')
+    print('a)' + oldFileName + '\nb)' + hbFileName)
+
 def allocprofiler(args):
     """launch Maxine VM with Allocation Profiler
 
@@ -848,10 +853,7 @@ def allocprofiler(args):
 
     print('==================================================')
     print('The execution is finished.')
-    applynumathreadmap(os.path.basename(os.getenv('MAXINE_LOG_FILE')))
-    print('Finished.')
-    print('=> Results directory: ' + os.getenv('MAXINE_LOG_FILE'))
-    print('=> Results format: Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode; TimeStamp; CoreId')
+    allocProfilerOutputProcessing(os.path.basename(os.getenv('MAXINE_LOG_FILE')))
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
@@ -1038,7 +1040,7 @@ def mx_init(suite):
 
     commands = {
         'allocprofiler': [allocprofiler, ''],
-        'applynumathreadmap': [applynumathreadmap, ''],
+        'allocProfilerOutputProcessing': [allocProfilerOutputProcessing, ''],
         'build': [build, '"for help run mx :build -h"'],
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],
