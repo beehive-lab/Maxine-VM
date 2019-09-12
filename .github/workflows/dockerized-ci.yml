@@ -1,0 +1,130 @@
+name: Dockerized CI
+
+on: push
+
+jobs:
+  x86:
+    name: x86 build and test
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Check style
+      run: $MX checkstyle
+    - name: Build
+      run: $MX build
+    - name: mx jttgen && canonicalizeprojects
+      run: |
+        $MX jttgen
+        $MX canonicalizeprojects
+    - name: x86-image
+      run: $MX -J-ea image
+    - name: Gate
+      run: $MX -J-Xmx1g gate -maxvm-args=-Xmx1g -refvm-args=-Xmx1g
+  aarch64:
+    name: AArch64 cross build and test
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: AArch64-cross-test
+      run: |
+        $MX --J @"-Dmax.platform=linux-aarch64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:aarch64.asm+Aarch64T1XTest+Aarch64T1XpTest+Aarch64JTT
+    - name: AArch64-cross-image
+      run: $MX image -build=DEBUG -platform linux-aarch64 -isa Aarch64
+  armv7:
+    name: ARMv7 cross build and test
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: ARMv7-cross-test
+      run: |
+        $MX --J @"-Dmax.platform=linux-arm -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:armv7.asm+ARMV7T1XTest+ARMV7JTT
+    - name: ARMv7-cross-image
+      run: $MX image -build=DEBUG -platform linux-arm -isa ARMV7
+  riscv:
+    name: RISC-V cross build and test
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: RISC-V-cross-test
+      run: |
+        $MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x+riscv64.jtt
+    - name: RISCV64-cross-image
+      run: $MX image -build=DEBUG -platform linux-riscv64 -isa RISCV64
