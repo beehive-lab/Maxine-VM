@@ -60,6 +60,12 @@ static ThreadLocalsKey theThreadLocalsKey;
 static Address allocateThreadLocalBlock(size_t tlBlockSize) {
 #if os_MAXVE
 	return (Address) maxve_virtualMemory_allocate(tlBlockSize, DATA_VM);
+#elif os_DARWIN
+	Address result;
+	if (posix_memalign((void**)&result, 4096, tlBlockSize) != 0) {
+		printf("posix_memalign failed\n");
+	}
+	return result;
 #else
 	c_ASSERT(tlBlockSize < 100000000);
     return (Address) aligned_alloc(4096, tlBlockSize);
