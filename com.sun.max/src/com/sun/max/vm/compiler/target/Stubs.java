@@ -1372,9 +1372,6 @@ public class Stubs {
             CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
-            // TODO INFINITE LOOP
-            asm.jal(RISCV64.zero, 0);
-
             // the very first instruction must save the flags.
             // we save them twice and overwrite the first copy with the trap instruction/return address.
             asm.push(64, registerConfig.getScratchRegister());

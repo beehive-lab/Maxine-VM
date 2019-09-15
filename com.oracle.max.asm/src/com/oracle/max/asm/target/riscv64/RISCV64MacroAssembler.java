@@ -220,15 +220,19 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void fmov(int size, CiRegister dst, CiRegister src) {
-        assert !(RISCV64.isIntReg(dst) && RISCV64.isIntReg(src)) : "src and dst cannot both be integer registers.";
         if (dst.equals(src)) {
             return;
         }
         if (RISCV64.isIntReg(dst)) {
-            if (size == 32) {
-                fmvxw(dst, src);
+            // Note: We need this check because the ABI can allow for FPU values to be hold in CPU registers
+            if (RISCV64.isIntReg(src)) {
+                mov(dst, src);
             } else {
-                fmvxd(dst, src);
+                if (size == 32) {
+                    fmvxw(dst, src);
+                } else {
+                    fmvxd(dst, src);
+                }
             }
         } else if (RISCV64.isIntReg(src)) {
             if (size == 32) {
@@ -343,6 +347,27 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         instruction |= ((imm32 >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm32 in bits 30:21 of instruction
         instruction |= ((imm32 >> 11) & 1) << 20; // This places bit 11 of imm32 in bit20 of instruction
         instruction |= ((imm32 >> 12) & 0xFF) << 12; // This places bits 19:12 of imm32 in bits 19:12 of instruction
+        return instruction;
+    }
+
+    public static int branchNotEqualHelper(CiRegister rs1, CiRegister rs2, int imm32) {
+        int instruction = BRNC.getValue();
+        instruction |= ((imm32 >> 11) & 1) << 7;
+        instruction |= ((imm32 >> 1) & 0xF) << 8;
+        instruction |= 1 << 12;
+        instruction |= rs1.getEncoding() << 15;
+        instruction |= rs2.getEncoding() << 20;
+        instruction |= ((imm32 >> 5) & 0x3F) << 25;
+        instruction |= ((imm32 >> 12) & 1) << 31;
+        return instruction;
+    }
+
+    public static int ldHelper(CiRegister rd, CiRegister rs, int imm32) {
+        int instruction = LD.getValue();
+        instruction |= rd.getEncoding() << 7;
+        instruction |= 3 << 12;
+        instruction |= rs.getEncoding() << 15;
+        instruction |= imm32 << 20;
         return instruction;
     }
 
@@ -538,10 +563,10 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         // rem = n - Truncating(n / d) * d
         this.fdiv(size, RISCV64.f31, rs1, rs2);
         if (size == 64) {
-            fcvtld(scratchRegister, RISCV64.f31);
+            fcvtldRTZ(scratchRegister, RISCV64.f31);
             fcvtdl(RISCV64.f31, scratchRegister);
         } else {
-            fcvtws(scratchRegister, RISCV64.f31);
+            fcvtwsRTZ(scratchRegister, RISCV64.f31);
             fcvtsw(RISCV64.f31, scratchRegister);
         }
         this.fmul(size, RISCV64.f31, RISCV64.f31, rs2);
@@ -590,61 +615,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         }
     }
 
-    public int insertFloatingDivByZeroCheck(CiRegister numerator, CiRegister denominator, boolean isDouble) {
-        Label jumpLabel = new Label();
-        Label crashLabel = new Label();
-        Label crashLabel1 = new Label();
-
-        // denominator
-        // Clear NV flag
-        csrrci(RISCV64.x0, 0x001, 0b10000);
-        mov32BitConstant(scratchRegister1, 0);
-        if (isDouble) {
-            fcvtdl(RISCV64.f28, scratchRegister1);
-            feqd(scratchRegister1, denominator, RISCV64.f28);
-        } else {
-            fcvtsl(RISCV64.f28, scratchRegister1);
-            feqs(scratchRegister1, denominator, RISCV64.f28);
-        }
-        // check if comparison set the NV flag to 1. If it did, the denominator is NaN --> crash
-        csrrci(scratchRegister, 0x001, 0);
-        branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, crashLabel1);
-        push(64, scratchRegister1);
-
-        // numerator
-        csrrci(RISCV64.x0, 0x001, 0b10000);
-        if (isDouble) {
-            feqd(scratchRegister1, numerator, RISCV64.f28);
-        } else {
-            feqs(scratchRegister1, numerator, RISCV64.f28);
-        }
-        // check if comparison set the NV flag to 1. If it did, the numerator is NaN --> crash
-        csrrci(scratchRegister, 0x001, 0);
-        branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, crashLabel);
-
-        //Check if numerator and denominator !=0. If both == 0 then crash
-        pop(64, scratchRegister, true);
-        branchConditionally(ConditionFlag.EQ, scratchRegister1, RISCV64.zero, jumpLabel);
-        branchConditionally(ConditionFlag.EQ, scratchRegister, RISCV64.zero, jumpLabel);
-        b(crashLabel1);
-
-        // crash
-        bind(crashLabel);
-        pop(64, scratchRegister, true);
-        bind(crashLabel1);
-        int offset = codeBuffer.position();
-        and(RISCV64.a0, RISCV64.zero, RISCV64.zero); // Return 0 (false)
-        emitInt(0xFFFFFFFF); // Generate SIGSEGV
-
-        // continue
-        bind(jumpLabel);
-        return offset;
-    }
-
     public int insertDivByZeroCheck(CiRegister denominator) {
         Label jumpLabel = new Label();
         mov32BitConstant(scratchRegister1, 0);
-        branchConditionally(ConditionFlag.NE, denominator, scratchRegister1, jumpLabel);
+        mov(RISCV64.x30, denominator);
+        branchConditionally(ConditionFlag.NE, RISCV64.x30, scratchRegister1, jumpLabel);
         int offset = codeBuffer.position();
         ldru(64, RISCV64.zero, RISCV64Address.createBaseRegisterOnlyAddress(scratchRegister1));
         bind(jumpLabel);
@@ -1292,7 +1267,14 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public void pause() {
-        //TODO Implement software pause
+        // See https://github.com/riscv/riscv-gnu-toolchain/blob/master/linux-headers/include/asm-generic/unistd.h for the system call numbers
+        // http://man7.org/linux/man-pages/man2/syscall.2.html for information about the system call convention
+        // http://man7.org/linux/man-pages/man2/sched_yield.2.html for the sched_yield system call
+        int sysSchedYield = 124;
+        push(64, RISCV64.a0, RISCV64.a1, RISCV64.a7, RISCV64.LATCH_REGISTER, RISCV64.x31, RISCV64.ra);
+        mov32BitConstant(RISCV64.a7, sysSchedYield);
+        ecall();
+        pop(64, true, RISCV64.ra, RISCV64.x31, RISCV64.LATCH_REGISTER, RISCV64.a7, RISCV64.a1, RISCV64.a0);
     }
 
     public void hlt() {

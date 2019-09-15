@@ -224,6 +224,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     // ABI for RISCV specifies that in the case of running out of FPU parameter slots when passing
                     // FPU values, you must use the available CPU registers, and only after that the stack slots.
                     // https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md
+                    // Be aware that any change made to this must be compatible with the RISCV64AdapterGenerator::adapt for Baseline2Opt and Opt2Baseline
                     if (target.arch.isRISCV64() && currentFloat == fpuParameters.length
                             && currentGeneral < cpuParameters.length) {
                         CiRegister register = cpuParameters[currentGeneral];
