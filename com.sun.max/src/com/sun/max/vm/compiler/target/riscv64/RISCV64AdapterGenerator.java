@@ -25,11 +25,9 @@ import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
 import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.riscv64.RISCV64TargetMethodUtil.*;
 
 import java.io.*;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.riscv64.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
@@ -406,7 +404,11 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
 
         protected void adapt(RISCV64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
             CiKind loadKind;
-            switch(kind.asEnum) {
+            // ABI for RISCV specifies that in the case of running out of FPU parameter slots when passing
+            // FPU values, you must use the available CPU registers, and only after that the stack slots.
+            // https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md
+            // Be aware that any change made to this must be compatible with CiRegisterConfig::getCallingConvention
+            switch (kind.asEnum) {
                 case BYTE:
                     loadKind = CiKind.Byte;
                     break;
@@ -428,12 +430,12 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
                     loadKind = CiKind.Long;
                     break;
                 case FLOAT:
-                    loadKind = CiKind.Float;
+                    loadKind = reg.isFpu() ? CiKind.Float : CiKind.Int;
                     break;
                 case DOUBLE:
-                    loadKind = CiKind.Double;
+                    loadKind = reg.isFpu() ? CiKind.Double : CiKind.Long;
                     break;
-                default :
+                default:
                     throw ProgramError.unexpected("Bad case");
             }
             masm.load(reg, masm.getAddressInFrame(RISCV64.sp, offset32), loadKind);
@@ -691,7 +693,11 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
 
         protected void adapt(RISCV64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
             CiKind storeKind;
-            switch(kind.asEnum) {
+            // ABI for RISCV specifies that in the case of running out of FPU parameter slots when passing
+            // FPU values, you must use the available CPU registers, and only after that the stack slots.
+            // https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md
+            // Be aware that any change made to this must be compatible with CiRegisterConfig::getCallingConvention
+            switch (kind.asEnum) {
                 case BYTE:
                 case BOOLEAN:
                 case SHORT:
@@ -705,12 +711,12 @@ public abstract class RISCV64AdapterGenerator extends AdapterGenerator {
                     storeKind = CiKind.Long;
                     break;
                 case FLOAT:
-                    storeKind = CiKind.Float;
+                    storeKind = reg.isFpu() ? CiKind.Float : CiKind.Int;
                     break;
                 case DOUBLE:
-                    storeKind = CiKind.Double;
+                    storeKind = reg.isFpu() ? CiKind.Double : CiKind.Long;
                     break;
-                default :
+                default:
                     throw ProgramError.unexpected("Bad case");
             }
             masm.store(reg, masm.getAddressInFrame(RISCV64.sp, offset32), storeKind);

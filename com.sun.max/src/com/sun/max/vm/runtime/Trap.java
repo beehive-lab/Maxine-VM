@@ -28,6 +28,8 @@ import static com.sun.max.vm.runtime.Trap.Number.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import com.oracle.max.asm.target.riscv64.RISCV64;
+import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -222,8 +224,8 @@ public abstract class Trap {
         }
 
         if (Platform.target().arch.isRISCV64()
-            && pc.readInt(0) == 0xFFFFFFFF // emitInt(0xFFFFFFFF)
-            && pc.readInt(-4) == 0xf509) { // and(a0, x0, x0)
+            && pc.readInt(0) == RISCV64MacroAssembler.ldHelper(RISCV64.zero, RISCV64.x29, 0)
+            && pc.readInt(-4) == RISCV64MacroAssembler.branchNotEqualHelper(RISCV64.x30, RISCV64.x29, 8)) {
             trapNumber = ARITHMETIC_EXCEPTION;
         }
 
