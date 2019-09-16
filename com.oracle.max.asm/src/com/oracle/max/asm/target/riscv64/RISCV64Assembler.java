@@ -862,6 +862,8 @@ public class RISCV64Assembler extends AbstractAssembler {
     private void csrImmediate(RISCV64opCodes opcode, CiRegister rd, int funct3, int csr, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.getEncoding() >> 5 == 0;
+        assert funct3 >> 3 == 0;
+        assert imm32 >> 5 == 0;
         assert csr >>> 12 == 0;
         int instruction = opcode.getValue();
         instruction |= rd.getEncoding() << 7;

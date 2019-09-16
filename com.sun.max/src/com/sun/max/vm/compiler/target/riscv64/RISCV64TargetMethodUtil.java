@@ -129,10 +129,10 @@ public final class RISCV64TargetMethodUtil {
             if (instruction == 0) { // fill in with asm.nop() if mov32BitConstant did not need those instructions
                 instruction = addImmediateHelper(RISCV64.zero, RISCV64.zero, 0);
             }
-            patchSite.writeInt(offset + 8 + i * INSTRUCTION_SIZE, instruction);
+            patchSite.writeInt(offset + MOV_OFFSET_IN_TRAMPOLINE + i * INSTRUCTION_SIZE, instruction);
         }
         instruction = addSubInstructionHelper(RISCV64.x28, RISCV64.x29, RISCV64.x28, isNegative);
-        patchSite.writeInt(offset + 8 + mov32BitConstantInstructions.length * INSTRUCTION_SIZE, instruction);
+        patchSite.writeInt(offset + MOV_OFFSET_IN_TRAMPOLINE + mov32BitConstantInstructions.length * INSTRUCTION_SIZE, instruction);
         instruction = jumpAndLinkHelper(isLinked ? RISCV64.ra : RISCV64.x0, RISCV64.x28, 0);
         patchSite.writeInt(CALL_BRANCH_OFFSET, instruction);
         // Patch the JAL to jump to the new trampoline
@@ -237,11 +237,11 @@ public final class RISCV64TargetMethodUtil {
             if (instruction == 0) { // fill in with asm.nop() if mov32BitConstant did not need those instructions
                 instruction = addImmediateHelper(RISCV64.zero, RISCV64.zero, 0);
             }
-            writeInstruction(code, trampolineOffset + 8 + i * INSTRUCTION_SIZE, instruction);
+            writeInstruction(code, trampolineOffset + MOV_OFFSET_IN_TRAMPOLINE + i * INSTRUCTION_SIZE, instruction);
         }
         // Create the new trampoline
         instruction = addSubInstructionHelper(RISCV64.x28, RISCV64.x29, RISCV64.x28, isNegative);
-        writeInstruction(code, trampolineOffset + 8 + mov32BitConstantInstructions.length * INSTRUCTION_SIZE, instruction);
+        writeInstruction(code, trampolineOffset + MOV_OFFSET_IN_TRAMPOLINE + mov32BitConstantInstructions.length * INSTRUCTION_SIZE, instruction);
         instruction = extractInstruction(code, callOffset + CALL_BRANCH_OFFSET);
         final boolean isLinked = isJumpLinked(instruction);
         instruction = jumpAndLinkHelper(isLinked ? RISCV64.ra : RISCV64.x0, RISCV64.x28, 0);
