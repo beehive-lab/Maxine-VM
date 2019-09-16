@@ -1,0 +1,56 @@
+name: Native CI
+
+on: push
+
+jobs:
+  clone-and-build:
+    name: Clone and build maxine
+    strategy:
+      matrix:
+        os: [macOS-10.14, ubuntu-18.04]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - uses: actions/setup-java@v1
+      with:
+        java-version: 8.0.212
+    - name: Install libnuma (Ubuntu)
+      if: matrix.os != 'macOS-10.14'
+      run: sudo apt-get install libnuma-dev
+    - name: Check style
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine checkstyle
+    - name: Build
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine build
+    - name: mx jttgen && canonicalizeprojects
+      env:
+        MAXINE_HOME: ./
+      run: |
+        ../mx/mx --no-download-progress --suite=maxine jttgen
+        ../mx/mx --no-download-progress --suite=maxine canonicalizeprojects
+    - name: mx image
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine image
+    - name: Gate
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine -J-Xmx1g gate -maxvm-args=-Xmx1g -refvm-args=-Xmx1g
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: gate-test-results-${{ matrix.os }}
+        path: maxine-tester

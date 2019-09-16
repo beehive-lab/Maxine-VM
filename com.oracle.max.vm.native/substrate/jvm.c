@@ -193,6 +193,11 @@ void JVM_Halt(jint code) {
     vm.Halt(env, code);
 }
 
+void JVM_BeforeHalt() {
+    /* Make zulu openjdk happy for github actions */
+    /* FIXME on newer Java versions (>=11) */
+}
+
 void JVM_GC(void) {
     JNIEnv *env = currentJniEnv();
     vm.GC(env);
