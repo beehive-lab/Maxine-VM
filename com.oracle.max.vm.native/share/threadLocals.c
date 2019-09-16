@@ -348,7 +348,7 @@ void tla_initialize(int tlaSize) {
     theTLASize = tlaSize;
 #if !TELE
 #if os_DARWIN || os_LINUX
-    int error = pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
+    int error = pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor)(void *) threadLocalsBlock_destroy);
     #if log_THREADS
         log_println("tla_initialize: pthread_key_create returned code = %d", error);
     #endif

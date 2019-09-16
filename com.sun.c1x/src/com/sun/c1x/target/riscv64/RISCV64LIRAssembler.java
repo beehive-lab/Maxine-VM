@@ -418,7 +418,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         // Set scratch to address of jump table
         int adrPos = buf.position();
         masm.auipc(scratchRegister, 0);
-        masm.add(scratchRegister, scratchRegister, 0);
+        masm.add(64, scratchRegister, scratchRegister, 0);
 
         // Load jump table entry into value and jump to it
         masm.slli(value, value, 2); // Shift left by 2 to make offset in bytes
@@ -432,7 +432,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
         int jumpTablePos = buf.position();
         buf.setPosition(adrPos + 4);
-        masm.add(scratchRegister, scratchRegister, jumpTablePos - adrPos);
+        masm.add(64, scratchRegister, scratchRegister, jumpTablePos - adrPos);
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
@@ -467,6 +467,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 // Check if NV flag in fflags is set to 1. If it is, then one of the operands from emitCompare was NaN.
                 // Should go to the 'false' branch in this case
                 masm.csrrci(scratchRegister, 0x001, 0b10000); // Read and clear NV flag
+                masm.andi(scratchRegister, scratchRegister, 0b10000);
                 masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.NE, scratchRegister, RISCV64.zero, op.unorderedBlock().label());
 
                 switch (op.cond()) {
@@ -541,24 +542,48 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
             case I2D:
                 masm.fcvtdw(dest.asRegister(), src.asRegister());
                 break;
-            case F2I:
-                masm.fcvtws(dest.asRegister(), src.asRegister());
+            case F2I: {
+                // Check if src is Float.NaN. If so, then move 0 to dest
+                masm.mov32BitConstant(RISCV64.x30, Float.floatToRawIntBits(Float.NaN));
+                masm.fmvxw(scratchRegister1, src.asRegister());
+                masm.mov(dest.asRegister(), RISCV64.zero);
+                masm.beq(RISCV64.x30, scratchRegister1, 2 * RISCV64MacroAssembler.INSTRUCTION_SIZE);
+                masm.fcvtwsRTZ(dest.asRegister(), src.asRegister());
                 break;
-            case D2I:
-                masm.fcvtwd(dest.asRegister(), src.asRegister());
+            }
+            case D2I: {
+                // Check if src is Double.NaN. If so, then move 0 to dest
+                masm.mov64BitConstant(RISCV64.x30, Double.doubleToRawLongBits(Double.NaN));
+                masm.fmvxd(scratchRegister1, src.asRegister());
+                masm.mov(dest.asRegister(), RISCV64.zero);
+                masm.beq(RISCV64.x30, scratchRegister1, 2 * RISCV64MacroAssembler.INSTRUCTION_SIZE);
+                masm.fcvtwdRTZ(dest.asRegister(), src.asRegister());
                 break;
+            }
             case L2F:
                 masm.fcvtsl(dest.asRegister(), src.asRegister());
                 break;
             case L2D:
                 masm.fcvtdl(dest.asRegister(), src.asRegister());
                 break;
-            case F2L:
-                masm.fcvtls(dest.asRegister(), src.asRegister());
+            case F2L: {
+                // Check if src is Float.NaN. If so, then move 0 to dest
+                masm.mov32BitConstant(RISCV64.x30, Float.floatToRawIntBits(Float.NaN));
+                masm.fmvxw(scratchRegister1, src.asRegister());
+                masm.mov(dest.asRegister(), RISCV64.zero);
+                masm.beq(RISCV64.x30, scratchRegister1, 2 * RISCV64MacroAssembler.INSTRUCTION_SIZE);
+                masm.fcvtlsRTZ(dest.asRegister(), src.asRegister());
                 break;
-            case D2L:
-                masm.fcvtld(dest.asRegister(), src.asRegister());
+            }
+            case D2L: {
+                // Check if src is Double.NaN. If so, then move 0 to dest
+                masm.mov64BitConstant(RISCV64.x30, Double.doubleToRawLongBits(Double.NaN));
+                masm.fmvxd(scratchRegister1, src.asRegister());
+                masm.mov(dest.asRegister(), RISCV64.zero);
+                masm.beq(RISCV64.x30, scratchRegister1, 2 * RISCV64MacroAssembler.INSTRUCTION_SIZE);
+                masm.fcvtldRTZ(dest.asRegister(), src.asRegister());
                 break;
+            }
             case MOV_I2F:
                 masm.fmvwx(dest.asRegister(), src.asRegister());
                 break;
@@ -671,10 +696,10 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 final long delta = ((CiConstant) right).asLong();
                 switch (code) {
                     case Add:
-                        masm.add(dest.asRegister(), lreg, delta);
+                        masm.add(size, dest.asRegister(), lreg, delta);
                         break;
                     case Sub:
-                        masm.sub(dest.asRegister(), lreg, delta);
+                        masm.sub(size, dest.asRegister(), lreg, delta);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -737,11 +762,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                         masm.fmul(size, dest.asRegister(), lreg, rreg);
                         break;
                     case Div:
-                        masm.insertFloatingDivByZeroCheck(lreg, rreg, kind.isDouble());
                         masm.fdiv(size, dest.asRegister(), lreg, rreg);
                         break;
                     case Rem:
-                        masm.insertFloatingDivByZeroCheck(lreg, rreg, kind.isDouble());
                         masm.frem(size, dest.asRegister(), lreg, rreg);
                         break;
                     default:
@@ -1005,15 +1028,9 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Short:
                     case Int:
                     case Object:
-                    case Long: {
-                        doComparison(scratchRegister, reg1, opr2.asRegister(), opr1.kind, cond);
-                        break;
-                    }
+                    case Long:
                     case Float:
                     case Double: {
-                        // Clear NV flag from fflags.
-                        // Will get set to 1 by masm.fltd/s if one of the operands is NaN.
-                        masm.csrrci(RISCV64.x0, 0x001, 0b10000);
                         doComparison(scratchRegister, reg1, opr2.asRegister(), opr1.kind, cond);
                         break;
                     }
@@ -1038,7 +1055,6 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     case Float:
                     case Double: {
                         masm.load(RISCV64.f31, frameMap.toStackAddress(opr2Slot), opr1.kind);
-                        masm.csrrci(RISCV64.x0, 0x001, 0b10000);
                         doComparison(scratchRegister, reg1, RISCV64.f31, opr1.kind, cond);
                         break;
                     }
@@ -1118,8 +1134,15 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
     }
 
     private void doComparison(CiRegister regWithOne, CiRegister leftComparand, CiRegister rightComparand, CiKind comparandKind, RISCV64MacroAssembler.ConditionFlag setLessThanConditionFlag) {
+        assert regWithOne != leftComparand && regWithOne != rightComparand : "regWithOne should be different from the comparands";
         Label continueLabel = new Label();
         Label lessThanLabel = new Label();
+
+        if (comparandKind == CiKind.Float || comparandKind == CiKind.Double) {
+             // Clear NV flag from fflags.
+             // Will get set to 1 by masm.fltd/s if one of the operands is NaN.
+            masm.csrrci(RISCV64.x0, 0x001, 0b10000);
+        }
 
         // a > b
         masm.mov32BitConstant(regWithOne, 1);
@@ -1151,11 +1174,13 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         CiRegister dest = dst.asRegister();
         if (code == LIROpcode.Cmpfd2i || code == LIROpcode.Ucmpfd2i) {
             assert left.kind.isFloat() || left.kind.isDouble();
-            CiRegister lreg = left.asRegister();
-            CiRegister rreg = right.asRegister();
 
             Label l = new Label();
             if (code == LIROpcode.Ucmpfd2i) {
+                // Clear NV flag from fflags.
+                // Will get set to 1 by masm.fltd/s if one of the operands is NaN.
+                masm.csrrci(RISCV64.x0, 0x001, 0b10000);
+
                 // less than unsigned case
                 masm.mov(dest, -1);
                 if (left.kind.isFloat()) {
@@ -1163,6 +1188,12 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 } else {
                     masm.fltd(scratchRegister1, left.asRegister(), right.asRegister());
                 }
+
+                // Check if NV flag in fflags is set to 1.
+                masm.csrrci(scratchRegister, 0x001, 0b10000); // Read and clear NV flag
+                masm.andi(scratchRegister, scratchRegister, 0b10000);
+                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.NE, scratchRegister, RISCV64.zero, l);
+
                 masm.mov32BitConstant(scratchRegister, 1);
                 masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister1, scratchRegister, l);
 
@@ -1177,6 +1208,11 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 //higher case
                 masm.mov(dest, 1);
             } else { // unordered is greater
+
+                // Clear NV flag from fflags.
+                // Will get set to 1 by masm.fltd/s if one of the operands is NaN.
+                masm.csrrci(RISCV64.x0, 0x001, 0b10000);
+
                 // higher than case
                 masm.mov(dest, 1);
                 if (left.kind.isFloat()) {
@@ -1184,6 +1220,12 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                 } else {
                     masm.fltd(scratchRegister1, right.asRegister(), left.asRegister());
                 }
+
+                // Check if NV flag in fflags is set to 1.
+                masm.csrrci(scratchRegister, 0x001, 0b10000); // Read and clear NV flag
+                masm.andi(scratchRegister, scratchRegister, 0b10000);
+                masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.NE, scratchRegister, RISCV64.zero, l);
+
                 masm.mov32BitConstant(scratchRegister, 1);
                 masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.EQ, scratchRegister1, scratchRegister, l);
 
@@ -1890,7 +1932,13 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
+        Label skip = new Label();
+        // Check if NV flag in fflags is set to 1. If it is, then one of the operands from emitCompare was NaN.
+        masm.csrrci(scratchRegister, 0x001, 0b10000); // Read and clear NV flag
+        masm.andi(scratchRegister, scratchRegister, 0b10000);
+        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.NE, scratchRegister, RISCV64.zero, skip);
         masm.branchConditionally(cflag, RISCV64.x31, RISCV64.zero, label);
+        masm.bind(skip);
         masm.nop(3);
     }
 

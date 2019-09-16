@@ -26,7 +26,6 @@ import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
-import com.oracle.max.asm.NumUtil;
 import com.oracle.max.asm.target.riscv64.RISCV64MacroAssembler.ConditionFlag;
 import com.oracle.max.asm.target.riscv64.*;
 import com.oracle.max.vm.ext.maxri.*;
@@ -36,7 +35,6 @@ import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.DebugMethodWriter;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.riscv64.RISCV64JVMSFrameLayout;
@@ -76,13 +74,13 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     public void decStack(int numberOfSlots) {
         assert numberOfSlots > 0;
-        asm.add(sp, sp, numberOfSlots * JVMS_SLOT_SIZE);
+        asm.add(64, sp, sp, numberOfSlots * JVMS_SLOT_SIZE);
     }
 
     @Override
     public void incStack(int numberOfSlots) {
         assert numberOfSlots > 0;
-        asm.sub(sp, sp, numberOfSlots * JVMS_SLOT_SIZE);
+        asm.sub(64, sp, sp, numberOfSlots * JVMS_SLOT_SIZE);
     }
 
     @Override
@@ -375,12 +373,12 @@ public class RISCV64T1XCompilation extends T1XCompilation {
          */
         asm.push(64, RISCV64.ra);
         asm.push(64, RISCV64.fp);
-        asm.sub(RISCV64.fp, RISCV64.sp, framePointerAdjustment()); // fp set relative to sp
+        asm.sub(64, RISCV64.fp, RISCV64.sp, framePointerAdjustment()); // fp set relative to sp
         /*
          * Extend the stack pointer past the frame size minus the slot used for the callers
          * frame pointer.
          */
-        asm.sub(RISCV64.sp, RISCV64.sp, frameSize - JVMS_SLOT_SIZE);
+        asm.sub(64, RISCV64.sp, RISCV64.sp, frameSize - JVMS_SLOT_SIZE);
 
 
         if (Trap.STACK_BANGING) {
@@ -420,10 +418,10 @@ public class RISCV64T1XCompilation extends T1XCompilation {
     @Override
     protected void emitEpilogue() {
         // rewind stack pointer
-        asm.add(RISCV64.sp, RISCV64.fp, framePointerAdjustment());
+        asm.add(64, RISCV64.sp, RISCV64.fp, framePointerAdjustment());
         asm.pop(64, RISCV64.fp, true);
         asm.pop(64, RISCV64.ra, true);
-        asm.add(RISCV64.sp, RISCV64.sp, frame.sizeOfParameters());
+        asm.add(64, RISCV64.sp, RISCV64.sp, frame.sizeOfParameters());
         asm.ret(RISCV64.ra);
         if (T1XOptions.DebugMethods) {
             try {
@@ -502,7 +500,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
          */
         asm.auipc(scratch2, 0); // Get the jump table address
         final int adrPos = buf.position();
-        asm.add(scratch2, scratch2, 0);
+        asm.add(64, scratch2, scratch2, 0);
         asm.slli(scratch1, scratch1, 2); // Multiply by 4 to get actual label offset
         asm.add(scratch1, scratch2, scratch1); //Add label offset to jump table address
         asm.load(scratch1, RISCV64Address.createBaseRegisterOnlyAddress(scratch1), CiKind.Int);
@@ -511,7 +509,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
         int jumpTablePos = buf.position();
         buf.setPosition(adrPos);
-        asm.add(scratch2, scratch2, jumpTablePos - adrPos + 4);
+        asm.add(64, scratch2, scratch2, jumpTablePos - adrPos + 4);
         buf.setPosition(jumpTablePos);
 
         for (int i = 0; i < ts.numberOfCases(); i++) {
@@ -554,7 +552,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
             asm.auipc(scratch2, 0);  // lookup table base
             int adrPos = buf.position();
-            asm.add(scratch2, scratch2, 0);
+            asm.add(64, scratch2, scratch2, 0);
 
             // Initialize loop counter to number of cases x2 to account for pairs of integers (key-offset)
             asm.mov32BitConstant(RISCV64.s3, (ls.numberOfCases() - 1) * 2);
@@ -565,7 +563,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             asm.load(RISCV64.s4, RISCV64Address.createBaseRegisterOnlyAddress(scratch1), CiKind.Int);
             int branchPos = buf.position();
             asm.beq(scratch, RISCV64.s4, 0);                             // break out of loop
-            asm.sub(RISCV64.s3, RISCV64.s3, 2);              // decrement loop counter (1 pair at a time)
+            asm.sub(64, RISCV64.s3, RISCV64.s3, 2);              // decrement loop counter (1 pair at a time)
             jcc(ConditionFlag.GE, loopPos, RISCV64.s3, RISCV64.zr, false);                         // iterate again if >= 0
             startBlock(ls.defaultTarget());                         // No match, jump to default target
             asm.pop(64, RISCV64.s4, true);                                   // after restoring registers r20
@@ -580,7 +578,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
             buf.setPosition(branchTargetPos);
 
             // load offset, add to lookup table base and jump.
-            asm.add(RISCV64.s3, RISCV64.s3, 1); // increment r19 to get the offset (instead of the key)
+            asm.add(64, RISCV64.s3, RISCV64.s3, 1); // increment r19 to get the offset (instead of the key)
             asm.slli(scratch1, RISCV64.s3, 2); // Multiply by 4 to get actual label offset
             asm.add(scratch1, scratch2, scratch1);
             asm.load(scratch, RISCV64Address.createBaseRegisterOnlyAddress(scratch1), CiKind.Int);
@@ -592,7 +590,7 @@ public class RISCV64T1XCompilation extends T1XCompilation {
 
             // Patch adr instruction above now that we know the position of the jump table
             buf.setPosition(adrPos);
-            asm.add(scratch2, scratch2, lookupTablePos - adrPos + 4);
+            asm.add(64, scratch2, scratch2, lookupTablePos - adrPos + 4);
             buf.setPosition(lookupTablePos);
 
             // Emit lookup table entries

@@ -836,7 +836,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void csrrwi(CiRegister rd, int csr, int imm32) {
-        itype(SYS, rd, 5, x0, csr);
+        csrImmediate(SYS, rd, 5, csr, imm32);
     }
 
     /**
@@ -846,7 +846,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void csrrsi(CiRegister rd, int csr, int imm32) {
-        itype(SYS, rd, 6, x0, csr);
+        csrImmediate(SYS, rd, 6, csr, imm32);
     }
 
     /**
@@ -856,7 +856,22 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void csrrci(CiRegister rd, int csr, int imm32) {
-        itype(SYS, rd, 7, x0, csr);
+        csrImmediate(SYS, rd, 7, csr, imm32);
+    }
+
+    private void csrImmediate(RISCV64opCodes opcode, CiRegister rd, int funct3, int csr, int imm32) {
+        assert opcode.getValue() >> 7 == 0;
+        assert rd.getEncoding() >> 5 == 0;
+        assert funct3 >> 3 == 0;
+        assert imm32 >> 5 == 0;
+        assert csr >>> 12 == 0;
+        int instruction = opcode.getValue();
+        instruction |= rd.getEncoding() << 7;
+        instruction |= funct3 << 12;
+        instruction |= imm32 << 15;
+        instruction |= csr << 20;
+
+        emitInt(instruction);
     }
 
     // RV64I Base instruction set /////////////////////////////////////////////
@@ -1040,12 +1055,20 @@ public class RISCV64Assembler extends AbstractAssembler {
         itype(RV32D, rd, 0, rs, 0b110000100000);
     }
 
+    public void fcvtwdRTZ(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0b001, rs, 0b110000100000);
+    }
+
     public void fcvtdl(CiRegister rd, CiRegister rs) {
         itype(RV32D, rd, 0, rs, 0b110100100010);
     }
 
     public void fcvtld(CiRegister rd, CiRegister rs) {
         itype(RV32D, rd, 0, rs, 0b110000100010);
+    }
+
+    public void fcvtldRTZ(CiRegister rd, CiRegister rs) {
+        itype(RV32D, rd, 0b001, rs, 0b110000100010);
     }
 
     public void fsgnjd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
@@ -1113,12 +1136,24 @@ public class RISCV64Assembler extends AbstractAssembler {
         itype(RV32F, rd, 0, rs, 0b110000000010);
     }
 
+    public void fcvtlsRTZ(CiRegister rd, CiRegister rs) {
+        itype(RV32F, rd, 0b001, rs, 0b110000000010);
+    }
+
     public void fcvtws(CiRegister rd, CiRegister rs) {
         itype(RV32F, rd, 0, rs, 0b110000000000);
     }
 
+    public void fcvtwsRTZ(CiRegister rd, CiRegister rs) {
+        itype(RV32F, rd, 0b001, rs, 0b110000000000);
+    }
+
     public void fcvtwus(CiRegister rd, CiRegister rs) {
         itype(RV32F, rd, 0, rs, 0b110000000001);
+    }
+
+    public void fcvtwusRTZ(CiRegister rd, CiRegister rs) {
+        itype(RV32F, rd, 0b001, rs, 0b110000000001);
     }
 
     public void fcvtsw(CiRegister rd, CiRegister rs) {
