@@ -288,6 +288,7 @@ suite = {
                 "jtt",
                 "ASM",
                 "ASMUTIL",
+                "Maxine-Graal:DACAPO",
             ],
             "generatedDependencies": ["uk.ac.manchester.tests.jdk8"],
             "checkstyle": "com.sun.max",

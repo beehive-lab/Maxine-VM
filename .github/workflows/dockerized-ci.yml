@@ -128,3 +128,39 @@ jobs:
         $MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x+riscv64.jtt
     - name: RISCV64-cross-image
       run: $MX image -build=DEBUG -platform linux-riscv64 -isa RISCV64
+  dacapos:
+    name: Run DaCapo benchmark-suite
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: x86-image
+      run: $MX -J-ea image
+    - name: Benchmark
+      run: |
+        wget -nv https://sourceforge.net/projects/dacapobench/files/9.12-bach-MR1/dacapo-9.12-MR1-bach.jar
+        $MX testme -insitu -dacapoBach=`pwd`/dacapo-9.12-MR1-bach.jar -tests=dacapobach
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: dacapo-test-results-docker
+        path: maxine-tester/insitu
