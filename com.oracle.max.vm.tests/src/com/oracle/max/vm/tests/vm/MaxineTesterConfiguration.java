@@ -202,18 +202,19 @@ public class MaxineTesterConfiguration {
         dacapo2006("pmd");
 
         dacapoBach("avrora");
-        dacapoBach("batik");
-        dacapoBach("eclipse");
-        dacapoBach("fop");
+        dacapoBach("batik", FAIL_ALL);
+        dacapoBach("eclipse", FAIL_DARWIN);
+        dacapoBach("fop", FAIL_DARWIN);
         dacapoBach("h2");
         dacapoBach("jython");
         dacapoBach("luindex");
         dacapoBach("lusearch");
+        dacapoBach("lusearch-fix");
         dacapoBach("pmd");
-        dacapoBach("sunflow");
+        dacapoBach("sunflow", FAIL_DARWIN);
         dacapoBach("tomcat");
-        dacapoBach("tradebeans");
-        dacapoBach("tradesoap");
+        dacapoBach("tradebeans", FAIL_DARWIN);
+        dacapoBach("tradesoap", FAIL_DARWIN);
         dacapoBach("xalan");
 
         specjvm98("_201_compress");
