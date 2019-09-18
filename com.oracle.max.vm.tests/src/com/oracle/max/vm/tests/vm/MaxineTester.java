@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.*;
 
+import com.sun.max.test.TestResult;
 import org.junit.runner.*;
 import org.junit.runner.manipulation.*;
 import org.junit.runner.notification.*;
@@ -1952,6 +1953,7 @@ public class MaxineTester {
             if (imageDir != null) {
                 if (!dacapoJar.exists()) {
                     out().println("Couldn't find DaCapo JAR file " + dacapoJar);
+                    addTestResult("DacapoBach all", "Couldn't find DaCapo JAR file " + dacapoJar);
                     return;
                 }
                 for (String test : testList) {
