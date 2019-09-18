@@ -203,7 +203,7 @@ public class MaxineTesterConfiguration {
 
         dacapoBach("avrora");
         dacapoBach("batik", FAIL_ALL);
-        dacapoBach("eclipse", FAIL_DARWIN);
+        dacapoBach("eclipse", RAND_DARWIN);
         dacapoBach("fop", FAIL_DARWIN);
         dacapoBach("h2");
         dacapoBach("jython");
@@ -213,8 +213,8 @@ public class MaxineTesterConfiguration {
         dacapoBach("pmd");
         dacapoBach("sunflow", FAIL_DARWIN);
         dacapoBach("tomcat");
-        dacapoBach("tradebeans", FAIL_DARWIN);
-        dacapoBach("tradesoap", FAIL_DARWIN);
+        dacapoBach("tradebeans", RAND_DARWIN);
+        dacapoBach("tradesoap", RAND_DARWIN);
         dacapoBach("xalan");
 
         specjvm98("_201_compress");
