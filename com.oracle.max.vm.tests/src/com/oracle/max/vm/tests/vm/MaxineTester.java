@@ -1833,7 +1833,7 @@ public class MaxineTester {
         }
 
         SpecJVM2008Harness(String filter) {
-            this.testList = filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm98Tests, filter);
+            this.testList = filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm2008Tests, filter);
         }
 
         public void run() {
