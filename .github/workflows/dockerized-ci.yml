@@ -164,3 +164,41 @@ jobs:
       with:
         name: dacapo-test-results-docker
         path: maxine-tester/insitu
+  specjvm2008:
+    name: Run SPECjvm2008 benchmark-suite
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: x86-image
+      run: $MX -J-ea image
+    - name: Get and install SPECjvm2008
+      run: |
+        wget -nv http://spec.cs.miami.edu/downloads/osg/java/SPECjvm2008_1_01_setup.jar
+        java -jar SPECjvm2008_1_01_setup.jar -i silent -DUSER_INSTALL_DIR=`pwd`/SPECjvm2008
+    - name: Benchmark
+      run: $MX testme -insitu -specjvm2008=`pwd`/SPECjvm2008/SPECjvm2008.jar -tests=specjvm2008
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: specjvm2008-test-results-docker
+        path: maxine-tester/insitu

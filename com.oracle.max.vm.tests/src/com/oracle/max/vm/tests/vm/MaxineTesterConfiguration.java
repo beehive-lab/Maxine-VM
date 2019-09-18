@@ -254,7 +254,7 @@ public class MaxineTesterConfiguration {
         specjvm2008("mpegaudio");
         specjvm2008("scimark.fft.large");
         specjvm2008("scimark.lu.large", FAIL_LINUX);
-        specjvm2008("scimark.sor.large");
+        specjvm2008("scimark.sor.large", FAIL_LINUX);
         specjvm2008("scimark.sparse.large", FAIL_ALL);
         specjvm2008("scimark.fft.small");
         specjvm2008("scimark.lu.small");
