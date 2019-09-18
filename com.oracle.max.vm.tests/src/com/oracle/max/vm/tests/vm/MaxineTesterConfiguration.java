@@ -457,7 +457,7 @@ public class MaxineTesterConfiguration {
 
     private static void dacapoBach(String name, Expectation... results) {
         zeeDacapoBachTests.add(name);
-        addExpectedResults("DacapoBach " + name, results);
+        addExpectedResults("DaCapo-bach " + name, results);
     }
 
     private static void specjvm98(String name, Expectation... results) {
