@@ -23,25 +23,20 @@ Benchmarks
 
 The most useful way to test Maxine is to execute some of the standard
 benchmarks on the image previously built with the ``mx image`` command.
-In this example, we will use the SpecJVM98 and DaCapo benchmarks.
-After downloading the benchmarks, set the following environment
-variables:
+In this example, we will use the DaCapo benchmarks.
+After downloading the benchmark suite from https://sourceforge.net/projects/dacapobench/files/9.12-bach-MR1/dacapo-9.12-MR1-bach.jar, set the following environment
+variable:
 
 ::
 
-    export SPECJVM98_ZIP=/Users/acme/benchmarks/specjvm98.zip
-    export DACAPOBACH_JAR=/Users/acme/benchmarks/dacapo-9.12-bach.jar
+    export DACAPOBACH_JAR=/Users/acme/benchmarks/dacapo-9.12-MR1-bach.jar
 
 Then execute the following command:
 
 ::
 
-    mx test -insitu -tests=specjvm98,dacapobach
+    mx testme -insitu -tests=dacapo
     ----------------------------------------------------------------------------------------
-    Running reference       SpecJVM98 _201_compress:               1607 ms
-    Running maxvm (std)     SpecJVM98 _201_compress:               3309 ms           2.059x
-    ----------------------------------------------------------------------------------------
-    ...
     Running reference       DaCapo-bach avrora:                    3960 ms
     Running maxvm (std)     DaCapo-bach avrora:                   13815 ms           3.488x
     ----------------------------------------------------------------------------------------
