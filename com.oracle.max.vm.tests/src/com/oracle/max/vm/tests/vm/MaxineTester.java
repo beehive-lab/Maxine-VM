@@ -1868,7 +1868,7 @@ public class MaxineTester {
         }
 
         void runSpecJVM2008Test(File outputDir, File imageDir, File specjvm2008jar, String test) {
-            final String testName = "SpecJVM2008 " + (test == null ? "all" : test);
+            final String testName = "SPECjvm2008 " + (test == null ? "all" : test);
             final JavaCommand command = new JavaCommand(specjvm2008jar);
 
             // Disable generation of report files (no raw report, text report, and html report)
