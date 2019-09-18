@@ -1972,9 +1972,10 @@ public class MaxineTester {
             command.addArgument(test);
             OutputComparison comparison = new OutputComparison();
             if (test.equals("jython")) {
-                comparison.stdout = false;
+                comparison.stdout = true;
+                comparison.stdoutIgnore = new String[] {"ms", "seconds", "Benchmark:"};
                 comparison.stderr = true;
-                comparison.stderrIgnore = new String[] {"PASSED"};
+                comparison.stderrIgnore = new String[] {"PASSED", "stack"};
             }
             testJavaProgram(testName, command, null, outputDir, null, imageDir, comparison);
             // reportTiming(testName, outputDir);
