@@ -38,6 +38,11 @@ jobs:
       run: $MX -J-ea image
     - name: Gate
       run: $MX -J-Xmx1g gate -maxvm-args=-Xmx1g -refvm-args=-Xmx1g
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: gate-test-results-docker
+        path: maxine-tester
   aarch64:
     name: AArch64 cross build and test
     runs-on: ubuntu-18.04
@@ -66,6 +71,11 @@ jobs:
     - name: AArch64-cross-test
       run: |
         $MX --J @"-Dmax.platform=linux-aarch64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:aarch64.asm+Aarch64T1XTest+Aarch64T1XpTest+Aarch64JTT
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: aarch64-test-results-docker
+        path: maxine-tester
     - name: AArch64-cross-image
       run: $MX image -build=DEBUG -platform linux-aarch64 -isa Aarch64
   armv7:
@@ -96,6 +106,11 @@ jobs:
     - name: ARMv7-cross-test
       run: |
         $MX --J @"-Dmax.platform=linux-arm -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:armv7.asm+ARMV7T1XTest+ARMV7JTT
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: armv7-test-results-docker
+        path: maxine-tester
     - name: ARMv7-cross-image
       run: $MX image -build=DEBUG -platform linux-arm -isa ARMV7
   riscv:
@@ -126,6 +141,11 @@ jobs:
     - name: RISC-V-cross-test
       run: |
         $MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x+riscv64.jtt
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: riscv64-test-results-docker
+        path: maxine-tester
     - name: RISCV64-cross-image
       run: $MX image -build=DEBUG -platform linux-riscv64 -isa RISCV64
   dacapos:
