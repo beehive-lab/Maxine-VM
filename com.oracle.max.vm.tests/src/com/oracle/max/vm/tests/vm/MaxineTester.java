@@ -1850,14 +1850,6 @@ public class MaxineTester {
                     out().println("Couldn't find SpecJVM2008 JAR file " + specjvm2008jar);
                     return;
                 }
-//                final File specjvm2008Dir = new File(outputDirOption.getValue(), "specjvm2008");
-//                if (specjvm2008Dir.exists()) {
-//                    // Some of the benchmarks (e.g. derby) complain if previous files exist.
-//                    if (exec(null, new String[]{"rm", "-r", specjvm2008Dir.getAbsolutePath()}, null, new Logs(), "Delete specjvm2008 dir", 100) != 0) {
-//                        out().println("Failed to delete existing specjvm2008 dir");
-//                        return;
-//                    }
-//                }
                 for (String test : testList) {
                     runSpecJVM2008Test(outputDir, imageDir, specjvm2008jar, test);
                     if (stopTesting()) {
