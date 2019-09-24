@@ -202,18 +202,19 @@ public class MaxineTesterConfiguration {
         dacapo2006("pmd");
 
         dacapoBach("avrora");
-        dacapoBach("batik");
-        dacapoBach("eclipse");
-        dacapoBach("fop");
+        dacapoBach("batik", FAIL_ALL);
+        dacapoBach("eclipse", RAND_DARWIN);
+        dacapoBach("fop", FAIL_DARWIN);
         dacapoBach("h2");
         dacapoBach("jython");
         dacapoBach("luindex");
         dacapoBach("lusearch");
+        dacapoBach("lusearch-fix");
         dacapoBach("pmd");
-        dacapoBach("sunflow");
+        dacapoBach("sunflow", FAIL_DARWIN);
         dacapoBach("tomcat");
-        dacapoBach("tradebeans");
-        dacapoBach("tradesoap");
+        dacapoBach("tradebeans", RAND_DARWIN);
+        dacapoBach("tradesoap", RAND_DARWIN);
         dacapoBach("xalan");
 
         specjvm98("_201_compress");
@@ -225,23 +226,24 @@ public class MaxineTesterConfiguration {
         specjvm98("_227_mtrt");
         specjvm98("_228_jack");
 
-        specjvm2008("startup.helloworld");
-        specjvm2008("startup.compiler.compiler");
-        specjvm2008("startup.compiler.sunflow");
-        specjvm2008("startup.compress");
-        specjvm2008("startup.crypto.aes");
-        specjvm2008("startup.crypto.rsa");
-        specjvm2008("startup.crypto.signverify");
-        specjvm2008("startup.mpegaudio");
-        specjvm2008("startup.scimark.fft");
-        specjvm2008("startup.scimark.lu");
-        specjvm2008("startup.scimark.monte_carlo");
-        specjvm2008("startup.scimark.sor");
-        specjvm2008("startup.scimark.sparse");
-        specjvm2008("startup.serial");
-        specjvm2008("startup.sunflow");
-        specjvm2008("startup.xml.transform");
-        specjvm2008("startup.xml.validation");
+        /* startup benchmarks start the refvm, which causes failures in DARWIN */
+        specjvm2008("startup.helloworld", FAIL_DARWIN);
+        specjvm2008("startup.compiler.compiler", FAIL_DARWIN);
+        specjvm2008("startup.compiler.sunflow", FAIL_DARWIN);
+        specjvm2008("startup.compress", FAIL_DARWIN);
+        specjvm2008("startup.crypto.aes", FAIL_DARWIN);
+        specjvm2008("startup.crypto.rsa", FAIL_DARWIN);
+        specjvm2008("startup.crypto.signverify", FAIL_DARWIN);
+        specjvm2008("startup.mpegaudio", FAIL_DARWIN);
+        specjvm2008("startup.scimark.fft", FAIL_DARWIN);
+        specjvm2008("startup.scimark.lu", FAIL_DARWIN);
+        specjvm2008("startup.scimark.monte_carlo", FAIL_DARWIN);
+        specjvm2008("startup.scimark.sor", FAIL_DARWIN);
+        specjvm2008("startup.scimark.sparse", FAIL_DARWIN);
+        specjvm2008("startup.serial", FAIL_DARWIN);
+        specjvm2008("startup.sunflow", FAIL_DARWIN);
+        specjvm2008("startup.xml.transform", FAIL_DARWIN);
+        specjvm2008("startup.xml.validation", FAIL_DARWIN);
         specjvm2008("compiler.compiler");
         specjvm2008("compiler.sunflow");
         specjvm2008("compress");
@@ -259,8 +261,8 @@ public class MaxineTesterConfiguration {
         specjvm2008("scimark.sor.small");
         specjvm2008("scimark.sparse.small");
         specjvm2008("scimark.monte_carlo");
-        specjvm2008("serial", FAIL_ALL);
-        specjvm2008("sunflow");
+        specjvm2008("serial");
+        specjvm2008("sunflow", FAIL_DARWIN);
         specjvm2008("xml.transform");
         specjvm2008("xml.validation");
 
@@ -456,7 +458,7 @@ public class MaxineTesterConfiguration {
 
     private static void dacapoBach(String name, Expectation... results) {
         zeeDacapoBachTests.add(name);
-        addExpectedResults("DacapoBach " + name, results);
+        addExpectedResults("DaCapo-bach " + name, results);
     }
 
     private static void specjvm98(String name, Expectation... results) {

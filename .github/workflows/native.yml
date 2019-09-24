@@ -54,3 +54,94 @@ jobs:
       with:
         name: gate-test-results-${{ matrix.os }}
         path: maxine-tester
+  dacapos:
+    name: Run DaCapo benchmark-suite
+    strategy:
+      matrix:
+        os: [macOS-10.14, ubuntu-18.04]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - uses: actions/setup-java@v1
+      with:
+        java-version: 8.0.212
+    - name: Install libnuma (Ubuntu)
+      if: matrix.os != 'macOS-10.14'
+      run: sudo apt-get install libnuma-dev
+    - name: Build
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine build
+    - name: mx image
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine image
+    - name: Benchmark
+      env:
+        MAXINE_HOME: ./
+      run: |
+        wget -nv https://sourceforge.net/projects/dacapobench/files/9.12-bach-MR1/dacapo-9.12-MR1-bach.jar
+        ../mx/mx --no-download-progress --suite=maxine testme -insitu -dacapoBach=`pwd`/dacapo-9.12-MR1-bach.jar -tests=dacapobach
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: dacapo-test-results-${{ matrix.os }}
+        path: maxine-tester/insitu
+  specjvm2008:
+    name: Run SPECjvm2008 benchmark-suite
+    strategy:
+      matrix:
+        os: [macOS-10.14, ubuntu-18.04]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - uses: actions/setup-java@v1
+      with:
+        java-version: 8.0.212
+    - name: Install libnuma (Ubuntu)
+      if: matrix.os != 'macOS-10.14'
+      run: sudo apt-get install libnuma-dev
+    - name: Build
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine build
+    - name: mx image
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine image
+    - name: Get and install SPECjvm2008
+      env:
+        MAXINE_HOME: ./
+      run: |
+        wget -nv http://spec.cs.miami.edu/downloads/osg/java/SPECjvm2008_1_01_setup.jar
+        java -jar SPECjvm2008_1_01_setup.jar -i silent -DUSER_INSTALL_DIR=`pwd`/SPECjvm2008
+    - name: Benchmark
+      env:
+        MAXINE_HOME: ./
+      run: |
+        ../mx/mx --no-download-progress --suite=maxine testme -insitu -specjvm2008=`pwd`/SPECjvm2008/SPECjvm2008.jar -tests=specjvm2008
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: specjvm-test-results-${{ matrix.os }}
+        path: maxine-tester/insitu

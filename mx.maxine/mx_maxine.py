@@ -409,7 +409,7 @@ def inspect(args):
         sysProps + ['-cp', suite_classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
         insArgs + ['-a=' + ' '.join(vmArgs)])
 
-    if mx.get_os() == 'darwin' and not remote:
+    if mx.is_darwin() and not remote:
         # The -E option propagates the environment variables into the sudo process
         mx.run(['sudo', '-E', '-p',
                 'Debugging is a privileged operation on Mac OS X. Please enter your "sudo" password:'] + cmd, cwd=cwd)
@@ -427,7 +427,7 @@ def inspectoragent(args):
 
     cmd = [mx.get_jdk().java]
     cmd += mx.get_jdk().processArgs(['-cp', mx.classpath(), 'com.sun.max.tele.channel.agent.InspectorAgent'] + args)
-    if mx.get_os() == 'darwin':
+    if mx.is_darwin():
         # The -E option propagates the environment variables into the sudo process
         mx.run(['sudo', '-E', '-p',
                 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
@@ -518,7 +518,7 @@ def makejdk(args):
     (such as NetBeans) which expect a certain directory structure
     and executable names in a JDK installation."""
 
-    if mx.os == 'darwin':
+    if mx.is_darwin():
         mx.log('mx makejdk is not supported on Darwin')
         mx.abort(1)
 

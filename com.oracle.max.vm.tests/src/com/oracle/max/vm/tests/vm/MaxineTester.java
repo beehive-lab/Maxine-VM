@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.*;
 
+import com.sun.max.test.TestResult;
 import org.junit.runner.*;
 import org.junit.runner.manipulation.*;
 import org.junit.runner.notification.*;
@@ -84,7 +85,7 @@ public class MaxineTester {
     private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 700,
                     "The maximum number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
-    private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 20,
+    private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 100,
                     "The scaling factor for automatically computing the timeout for running user programs " +
                     "from how long the program took on the reference VM.");
     private static final Option<Integer> compilerTestTimeOutOption = options.newIntegerOption("compiler-test-timeout", 300,
@@ -129,8 +130,8 @@ public class MaxineTester {
                     "Stop execution as soon as a single test fails.");
     private static final Option<File> specjvm98ZipOption = options.newFileOption("specjvm98", (File) null,
                     "Location of zipped up SpecJVM98 directory. If not provided, then the SPECJVM98_ZIP environment variable is used.");
-    private static final Option<File> specjvm2008ZipOption = options.newFileOption("specjvm2008", (File) null,
-                    "Location of zipped up SPECjvm2008 directory. If not provided, then the SPECJVM2008_ZIP environment variable is used.");
+    private static final Option<File> specjvm2008JarOption = options.newFileOption("specjvm2008", (File) null,
+                    "Location of SPECjvm2008 JAR file. If not provided, then the SPECJVM2008_JAR environment variable is used.");
     private static final Option<File> dacapo2006JarOption = options.newFileOption("dacapo2006", (File) null,
                     "Location of DaCapo-2006 JAR file. If not provided, then the DACAPO2006_JAR environment variable is used.");
     private static final Option<File> dacapoBachJarOption = options.newFileOption("dacapoBach", (File) null,
@@ -1832,34 +1833,25 @@ public class MaxineTester {
         }
 
         SpecJVM2008Harness(String filter) {
-            this.testList = filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm98Tests, filter);
+            this.testList = filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm2008Tests, filter);
         }
 
         public void run() {
-            final File specjvm2008Zip = getFileFromOptionOrEnv(specjvm2008ZipOption, "SPECJVM2008_ZIP");
-            if (specjvm2008Zip == null) {
-                out().println("Need to specify the location of SpecJVM2008 ZIP file with -" + specjvm2008ZipOption + " or in the SPECJVM2008_ZIP environment variable");
+            final File specjvm2008jar = getFileFromOptionOrEnv(specjvm2008JarOption, "SPECJVM2008_JAR");
+            if (specjvm2008jar == null) {
+                out().println("Need to specify the location of SPECjvm2008 JAR file with -" + specjvm2008JarOption + " or in the SPECJVM2008_JAR environment variable");
                 return;
             }
             String config = imageConfigs[0];
             final File outputDir = new File(outputDirOption.getValue(), config);
             final File imageDir = generateJavaRunSchemeImage(config);
             if (imageDir != null) {
-                if (!specjvm2008Zip.exists()) {
-                    out().println("Couldn't find SpecJVM2008 ZIP file " + specjvm2008Zip);
+                if (!specjvm2008jar.exists()) {
+                    out().println("Couldn't find SpecJVM2008 JAR file " + specjvm2008jar);
                     return;
                 }
-                final File specjvm2008Dir = new File(outputDirOption.getValue(), "specjvm2008");
-                if (specjvm2008Dir.exists()) {
-                    // Some of the benchmarks (e.g. derby) complain if previous files exist.
-                    if (exec(null, new String[]{"rm", "-r", specjvm2008Dir.getAbsolutePath()}, null, new Logs(), "Delete specjvm2008 dir", 100) != 0) {
-                        out().println("Failed to delete existing specjvm2008 dir");
-                        return;
-                    }
-                }
-                Files.unzip(specjvm2008Zip, specjvm2008Dir);
                 for (String test : testList) {
-                    runSpecJVM2008Test(outputDir, imageDir, specjvm2008Dir, test);
+                    runSpecJVM2008Test(outputDir, imageDir, specjvm2008jar, test);
                     if (stopTesting()) {
                         break;
                     }
@@ -1867,9 +1859,9 @@ public class MaxineTester {
             }
         }
 
-        void runSpecJVM2008Test(File outputDir, File imageDir, File workingDir, String test) {
-            final String testName = "SpecJVM2008 " + (test == null ? "all" : test);
-            final JavaCommand command = new JavaCommand(new File("SPECjvm2008.jar"));
+        void runSpecJVM2008Test(File outputDir, File imageDir, File specjvm2008jar, String test) {
+            final String testName = "SPECjvm2008 " + (test == null ? "all" : test);
+            final JavaCommand command = new JavaCommand(specjvm2008jar);
 
             // Disable generation of report files (no raw report, text report, and html report)
             command.addArgument("-crf");
@@ -1903,9 +1895,9 @@ public class MaxineTester {
             comparison.stdoutIgnore = new String[]{
                 "Iteration",
                 "Score on",
-                workingDir.getAbsolutePath()
+                specjvm2008jar.getParentFile().getAbsolutePath()
             };
-            testJavaProgram(testName, command, null, outputDir, workingDir, imageDir, comparison);
+            testJavaProgram(testName, command, null, outputDir, specjvm2008jar.getParentFile(), imageDir, comparison);
             // reportTiming(testName, outputDir);
         }
 
@@ -1952,6 +1944,7 @@ public class MaxineTester {
             if (imageDir != null) {
                 if (!dacapoJar.exists()) {
                     out().println("Couldn't find DaCapo JAR file " + dacapoJar);
+                    addTestResult("DacapoBach all", "Couldn't find DaCapo JAR file " + dacapoJar);
                     return;
                 }
                 for (String test : testList) {
@@ -1970,9 +1963,10 @@ public class MaxineTester {
             command.addArgument(test);
             OutputComparison comparison = new OutputComparison();
             if (test.equals("jython")) {
-                comparison.stdout = false;
+                comparison.stdout = true;
+                comparison.stdoutIgnore = new String[] {"ms", "seconds", "Benchmark:"};
                 comparison.stderr = true;
-                comparison.stderrIgnore = new String[] {"PASSED"};
+                comparison.stderrIgnore = new String[] {"PASSED", "stack"};
             }
             testJavaProgram(testName, command, null, outputDir, null, imageDir, comparison);
             // reportTiming(testName, outputDir);
