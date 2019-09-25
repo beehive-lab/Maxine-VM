@@ -137,6 +137,7 @@ public final class MaxineVM {
      *  2) -XX:+AllocationProfilerEntryPoint is used
      *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
      *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
+     *  5) The object is not allocated by the VmOperationThread
      *
      *  OR
      *
@@ -157,7 +158,7 @@ public final class MaxineVM {
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null || AllocationProfiler.profileAll() :
                     "The Allocation Profiler should only be initialized when the VM is running and profiling is enabled";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            return (profilerTLA == 1 || AllocationProfiler.profileAll()) && AllocationProfiler.warmupFinished() && AllocationProfiler.objectWarmupFinished();
+            return (profilerTLA == 1 || AllocationProfiler.profileAll()) && AllocationProfiler.warmupFinished() && AllocationProfiler.objectWarmupFinished() && VmThread.current() != VmThread.vmOperationThread;
         }
         return false;
     }
