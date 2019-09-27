@@ -1480,7 +1480,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitMemoryBarriers(int barriers) {
-        masm.membar(barriers);
+        masm.membar();
     }
 
     @Override
@@ -1932,13 +1932,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
-        Label skip = new Label();
-        // Check if NV flag in fflags is set to 1. If it is, then one of the operands from emitCompare was NaN.
-        masm.csrrci(scratchRegister, 0x001, 0b10000); // Read and clear NV flag
-        masm.andi(scratchRegister, scratchRegister, 0b10000);
-        masm.branchConditionally(RISCV64MacroAssembler.ConditionFlag.NE, scratchRegister, RISCV64.zero, skip);
         masm.branchConditionally(cflag, RISCV64.x31, RISCV64.zero, label);
-        masm.bind(skip);
         masm.nop(3);
     }
 

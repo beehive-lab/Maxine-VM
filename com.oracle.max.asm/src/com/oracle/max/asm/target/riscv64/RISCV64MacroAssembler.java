@@ -738,7 +738,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
 
-    public void membar(int barriers) {
+    public void membar() {
         fence(0b1111, 0b1111);
         fencei();
     }
@@ -752,30 +752,18 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      * @param address
      */
     public void cas(int size, CiRegister newValue, CiRegister compareValue, RISCV64Address address) {
-        //TODO At the moment we don't know how to implement memory barriers in RISC-V.
-        // This implementation must be changed to be atmoic and use a memory barrier.
-        // See Aarch64MacroAssembler.cas() for example of implementation
-
         assert scratchRegister != compareValue;
         assert newValue != compareValue;
         assert size <= 64;
 
-        CiRegister cmpVal;
-        if (size < 64) {
-            slli(scratchRegister1, compareValue, 64 - size);
-            srli(scratchRegister1, scratchRegister1, 64 - size);
-            cmpVal = scratchRegister1;
-        } else {
-            cmpVal = compareValue;
-        }
-
+        membar();
         Label notEqualTocmpValue = new Label();
-        ldru(size, scratchRegister, address);
-        branchConditionally(ConditionFlag.NE, cmpVal, scratchRegister, notEqualTocmpValue);
+        ldr(size, scratchRegister, address);
+        branchConditionally(ConditionFlag.NE, compareValue, scratchRegister, notEqualTocmpValue);
         str(size, newValue, address);
-        mov(scratchRegister, cmpVal); // set scratch register to the cmp value to indicate success
-
+        mov(scratchRegister, compareValue); // set scratch register to the cmp value to indicate success
         bind(notEqualTocmpValue);
+        membar();
     }
 
     /**
