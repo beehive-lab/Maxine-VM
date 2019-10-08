@@ -94,6 +94,9 @@ public final class BootImageGenerator {
     private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
             "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
+    private static final Option<Boolean> useProfiler = options.newBooleanOption("use-profiler", false,
+            "Uses allocation profiler.");
+
     // Options shared with the Inspector
     public static final OptionSet inspectorSharedOptions = new OptionSet();
 
@@ -216,6 +219,8 @@ public final class BootImageGenerator {
                 options.printHelp(System.out, 80);
                 return;
             }
+
+            MaxineVM.useProfiler = useProfiler.getValue();
 
             if (compilationBrokerClassOption.getValue() != null) {
                 System.setProperty(CompilationBroker.COMPILATION_BROKER_CLASS_PROPERTY_NAME, compilationBrokerClassOption.getValue());

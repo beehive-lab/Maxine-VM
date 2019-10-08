@@ -127,6 +127,7 @@ public final class MaxineVM {
     /**
      * The Dynamic AllocationProfiler object. It's initialized during Java Run Scheme initialization (if it's needed).
      */
+    public static boolean useProfiler;
     public static AllocationProfiler allocationProfiler;
 
     /**
