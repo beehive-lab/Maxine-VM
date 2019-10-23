@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2020, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -252,6 +252,10 @@ class RecordBuffer {
     public void print(int cycle, int allocation) {
         long start = readLong(timestamps, 0);
         for (int i = 0; i < currentIndex; i++) {
+            if (NUMAProfiler.NUMAProfilerIsolateDominantThread && readInt(threadIds, i) != readInt(threadIds, 0)) {
+                continue;
+            }
+
             Log.print(cycle);
             Log.print(';');
 

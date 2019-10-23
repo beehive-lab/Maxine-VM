@@ -103,6 +103,8 @@ public class NUMAProfiler {
     private static boolean NUMAProfilerDebug;
     @SuppressWarnings("unused")
     private static boolean NUMAProfilerIncludeFinalization;
+    @SuppressWarnings("unused")
+    public static boolean NUMAProfilerIsolateDominantThread;
 
     private static int totalNewSize  = 0;
     private static int totalSurvSize = 0;
@@ -196,6 +198,7 @@ public class NUMAProfiler {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareProfileWindow", NUMAProfiler.class, "The number of the Flare objects to be allocated before the NUMAProfiler stops recording. (default: 1)");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerDebug", NUMAProfiler.class, "Print information to help in NUMAProfiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerIncludeFinalization", NUMAProfiler.class, "Include memory accesses performed due to Finalization. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerIsolateDominantThread", NUMAProfiler.class, "Isolate the dominant thread object allocations (default: false)", MaxineVM.Phase.PRISTINE);
 
         objectAccessCounterNames = new String[]{
             "LOCAL_TUPLE_WRITES", "INTERNODE_TUPLE_WRITES", "INTERBLADE_TUPLE_WRITES",
