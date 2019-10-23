@@ -127,8 +127,10 @@ public final class MaxineVM {
     /**
      * The Dynamic AllocationProfiler object. It's initialized during Java Run Scheme initialization (if it's needed).
      */
-    public static boolean useProfiler;
     public static AllocationProfiler allocationProfiler;
+
+    public static boolean useProfiler;
+    public static boolean inProfilingSession = false;
 
     /**
      * This method is used to guard object allocation code sections.
@@ -159,9 +161,11 @@ public final class MaxineVM {
             assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null || AllocationProfiler.profileAll() :
                     "The Allocation Profiler should only be initialized when the VM is running and profiling is enabled";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            return (profilerTLA == 1 || AllocationProfiler.profileAll()) && AllocationProfiler.warmupFinished() && AllocationProfiler.objectWarmupFinished() && VmThread.current() != VmThread.vmOperationThread;
+            inProfilingSession = (profilerTLA == 1 || AllocationProfiler.profileAll()) && AllocationProfiler.warmupFinished() && AllocationProfiler.objectWarmupFinished() && VmThread.current() != VmThread.vmOperationThread;
+            return inProfilingSession;
         }
-        return false;
+        inProfilingSession = false;
+        return inProfilingSession;
     }
 
     /**
