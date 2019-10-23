@@ -132,6 +132,8 @@ public class AllocationProfiler {
      */
     public static NUMALib numaConfig;
 
+    public static int tupleWrites = 0;
+
     /**
      * The options a user can pass to the Allocation Profiler.
      */
@@ -271,6 +273,12 @@ public class AllocationProfiler {
         totalNewSize = totalNewSize + size;
         ongoingAllocation = false;
         unlock(lockDisabledSafepoints);
+    }
+
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NEVER_INLINE
+    public void tupleWrite(long address) {
+        tupleWrites++;
     }
 
     /**
@@ -565,6 +573,9 @@ public class AllocationProfiler {
      * followed by any GC.
      */
     public void terminate() {
+
+        Log.print("Total Tuple Writes = ");
+        Log.println(tupleWrites);
 
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {

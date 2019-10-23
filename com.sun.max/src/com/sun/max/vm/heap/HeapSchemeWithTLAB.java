@@ -498,6 +498,17 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         allocationProfiler.profile(size, objectType, address);
     }
 
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public final void tupleWrite(Pointer cell) {
+    //public final void tupleWrite() {
+        //Log.println("[HeapSchemeWithTLAB]: tupleWrite");
+        //final String objectType = hub.classActor.name();
+        final long address = cell.toLong();
+        allocationProfiler.tupleWrite(address);
+        //allocationProfiler.tupleWrite();
+    }
+
     /**
      * Handling of custom allocation by sub-classes.
      * The normal allocation path. may be escaped by temporarily enabling use of a custom allocator identified with an opaque identifier.

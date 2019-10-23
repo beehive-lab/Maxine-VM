@@ -1494,6 +1494,9 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.TUPLE_POST_BARRIER).genWriteBarrier(asm, object);
             }
+            if (MaxineVM.useProfiler && kind == CiKind.Object) {
+                callRuntimeThroughStub(asm, "callTupleWrite", null, object);
+            }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">");
         } else {
             // unresolved case
@@ -2150,6 +2153,12 @@ public class MaxXirGenerator implements RiXirGenerator {
 
             if (MaxineVM.profileThatObject(hub)) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub, cell);
+            }
+        }
+
+        public static void callTupleWrite(Pointer cell) {
+            if (MaxineVM.inProfilingSession) {
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).tupleWrite(cell);
             }
         }
 
