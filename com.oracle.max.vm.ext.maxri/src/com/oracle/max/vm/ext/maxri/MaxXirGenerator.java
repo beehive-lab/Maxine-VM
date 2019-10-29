@@ -1514,6 +1514,9 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 writeBarrier(asm, object, null, value);
             }
+            if (MaxineVM.useProfiler && kind == CiKind.Object) {
+                callRuntimeThroughStub(asm, "callTupleWrite", null, object);
+            }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
         return xirTemplate;
