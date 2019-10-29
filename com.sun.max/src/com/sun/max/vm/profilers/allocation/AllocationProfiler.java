@@ -24,8 +24,9 @@ import com.sun.max.annotate.C_FUNCTION;
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.*;
+import com.sun.max.unsafe.Address;
 import com.sun.max.util.NUMALib;
+import com.sun.max.vm.Intrinsics;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOptions;
@@ -133,6 +134,8 @@ public class AllocationProfiler {
     public static NUMALib numaConfig;
 
     public static int tupleWrites = 0;
+    public static int localTupleWrites = 0;
+    public static int remoteTupleWrites = 0;
 
     /**
      * The options a user can pass to the Allocation Profiler.
@@ -278,7 +281,24 @@ public class AllocationProfiler {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void tupleWrite(long address) {
-        tupleWrites++;
+        if (VmThread.current().getName().equals("RWThread")) {
+            tupleWrites++;
+            final int  coreID    = Intrinsics.getCpuID();
+            final int threadNumaNode = hwConfig.numaNode[coreID];
+
+            int pageSize = 4096;
+            long firstPageAddress = heapPages.readAddr(0);
+            long numerator = address - firstPageAddress;
+            long div = numerator / (long) pageSize;
+            int pageIndex = (int) div;
+            final int objNumaNode = heapPages.readNumaNode(pageIndex);
+
+            if (threadNumaNode != objNumaNode) {
+                remoteTupleWrites++;
+            } else {
+                localTupleWrites++;
+            }
+        }
     }
 
     /**
@@ -291,7 +311,7 @@ public class AllocationProfiler {
             Log.print(profilingCycle);
             Log.println(" ====");
         }
-        newObjects.print(profilingCycle, 1);
+        //newObjects.print(profilingCycle, 1);
         unlock(lockDisabledSafepoints);
     }
 
@@ -303,16 +323,16 @@ public class AllocationProfiler {
             Log.println(" ====");
         }
         if ((profilingCycle % 2) == 0) {
-            survivors2.print(profilingCycle, 0);
+            //survivors2.print(profilingCycle, 0);
         } else {
-            survivors1.print(profilingCycle, 0);
+            //survivors1.print(profilingCycle, 0);
         }
         unlock(lockDisabledSafepoints);
     }
 
     public void dumpHeapBoundaries() {
         final boolean lockDisabledSafepoints = lock();
-        heapPages.printStats(profilingCycle);
+        //heapPages.printStats(profilingCycle);
         unlock(lockDisabledSafepoints);
     }
 
@@ -576,6 +596,10 @@ public class AllocationProfiler {
 
         Log.print("Total Tuple Writes = ");
         Log.println(tupleWrites);
+        Log.print("Remote Tuple Writes = ");
+        Log.println(remoteTupleWrites);
+        Log.print("Local Tuple Writes = ");
+        Log.println(localTupleWrites);
 
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
