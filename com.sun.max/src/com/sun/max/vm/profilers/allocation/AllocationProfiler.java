@@ -281,24 +281,51 @@ public class AllocationProfiler {
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void tupleWrite(long address) {
-        if (VmThread.current().getName().equals("RWThread")) {
-            tupleWrites++;
-            final int  coreID    = Intrinsics.getCpuID();
-            final int threadNumaNode = hwConfig.numaNode[coreID];
+        // get the Numa Node where the thread which is performing the write is running
+        final int coreId = Intrinsics.getCpuID() % 128;
+        final int threadNumaNode = hwConfig.numaNode[coreId];
 
-            int pageSize = 4096;
-            long firstPageAddress = heapPages.readAddr(0);
-            long numerator = address - firstPageAddress;
-            long div = numerator / (long) pageSize;
-            int pageIndex = (int) div;
-            final int objNumaNode = heapPages.readNumaNode(pageIndex);
-
-            if (threadNumaNode != objNumaNode) {
-                remoteTupleWrites++;
-            } else {
-                localTupleWrites++;
-            }
+        // get the Numa Node where the written object is placed
+        int pageSize = 4096;
+        long firstPageAddress = heapPages.readAddr(0);
+        // if we haven't got the heap Pages map yet, do findNumaNodePages()
+        if (firstPageAddress == 0) {
+            // at this point disable profiling temporarily
+            MaxineVM.inProfilingSession = false;
+            findNumaNodeForPages();
+            firstPageAddress = heapPages.readAddr(0);
+            // re-enable profiling
+            MaxineVM.inProfilingSession = true;
         }
+
+        // if the written object is not part of the data heap
+        if (firstPageAddress > address) {
+            // no heap object, ignore
+            return;
+        }
+
+        long numerator = address - firstPageAddress;
+        long div = numerator / (long) pageSize;
+        int pageIndex = (int) div;
+
+        int objNumaNode = heapPages.readNumaNode(pageIndex);
+        // if no node found use jnumatils to find it and update heapPages accordingly
+        if (objNumaNode == -14) {
+            long pageAddr = heapPages.readAddr(pageIndex);
+            int node = NUMALib.numaNodeOfAddress(pageAddr);
+            heapPages.writeNumaNode(pageIndex, node);
+            objNumaNode = node;
+        }
+
+        // increment local or remote writes
+        if (threadNumaNode != objNumaNode) {
+            remoteTupleWrites++;
+        } else {
+            localTupleWrites++;
+        }
+
+        // increment total writes
+        tupleWrites++;
     }
 
     /**
@@ -594,12 +621,18 @@ public class AllocationProfiler {
      */
     public void terminate() {
 
+        //end profiling
+        MaxineVM.inProfilingSession = false;
+
         Log.print("Total Tuple Writes = ");
         Log.println(tupleWrites);
         Log.print("Remote Tuple Writes = ");
         Log.println(remoteTupleWrites);
         Log.print("Local Tuple Writes = ");
         Log.println(localTupleWrites);
+
+        //heapPages.print(profilingCycle);
+        //heapPages.printStats(profilingCycle);
 
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
