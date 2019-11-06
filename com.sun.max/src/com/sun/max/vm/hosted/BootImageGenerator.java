@@ -44,6 +44,8 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 
+import static com.sun.max.platform.Platform.platform;
+
 /**
  * Construction of a virtual machine image begins here by running on a host virtual
  * machine (e.g. Hotspot). This process involves creating a target VM configuration
@@ -221,6 +223,10 @@ public final class BootImageGenerator {
             }
 
             MaxineVM.useProfiler = useProfiler.getValue();
+
+            if (MaxineVM.useProfiler && !platform().target.arch.isX86()) {
+                FatalError.unimplemented("Allocation Profiler unsupported for non-x86 Architectures.");
+            }
 
             if (compilationBrokerClassOption.getValue() != null) {
                 System.setProperty(CompilationBroker.COMPILATION_BROKER_CLASS_PROPERTY_NAME, compilationBrokerClassOption.getValue());

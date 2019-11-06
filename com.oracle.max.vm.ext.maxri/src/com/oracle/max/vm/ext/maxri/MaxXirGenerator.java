@@ -2160,8 +2160,10 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static void callTupleWrite(Pointer cell) {
-            if (MaxineVM.inProfilingSession) {
-                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).tupleWrite(cell);
+            if (target().arch.isX86()) {
+                if (MaxineVM.inProfilingSession) {
+                    ((HeapSchemeWithTLAB) vmConfig().heapScheme()).tupleWrite(cell);
+                }
             }
         }
 
