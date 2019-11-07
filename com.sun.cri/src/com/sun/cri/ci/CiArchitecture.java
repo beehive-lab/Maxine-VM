@@ -176,6 +176,18 @@ public abstract class CiArchitecture {
         return false;
     }
 
+    /**
+     * Architectures that do not provide a native 32-bit PC-relative call instruction may
+     * need to use call trampolines. Setting this value to true instructs the
+     * {@linkplain TargetMethodAssembler#finishTargetMethod TargetMethodAssembler} to request an array of
+     * trampolines from the architecture specific {@linkplain AbstractAssembler assembler} that are subsequently
+     * installed in the code cache. Note that this affects optimised methods only, T1X has its own mechanism.
+     * @return
+     */
+    public boolean usesTrampolines() {
+        return false;
+    }
+
     // TODO: Why enumerate the concrete subclasses here rather
     // than use instanceof comparisons in code that cares?
 

@@ -351,6 +351,26 @@ public final class Safepoints {
         return n;
     }
 
+    /**
+     * Returns the index of the call (relative to other calls) at a given position in the code.
+     * NB it is not the safepoint index that is returned. If there is no call at the specified
+     * position -1 is returned.
+     * @param pos
+     * @return the call index, or -1
+     */
+    public int indexOfCallAt(int pos) {
+        int index = -1;
+        for (int i = 0; i < safepoints.length; i++) {
+            if (isCall(safepoints[i])) {
+                index++;
+            }
+            if (pos == posAt(i)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder(safepoints.length * 15);

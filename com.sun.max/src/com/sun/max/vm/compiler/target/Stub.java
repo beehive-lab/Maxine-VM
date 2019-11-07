@@ -164,15 +164,15 @@ public final class Stub extends TargetMethod {
         type = InvalidIndexTrampoline;
     }
 
-    public Stub(Type type, String stubName, int frameSize, byte[] code, int callPos, int callSize, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
+    public Stub(Type type, String stubName, int frameSize, byte[] code, int callPos, int callSize, ClassMethodActor callee, int registerRestoreEpilogueOffset, byte [] trampoline) {
         super(stubName, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         this.type = type;
         this.setFrameSize(frameSize);
         this.setRegisterRestoreEpilogueOffset(registerRestoreEpilogueOffset);
 
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, 0, code.length);
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, 0, code.length, trampoline == null ? 0 : trampoline.length);
         Code.allocate(targetBundleLayout, this);
-        setData(null, null, code);
+        setData(null, null, code, trampoline);
         if (callPos != -1) {
             int safepointPos = Safepoints.safepointPosForCall(callPos, callSize);
             assert callee != null;
@@ -184,6 +184,10 @@ public final class Stub extends TargetMethod {
                 MaxineVM.maxine_cache_flush(codeStart().toPointer(), code().length);
             }
         }
+    }
+
+    public Stub(Type type, String stubName, int frameSize, byte[] code, int callPos, int callSize, ClassMethodActor callee, int registerRestoreEpilogueOffset) {
+        this(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset, null);
     }
 
     public Stub(Type type, String name, CiTargetMethod tm) {

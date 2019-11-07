@@ -162,6 +162,12 @@ public abstract class T1XCompilation {
     protected Buffer buf;
 
     /**
+     * Array of call-site trampolines should the targeted plafrorm require them to
+     * reach targets beyond an architectural limit.
+     */
+    protected byte[] trampolines = null;
+
+    /**
      * The compiler context.
      */
     protected final T1X compiler;
@@ -394,6 +400,7 @@ public abstract class T1XCompilation {
 
         template = null;
         initializedArgs = 0;
+        trampolines = null;
     }
 
     /**

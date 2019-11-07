@@ -216,8 +216,11 @@ public class T1XTargetMethod extends TargetMethod {
         assert comp.protectionLiteralIndex == 0 : "protection literal should be first but is " + comp.protectionLiteralIndex;
         protectionLiteralIndex = comp.protectionLiteralIndex;
 
+        final TargetBundleLayout targetBundleLayout;
+
+        targetBundleLayout = new TargetBundleLayout(0, comp.objectLiterals.size(), comp.buf.position(), comp.trampolines == null ? 0 : comp.trampolines.length);
+
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.objectLiterals.size(), comp.buf.position());
         if (install) {
             Code.allocate(targetBundleLayout, this);
         } else {
@@ -226,6 +229,12 @@ public class T1XTargetMethod extends TargetMethod {
 
         // Copy code
         comp.buf.copyInto(code(), 0, code().length);
+
+        // Check whether the target method uses trampolines. For instance a
+        // method might not have any callees and hence trampolines set.
+        if (trampolines() != null && trampolines().length != 0) {
+            System.arraycopy(comp.trampolines, 0, trampolines(), 0, trampolinesLength());
+        }
 
         // Copy reference literals
         if (referenceLiterals != null) {

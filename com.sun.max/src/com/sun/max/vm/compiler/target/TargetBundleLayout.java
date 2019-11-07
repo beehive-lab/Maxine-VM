@@ -45,7 +45,8 @@ public final class TargetBundleLayout {
     public enum ArrayField {
         scalarLiterals(false),
         referenceLiterals(false),
-        code(true);
+        code(true),
+        trampolines(false);
 
         public static final List<ArrayField> VALUES = Arrays.asList(values());
 
@@ -115,11 +116,11 @@ public final class TargetBundleLayout {
     final Offset[] cellOffsets;
     private Size bundleSize;
 
-    public TargetBundleLayout(int numberOfScalarLiteralBytes,
-                              int numberOfReferenceLiterals,
-                              int numberOfCodeBytes) {
+    public TargetBundleLayout(int numberOfScalarLiteralBytes, int numberOfReferenceLiterals, int numberOfCodeBytes,
+            int numberOfTrampolineBytes) {
 
-        final LinearAllocatorRegion region = new LinearAllocatorRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE), "TargetBundle");
+        final LinearAllocatorRegion region = new LinearAllocatorRegion(Address.zero(), Size.fromLong(Long.MAX_VALUE),
+                "TargetBundle");
 
         final int numberOfFields = ArrayField.VALUES.size();
         lengths = new int[numberOfFields];
@@ -134,9 +135,17 @@ public final class TargetBundleLayout {
         initialize(scalarLiterals, numberOfScalarLiteralBytes, region);
         initialize(referenceLiterals, numberOfReferenceLiterals, region);
         initialize(code, numberOfCodeBytes, region);
+        initialize(trampolines, numberOfTrampolineBytes, region);
 
         bundleSize = region.getAllocationMark().asSize();
         assert bundleSize.isWordAligned();
+    }
+
+    public TargetBundleLayout(int numberOfScalarLiteralBytes,
+                              int numberOfReferenceLiterals,
+                              int numberOfCodeBytes) {
+        this(numberOfScalarLiteralBytes, numberOfReferenceLiterals, numberOfCodeBytes, 0);
+
     }
 
     /**
@@ -271,6 +280,7 @@ public final class TargetBundleLayout {
     public static TargetBundleLayout from(TargetMethod targetMethod) {
         return new TargetBundleLayout(targetMethod.numberOfScalarLiteralBytes(),
                 targetMethod.numberOfReferenceLiterals(),
-                targetMethod.codeLength());
+                targetMethod.codeLength(),
+                targetMethod.trampolinesLength());
     }
 }

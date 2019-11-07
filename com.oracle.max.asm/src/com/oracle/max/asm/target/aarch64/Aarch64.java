@@ -249,4 +249,9 @@ public class Aarch64 extends CiArchitecture {
     public boolean twoOperandMode() {
         return true;
     }
+
+    @Override
+    public boolean usesTrampolines() {
+        return true;
+    }
 }

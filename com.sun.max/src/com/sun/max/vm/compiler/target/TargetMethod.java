@@ -153,6 +153,16 @@ public abstract class TargetMethod extends MemoryRegion {
     protected Address oldStart = Address.zero();
 
     /**
+     * Array of call trampolines for architectures that require them.
+     */
+    private byte[] trampolines;
+
+    /**
+     * The address of the start of the trampoline array.
+     */
+    private Pointer trampolineStart = Pointer.zero();
+
+    /**
      * If non-null, then this method has been invalidated. Set only by deoptimization operation at safepoint.
      *
      * @see #invalidated()
@@ -425,6 +435,20 @@ public abstract class TargetMethod extends MemoryRegion {
         return (code == null) ? 0 : code.length;
     }
 
+    @INLINE
+    public final byte[] trampolines() {
+        return this.trampolines;
+    }
+
+    @INLINE
+    public final CodePointer trampolineStart() {
+        return CodePointer.from(trampolineStart);
+    }
+
+    public final int trampolinesLength() {
+        return (trampolines == null) ? 0 : trampolines.length;
+    }
+
     /**
      * Gets the address of the first instruction in this target method's {@linkplain #code() compiled code array} in the
      * form of an eviction-safe {@link CodePointer}.
@@ -432,6 +456,11 @@ public abstract class TargetMethod extends MemoryRegion {
     @INLINE
     public final CodePointer codeStart() {
         return CodePointer.from(codeStart);
+    }
+
+    @HOSTED_ONLY
+    public final void setTrampolineStart(Pointer trampolineStart) {
+        this.trampolineStart = trampolineStart;
     }
 
     /**
@@ -491,11 +520,13 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param scalarLiterals the scalar data referenced from {@code code}
      * @param referenceLiterals the reference data referenced from {@code code}
      */
-    public final void setCodeArrays(byte[] code, Pointer codeStart, byte[] scalarLiterals, Object[] referenceLiterals) {
+    public final void setCodeArrays(byte[] code, Pointer codeStart, byte[] trampolines, Pointer trampolineStart, byte[] scalarLiterals, Object[] referenceLiterals) {
         this.scalarLiterals = scalarLiterals;
         this.referenceLiterals = referenceLiterals;
         this.code = code;
         this.codeStart = codeStart;
+        this.trampolines = trampolines;
+        this.trampolineStart = trampolineStart;
     }
 
     protected final void setSafepoints(Safepoints safepoints, Object[] directCallees) {
@@ -522,7 +553,7 @@ public abstract class TargetMethod extends MemoryRegion {
         Literals literals = new Literals(ciTargetMethod.dataReferences);
 
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(literals.scalars.length, literals.objects.length, ciTargetMethod.targetCodeSize());
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(literals.scalars.length, literals.objects.length, ciTargetMethod.targetCodeSize(), ciTargetMethod.trampolinesSize());
         if (install) {
             Code.allocate(targetBundleLayout, this);
         } else {
@@ -538,7 +569,7 @@ public abstract class TargetMethod extends MemoryRegion {
             }
         }
 
-        setData(literals.scalars, literals.objects, ciTargetMethod.targetCode());
+        setData(literals.scalars, literals.objects, ciTargetMethod.targetCode(), ciTargetMethod.trampolines());
 
         // Patch relative instructions in the code buffer
         assert lifespan() == Lifespan.LONG : "code may move: must protect direct code pointers";
@@ -829,9 +860,9 @@ public abstract class TargetMethod extends MemoryRegion {
      *            offsets
      * @param codeBuffer the buffer containing the compiled code. The compiled code is in the first
      *            {@code this.code.length} bytes of {@code codeBuffer}.
+     * @param trampolines the trampoline array for the current compiled target method.
      */
-    protected final void setData(byte[] scalarLiterals, Object[] objectLiterals, byte[] codeBuffer) {
-
+    protected final void setData(byte[] scalarLiterals, Object[] objectLiterals, byte[] codeBuffer, byte[] trampolines) {
         assert !codeStart.isZero() : "Must call setCodeArrays() first";
 
         // Copy scalar literals
@@ -847,7 +878,17 @@ public abstract class TargetMethod extends MemoryRegion {
 
         // now copy the code
         System.arraycopy(codeBuffer, 0, this.code, 0, this.code.length);
+
+        // Check whether the target method uses trampolines. For instance a
+        // method might not have any callees and hence trampolines set.
+        if (trampolines != null && trampolines.length > 0) {
+            System.arraycopy(trampolines, 0, this.trampolines, 0, this.trampolinesLength());
+        }
         cleanCache();
+    }
+
+    protected final void setData(byte[] scalarLiterals, Object[] objectLiterals, byte[] codeBuffer) {
+        setData(scalarLiterals, objectLiterals, codeBuffer, null);
     }
 
     public void cleanCache() {

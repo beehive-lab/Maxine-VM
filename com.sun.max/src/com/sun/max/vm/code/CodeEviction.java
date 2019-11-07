@@ -326,13 +326,20 @@ public final class CodeEviction extends VmOperation {
                 assert invalidateCode(targetMethod.code()); // this invalidates the old code as targetMethod's pointers have not been changed yet!
                 targetMethod.setOldStart(targetMethod.start());
                 targetMethod.setStart(to);
+                byte[] trampolines = null;
+                Pointer trampolineStart = Pointer.zero();
                 final byte[] code = (byte[]) relocate(from, to, targetMethod.code());
                 final Pointer codeStart = to.plus(targetMethod.codeStart().toPointer().minus(from));
+
+                if (targetMethod.trampolines() != null) {
+                    trampolines = (byte[]) relocate(from, to, targetMethod.trampolines());
+                    trampolineStart = to.plus(targetMethod.trampolineStart().toPointer().minus(from));
+                }
                 final byte[] scalarLiterals = targetMethod.scalarLiterals() == null ?
                     null : (byte[]) relocate(from, to, targetMethod.scalarLiterals());
                 final Object[] referenceLiterals = targetMethod.referenceLiterals() == null ?
                     null : (Object[]) relocate(from, to, targetMethod.referenceLiterals());
-                targetMethod.setCodeArrays(code, codeStart, scalarLiterals, referenceLiterals);
+                targetMethod.setCodeArrays(code, codeStart, trampolines, trampolineStart, scalarLiterals, referenceLiterals);
                 cr.setMark(cr.mark().plus(size));
                 CodeManager.runtimeBaselineCodeRegion.add(targetMethod);
                 targetMethod.survivedEviction();

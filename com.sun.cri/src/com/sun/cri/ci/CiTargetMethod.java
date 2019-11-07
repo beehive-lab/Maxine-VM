@@ -375,6 +375,11 @@ public class CiTargetMethod implements Serializable {
     private CiAssumptions assumptions;
 
     /**
+     * Array of architecture specific trampolines.
+     */
+    private byte[] trampolines;
+
+    /**
      * Constructs a new target method.
      */
     public CiTargetMethod() {
@@ -542,6 +547,30 @@ public class CiTargetMethod implements Serializable {
     }
 
     /**
+     * Returns any trampolines for the compiled method, maybe null.
+     * @return
+     */
+    public byte[] trampolines() {
+        return trampolines;
+    }
+
+    /**
+     * Returns the size in bytes of the trampoline array.
+     * @return
+     */
+    public int trampolinesSize() {
+        return trampolines == null ? 0 : trampolines.length;
+    }
+
+    /**
+     * Sets the trampolines.
+     * @param trampolines
+     */
+    public void setTrampolines(byte[]trampolines) {
+        this.trampolines = trampolines;
+    }
+
+    /**
      * @return the code annotations or {@code null} if there are none
      */
     public List<CodeAnnotation> annotations() {
@@ -554,6 +583,21 @@ public class CiTargetMethod implements Serializable {
             annotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
         }
         annotations.add(annotation);
+    }
+
+    /**
+     * Return the number of calls made from this method.
+     *
+     * @return
+     */
+    public int numberOfCalls() {
+        int calls = 0;
+        for (Safepoint s : safepoints) {
+            if (s instanceof Call) {
+                calls++;
+            }
+        }
+        return calls;
     }
 
     private static void appendDebugInfo(StringBuilder sb, CiDebugInfo info) {

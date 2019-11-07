@@ -200,6 +200,8 @@ public abstract class CodeManager {
         int codeLength = targetBundleLayout.length(ArrayField.code);
         int scalarLiteralsLength = targetBundleLayout.length(ArrayField.scalarLiterals);
         int referenceLiteralsLength = targetBundleLayout.length(ArrayField.referenceLiterals);
+        int trampolinesLength = targetBundleLayout.length(ArrayField.trampolines);
+
         final Size allocationSize;
         CodeRegion currentCodeRegion = null;
 
@@ -269,15 +271,22 @@ public abstract class CodeManager {
         // Initialize the objects in the allocated space so that they appear as a set of contiguous
         // well-formed objects that can be traversed.
         byte[] code;
+        byte[] trampolines = null;
         byte[] scalarLiterals = null;
         Object[] referenceLiterals = null;
+        Pointer trampolineStart = Pointer.zero();
         if (MaxineVM.isHosted()) {
             code = new byte[codeLength];
+            trampolines = trampolinesLength == 0 ? null : new byte[trampolinesLength];
             scalarLiterals = scalarLiteralsLength == 0 ? null : new byte[scalarLiteralsLength];
             referenceLiterals = referenceLiteralsLength == 0 ? null : new Object[referenceLiteralsLength];
         } else {
             final Pointer codeCell = targetBundleLayout.cell(start, ArrayField.code);
             code = (byte[]) Cell.plantArray(codeCell, ClassRegistry.BYTE_ARRAY.dynamicHub(), codeLength);
+            if (trampolinesLength != 0) {
+                final Pointer trampolinesCell = targetBundleLayout.cell(start, ArrayField.trampolines);
+                trampolines = (byte[]) Cell.plantArray(trampolinesCell, ClassRegistry.BYTE_ARRAY.dynamicHub(), trampolinesLength);
+            }
             if (scalarLiteralsLength != 0) {
                 final Pointer scalarLiteralsCell = targetBundleLayout.cell(start, ArrayField.scalarLiterals);
                 scalarLiterals = (byte[]) Cell.plantArray(scalarLiteralsCell, ClassRegistry.BYTE_ARRAY.dynamicHub(), scalarLiteralsLength);
@@ -287,12 +296,16 @@ public abstract class CodeManager {
                 referenceLiterals = (Object[]) Cell.plantArray(referenceLiteralsCell, ClassActor.fromJava(Object[].class).dynamicHub(), referenceLiteralsLength);
             }
             if (Code.TraceCodeAllocation) {
-                traceAllocation(targetBundleLayout, bundleSize, scalarLiteralsLength, referenceLiteralsLength, start, codeCell);
+                traceAllocation(targetBundleLayout, bundleSize, scalarLiteralsLength, referenceLiteralsLength, start, codeCell, trampolinesLength);
             }
         }
 
         final Pointer codeStart = targetBundleLayout.firstElementPointer(start, ArrayField.code);
-        targetMethod.setCodeArrays(code, codeStart, scalarLiterals, referenceLiterals);
+        if (trampolinesLength != 0) {
+            trampolineStart = targetBundleLayout.firstElementPointer(start, ArrayField.trampolines);
+        }
+
+        targetMethod.setCodeArrays(code, codeStart, trampolines, trampolineStart, scalarLiterals, referenceLiterals);
         if (currentCodeRegion == runtimeBaselineCodeRegion) {
             targetMethod.protect();
         }
@@ -312,7 +325,7 @@ public abstract class CodeManager {
         }
     }
 
-    private void traceAllocation(TargetBundleLayout targetBundleLayout, Size bundleSize, int scalarLiteralsLength, int referenceLiteralsLength, Pointer start, Pointer codeCell) {
+    private void traceAllocation(TargetBundleLayout targetBundleLayout, Size bundleSize, int scalarLiteralsLength, int referenceLiteralsLength, Pointer start, Pointer codeCell, int trampolinesLength) {
         final boolean lockDisabledSafepoints = Log.lock();
         Log.printCurrentThread(false);
         Log.print(": Code arrays: code=[");
@@ -332,6 +345,14 @@ public abstract class CodeManager {
             Log.print(targetBundleLayout.cell(start, ArrayField.referenceLiterals));
             Log.print(" - ");
             Log.print(targetBundleLayout.cellEnd(start, ArrayField.referenceLiterals));
+            Log.print("], trampolines=");
+        } else {
+            Log.print("0, trampolines=");
+        }
+        if (trampolinesLength > 0) {
+            Log.print(targetBundleLayout.cell(start, ArrayField.trampolines));
+            Log.print(" - ");
+            Log.print(targetBundleLayout.cellEnd(start, ArrayField.trampolines));
             Log.println("]");
         } else {
             Log.println(0);

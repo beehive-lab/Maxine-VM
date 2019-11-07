@@ -279,6 +279,21 @@ public class T1XTemplate {
             lastNonTemplateSafepointBCI = bci;
         }
 
+        /**
+         * Returns the number of calls. The adapter call, if there is one, is <b>not</b> included in the count.
+         * @return
+         */
+        public int numberOfCalls() {
+            int calls = 0;
+            for (int i = 0; i < safepointsArray.size; i++) {
+                T1XSafepoint sp = safepointsArray.get(i);
+                if (sp.isCall()) {
+                    calls++;
+                }
+            }
+            return calls;
+        }
+
         public void add(T1XTemplate template, int pos, int bci) {
             assert bci == -1 || bci != lastNonTemplateSafepointBCI : "safepoints in template code must always precede non-template safepoints for any specific BCI";
 

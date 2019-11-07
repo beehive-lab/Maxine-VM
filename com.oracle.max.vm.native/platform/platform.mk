@@ -267,7 +267,7 @@ ifeq ($(OS),linux)
         LINK_LIB_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
     endif
     ifneq ($(ISA),arm)
-        LINK_LIB_POSTFIX = -lc -lm -lpthread -lnuma
+        LINK_LIB_POSTFIX = -lc -lm -lpthread
     endif
     LIB_PREFIX = lib
     LIB_SUFFIX = .so

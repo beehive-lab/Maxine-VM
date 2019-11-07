@@ -71,4 +71,13 @@ public abstract class AbstractAssembler {
     public final void offlineAddToBuffer(byte[] b) {
         codeBuffer.offlineCopyBuffer(b);
     }
+
+    /**
+     * Emit an array of call trampoline stubs.
+     * @param i
+     * @return
+     */
+    public byte[] trampolines(int i) {
+        throw new UnsupportedOperationException("Trampolines are not implemented for the current architecture.");
+    }
 }

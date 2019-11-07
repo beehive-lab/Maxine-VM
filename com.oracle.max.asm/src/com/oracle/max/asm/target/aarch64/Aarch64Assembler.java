@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -40,6 +40,9 @@ public class Aarch64Assembler extends AbstractAssembler {
      */
     public final CiRegister frameRegister;
     public final CiRegister scratchRegister;
+
+    /** Native instruction size in number of bytes. */
+    public static final int INSTRUCTION_SIZE = 4;
 
     @Override
     public void patchJumpTarget(int branch, int target) {
@@ -719,18 +722,33 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     }
 
+    /**
+     * Checks if the given branch instruction is a branch immediate or branch register.
+     *
+     * @param instruction the machine code of the original instruction
+     * @return
+     */
     public static boolean isBranchInstruction(int instruction) {
         final int immOp = instruction & (NumUtil.getNbitNumberInt(5) << 26);
         final int regOp = instruction & (NumUtil.getNbitNumberInt(7) << 25);
         return immOp == UnconditionalBranchImmOp || regOp == UnconditionalBranchRegOp;
     }
 
-
     /**
-     * Checks if the given branch instruction is a branch immediate or branch register.
+     * Checks if the given branch instruction is a branch register.
      *
      * @param instruction the machine code of the original instruction
-     * @return the instruction type
+     * @return
+     */
+    public static boolean isBranchRegInstruction(int instruction) {
+        return (instruction & (NumUtil.getNbitNumberInt(7) << 25)) == UnconditionalBranchRegOp;
+    }
+
+    /**
+     * Checks if the given branch instruction is a branch immediate.
+     *
+     * @param instruction the machine code of the original instruction
+     * @return
      */
     public static boolean isBimmInstruction(int instruction) {
         return (instruction & (NumUtil.getNbitNumberInt(5) << 26)) == UnconditionalBranchImmOp;
@@ -773,6 +791,20 @@ public class Aarch64Assembler extends AbstractAssembler {
             default:
                 throw new Error("Unhandled addressing mode: " + address.getAddressingMode());
         }
+    }
+
+    /**
+     * Write an integer in little endian order into the byte array at the specified offset.
+     * @param instruction
+     * @param buffer
+     * @param offset
+     */
+    static void writeInt(int instruction, byte[] buffer, int offset) {
+        assert buffer.length >= offset + 3 : "Buffer too small";
+        buffer[offset + 0] = (byte) (instruction       & 0xFF);
+        buffer[offset + 1] = (byte) (instruction >> 8  & 0xFF);
+        buffer[offset + 2] = (byte) (instruction >> 16 & 0xFF);
+        buffer[offset + 3] = (byte) (instruction >> 24 & 0xFF);
     }
 
     /**
@@ -915,7 +947,7 @@ public class Aarch64Assembler extends AbstractAssembler {
         loadStoreInstruction(rt, address, InstructionType.General64, Instruction.STR, transferSize);
     }
 
-    private void loadStoreInstruction(CiRegister reg, Aarch64Address address, InstructionType type,
+    public static final int loadStoreInstructionHelper(CiRegister reg, Aarch64Address address, InstructionType type,
                                       Instruction instr, int log2TransferSize) {
         assert log2TransferSize >= 0 && log2TransferSize < 4;
         assert !Aarch64.isSp(reg);
@@ -929,56 +961,54 @@ public class Aarch64Assembler extends AbstractAssembler {
                 rt(reg);
         switch (address.getAddressingMode()) {
             case IMMEDIATE_SCALED:
-                emitInt(memop |
+                return memop |
                         LoadStoreScaledOp |
                         address.getImmediate() << LoadStoreScaledImmOffset |
-                        rs1(address.getBase()));
-                break;
+                        rs1(address.getBase());
             case IMMEDIATE_UNSCALED:
-                emitInt(memop |
+                return memop |
                         LoadStoreUnscaledOp |
                         address.getImmediate() << LoadStoreUnscaledImmOffset |
-                        rs1(address.getBase()));
-                break;
+                        rs1(address.getBase());
             case BASE_REGISTER_ONLY:
-                emitInt(memop | LoadStoreScaledOp | rs1(address.getBase()));
-                break;
+                return memop | LoadStoreScaledOp | rs1(address.getBase());
             case EXTENDED_REGISTER_OFFSET:
             case REGISTER_OFFSET:
                 ExtendType extendType = address.getAddressingMode() == AddressingMode.EXTENDED_REGISTER_OFFSET ?
                         address.getExtendType() : ExtendType.UXTX;
                 boolean shouldScale = address.isScaled() && log2TransferSize != 0;
-                emitInt(memop |
+                return memop |
                         LoadStoreRegisterOp |
                         rs2(address.getOffset()) |
                         extendType.encoding << ExtendTypeOffset |
                         (shouldScale ? 1 : 0) << LoadStoreScaledRegOffset |
-                        rs1(address.getBase()));
-                break;
+                        rs1(address.getBase());
             case PC_LITERAL:
                 assert log2TransferSize >= 2 : "PC literal loads only works for load/stores of 32-bit and larger";
                 transferSizeEncoding = (log2TransferSize - 2) << LoadStoreTransferSizeOffset;
-                emitInt(transferSizeEncoding |
+                return transferSizeEncoding |
                         isFloat |
                         LoadLiteralOp |
                         rd(reg) |
-                        address.getImmediate() << LoadLiteralImmeOffset);
-                break;
+                        address.getImmediate() << LoadLiteralImmeOffset;
             case IMMEDIATE_POST_INDEXED:
-                emitInt(memop |
+                return memop |
                         LoadStorePostIndexedOp |
                         rs1(address.getBase()) |
-                        address.getImmediate() << LoadStoreIndexedImmOffset);
-                break;
+                        address.getImmediate() << LoadStoreIndexedImmOffset;
             case IMMEDIATE_PRE_INDEXED:
-                emitInt(memop |
+                return memop |
                         LoadStorePreIndexedOp |
                         rs1(address.getBase()) |
-                        address.getImmediate() << LoadStoreIndexedImmOffset);
-                break;
+                        address.getImmediate() << LoadStoreIndexedImmOffset;
             default:
                 throw new Error("should not reach here");
         }
+    }
+
+    private void loadStoreInstruction(CiRegister reg, Aarch64Address address, InstructionType type,
+                                      Instruction instr, int log2TransferSize) {
+        emitInt(loadStoreInstructionHelper(reg, address, type, instr, log2TransferSize));
     }
 
     /* Load-Store Exclusive (5.3.6) */
@@ -1123,6 +1153,12 @@ public class Aarch64Assembler extends AbstractAssembler {
         addressCalculationInstruction(dst, imm21, Instruction.ADRP);
     }
 
+    /**
+     * Helper function for encoding an adr instruction. 
+     * @param dst
+     * @param imm21
+     * @return
+     */
     public static int adrHelper(CiRegister dst, int imm21) {
         return Instruction.ADR.encoding | PcRelImmOp | rd(dst) | getPcRelativeImmEncoding(imm21);
     }
@@ -1572,9 +1608,52 @@ public class Aarch64Assembler extends AbstractAssembler {
                 rs2(src2));
     }
 
+    /** The number of instructions in a trampoline. */
+    public static final int TRAMPOLINE_INSTRUCTIONS = 2;
 
+    /** The size of a trampoline in bytes. */
+    public static final int TRAMPOLINE_SIZE = (TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE) + Long.BYTES;
 
+    /** The offset of the address operand in a trampoline. */
+    public static final int TRAMPOLINE_ADDRESS_OFFSET = TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE;
 
+    /**
+     * An address describing the PC relative offset of the trampoline address in the trampoline
+     * itself. That is +8 from the load. The trampoline has the format:
+     * <code>
+     * ldr x16, #8              ; load target address
+     * br x16                   ; branch to target
+     * 0x0000_0000_0000_0000    ; target address
+     * </code>
+     */
+    private static final Aarch64Address trampolineOffset = Aarch64Address.createAddress(CiKind.Long,
+            AddressingMode.PC_LITERAL, Aarch64.zr, Aarch64.zr, TRAMPOLINE_ADDRESS_OFFSET, false, null);
+
+    /**
+     * Encode a load instruction for a trampoline.
+     * @return
+     */
+    private int trampolineLdr() {
+        return loadStoreInstructionHelper(scratchRegister, trampolineOffset, General64, Instruction.LDR, 3);
+    }
+
+    /**
+     * Encode a branch instruction for a trampoline.
+     * @return
+     */
+    private int trampolineBr() {
+        return unconditionalBranchRegInstructionHelper(scratchRegister, false);
+    }
+
+    @Override
+    public byte[] trampolines(int count) {
+        byte[] trampolines = new byte[count * TRAMPOLINE_SIZE];
+        for (int i = 0; i < trampolines.length; i += TRAMPOLINE_SIZE) {
+            writeInt(trampolineLdr(), trampolines, i);
+            writeInt(trampolineBr(), trampolines, i + INSTRUCTION_SIZE);
+        }
+        return trampolines;
+    }
 
     /* Arithmetic (shifted register) (5.5.1) */
 

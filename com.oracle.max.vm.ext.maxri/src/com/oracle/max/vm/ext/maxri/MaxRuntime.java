@@ -514,4 +514,13 @@ public class MaxRuntime implements RiRuntime {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public int numberOfAdapterCalls(RiResolvedMethod method) {
+        AdapterGenerator a = AdapterGenerator.forCallee((ClassMethodActor) method, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        if (a != null) {
+            return 1;
+        }
+        return 0;
+    }
+
 }
