@@ -7,7 +7,7 @@ jobs:
     name: Clone and build maxine
     strategy:
       matrix:
-        os: [macOS-10.14, ubuntu-18.04]
+        os: [macOS-latest, ubuntu-18.04]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -25,7 +25,7 @@ jobs:
       with:
         java-version: 8.0.212
     - name: Install libnuma (Ubuntu)
-      if: matrix.os != 'macOS-10.14'
+      if: matrix.os != 'macOS-latest'
       run: sudo apt-get install libnuma-dev
     - name: Check style
       env:
@@ -58,7 +58,7 @@ jobs:
     name: Run DaCapo benchmark-suite
     strategy:
       matrix:
-        os: [macOS-10.14, ubuntu-18.04]
+        os: [macOS-latest, ubuntu-18.04]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -76,7 +76,7 @@ jobs:
       with:
         java-version: 8.0.212
     - name: Install libnuma (Ubuntu)
-      if: matrix.os != 'macOS-10.14'
+      if: matrix.os != 'macOS-latest'
       run: sudo apt-get install libnuma-dev
     - name: Build
       env:
@@ -101,7 +101,7 @@ jobs:
     name: Run SPECjvm2008 benchmark-suite
     strategy:
       matrix:
-        os: [macOS-10.14, ubuntu-18.04]
+        os: [macOS-latest, ubuntu-18.04]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -119,7 +119,7 @@ jobs:
       with:
         java-version: 8.0.212
     - name: Install libnuma (Ubuntu)
-      if: matrix.os != 'macOS-10.14'
+      if: matrix.os != 'macOS-latest'
       run: sudo apt-get install libnuma-dev
     - name: Build
       env:
