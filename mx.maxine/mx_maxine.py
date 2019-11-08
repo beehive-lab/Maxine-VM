@@ -169,6 +169,9 @@ def gate(args):
         mx.log('Rerun "mx canonicalizeprojects" and check-in the modified mx/suite.py files.')
         mx.abort(1)
 
+    mx.log('Testing +PrintCFGToFile...')
+    vm(['-C1X:+PrintCFGToFile', '-version'])
+
     mx.log('Running MaxineTester...')
 
     testme(['-image-configs=java',
