@@ -137,6 +137,8 @@ public class AllocationProfiler {
     public static int localTupleWrites = 0;
     public static int remoteTupleWrites = 0;
 
+    public static int arrayWrites = 0;
+
     /**
      * The options a user can pass to the Allocation Profiler.
      */
@@ -326,6 +328,12 @@ public class AllocationProfiler {
 
         // increment total writes
         tupleWrites++;
+    }
+
+
+    public void arrayWrite(long arrayAddress) {
+        // increment total writes
+        arrayWrites++;
     }
 
     /**
@@ -630,6 +638,9 @@ public class AllocationProfiler {
         Log.println(remoteTupleWrites);
         Log.print("Local Tuple Writes = ");
         Log.println(localTupleWrites);
+
+        Log.print("Total Array Writes = ");
+        Log.println(arrayWrites);
 
         //heapPages.print(profilingCycle);
         //heapPages.printStats(profilingCycle);

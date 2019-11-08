@@ -846,6 +846,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (genWriteBarrier) {
             writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.ARRAY_POST_BARRIER).genWriteBarrier(asm, array, index);
         }
+        if (MaxineVM.useProfiler && kind == CiKind.Object) {
+            callRuntimeThroughStub(asm, "callArrayWrite", null, array);
+        }
         if (genBoundsCheck) {
             asm.bindOutOfLine(failBoundsCheck);
             callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, array, index);
@@ -2163,6 +2166,14 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (target().arch.isX86()) {
                 if (MaxineVM.inProfilingSession) {
                     ((HeapSchemeWithTLAB) vmConfig().heapScheme()).tupleWrite(cell);
+                }
+            }
+        }
+
+        public static void callArrayWrite(Pointer arrayCell) {
+            if (target().arch.isX86()) {
+                if (MaxineVM.inProfilingSession) {
+                    ((HeapSchemeWithTLAB) vmConfig().heapScheme()).arrayWrite(arrayCell);
                 }
             }
         }
