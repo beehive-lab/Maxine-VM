@@ -1120,7 +1120,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm21 the address whose relative page we want.
      */
     public void adrp(CiRegister dst, int imm21) {
-        addressCalculationInstruction(dst, getPcRelativeImmEncoding(imm21), Instruction.ADRP);
+        addressCalculationInstruction(dst, imm21, Instruction.ADRP);
     }
 
     public static int adrHelper(CiRegister dst, int imm21) {
