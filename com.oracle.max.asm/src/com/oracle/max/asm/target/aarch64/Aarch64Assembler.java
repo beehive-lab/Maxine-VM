@@ -1120,19 +1120,6 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm21 the address whose relative page we want.
      */
     public void adrp(CiRegister dst, int imm21) {
-        //assert (imm & NumUtil.getNbitNumberInt(12)) == 0 : "Lower 12-bit of immediate must be zero.";
-        //assert NumUtil.isSignedNbit(33, imm);
-//      int pc = codeBuffer.position();
-//      int pcPage = (pc >> 12);
-//      int immPage = (int)(imm >> 12);
-//      int offset = immPage - pcPage;
-//
-//      System.out.println("imm: " + imm);
-//      System.out.println("pc: " + pc);
-//      System.out.println("pcPage: " + pcPage);
-//      System.out.println("immPage: " + immPage);
-//      System.out.println("offset: " + offset);
-//
         addressCalculationInstruction(dst, getPcRelativeImmEncoding(imm21), Instruction.ADRP);
     }
 
