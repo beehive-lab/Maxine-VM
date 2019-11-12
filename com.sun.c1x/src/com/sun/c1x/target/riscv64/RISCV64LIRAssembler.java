@@ -439,8 +439,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
         for (BlockBegin target : op.targets) {
             Label label = target.label();
             if (label.isBound()) {
-                int imm32 = label.position() - jumpTablePos;
-                buf.emitInt(imm32);
+                masm.jal(RISCV64.zero, label.position() - jumpTablePos);
             } else {
                 label.addPatchAt(buf.position());
                 buf.emitByte(RISCV64MacroAssembler.PatchLabelKind.TABLE_SWITCH.encoding);
