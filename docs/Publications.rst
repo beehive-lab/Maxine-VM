@@ -4,6 +4,10 @@ Papers and Presentations
 This page lists some of the papers, presentations, articles and demos
 that have resulted from the Maxine project and its predecessors.
 
+-  Tim Hartley, Foivos S. Zakkak, Christos Kotselidis, and Mikel Luján.
+   **An analysis of call-site patching without strong hardware support for self-modifying-code**
+   In Proceedings of the 16th ACM SIGPLAN International Conference on Managed Programming Languages and Runtimes (MPLR), 2019.
+
 -  Thomas Shull, Jian Huang, and Josep Torrellas.
    **AutoPersist: An Easy-To-Use Java NVM Framework Based on Reachability**
    In the 40th ACM SIGPLAN Conference on Programming Language Design and Implementation (PLDI), 2019.
