@@ -425,8 +425,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         for (BlockBegin target : op.targets) {
             Label label = target.label();
             if (label.isBound()) {
-                int imm32 = label.position() - jumpTablePos;
-                buf.emitInt(imm32);
+                masm.b(label.position() - buf.position());
             } else {
                 label.addPatchAt(buf.position());
                 buf.emitByte(PatchLabelKind.TABLE_SWITCH.encoding);
