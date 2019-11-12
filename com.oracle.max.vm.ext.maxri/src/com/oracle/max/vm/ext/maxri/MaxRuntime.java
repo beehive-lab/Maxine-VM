@@ -224,7 +224,7 @@ public class MaxRuntime implements RiRuntime {
         final Platform platform = Platform.platform();
         // For non-amd64 platforms use objdump for disassemble
         if (platform.isa != ISA.AMD64) {
-            return disassemble(ciTM, ciTM.targetCode(), ciTM.targetCodeSize(), 0);
+            return ObjdumpDisassembler.disassemble(ciTM);
         }
         byte[] code = maxTM == null ? Arrays.copyOf(ciTM.targetCode(), ciTM.targetCodeSize()) : maxTM.code();
 
