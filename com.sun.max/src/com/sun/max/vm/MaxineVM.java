@@ -131,6 +131,7 @@ public final class MaxineVM {
 
     public static boolean useProfiler;
     public static boolean inProfilingSession = false;
+    public static boolean isProfilingPaused = false;
 
     /**
      * This method is used to guard object allocation code sections.

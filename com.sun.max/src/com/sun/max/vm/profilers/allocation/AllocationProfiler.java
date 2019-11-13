@@ -502,6 +502,14 @@ public class AllocationProfiler {
      */
     public void preGCActions() {
 
+        /**
+         * Pause Profiling during GC
+         */
+        if (MaxineVM.inProfilingSession) {
+            MaxineVM.inProfilingSession = false;
+            MaxineVM.isProfilingPaused = true;
+        }
+
         if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Entering Pre-GC Phase.");
             Log.print("(Allocation Profiler): Cycle ");
@@ -611,6 +619,14 @@ public class AllocationProfiler {
             Log.print("(Allocation Profiler): Start Profiling. [Cycle ");
             Log.print(getProfilingCycle());
             Log.println("]");
+        }
+
+        /**
+         *  Re-enable Profiling if it's paused
+         */
+        if (MaxineVM.isProfilingPaused) {
+            MaxineVM.inProfilingSession = true;
+            MaxineVM.isProfilingPaused = false;
         }
     }
 
