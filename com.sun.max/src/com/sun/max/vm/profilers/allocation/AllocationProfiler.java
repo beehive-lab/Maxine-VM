@@ -632,15 +632,9 @@ public class AllocationProfiler {
         //end profiling
         MaxineVM.inProfilingSession = false;
 
-        Log.print("Total Tuple Writes = ");
-        Log.println(tupleWrites);
-        Log.print("Remote Tuple Writes = ");
-        Log.println(remoteTupleWrites);
-        Log.print("Local Tuple Writes = ");
-        Log.println(localTupleWrites);
-
-        Log.print("Total Array Writes = ");
-        Log.println(arrayWrites);
+        if (AllocationProfilerVerbose) {
+            Log.println("(Allocation Profiler): Termination");
+        }
 
         //heapPages.print(profilingCycle);
         //heapPages.printStats(profilingCycle);
@@ -668,6 +662,18 @@ public class AllocationProfiler {
             Log.println(" MB");
 
             newObjects.printUsage();
+        }
+
+        if (AllocationProfilerVerbose) {
+            Log.print("(Allocation Profiler): Total Tuple Writes = ");
+            Log.println(tupleWrites);
+            Log.print("(Allocation Profiler): Remote Tuple Writes = ");
+            Log.println(remoteTupleWrites);
+            Log.print("(Allocation Profiler): Local Tuple Writes = ");
+            Log.println(localTupleWrites);
+
+            Log.print("(Allocation Profiler): Total Array Writes = ");
+            Log.println(arrayWrites);
         }
 
         if (AllocationProfilerVerbose) {
