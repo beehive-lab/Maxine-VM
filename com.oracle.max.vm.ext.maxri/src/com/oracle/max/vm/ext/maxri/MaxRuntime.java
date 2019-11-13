@@ -217,25 +217,61 @@ public class MaxRuntime implements RiRuntime {
 
     @Override
     public String disassemble(final CiTargetMethod tm) {
-        return ObjdumpDisassembler.disassemble(tm, tm.targetCode(), tm.targetCodeSize(), 0);
+        return disassemble(tm, null);
     }
 
     public String disassemble(CiTargetMethod ciTM, MaxTargetMethod maxTM) {
-        final byte[] code;
-        final int codeSize;
-        final long startAddress;
+        final Platform platform = Platform.platform();
+        // For non-amd64 platforms use objdump for disassemble
+        if (platform.isa != ISA.AMD64) {
+            return ObjdumpDisassembler.disassemble(ciTM);
+        }
+        byte[] code = maxTM == null ? Arrays.copyOf(ciTM.targetCode(), ciTM.targetCodeSize()) : maxTM.code();
 
-        if (maxTM == null) {
-            code = ciTM.targetCode();
-            codeSize = ciTM.targetCodeSize();
-            startAddress = 0L;
-        } else {
-            code = maxTM.code();
-            codeSize = code.length;
-            startAddress = maxTM.codeStart().toLong();
+        long startAddress = maxTM == null ? 0L : maxTM.codeStart().toLong();
+        HexCodeFile hcf = new HexCodeFile(code, startAddress, platform.isa.name(), platform.wordWidth().numberOfBits);
+        HexCodeFile.addAnnotations(hcf, ciTM.annotations());
+        addExceptionHandlersComment(ciTM, hcf);
+        RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, AMD64.rsp, 0);
+        for (Safepoint safepoint : ciTM.safepoints) {
+            if (safepoint instanceof Call) {
+                Call call = (Call) safepoint;
+                if (call.debugInfo != null) {
+                    hcf.addComment(Safepoints.safepointPosForCall(call.pcOffset, call.size), CiUtil.append(new StringBuilder(100), call.debugInfo, slotFormatter).toString());
+                }
+                addOperandComment(hcf, call.pcOffset, "{" + call.target + "}");
+            } else {
+                if (safepoint.debugInfo != null) {
+                    hcf.addComment(safepoint.pcOffset, CiUtil.append(new StringBuilder(100), safepoint.debugInfo, slotFormatter).toString());
+                }
+                addOperandComment(hcf, safepoint.pcOffset, "{safepoint}");
+            }
+        }
+        for (DataPatch site : ciTM.dataReferences) {
+            hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
         }
 
-        return ObjdumpDisassembler.disassemble(ciTM, code, codeSize, startAddress);
+        return HexCodeFileTool.toText(hcf);
+    }
+
+    private static void addExceptionHandlersComment(CiTargetMethod tm, HexCodeFile hcf) {
+        if (!tm.exceptionHandlers.isEmpty()) {
+            String nl = HexCodeFile.NEW_LINE;
+            StringBuilder buf = new StringBuilder("------ Exception Handlers ------").append(nl);
+            for (CiTargetMethod.ExceptionHandler e : tm.exceptionHandlers) {
+                buf.append("    ").
+                    append(e.pcOffset).append(" -> ").
+                    append(e.handlerPos).
+                    append("  ").append(e.exceptionType == null ? "<any>" : e.exceptionType).
+                    append(nl);
+            }
+            hcf.addComment(0, buf.toString());
+        }
+    }
+
+    private static void addOperandComment(HexCodeFile hcf, int pos, String comment) {
+        String oldValue = hcf.addOperandComment(pos, comment);
+        assert oldValue == null : "multiple comments for operand of instruction at " + pos + ": " + comment + ", " + oldValue;
     }
 
     protected static class CachedInvocation {

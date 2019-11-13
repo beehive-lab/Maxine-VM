@@ -504,7 +504,7 @@ public class CompilationBroker {
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
-                    Log.print(": Compilation of " + cma + " by " + compilation.compiler + " failed");
+                    Log.println(": Compilation of " + cma + " by " + compilation.compiler + " failed with:");
                     t.printStackTrace(Log.out);
                     Log.unlock(lockDisabledSafepoints);
                 }
