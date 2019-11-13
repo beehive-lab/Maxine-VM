@@ -200,10 +200,21 @@ public class AllocationProfiler {
         }
     }
 
+    /**
+     * Find heap's first page address and Numa Node and set it in heapPages.
+     */
+    public void findFirstHeapPage() {
+        Address startAddress = vm().config.heapScheme().getHeapStartAddress();
+        int node = NUMALib.numaNodeOfAddress(startAddress.toLong());
+        heapPages.writeAddr(0, startAddress.toLong());
+        heapPages.writeNumaNode(0, node);
+    }
+
     public void initializeHeapBoundariesBuffer() {
         int pageSize = 4096;
         int bufSize = Heap.maxSize().dividedBy(pageSize).toInt();
         heapPages = new VirtualPagesBuffer(bufSize);
+        findFirstHeapPage();
     }
 
     public int getProfilingCycle() {
@@ -367,7 +378,14 @@ public class AllocationProfiler {
 
     public void dumpHeapBoundaries() {
         final boolean lockDisabledSafepoints = lock();
-        //heapPages.printStats(profilingCycle);
+        heapPages.printStats(profilingCycle);
+        unlock(lockDisabledSafepoints);
+    }
+
+    public void resetHeapBoundaries() {
+        final boolean lockDisabledSafepoints = lock();
+        heapPages.resetBuffer();
+        findFirstHeapPage();
         unlock(lockDisabledSafepoints);
     }
 
@@ -523,6 +541,10 @@ public class AllocationProfiler {
             findObjectNumaNode();
         }
 
+        if (AllocationProfilerVerbose) {
+            Log.println("(Allocation Profiler): Dump AllocationProfiler Buffer. [pre-GC phase]");
+        }
+
         if (!AllocationProfilerDebug) {
             dumpHeapBoundaries();
             dumpBuffer();
@@ -545,7 +567,15 @@ public class AllocationProfiler {
         }
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Dump AllocationProfiler Buffer. [pre-GC phase]");
+            Log.print("(Allocation Profiler): Total Tuple Writes = ");
+            Log.println(tupleWrites);
+            Log.print("(Allocation Profiler): Remote Tuple Writes = ");
+            Log.println(remoteTupleWrites);
+            Log.print("(Allocation Profiler): Local Tuple Writes = ");
+            Log.println(localTupleWrites);
+
+            Log.print("(Allocation Profiler): Total Array Writes = ");
+            Log.println(arrayWrites);
         }
 
         if (AllocationProfilerVerbose) {
@@ -580,6 +610,11 @@ public class AllocationProfiler {
             Log.println("(Allocation Profiler): Clean-up AllocationProfiler Buffer. [post-gc phase]");
         }
         newObjects.resetBuffer();
+
+        if (AllocationProfilerVerbose) {
+            Log.println("(Allocation Profiler): Reset HeapBoundaries Buffer. [post-gc phase]");
+        }
+        resetHeapBoundaries();
 
         if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Dump Survivors Buffer. [pre-GC phase]");
