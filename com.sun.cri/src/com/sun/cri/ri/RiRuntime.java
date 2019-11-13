@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -237,4 +239,13 @@ public interface RiRuntime {
      * Executes the given runnable on a compiler thread, which means that it can access constant pools, etc.
      */
     void executeOnCompilerThread(Runnable r);
+
+    /**
+     * If the runtime uses adapters e.g. to support compilations with incompatible calling conventions, the compilation
+     * toolchain can request the runtime to report how many additional calls will be compiled for a given method.
+     * 
+     * @param method
+     * @return
+     */
+    int numberOfAdapterCalls(RiResolvedMethod method);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -277,6 +277,21 @@ public class T1XTemplate {
             dst.frameRefMap = null;
             reserveInBSM(dst);
             lastNonTemplateSafepointBCI = bci;
+        }
+
+        /**
+         * Returns the number of calls. The adapter call, if there is one, is <b>not</b> included in the count.
+         * @return
+         */
+        public int numberOfCalls() {
+            int calls = 0;
+            for (int i = 0; i < safepointsArray.size; i++) {
+                T1XSafepoint sp = safepointsArray.get(i);
+                if (sp.isCall()) {
+                    calls++;
+                }
+            }
+            return calls;
         }
 
         public void add(T1XTemplate template, int pos, int bci) {

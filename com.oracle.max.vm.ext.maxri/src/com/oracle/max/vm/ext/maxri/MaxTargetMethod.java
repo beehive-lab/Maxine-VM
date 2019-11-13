@@ -290,10 +290,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 ARMTargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
         } else if (platform().isa == ISA.Aarch64) {
-            Aarch64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
-            if (vm().compilationBroker.needsAdapters()) {
-                Aarch64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
-            }
+            // Aarch64 entry points are patched in one pass to avoid overlapping long range call-site patches.
+            Aarch64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.in(tm));
         } else if (platform().isa == ISA.RISCV64) {
             RISCV64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             if (vm().compilationBroker.needsAdapters()) {

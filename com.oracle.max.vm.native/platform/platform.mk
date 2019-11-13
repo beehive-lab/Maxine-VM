@@ -256,18 +256,17 @@ ifeq ($(OS),linux)
     LINK_MAIN = $(CC) -z execstack -g -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
     # Libraries must be specified after the actual source files, so the POSTFIX variable is used for that
     # (Introduced to solve a linking problem on Ubuntu 11.10)
+    LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
     ifeq ($(ISA),arm)
-        LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
-    endif
-    ifneq ($(ISA),arm)
-        LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
+        LINK_MAIN_POSTFIX += -lstdc++
     endif
     LINK_LIB = $(CC) -g -shared
+    LINK_LIB_POSTFIX = -lc -lm -lpthread
     ifeq ($(ISA),arm)
-        LINK_LIB_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
+        LINK_LIB_POSTFIX += -lstdc++ -ldl
     endif
-    ifneq ($(ISA),arm)
-        LINK_LIB_POSTFIX = -lc -lm -lpthread -lnuma
+    ifeq ($(ISA),amd64)
+        LINK_LIB_POSTFIX += -lnuma
     endif
     LIB_PREFIX = lib
     LIB_SUFFIX = .so

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -247,6 +247,11 @@ public class Aarch64 extends CiArchitecture {
 
     @Override
     public boolean twoOperandMode() {
+        return true;
+    }
+
+    @Override
+    public boolean usesTrampolines() {
         return true;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -173,6 +173,18 @@ public abstract class CiArchitecture {
      * @return {@code true} if this architecture uses two-operand mode
      */
     public boolean twoOperandMode() {
+        return false;
+    }
+
+    /**
+     * Architectures that do not provide a native 32-bit PC-relative call instruction may
+     * need to use call trampolines. Setting this value to true instructs the
+     * {@linkplain TargetMethodAssembler#finishTargetMethod TargetMethodAssembler} to request an array of
+     * trampolines from the architecture specific {@linkplain AbstractAssembler assembler} that are subsequently
+     * installed in the code cache. Note that this affects optimised methods only, T1X has its own mechanism.
+     * @return
+     */
+    public boolean usesTrampolines() {
         return false;
     }
 

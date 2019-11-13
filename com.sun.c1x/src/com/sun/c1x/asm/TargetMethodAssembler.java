@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -20,16 +20,24 @@
  */
 package com.sun.c1x.asm;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.oracle.max.asm.*;
-import com.sun.c1x.*;
-import com.oracle.max.criutils.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.oracle.max.asm.AbstractAssembler;
+import com.oracle.max.criutils.TTY;
+import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ir.ExceptionHandler;
+import com.sun.c1x.lir.LIRDebugInfo;
+import com.sun.c1x.util.Util;
+import com.sun.cri.ci.CiAddress;
+import com.sun.cri.ci.CiConstant;
+import com.sun.cri.ci.CiDebugInfo;
+import com.sun.cri.ci.CiTargetMethod;
+import com.sun.cri.ci.CiUtil;
+import com.sun.cri.ri.RiResolvedMethod;
+import com.sun.cri.ri.RiRuntime;
+import com.sun.cri.ri.RiType;
 
 public class TargetMethodAssembler {
     public final AbstractAssembler asm;
@@ -53,6 +61,32 @@ public class TargetMethodAssembler {
         targetMethod.addAnnotation(new CiTargetMethod.CodeComment(asm.codeBuffer.position(), s));
     }
 
+    /**
+     * Create trampolines for architectures that require them.
+     * @param method
+     */
+    private void maybeCreateTrampolines(Object method, RiRuntime runtime) {
+        if (asm.target.arch.usesTrampolines()) {
+            /*
+             * The CiTargetMethod only knows about calls compiled in the method body minus the prologue.
+             * The runtime adjusts the number of safepoints to account for a call to an adapter. This adjustment
+             * also needs to be accounted for in the trampoline array.
+             */
+            int calls = targetMethod.numberOfCalls();
+
+            /*
+             * Adapter calls are only relevant for regular Java methods. Stubs don't have them
+             * so we filter them out. In the case where a method is a Stub the 'method' parameter
+             * to this function is a String.
+             */
+            if (method instanceof RiResolvedMethod) {
+                calls += runtime.numberOfAdapterCalls((RiResolvedMethod) method);
+            }
+            byte [] trampolines = asm.trampolines(calls);
+            targetMethod.setTrampolines(trampolines);
+        }
+    }
+
     public CiTargetMethod finishTargetMethod(Object name, RiRuntime runtime, int registerRestoreEpilogueOffset, boolean isStub) {
         // Install code, data and frame size
         targetMethod.setTargetCode(asm.codeBuffer.close(false), asm.codeBuffer.position());
@@ -69,6 +103,8 @@ public class TargetMethodAssembler {
                 }
             }
         }
+
+        maybeCreateTrampolines(name, runtime);
 
         if (C1XOptions.PrintMetrics) {
             C1XMetrics.TargetMethods++;

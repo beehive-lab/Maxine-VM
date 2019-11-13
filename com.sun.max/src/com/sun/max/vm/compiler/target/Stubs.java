@@ -547,9 +547,8 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             final int frameToCSA = csl.frameOffsetToCSA;
 
-            for (int i = 0; i < prologueSize; ++i) {
-                asm.nop();
-            }
+            asm.nop(prologueSize / Aarch64Assembler.INSTRUCTION_SIZE);
+
             asm.push(Aarch64.linkRegister);
 
             // now allocate the frame for this method
@@ -769,9 +768,7 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             final int frameToCSA = csl.frameOffsetToCSA;
 
-            for (int i = 0; i < prologueSize; ++i) {
-                asm.nop();
-            }
+            asm.nop(prologueSize / Aarch64Assembler.INSTRUCTION_SIZE);
             asm.push(Aarch64.linkRegister);
             // now allocate the frame for this method
             asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
@@ -818,7 +815,7 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
-            return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
+            return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset, asm.trampolines(1));
         } else if (platform().isa == ISA.RISCV64) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), registerConfig);
@@ -1064,9 +1061,7 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
 
-            for (int i = 0; i < prologueSize; ++i) {
-                asm.nop();
-            }
+            asm.nop(prologueSize / Aarch64Assembler.INSTRUCTION_SIZE);
 
             // compute the static trampoline call site
             CiRegister callSite = registerConfig.getScratchRegister();
@@ -2948,9 +2943,7 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
 
-            for (int i = 0; i < prologueSize; ++i) {
-                masm.nop();
-            }
+            masm.nop(prologueSize / Aarch64Assembler.INSTRUCTION_SIZE);
             masm.crashme();
 
             // now allocate the frame for this method

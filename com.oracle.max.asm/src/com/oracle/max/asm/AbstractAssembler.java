@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -70,5 +70,14 @@ public abstract class AbstractAssembler {
 
     public final void offlineAddToBuffer(byte[] b) {
         codeBuffer.offlineCopyBuffer(b);
+    }
+
+    /**
+     * Emit an array of call trampoline stubs.
+     * @param i
+     * @return
+     */
+    public byte[] trampolines(int i) {
+        throw new UnsupportedOperationException("Trampolines are not implemented for the current architecture.");
     }
 }
