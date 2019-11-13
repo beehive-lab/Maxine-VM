@@ -45,6 +45,10 @@ jobs:
       env:
         MAXINE_HOME: ./
       run: ../mx/mx --no-download-progress --suite=maxine image
+    - name: mx version with PrintCFGToFile
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine vm -C1X:+PrintCFGToFile -version
     - name: Gate
       env:
         MAXINE_HOME: ./
