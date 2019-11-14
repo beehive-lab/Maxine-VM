@@ -1135,7 +1135,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub, cell);
+        callRuntimeThroughStub(asm, "callProfileNewArray", null, arraySize, hub, cell);
 
         asm.bindOutOfLine(reportNegativeIndexError);
         callRuntimeThroughStub(asm, "throwNegativeArraySizeException", null, length);
@@ -1183,7 +1183,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfiler", null, arraySize, hub, cell);
+        callRuntimeThroughStub(asm, "callProfileNewTuple", null, arraySize, hub, cell);
 
         asm.bindOutOfLine(reportNegativeIndexError);
         callRuntimeThroughStub(asm, "throwNegativeArraySizeException", null, length);
@@ -1328,7 +1328,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub, cell);
+        callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
     }
 
     @HOSTED_ONLY
@@ -1395,7 +1395,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub, cell);
+        callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
 
         asm.bindOutOfLine(slowPath);
         callRuntimeThroughStub(asm, "slowPathAllocate", cell, tupleSize, etla);
@@ -2142,23 +2142,23 @@ public class MaxXirGenerator implements RiXirGenerator {
          * @param size of the profiled object.
          * @param hub object hub to obtain the type of the profiled object.
          */
-        public static void callProfiler(int size, Hub hub, Pointer cell) {
+        public static void callProfileNewTuple(int size, Hub hub, Pointer cell) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
             if (MaxineVM.profileThatObject(hub)) {
-                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub, cell);
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileNewTuple(size, hub, cell);
             }
         }
 
-        public static void callProfilerArray(int size, Hub hub, Pointer cell) {
+        public static void callProfileNewArray(int size, Hub hub, Pointer cell) {
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
             if (MaxineVM.profileThatObject(hub)) {
-                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub, cell);
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileNewArray(size, hub, cell);
             }
         }
 

@@ -265,7 +265,7 @@ public class AllocationProfiler {
      */
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void profile(int size, String type, long address) {
+    public void profileNew(int size, String type, long address) {
         /* PROFILER_TLA is currently a thread local that has it's value maintained
          * only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA. That
          * said if we lock and disable safepoints it is no longer accessible, thus
