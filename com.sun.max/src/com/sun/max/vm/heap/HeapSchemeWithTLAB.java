@@ -500,14 +500,14 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
-    public final void tupleWrite(Pointer cell) {
+    public final void profileWriteTuple(Pointer cell) {
         final long tupleAddress = cell.toLong();
         allocationProfiler.profileWriteAccessTuple(tupleAddress);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
-    public final void arrayWrite(Pointer arrayCell) {
+    public final void profileWriteArray(Pointer arrayCell) {
         final long arrayAddress = arrayCell.toLong();
         allocationProfiler.profileWriteAccessArray(arrayAddress);
     }

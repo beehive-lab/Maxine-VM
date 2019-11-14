@@ -847,7 +847,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.ARRAY_POST_BARRIER).genWriteBarrier(asm, array, index);
         }
         if (MaxineVM.useProfiler && kind == CiKind.Object) {
-            callRuntimeThroughStub(asm, "callArrayWrite", null, array);
+            callRuntimeThroughStub(asm, "callProfileWriteArray", null, array);
         }
         if (genBoundsCheck) {
             asm.bindOutOfLine(failBoundsCheck);
@@ -1498,7 +1498,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.TUPLE_POST_BARRIER).genWriteBarrier(asm, object);
             }
             if (MaxineVM.useProfiler && kind == CiKind.Object) {
-                callRuntimeThroughStub(asm, "callTupleWrite", null, object);
+                callRuntimeThroughStub(asm, "callProfileWriteTuple", null, object);
             }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">");
         } else {
@@ -1518,7 +1518,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 writeBarrier(asm, object, null, value);
             }
             if (MaxineVM.useProfiler && kind == CiKind.Object) {
-                callRuntimeThroughStub(asm, "callTupleWrite", null, object);
+                callRuntimeThroughStub(asm, "callProfileWriteTuple", null, object);
             }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
@@ -2162,18 +2162,18 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
         }
 
-        public static void callTupleWrite(Pointer cell) {
+        public static void callProfileWriteTuple(Pointer cell) {
             if (target().arch.isX86()) {
                 if (MaxineVM.inProfilingSession) {
-                    ((HeapSchemeWithTLAB) vmConfig().heapScheme()).tupleWrite(cell);
+                    ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteTuple(cell);
                 }
             }
         }
 
-        public static void callArrayWrite(Pointer arrayCell) {
+        public static void callProfileWriteArray(Pointer arrayCell) {
             if (target().arch.isX86()) {
                 if (MaxineVM.inProfilingSession) {
-                    ((HeapSchemeWithTLAB) vmConfig().heapScheme()).arrayWrite(arrayCell);
+                    ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteArray(arrayCell);
                 }
             }
         }
