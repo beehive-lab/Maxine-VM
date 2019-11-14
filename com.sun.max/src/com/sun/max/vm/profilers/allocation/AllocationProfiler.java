@@ -138,6 +138,8 @@ public class AllocationProfiler {
     public static int remoteTupleWrites = 0;
 
     public static int arrayWrites = 0;
+    public static int localArrayWrites = 0;
+    public static int remoteArrayWrites = 0;
 
     /**
      * The options a user can pass to the Allocation Profiler.
@@ -351,6 +353,22 @@ public class AllocationProfiler {
 
 
     public void arrayWrite(long arrayAddress) {
+        long firstPageAddress = heapPages.readAddr(0);
+
+        // if the written array is not part of the data heap
+        // TODO: implement some action, currently ignore
+        if (!inDataHeap(firstPageAddress, arrayAddress)) {
+            // no heap array, ignore
+            return;
+        }
+
+        // increment local or remote writes
+        if (isRemoteAccess(firstPageAddress, arrayAddress)) {
+            remoteArrayWrites++;
+        } else {
+            localArrayWrites++;
+        }
+
         // increment total writes
         arrayWrites++;
     }
@@ -584,6 +602,10 @@ public class AllocationProfiler {
 
             Log.print("(Allocation Profiler): Total Array Writes = ");
             Log.println(arrayWrites);
+            Log.print("(Allocation Profiler): Remote Array Writes = ");
+            Log.println(remoteArrayWrites);
+            Log.print("(Allocation Profiler): Local Array Writes = ");
+            Log.println(localArrayWrites);
         }
 
         if (AllocationProfilerVerbose) {
