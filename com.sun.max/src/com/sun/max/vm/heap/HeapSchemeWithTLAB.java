@@ -501,23 +501,15 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public final void tupleWrite(Pointer cell) {
-    //public final void tupleWrite() {
-        //Log.println("[HeapSchemeWithTLAB]: tupleWrite");
-        //final String objectType = hub.classActor.name();
-        final long address = cell.toLong();
-        allocationProfiler.tupleWrite(address);
-        //allocationProfiler.tupleWrite();
+        final long tupleAddress = cell.toLong();
+        allocationProfiler.profileWriteAccessTuple(tupleAddress);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public final void arrayWrite(Pointer arrayCell) {
-        //public final void tupleWrite() {
-        //Log.println("[HeapSchemeWithTLAB]: tupleWrite");
-        //final String objectType = hub.classActor.name();
         final long arrayAddress = arrayCell.toLong();
-        allocationProfiler.arrayWrite(arrayAddress);
-        //allocationProfiler.tupleWrite();
+        allocationProfiler.profileWriteAccessArray(arrayAddress);
     }
 
     /**

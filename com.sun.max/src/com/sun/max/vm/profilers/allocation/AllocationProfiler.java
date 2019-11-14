@@ -330,18 +330,18 @@ public class AllocationProfiler {
 
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
-    public void tupleWrite(long address) {
+    public void profileWriteAccessTuple(long tupleAddress) {
         long firstPageAddress = heapPages.readAddr(0);
 
         // if the written object is not part of the data heap
         // TODO: implement some action, currently ignore
-        if (!inDataHeap(firstPageAddress, address)) {
+        if (!inDataHeap(firstPageAddress, tupleAddress)) {
             // no heap object, ignore
             return;
         }
 
         // increment local or remote writes
-        if (isRemoteAccess(firstPageAddress, address)) {
+        if (isRemoteAccess(firstPageAddress, tupleAddress)) {
             remoteTupleWrites++;
         } else {
             localTupleWrites++;
@@ -352,7 +352,7 @@ public class AllocationProfiler {
     }
 
 
-    public void arrayWrite(long arrayAddress) {
+    public void profileWriteAccessArray(long arrayAddress) {
         long firstPageAddress = heapPages.readAddr(0);
 
         // if the written array is not part of the data heap
