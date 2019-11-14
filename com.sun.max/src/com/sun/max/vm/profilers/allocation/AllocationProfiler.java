@@ -374,6 +374,25 @@ public class AllocationProfiler {
     }
 
     /**
+     * Print the stats for Object Accesses.
+     */
+    public void printObjectAccessStats() {
+        Log.print("(Allocation Profiler): Total Tuple Writes = ");
+        Log.println(tupleWrites);
+        Log.print("(Allocation Profiler): Remote Tuple Writes = ");
+        Log.println(remoteTupleWrites);
+        Log.print("(Allocation Profiler): Local Tuple Writes = ");
+        Log.println(localTupleWrites);
+
+        Log.print("(Allocation Profiler): Total Array Writes = ");
+        Log.println(arrayWrites);
+        Log.print("(Allocation Profiler): Remote Array Writes = ");
+        Log.println(remoteArrayWrites);
+        Log.print("(Allocation Profiler): Local Array Writes = ");
+        Log.println(localArrayWrites);
+    }
+
+    /**
      * Dump AllocationProfiler Buffer to Maxine's Log output.
      */
     public void dumpBuffer() {
@@ -593,19 +612,7 @@ public class AllocationProfiler {
         }
 
         if (AllocationProfilerVerbose) {
-            Log.print("(Allocation Profiler): Total Tuple Writes = ");
-            Log.println(tupleWrites);
-            Log.print("(Allocation Profiler): Remote Tuple Writes = ");
-            Log.println(remoteTupleWrites);
-            Log.print("(Allocation Profiler): Local Tuple Writes = ");
-            Log.println(localTupleWrites);
-
-            Log.print("(Allocation Profiler): Total Array Writes = ");
-            Log.println(arrayWrites);
-            Log.print("(Allocation Profiler): Remote Array Writes = ");
-            Log.println(remoteArrayWrites);
-            Log.print("(Allocation Profiler): Local Array Writes = ");
-            Log.println(localArrayWrites);
+            printObjectAccessStats();
         }
 
         if (AllocationProfilerVerbose) {
@@ -746,15 +753,7 @@ public class AllocationProfiler {
         }
 
         if (AllocationProfilerVerbose) {
-            Log.print("(Allocation Profiler): Total Tuple Writes = ");
-            Log.println(tupleWrites);
-            Log.print("(Allocation Profiler): Remote Tuple Writes = ");
-            Log.println(remoteTupleWrites);
-            Log.print("(Allocation Profiler): Local Tuple Writes = ");
-            Log.println(localTupleWrites);
-
-            Log.print("(Allocation Profiler): Total Array Writes = ");
-            Log.println(arrayWrites);
+            printObjectAccessStats();
         }
 
         if (AllocationProfilerVerbose) {
