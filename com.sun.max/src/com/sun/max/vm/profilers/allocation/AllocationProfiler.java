@@ -313,6 +313,19 @@ public class AllocationProfiler {
         return objNumaNode;
     }
 
+    public boolean inDataHeap(long firstPageAddress, long address) {
+        return address >= firstPageAddress;
+    }
+
+    public boolean isRemoteAccess(long firstPageAddress, long address) {
+        // get the Numa Node where the thread which is performing the write is running
+        final int threadNumaNode = getThreadNumaNode();
+        // get the Numa Node where the written object is placed
+        final int objectNumaNode = getObjectNumaNode(firstPageAddress, address);
+
+        return threadNumaNode != objectNumaNode;
+    }
+
     @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
     @NEVER_INLINE
     public void tupleWrite(long address) {
@@ -320,18 +333,13 @@ public class AllocationProfiler {
 
         // if the written object is not part of the data heap
         // TODO: implement some action, currently ignore
-        if (firstPageAddress > address) {
+        if (!inDataHeap(firstPageAddress, address)) {
             // no heap object, ignore
             return;
         }
 
-        // get the Numa Node where the thread which is performing the write is running
-        final int threadNumaNode = getThreadNumaNode();
-        // get the Numa Node where the written object is placed
-        final int objectNumaNode = getObjectNumaNode(firstPageAddress, address);
-
         // increment local or remote writes
-        if (threadNumaNode != objectNumaNode) {
+        if (isRemoteAccess(firstPageAddress, address)) {
             remoteTupleWrites++;
         } else {
             localTupleWrites++;
