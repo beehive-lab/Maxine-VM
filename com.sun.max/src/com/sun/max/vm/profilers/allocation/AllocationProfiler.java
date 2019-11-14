@@ -291,32 +291,13 @@ public class AllocationProfiler {
         unlock(lockDisabledSafepoints);
     }
 
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
-    @NEVER_INLINE
-    public void tupleWrite(long address) {
-        // get the Numa Node where the thread which is performing the write is running
+    public int getThreadNumaNode() {
         final int coreId = Intrinsics.getCpuID() % 128;
-        final int threadNumaNode = hwConfig.numaNode[coreId];
+        return numaConfig.getNUMANodeOfCPU(coreId);
+    }
 
-        // get the Numa Node where the written object is placed
+    public int getObjectNumaNode(long firstPageAddress, long address) {
         int pageSize = 4096;
-        long firstPageAddress = heapPages.readAddr(0);
-        // if we haven't got the heap Pages map yet, do findNumaNodePages()
-        if (firstPageAddress == 0) {
-            // at this point disable profiling temporarily
-            MaxineVM.inProfilingSession = false;
-            findNumaNodeForPages();
-            firstPageAddress = heapPages.readAddr(0);
-            // re-enable profiling
-            MaxineVM.inProfilingSession = true;
-        }
-
-        // if the written object is not part of the data heap
-        if (firstPageAddress > address) {
-            // no heap object, ignore
-            return;
-        }
-
         long numerator = address - firstPageAddress;
         long div = numerator / (long) pageSize;
         int pageIndex = (int) div;
@@ -329,9 +310,28 @@ public class AllocationProfiler {
             heapPages.writeNumaNode(pageIndex, node);
             objNumaNode = node;
         }
+        return objNumaNode;
+    }
+
+    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NEVER_INLINE
+    public void tupleWrite(long address) {
+        long firstPageAddress = heapPages.readAddr(0);
+
+        // if the written object is not part of the data heap
+        // TODO: implement some action, currently ignore
+        if (firstPageAddress > address) {
+            // no heap object, ignore
+            return;
+        }
+
+        // get the Numa Node where the thread which is performing the write is running
+        final int threadNumaNode = getThreadNumaNode();
+        // get the Numa Node where the written object is placed
+        final int objectNumaNode = getObjectNumaNode(firstPageAddress, address);
 
         // increment local or remote writes
-        if (threadNumaNode != objNumaNode) {
+        if (threadNumaNode != objectNumaNode) {
             remoteTupleWrites++;
         } else {
             localTupleWrites++;
