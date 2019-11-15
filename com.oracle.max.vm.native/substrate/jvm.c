@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019,Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sched.h>
 #if os_DARWIN
 #include <sys/poll.h>
 #else
@@ -252,7 +253,26 @@ JVM_ActiveProcessorCount(void) {
     }
     // Otherwise return number of online cpus
     return online_cpus;
-#elif os_LINUX || os_DARWIN
+#elif os_LINUX
+    cpu_set_t cpus;  // can represent at most 1024 (CPU_SETSIZE) processors
+    int cpus_size = sizeof(cpu_set_t);
+    int processor_count = sysconf(_SC_NPROCESSORS_CONF);
+    int cpu_count = 0;
+
+    // pid 0 means the current thread - which we have to assume represents the process
+    if (sched_getaffinity(0, cpus_size, &cpus) == 0) {
+        // only look up to the number of configured processors
+        for (int i = 0; i < processor_count; i++) {
+            if (CPU_ISSET(i, &cpus)) {
+                cpu_count++;
+            }
+        }
+    } else {
+        cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
+    }
+
+    return cpu_count;
+#elif os_DARWIN
     // Linux doesn't yet have a (official) notion of processor sets,
     // so just return the number of online processors.
     int online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
