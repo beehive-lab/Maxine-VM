@@ -197,7 +197,7 @@ Dependencies
 Maxine depends on the `MX tool <https://github.com/graalvm/mx>`__ for its build process.
 To get it and add it to your ``PATH`` execute::
 
- sudo apt-get install python2.7           # MX depends on python 2.7
+ sudo apt-get install python           # MX depends on python
  mkdir -p $WORKDIR
  cd $WORKDIR
  git clone https://github.com/graalvm/mx

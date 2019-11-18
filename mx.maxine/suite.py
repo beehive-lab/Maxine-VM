@@ -324,7 +324,7 @@ suite = {
                 "JDK_TOOLS",
                 "JNUMAUTILS",
             ],
-            "checkstyle": "com.sun.max",
+            "checkstyleVersion" : "8.8",
             "javaCompliance": "1.7+",
         },
 
