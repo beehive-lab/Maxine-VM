@@ -31,6 +31,16 @@ SOURCES = c.c condition.c log.c image.c $(ISA).c jni.c jvm.c maxine.c memory.c m
           relocation.c dataio.c runtime.c snippet.c threads.c threadLocals.c time.c trap.c \
           virtualMemory.c jnitests.c sync.c signal.c jmm.c jvmti.c
 
+TARGETOS ?= $(shell uname -s)
+ifeq ($(TARGETOS),Linux)
+    TARGETISA ?= $(shell uname -m)
+    ifeq ($(TARGETISA), x86_64)
+        ISA := amd64
+    endif
+endif # Linux
+ifeq ($(ISA),amd64)
+    SOURCES += numa.c
+endif
 
 SOURCE_DIRS = share platform substrate
 

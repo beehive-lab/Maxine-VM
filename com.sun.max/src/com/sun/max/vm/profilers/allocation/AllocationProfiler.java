@@ -24,6 +24,7 @@ import com.sun.max.annotate.C_FUNCTION;
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.program.ProgramError;
+import com.sun.max.util.NUMALib;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOptions;
@@ -31,8 +32,6 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
-
-import uk.ac.manchester.jnumautils.JNumaUtils;
 
 import static com.sun.max.vm.MaxineVM.isHosted;
 
@@ -57,11 +56,6 @@ public class AllocationProfiler {
      */
     public static RecordBuffer survivors1;
     public static RecordBuffer survivors2;
-
-    /**
-     * The external JNumaUtils library object.
-     */
-    public JNumaUtils utilsObject;
 
     private static boolean AllocationProfilerAll;
     public static boolean AllocationProfilerVerbose;
@@ -140,6 +134,8 @@ public class AllocationProfiler {
     }
 
     public AllocationProfiler() {
+        assert NUMALib.numalib_available() != -1 : "AllocationProfiler cannot be run without NUMA support";
+
         if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): AllocationProfiler Initialization.");
         }
@@ -160,17 +156,6 @@ public class AllocationProfiler {
         newObjects = new RecordBuffer(allocBufferSize, "New Objects Buffer");
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): JNumaUtils Initialization.");
-        }
-        // Initialize a JNumaUtils object. We need to allocate it early because it is going to be used when allocation is disabled.
-        utilsObject = new JNumaUtils();
-
-        if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Force Native Methods's resolution.");
-        }
-        resolveNativeMethods();
-
-        if (AllocationProfilerVerbose) {
             Log.println("(Allocation Profiler): Initialize the Survivor Objects AllocationProfiler Buffers.");
         }
         survivors1 = new RecordBuffer(survBufferSize, "Survivors Buffer No1");
@@ -186,14 +171,6 @@ public class AllocationProfiler {
             Log.print(getProfilingCycle());
             Log.println("]");
         }
-    }
-
-    /**
-     * This method used to force resolution for native methods.
-     * All methods that will be called when allocation is disabled need to have already been resolved.
-     */
-    public void resolveNativeMethods() {
-        utilsObject.findNode(0L);
     }
 
     public int getProfilingCycle() {
@@ -301,7 +278,7 @@ public class AllocationProfiler {
 
     public void findNumaNodes() {
         for (int i = 0; i < newObjects.currentIndex; i++) {
-            int node = utilsObject.findNode(newObjects.readAddr(i));
+            int node = NUMALib.numaNodeOfAddress(newObjects.readAddr(i));
             newObjects.writeNode(i, node);
         }
     }
@@ -328,7 +305,7 @@ public class AllocationProfiler {
                 // update Virtual Address
                 long newAddr = Heap.getForwardedAddress(address);
                 // update NUMA Node
-                int node = utilsObject.findNode(newAddr);
+                int node = NUMALib.numaNodeOfAddress(newAddr);
                 from.readType(i);
                 //guard survivors RecordBuffer from overflow
                 if (to.currentIndex >= to.bufferSize) {

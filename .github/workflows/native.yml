@@ -49,6 +49,11 @@ jobs:
       env:
         MAXINE_HOME: ./
       run: ../mx/mx --no-download-progress --suite=maxine vm -C1X:+PrintCFGToFile -version
+    - name: numa profiler
+      if: matrix.os != 'macOS-latest'
+      env:
+        MAXINE_HOME: ./
+      run: ../mx/mx --no-download-progress --suite=maxine vm -XX:+AllocationProfilerAll -cp test/bin test.output.HelloWorld
     - name: Gate
       env:
         MAXINE_HOME: ./

@@ -101,11 +101,6 @@ suite = {
             "path": "lib/asm-util-6.0-maxine.jar",
         },
 
-        "JNUMAUTILS": {
-            "sha1": "425952b1dd9f15bb8d0d77577ef5917f44a7dc84",
-            "path": "lib/jnumautils-0.1-SNAPSHOT.jar",
-        },
-
     },
 
     # ------------- Maxine -------------
@@ -322,7 +317,6 @@ suite = {
                 "com.oracle.max.asm",
                 "com.oracle.max.criutils",
                 "JDK_TOOLS",
-                "JNUMAUTILS",
             ],
             "checkstyleVersion" : "8.8",
             "javaCompliance": "1.7+",
