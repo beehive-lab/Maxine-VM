@@ -24,6 +24,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
+from __future__ import print_function
 import os, shutil, fnmatch, subprocess, platform, itertools, datetime, sys, csv, re, multiprocessing
 from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
@@ -84,7 +85,7 @@ def checkcopyrights(args):
     """run copyright check on the Maxine sources"""
     for i in args:
         if i == '-h' or i == '-help' or i == '--help':
-            print '"for help run mx :checkcopyrights -h"'
+            print('for help run mx :checkcopyrights -h')
             return
     mx.checkcopyrights(['--', '--copyright-dir', 'mx.maxine'] + args)
 
@@ -92,7 +93,7 @@ def checkcopyrights(args):
 def build(args):
     for i in args:
         if i == '-h' or i == '-help' or i == '--help':
-            print '"for help run mx :build -h"'
+            print('for help run mx :build -h')
             return
     mx.build(['--warning-as-error'] + args)
 
@@ -686,7 +687,7 @@ def applynumathreadmap(filename):
     #there is no thread 0 so put a garbage value
     threadMap.insert(0, -9)
 
-    print 'Applying NUMA Thread Map...'    
+    print('Applying NUMA Thread Map...')
     for line in lines:
         threadMapLineMatch = re.findall(threadMapPattern, line)
         recordLineMatch = re.match(recordPattern, line)
@@ -805,25 +806,25 @@ def allocprofiler(args):
             del vmArgs[vmArgs.index('validate')]
             profilerArgs.append('-XX:+AllocationProfilerDebug')
 
-    print '=================================================='
-    print '== Launching Maxine VM with Allocation Profiler =='
-    print '=================================================='
-    print '== Profiler Args:'
+    print('==================================================')
+    print('== Launching Maxine VM with Allocation Profiler ==')
+    print('==================================================')
+    print('== Profiler Args:')
     for args in profilerArgs:
-        print '\t', args
-    print '== VM and Application Args:'
+        print('\t'), args
+    print('== VM and Application Args:')
     for args in vmArgs:
-        print '\t', args
-    print '=================================================='
+        print('\t'), args
+    print('==================================================')
 
     mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
 
-    print '=================================================='
-    print 'The execution is finished.'
+    print('==================================================')
+    print('The execution is finished.')
     applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
-    print 'Finished.'
-    print '=> Results directory: ',os.getenv('MAXINE_LOG_FILE')
-    print '=> Results format:', 'Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode'
+    print('Finished.')
+    print('=> Results directory: ' + os.getenv('MAXINE_LOG_FILE'))
+    print('=> Results format: Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode')
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
