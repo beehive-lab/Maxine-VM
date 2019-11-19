@@ -58,4 +58,7 @@ public class NUMALib {
 
     @C_FUNCTION
     public static native int numaNodeOfCPU(int cpuID);
+
+    @C_FUNCTION
+    public static native int numaPageSize();
 }

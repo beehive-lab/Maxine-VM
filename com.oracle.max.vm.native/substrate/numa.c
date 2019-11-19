@@ -42,3 +42,7 @@ int numaConfiguredCPUs() {
 int numaNodeOfCPU(int cpuID) {
     return numa_node_of_cpu(cpuID);
 }
+
+int numaPageSize() {
+    return numa_pagesize();
+}

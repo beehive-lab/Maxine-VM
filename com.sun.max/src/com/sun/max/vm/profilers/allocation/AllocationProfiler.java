@@ -213,7 +213,7 @@ public class AllocationProfiler {
     }
 
     public void initializeHeapBoundariesBuffer() {
-        int pageSize = 4096;
+        int pageSize = NUMALib.numaPageSize();
         int bufSize = Heap.maxSize().dividedBy(pageSize).toInt();
         heapPages = new VirtualPagesBuffer(bufSize);
         findFirstHeapPage();
@@ -299,7 +299,7 @@ public class AllocationProfiler {
     }
 
     public int getObjectNumaNode(long firstPageAddress, long address) {
-        int pageSize = 4096;
+        int pageSize = NUMALib.numaPageSize();
         long numerator = address - firstPageAddress;
         long div = numerator / (long) pageSize;
         int pageIndex = (int) div;
@@ -439,7 +439,7 @@ public class AllocationProfiler {
      * For every object, find the virtual memory page where the object is placed and get its physical NUMA Node.
      */
     public void findObjectNumaNode() {
-        int pageSize = 4096;
+        int pageSize = NUMALib.numaPageSize();
         long objectAddress;
         long firstPageAddress = heapPages.readAddr(0);
         int pageIndex;
@@ -489,7 +489,7 @@ public class AllocationProfiler {
             heapPages.writeAddr(index, currentAddress.toLong());
             heapPages.writeNumaNode(index, node);
             index++;
-            currentAddress = currentAddress.plus(4096);
+            currentAddress = currentAddress.plus(NUMALib.numaPageSize());
             //update stats
             if (node >= 0) {
                 int count = heapPages.readStats(node);
