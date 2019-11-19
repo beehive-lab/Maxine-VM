@@ -752,9 +752,6 @@ public class AllocationProfiler {
 
         if (AllocationProfilerVerbose) {
             printObjectAccessStats();
-        }
-
-        if (AllocationProfilerVerbose) {
             Log.print("(Allocation Profiler): Release Reserved Memory.");
         }
         releaseReservedMemory();
