@@ -847,7 +847,9 @@ public class MaxXirGenerator implements RiXirGenerator {
             writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.ARRAY_POST_BARRIER).genWriteBarrier(asm, array, index);
         }
         if (MaxineVM.useProfiler && kind == CiKind.Object) {
-            callRuntimeThroughStub(asm, "callProfileWriteArray", null, array);
+            XirOperand cell = asm.createTemp("cell", WordUtil.archKind());
+            asm.mov(cell, array);
+            callRuntimeThroughStub(asm, "callProfileWriteArray", null, cell);
         }
         if (genBoundsCheck) {
             asm.bindOutOfLine(failBoundsCheck);
@@ -1498,7 +1500,9 @@ public class MaxXirGenerator implements RiXirGenerator {
                 writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.TUPLE_POST_BARRIER).genWriteBarrier(asm, object);
             }
             if (MaxineVM.useProfiler && kind == CiKind.Object) {
-                callRuntimeThroughStub(asm, "callProfileWriteTuple", null, object);
+                XirOperand cell = asm.createTemp("cell", WordUtil.archKind());
+                asm.mov(cell, object);
+                callRuntimeThroughStub(asm, "callProfileWriteTuple", null, cell);
             }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">");
         } else {
@@ -1518,7 +1522,9 @@ public class MaxXirGenerator implements RiXirGenerator {
                 writeBarrier(asm, object, null, value);
             }
             if (MaxineVM.useProfiler && kind == CiKind.Object) {
-                callRuntimeThroughStub(asm, "callProfileWriteTuple", null, object);
+                XirOperand cell = asm.createTemp("cell", WordUtil.archKind());
+                asm.mov(cell, object);
+                callRuntimeThroughStub(asm, "callProfileWriteTuple", null, cell);
             }
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
