@@ -1137,7 +1137,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfileNewArray", null, arraySize, hub, cell);
+        if (MaxineVM.useProfiler) {
+            callRuntimeThroughStub(asm, "callProfileNewArray", null, arraySize, hub, cell);
+        }
 
         asm.bindOutOfLine(reportNegativeIndexError);
         callRuntimeThroughStub(asm, "throwNegativeArraySizeException", null, length);
@@ -1185,7 +1187,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfileNewTuple", null, arraySize, hub, cell);
+        if (MaxineVM.useProfiler) {
+            callRuntimeThroughStub(asm, "callProfileNewTuple", null, arraySize, hub, cell);
+        }
 
         asm.bindOutOfLine(reportNegativeIndexError);
         callRuntimeThroughStub(asm, "throwNegativeArraySizeException", null, length);
@@ -1330,7 +1334,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
+        if (MaxineVM.useProfiler) {
+            callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
+        }
     }
 
     @HOSTED_ONLY
@@ -1397,7 +1403,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
+        if (MaxineVM.useProfiler) {
+            callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
+        }
 
         asm.bindOutOfLine(slowPath);
         callRuntimeThroughStub(asm, "slowPathAllocate", cell, tupleSize, etla);
