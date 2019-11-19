@@ -2157,6 +2157,7 @@ public class MaxXirGenerator implements RiXirGenerator {
          * @param hub object hub to obtain the type of the profiled object.
          */
         public static void callProfileNewTuple(int size, Hub hub, Pointer cell) {
+            assert MaxineVM.useProfiler;
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
@@ -2167,6 +2168,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static void callProfileNewArray(int size, Hub hub, Pointer cell) {
+            assert MaxineVM.useProfiler;
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
@@ -2176,19 +2178,19 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
         }
 
+        @PLATFORM(cpu = "amd64")
         public static void callProfileWriteTuple(Pointer cell) {
-            if (target().arch.isX86()) {
-                if (MaxineVM.inProfilingSession) {
-                    ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteTuple(cell);
-                }
+            assert MaxineVM.useProfiler;
+            if (MaxineVM.inProfilingSession) {
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteTuple(cell);
             }
         }
 
+        @PLATFORM(cpu = "amd64")
         public static void callProfileWriteArray(Pointer arrayCell) {
-            if (target().arch.isX86()) {
-                if (MaxineVM.inProfilingSession) {
-                    ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteArray(arrayCell);
-                }
+            assert MaxineVM.useProfiler;
+            if (MaxineVM.inProfilingSession) {
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteArray(arrayCell);
             }
         }
 
