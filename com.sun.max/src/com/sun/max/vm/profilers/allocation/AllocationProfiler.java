@@ -491,13 +491,11 @@ public class AllocationProfiler {
             index++;
             currentAddress = currentAddress.plus(NUMALib.numaPageSize());
             //update stats
-            if (node >= 0) {
-                int count = heapPages.readStats(node);
-                heapPages.writeStats(node, count + 1);
-            } else {
-                int count = heapPages.readStats(VirtualPagesBuffer.maxNumaNodes);
-                heapPages.writeStats(VirtualPagesBuffer.maxNumaNodes, count + 1);
+            if (node < 0) {
+                node = VirtualPagesBuffer.maxNumaNodes;
             }
+            int count = heapPages.readStats(node);
+            heapPages.writeStats(node, count + 1);
         }
 
     }
