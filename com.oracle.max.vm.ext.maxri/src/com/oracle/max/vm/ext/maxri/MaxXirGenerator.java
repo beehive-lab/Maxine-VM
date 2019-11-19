@@ -32,7 +32,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.armv7.*;
-import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -846,7 +845,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (genWriteBarrier) {
             writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.ARRAY_POST_BARRIER).genWriteBarrier(asm, array, index);
         }
-        if (MaxineVM.useProfiler && kind == CiKind.Object) {
+        if (MaxineVM.useNUMAProfiler && kind == CiKind.Object) {
             XirOperand cell = asm.createTemp("cell", WordUtil.archKind());
             asm.mov(cell, array);
             callRuntimeThroughStub(asm, "callProfileWriteArray", null, cell);
@@ -1137,7 +1136,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
 
-        if (MaxineVM.useProfiler) {
+        if (MaxineVM.useNUMAProfiler) {
             callRuntimeThroughStub(asm, "callProfileNewArray", null, arraySize, hub, cell);
         }
 
@@ -1187,7 +1186,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
 
-        if (MaxineVM.useProfiler) {
+        if (MaxineVM.useNUMAProfiler) {
             callRuntimeThroughStub(asm, "callProfileNewTuple", null, arraySize, hub, cell);
         }
 
@@ -1334,7 +1333,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         asm.mov(result, cell);
 
-        if (MaxineVM.useProfiler) {
+        if (MaxineVM.useNUMAProfiler) {
             callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
         }
     }
@@ -1403,7 +1402,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         asm.mov(result, cell);
 
-        if (MaxineVM.useProfiler) {
+        if (MaxineVM.useNUMAProfiler) {
             callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
         }
 
@@ -1507,7 +1506,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.TUPLE_POST_BARRIER).genWriteBarrier(asm, object);
             }
-            if (MaxineVM.useProfiler && kind == CiKind.Object) {
+            if (MaxineVM.useNUMAProfiler && kind == CiKind.Object) {
                 XirOperand cell = asm.createTemp("cell", WordUtil.archKind());
                 asm.mov(cell, object);
                 callRuntimeThroughStub(asm, "callProfileWriteTuple", null, cell);
@@ -1529,7 +1528,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 writeBarrier(asm, object, null, value);
             }
-            if (MaxineVM.useProfiler && kind == CiKind.Object) {
+            if (MaxineVM.useNUMAProfiler && kind == CiKind.Object) {
                 XirOperand cell = asm.createTemp("cell", WordUtil.archKind());
                 asm.mov(cell, object);
                 callRuntimeThroughStub(asm, "callProfileWriteTuple", null, cell);
@@ -2157,7 +2156,7 @@ public class MaxXirGenerator implements RiXirGenerator {
          * @param hub object hub to obtain the type of the profiled object.
          */
         public static void callProfileNewTuple(int size, Hub hub, Pointer cell) {
-            assert MaxineVM.useProfiler;
+            assert MaxineVM.useNUMAProfiler;
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
@@ -2168,7 +2167,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         public static void callProfileNewArray(int size, Hub hub, Pointer cell) {
-            assert MaxineVM.useProfiler;
+            assert MaxineVM.useNUMAProfiler;
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
@@ -2180,7 +2179,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         @PLATFORM(cpu = "amd64")
         public static void callProfileWriteTuple(Pointer cell) {
-            assert MaxineVM.useProfiler;
+            assert MaxineVM.useNUMAProfiler;
             if (MaxineVM.inProfilingSession) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteTuple(cell);
             }
@@ -2188,7 +2187,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         @PLATFORM(cpu = "amd64")
         public static void callProfileWriteArray(Pointer arrayCell) {
-            assert MaxineVM.useProfiler;
+            assert MaxineVM.useNUMAProfiler;
             if (MaxineVM.inProfilingSession) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteArray(arrayCell);
             }

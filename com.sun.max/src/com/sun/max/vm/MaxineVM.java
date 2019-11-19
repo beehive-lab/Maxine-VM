@@ -129,7 +129,7 @@ public final class MaxineVM {
      */
     public static AllocationProfiler allocationProfiler;
 
-    public static boolean useProfiler;
+    public static boolean useNUMAProfiler;
     public static boolean inProfilingSession = false;
     public static boolean isProfilingPaused = false;
 

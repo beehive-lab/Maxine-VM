@@ -23,7 +23,6 @@ package com.sun.max.vm.hosted;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.max.asm.*;
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -96,8 +95,8 @@ public final class BootImageGenerator {
     private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
             "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
-    private static final Option<Boolean> useProfiler = options.newBooleanOption("use-profiler", false,
-            "Uses allocation profiler.");
+    private static final Option<Boolean> useProfiler = options.newBooleanOption("use-numa-profiler", false,
+            "Uses NUMA memory profiler.");
 
     // Options shared with the Inspector
     public static final OptionSet inspectorSharedOptions = new OptionSet();
@@ -222,10 +221,10 @@ public final class BootImageGenerator {
                 return;
             }
 
-            MaxineVM.useProfiler = useProfiler.getValue();
+            MaxineVM.useNUMAProfiler = useProfiler.getValue();
 
-            if (MaxineVM.useProfiler && !platform().target.arch.isX86()) {
-                FatalError.unimplemented("Allocation Profiler unsupported for non-x86 Architectures.");
+            if (MaxineVM.useNUMAProfiler && !platform().target.arch.isX86()) {
+                FatalError.unimplemented("NUMA memory profiler not supported on non-x86 Architectures.");
             }
 
             if (compilationBrokerClassOption.getValue() != null) {
