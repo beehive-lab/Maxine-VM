@@ -38,8 +38,8 @@ import com.sun.max.vm.instrument.InstrumentationManager;
 import com.sun.max.vm.jdk.JDK_sun_launcher_LauncherHelper;
 import com.sun.max.vm.jni.JniFunctions;
 import com.sun.max.vm.log.VMLog;
-import com.sun.max.vm.profilers.allocation.NUMAProfiler;
-import com.sun.max.vm.profilers.allocation.ProfilerGCCallback;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
+import com.sun.max.vm.profilers.tracing.numa.ProfilerGCCallback;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.RunScheme;
 import com.sun.max.vm.runtime.CriticalMethod;
@@ -199,7 +199,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.restart();
         }
-        // TODO: restart the allocation profiler as well, and dump its findings
+        // TODO: restart the numa profiler as well, and dump its findings
     }
 
     @ALIAS(declaringClass = System.class)

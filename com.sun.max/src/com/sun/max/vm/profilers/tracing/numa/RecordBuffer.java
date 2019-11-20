@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.sun.max.vm.profilers.allocation;
+package com.sun.max.vm.profilers.tracing.numa;
 
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
@@ -210,7 +210,7 @@ class RecordBuffer {
         return readInt(threadIds, index);
     }
 
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int id, int threadId, char[] type, int size, long address) {
         if (Platform.platform().isa != ISA.AMD64) {
@@ -234,7 +234,7 @@ class RecordBuffer {
         }
     }
 
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int id, int threadId, char[] type, int size, long address, int node) {
         writeNode(currentIndex, node);

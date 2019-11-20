@@ -18,7 +18,7 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-package com.sun.max.vm.profilers.allocation;
+package com.sun.max.vm.profilers.tracing.numa;
 
 import com.sun.max.annotate.C_FUNCTION;
 import com.sun.max.annotate.NEVER_INLINE;
@@ -146,7 +146,7 @@ public class NUMAProfiler {
      */
     static {
         VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", NUMAProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerVerbose", NUMAProfiler.class, "Verbose allocation profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerVerbose", NUMAProfiler.class, "Verbose numa profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "AllocationProfilerBufferSize", NUMAProfiler.class, "Allocation Profiler's Buffer Size.");
         VMOptions.addFieldOption("-XX:", "AllocationProfilerExplicitGCThreshold", NUMAProfiler.class, "The number of the Explicit GCs to be performed before the Allocation Profiler starts recording. (default: 0)");
         VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareObject", NUMAProfiler.class, "The Class of the Object to be sought after by the Allocation Profiler to drive the profiling process. (default: 'AllocationProfilerFlareObject')");
@@ -263,7 +263,7 @@ public class NUMAProfiler {
     /**
      * This method is called when a profiled object is allocated.
      */
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public void profileNew(int size, String type, long address) {
         /* PROFILER_TLA is currently a thread local that has it's value maintained
@@ -328,7 +328,7 @@ public class NUMAProfiler {
         return threadNumaNode != objectNumaNode;
     }
 
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public void profileWriteAccessTuple(long tupleAddress) {
         long firstPageAddress = heapPages.readAddr(0);
@@ -775,7 +775,7 @@ public class NUMAProfiler {
      * lock() and unlock() methods have been implemented according to the Log.lock() and Log.unlock() ones.
      *
      */
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public static boolean lock() {
         if (isHosted()) {
@@ -785,7 +785,7 @@ public class NUMAProfiler {
         boolean wasDisabled = SafepointPoll.disable();
         NUMAProfiler.allocationProfiler_lock();
         if (lockDepth == 0) {
-            FatalError.check(lockOwner == null, "allocation profiler lock should have no owner with depth 0");
+            FatalError.check(lockOwner == null, "numa profiler lock should have no owner with depth 0");
             lockOwner = VmThread.current();
         }
         lockDepth++;
@@ -796,7 +796,7 @@ public class NUMAProfiler {
      * lock() and unlock() methods have been implemented according to the Log.lock() and Log.unlock() ones.
      *
      */
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public static void unlock(boolean lockDisabledSafepoints) {
         if (isHosted()) {
@@ -805,7 +805,7 @@ public class NUMAProfiler {
 
         --lockDepth;
         FatalError.check(lockDepth >= 0, "mismatched lock/unlock");
-        FatalError.check(lockOwner == VmThread.current(), "allocation profiler lock should be owned by current thread");
+        FatalError.check(lockOwner == VmThread.current(), "numa profiler lock should be owned by current thread");
         if (lockDepth == 0) {
             lockOwner = null;
         }

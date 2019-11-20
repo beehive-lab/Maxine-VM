@@ -116,8 +116,8 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
-        addFieldOption("-XX:", "AllocationProfilerEntryPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should start");
-        addFieldOption("-XX:", "AllocationProfilerExitPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should end");
+        addFieldOption("-XX:", "NUMAProfilerEntryPoint", CompilationBroker.class, "Define the method upon whose invocation profiling should start");
+        addFieldOption("-XX:", "NUMAProfilerExitPoint", CompilationBroker.class, "Define the method upon whose invocation profiling should end");
         addFieldOption("-XX:", "LogCompiledMethods", CompilationBroker.class, "Log the names of compiled methods (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }

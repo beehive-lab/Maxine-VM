@@ -47,7 +47,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.profilers.allocation.NUMAProfiler;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;

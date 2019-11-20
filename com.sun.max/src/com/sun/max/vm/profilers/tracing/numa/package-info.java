@@ -20,4 +20,4 @@
 /**
  * Maxine Dynamic Object Allocation Profiler
  */
-package com.sun.max.vm.profilers.allocation;
+package com.sun.max.vm.profilers.tracing.numa;

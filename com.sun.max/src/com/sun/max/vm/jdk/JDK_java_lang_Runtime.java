@@ -23,7 +23,7 @@ package com.sun.max.vm.jdk;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.HeapScheme.GCRequest;
-import com.sun.max.vm.profilers.allocation.NUMAProfiler;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 
 /**
  * Implements method substitutions for {@link java.lang.Runtime java.lang.Runtime}.
