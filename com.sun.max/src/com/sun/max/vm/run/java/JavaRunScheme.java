@@ -256,25 +256,25 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     final String heapProfOptionPrefix = hprofOption.toString();
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
-                // The same for the Allocation Profiler
+                // The same for the NUMA Profiler
                 if (CompilationBroker.NUMAProfilerEntryPoint != null || NUMAProfiler.profileAll()) {
                     float beforeAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
-                    // Initialize Allocation Profiler
+                    // Initialize NUMA Profiler
                     MaxineVM.numaProfiler = new NUMAProfiler();
                     float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
 
-                    if (NUMAProfiler.AllocationProfilerDebug) {
+                    if (NUMAProfiler.NUMAProfilerDebug) {
                         Log.println("*===================================================*\n" +
-                            "* Allocation Profiler is on validation mode.\n" +
+                            "* NUMA Profiler is on validation mode.\n" +
                             "*===================================================*\n" +
-                            "* You can use Allocation Profiler with confidence if:\n" +
-                            "* => a) VM Reported Heap Used Space = Initial Used Heap Space + Allocation Profiler Size + New Objects Size\n" +
-                            "* => b) VM Reported Heap Used Space after GC = Initial Used Heap Space + Allocation Profiler Size + Survivor Objects Size\n" +
-                            "* => c) Next Cycle's VM Reported Heap Used Space = Initial Used Heap Space + Allocation Profiler Size + Survivor Object Size\n" +
+                            "* You can use NUMA Profiler with confidence if:\n" +
+                            "* => a) VM Reported Heap Used Space = Initial Used Heap Space + NUMA Profiler Size + New Objects Size\n" +
+                            "* => b) VM Reported Heap Used Space after GC = Initial Used Heap Space + NUMA Profiler Size + Survivor Objects Size\n" +
+                            "* => c) Next Cycle's VM Reported Heap Used Space = Initial Used Heap Space + NUMA Profiler Size + Survivor Object Size\n" +
                             "*===================================================*\n");
                         Log.println("Initial Used Heap Size = " + beforeAllocProfiler + " MB");
                         float allocProfilerSize = afterAllocProfiler - beforeAllocProfiler;
-                        Log.println("Allocation Profiler Size = " + allocProfilerSize + " MB\n");
+                        Log.println("NUMA Profiler Size = " + allocProfilerSize + " MB\n");
                     }
                 }
                 break;

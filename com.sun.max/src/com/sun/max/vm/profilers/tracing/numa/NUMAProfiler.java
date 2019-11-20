@@ -66,10 +66,10 @@ public class NUMAProfiler {
      */
     public static VirtualPagesBuffer heapPages;
 
-    private static boolean AllocationProfilerAll;
-    public static boolean AllocationProfilerVerbose;
-    public static int AllocationProfilerBufferSize;
-    public static boolean AllocationProfilerDebug;
+    private static boolean NUMAProfilerAll;
+    public static boolean NUMAProfilerVerbose;
+    public static int NUMAProfilerBufferSize;
+    public static boolean NUMAProfilerDebug;
 
     public static int totalNewSize = 0;
     public static int totalSurvSize = 0;
@@ -86,10 +86,10 @@ public class NUMAProfiler {
      * The following two variables are used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The iteration
      * is calculated by the number of System.gc() calls. The MaxineVM.profileThatObject()
-     * method returns false as long as the iteration counter is below the AllocationProfilerExplicitGCThreshold, which
+     * method returns false as long as the iteration counter is below the NUMAProfilerExplicitGCThreshold, which
      * is given by the user, ignoring any object allocation up to that point.
      */
-    public static int AllocationProfilerExplicitGCThreshold;
+    public static int NUMAProfilerExplicitGCThreshold;
     public static int iteration = 0;
 
     /**
@@ -108,14 +108,14 @@ public class NUMAProfiler {
      * Trigger Event: A Flare-Object Allocation by the Application.
      * The following variable is used to help us ignore the application's
      * warmup iterations in order to profile only the effective part. The MaxineVM.profileThatObject()
-     * method returns false as long as the AllocationProfilerFlareObject counter is below the AllocationProfilerFlareAllocationThreshold,
+     * method returns false as long as the NUMAProfilerFlareObject counter is below the NUMAProfilerFlareAllocationThreshold,
      * which is given by the user, ignoring any object allocation up to that point.
-     * The AllocationProfilerFlareProfileWindow (default 1) indicates how many Flare Objects we need
+     * The NUMAProfilerFlareProfileWindow (default 1) indicates how many Flare Objects we need
      * to allocate before we stop the profiling.
      */
-    public static int AllocationProfilerFlareAllocationThreshold;
-    public static int AllocationProfilerFlareProfileWindow = 1;
-    public static String AllocationProfilerFlareObject = "AllocationProfilerFlareObject";
+    public static int NUMAProfilerFlareAllocationThreshold;
+    public static int NUMAProfilerFlareProfileWindow = 1;
+    public static String NUMAProfilerFlareObject = "NUMAProfilerFlareObject";
 
     public final static int MINIMUMBUFFERSIZE = 500000;
     /**
@@ -142,42 +142,42 @@ public class NUMAProfiler {
     public static int remoteArrayWrites = 0;
 
     /**
-     * The options a user can pass to the Allocation Profiler.
+     * The options a user can pass to the NUMA Profiler.
      */
     static {
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", NUMAProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerVerbose", NUMAProfiler.class, "Verbose numa profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerBufferSize", NUMAProfiler.class, "Allocation Profiler's Buffer Size.");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerExplicitGCThreshold", NUMAProfiler.class, "The number of the Explicit GCs to be performed before the Allocation Profiler starts recording. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareObject", NUMAProfiler.class, "The Class of the Object to be sought after by the Allocation Profiler to drive the profiling process. (default: 'AllocationProfilerFlareObject')");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareAllocationThreshold", NUMAProfiler.class, "The number of the Flare objects to be allocated before the Allocation Profiler starts recording. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareProfileWindow", NUMAProfiler.class, "The number of the Flare objects to be allocated before the Allocation Profiler stops recording. (default: 1)");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerDebug", NUMAProfiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerAll", NUMAProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerVerbose", NUMAProfiler.class, "Verbose numa profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerBufferSize", NUMAProfiler.class, "NUMAProfiler's Buffer Size.");
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerExplicitGCThreshold", NUMAProfiler.class, "The number of the Explicit GCs to be performed before the NUMAProfiler starts recording. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareObject", NUMAProfiler.class, "The Class of the Object to be sought after by the NUMAProfiler to drive the profiling process. (default: 'AllocationProfilerFlareObject')");
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareAllocationThreshold", NUMAProfiler.class, "The number of the Flare objects to be allocated before the NUMAProfiler starts recording. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareProfileWindow", NUMAProfiler.class, "The number of the Flare objects to be allocated before the NUMAProfiler stops recording. (default: 1)");
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerDebug", NUMAProfiler.class, "Print information to help in NUMAProfiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
     public NUMAProfiler() {
         assert NUMALib.numalib_available() != -1 : "NUMAProfiler cannot be run without NUMA support";
 
-        if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): NUMAProfiler Initialization.");
+        if (NUMAProfilerVerbose) {
+            Log.println("(NUMA Profiler): NUMAProfiler Initialization.");
         }
 
-        if (AllocationProfilerBufferSize != 0) {
-            if (AllocationProfilerBufferSize < MINIMUMBUFFERSIZE) {
+        if (NUMAProfilerBufferSize != 0) {
+            if (NUMAProfilerBufferSize < MINIMUMBUFFERSIZE) {
                 Log.print("WARNING: Small Buffer Size. Minimum Buffer Size applied! (=");
                 Log.print(MINIMUMBUFFERSIZE);
                 Log.println(")");
                 allocBufferSize = MINIMUMBUFFERSIZE;
                 survBufferSize = MINIMUMBUFFERSIZE;
             } else {
-                allocBufferSize = AllocationProfilerBufferSize;
-                survBufferSize = AllocationProfilerBufferSize;
+                allocBufferSize = NUMAProfilerBufferSize;
+                survBufferSize = NUMAProfilerBufferSize;
             }
         }
 
         newObjects = new RecordBuffer(allocBufferSize, "New Objects Buffer");
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Initialize the Survivor Objects NUMAProfiler Buffers.");
         }
         survivors1 = new RecordBuffer(survBufferSize, "Survivors Buffer No1");
@@ -185,7 +185,7 @@ public class NUMAProfiler {
 
         charArrayBuffer = new char[RecordBuffer.MAX_CHARS];
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Initialize the Heap Boundaries Buffer.");
         }
         initializeHeapBoundariesBuffer();
@@ -193,7 +193,7 @@ public class NUMAProfiler {
         numaConfig = new NUMALib();
 
         profilingCycle = 1;
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Initialization Complete.");
 
             Log.print("(NUMA Profiler): Start Profiling. [Cycle ");
@@ -224,15 +224,15 @@ public class NUMAProfiler {
     }
 
     public static boolean profileAll() {
-        return AllocationProfilerAll;
+        return NUMAProfilerAll;
     }
 
     public static boolean warmupFinished() {
-        return iteration > AllocationProfilerExplicitGCThreshold || AllocationProfilerExplicitGCThreshold == 0;
+        return iteration > NUMAProfilerExplicitGCThreshold || NUMAProfilerExplicitGCThreshold == 0;
     }
 
     public static boolean objectWarmupFinished() {
-        return MaxineVM.flareObjectCounter >= AllocationProfilerFlareAllocationThreshold && MaxineVM.flareObjectCounter <= AllocationProfilerFlareAllocationThreshold + (AllocationProfilerFlareProfileWindow - 1);
+        return MaxineVM.flareObjectCounter >= NUMAProfilerFlareAllocationThreshold && MaxineVM.flareObjectCounter <= NUMAProfilerFlareAllocationThreshold + (NUMAProfilerFlareProfileWindow - 1);
     }
 
     /**
@@ -397,7 +397,7 @@ public class NUMAProfiler {
      */
     public void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.print("==== Profiling Cycle ");
             Log.print(profilingCycle);
             Log.println(" ====");
@@ -408,7 +408,7 @@ public class NUMAProfiler {
 
     public void dumpSurvivors() {
         final boolean lockDisabledSafepoints = lock();
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.print("==== Survivors Cycle ");
             Log.print(profilingCycle);
             Log.println(" ====");
@@ -506,7 +506,7 @@ public class NUMAProfiler {
      * @param to the destination buffer in which we store the survivor objects.
      */
     public void storeSurvivors(RecordBuffer from, RecordBuffer to) {
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.print("(NUMA Profiler): Copy Survived Objects from ");
             Log.print(from.buffersName);
             Log.print(" to ");
@@ -571,7 +571,7 @@ public class NUMAProfiler {
             MaxineVM.isProfilingPaused = true;
         }
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Entering Pre-GC Phase.");
             Log.print("(NUMA Profiler): Cycle ");
             Log.print(getProfilingCycle());
@@ -584,11 +584,11 @@ public class NUMAProfiler {
             findObjectNumaNode();
         }
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Dump NUMAProfiler Buffer. [pre-GC phase]");
         }
 
-        if (!AllocationProfilerDebug) {
+        if (!NUMAProfilerDebug) {
             dumpHeapBoundaries();
             dumpBuffer();
         } else {
@@ -609,11 +609,11 @@ public class NUMAProfiler {
             Log.println("Garbage Collection");
         }
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             printObjectAccessStats();
         }
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Leaving Pre-GC Phase.");
         }
     }
@@ -623,39 +623,39 @@ public class NUMAProfiler {
      */
     public void postGCActions() {
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Entering Post-GC Phase.");
         }
 
         profileSurvivors();
 
         if ((profilingCycle % 2) == 0) {
-            if (AllocationProfilerVerbose) {
+            if (NUMAProfilerVerbose) {
                 Log.println("(NUMA Profiler): Clean-up Survivor1 Buffer. [post-gc phase]");
             }
             survivors1.resetBuffer();
         } else {
-            if (AllocationProfilerVerbose) {
+            if (NUMAProfilerVerbose) {
                 Log.println("(NUMA Profiler): Clean-up Survivor2 Buffer. [post-gc phase]");
             }
             survivors2.resetBuffer();
         }
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Clean-up NUMAProfiler Buffer. [post-gc phase]");
         }
         newObjects.resetBuffer();
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Reset HeapBoundaries Buffer. [post-gc phase]");
         }
         resetHeapBoundaries();
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Dump Survivors Buffer. [pre-GC phase]");
         }
 
-        if (!AllocationProfilerDebug) {
+        if (!NUMAProfilerDebug) {
             dumpSurvivors();
         } else {
             //in validation mode don't dump buffer
@@ -684,7 +684,7 @@ public class NUMAProfiler {
 
         profilingCycle++;
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Leaving Post-GC Phase.");
             Log.print("(NUMA Profiler): Start Profiling. [Cycle ");
             Log.print(getProfilingCycle());
@@ -709,7 +709,7 @@ public class NUMAProfiler {
 
     /**
      * This method can be used for actions need to take place right before
-     * Allocation Profiler's termination. It is triggered when JavaRunScheme
+     * NUMA Profiler's termination. It is triggered when JavaRunScheme
      * is being terminated. Dumps the final profiling cycle which is not
      * followed by any GC.
      */
@@ -718,7 +718,7 @@ public class NUMAProfiler {
         //end profiling
         MaxineVM.inProfilingSession = false;
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Termination");
         }
 
@@ -731,7 +731,7 @@ public class NUMAProfiler {
             findObjectNumaNode();
         }
 
-        if (!AllocationProfilerDebug) {
+        if (!NUMAProfilerDebug) {
             dumpHeapBoundaries();
             dumpBuffer();
         } else {
@@ -750,13 +750,13 @@ public class NUMAProfiler {
             newObjects.printUsage();
         }
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             printObjectAccessStats();
             Log.println("(NUMA Profiler): Release Reserved Memory.");
         }
         releaseReservedMemory();
 
-        if (AllocationProfilerVerbose) {
+        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Terminating... Bye!");
         }
     }

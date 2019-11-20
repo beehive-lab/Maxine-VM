@@ -704,7 +704,7 @@ def allocProfilerOutputProcessing(filename):
     #there is no thread 0 so put a garbage value
     threadMap.insert(0, -9)
 
-    print('\n=> Processing AllocProfiler\'s Output:')
+    print('\n=> Processing NUMAProfiler\'s Output:')
     print('Generating Object Allocation Trace and Heap Boundaries Trace...')
     for line in lines:
         threadMapLineMatch = re.findall(threadMapPattern, line)
@@ -773,19 +773,19 @@ def allocProfilerOutputProcessing(filename):
     print('a)' + oldFileName + '\nb)' + hbFileName)
 
 def allocprofiler(args):
-    """launch Maxine VM with Allocation Profiler
+    """launch Maxine VM with NUMA Profiler
 
-    Run the Maxine VM with the Allocation Profiler and the given options and arguments.
+    Run the Maxine VM with the NUMA Profiler and the given options and arguments.
 
     where options include:
         all                                                         profile the allocated objects by any method. 1st priority (after log) if present.
         bufferSize                                                  the profiler's buffer size.
         entry <entry point method> [ | exit <exit point method> ]   profile the allocated objects from the entry until the exit method. If no exitpoint given profiles until the end.
         log                                                         execute the application and log the compiled methods by C1X and T1X. 1st priority if present.
-        verbose                                                     enable allocation profiler's verbosity.
+        verbose                                                     enable NUMA profiler's verbosity.
         warmup <num>                                                num of iterations to be considered as warmup and consequently to be ignored.
 
-    If no option given will run with the -XX:+AllocationProfilerAll option. This will profile all objects.
+    If no option given will run with the -XX:+NUMAProfilerAll option. This will profile all objects.
 
     Use "mx allocprofiler -help" to see what other options this command accepts."""
 
@@ -805,7 +805,7 @@ def allocprofiler(args):
         # all | entry | entry exit | none
         if 'all' in vmArgs:
             #if the all option is present, ignore the rest
-            profilerArgs.append('-XX:+AllocationProfilerAll')
+            profilerArgs.append('-XX:+NUMAProfilerAll')
             ignoreTheRestOptions(vmArgs, profilerOptions)
         elif 'entry' in vmArgs:
             profilerArgs.append(getEntryOrExitPoint('entry', vmArgs))
@@ -813,42 +813,42 @@ def allocprofiler(args):
                 profilerArgs.append(getEntryOrExitPoint('exit', vmArgs))
         else:
             #if none option is present, use the all option
-            profilerArgs.append('-XX:+AllocationProfilerAll')
+            profilerArgs.append('-XX:+NUMAProfilerAll')
 
         #enable/disable verbosity
         if 'verbose' in vmArgs:
             del vmArgs[vmArgs.index('verbose')]
-            profilerArgs.append('-XX:+AllocationProfilerVerbose')
+            profilerArgs.append('-XX:+NUMAProfilerVerbose')
 
         if 'warmup' in vmArgs:
             index = vmArgs.index('warmup')
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
-            profilerArgs.append('-XX:AllocationProfilerExplicitGCThreshold='+num)
+            profilerArgs.append('-XX:NUMAProfilerExplicitGCThreshold='+num)
 
         if 'buffersize' in vmArgs:
             index = vmArgs.index('buffersize')
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
-            profilerArgs.append('-XX:AllocationProfilerBufferSize='+num)
+            profilerArgs.append('-XX:NUMAProfilerBufferSize='+num)
 
         if 'validate' in vmArgs:
             del vmArgs[vmArgs.index('validate')]
-            profilerArgs.append('-XX:+AllocationProfilerDebug')
+            profilerArgs.append('-XX:+NUMAProfilerDebug')
 
         if 'stella' in vmArgs:
             del vmArgs[vmArgs.index('stella')]
-            profilerArgs.append('-XX:AllocationProfilerHWConfig=1')
+            profilerArgs.append('-XX:NUMAProfilerHWConfig=1')
         elif 'numascale' in vmArgs:
             del vmArgs[vmArgs.index('numascale')]
-            profilerArgs.append('-XX:AllocationProfilerHWConfig=2')
+            profilerArgs.append('-XX:NUMAProfilerHWConfig=2')
         else:
-            profilerArgs.append('-XX:AllocationProfilerHWConfig=0')
+            profilerArgs.append('-XX:NUMAProfilerHWConfig=0')
 
     print('==================================================')
-    print('== Launching Maxine VM with Allocation Profiler ==')
+    print('== Launching Maxine VM with NUMA Profiler ==')
     print('==================================================')
     print('== Profiler Args:')
     for args in profilerArgs:

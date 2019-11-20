@@ -144,7 +144,7 @@ public final class MaxineVM {
      *
      * An object will be profiled only if:
      *  1) MaxineVM is Running
-     *  2) -XX:+AllocationProfilerEntryPoint is used
+     *  2) -XX:+NUMAProfilerEntryPoint is used
      *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
      *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
      *  5) The object is not allocated by the VmOperationThread
@@ -160,13 +160,13 @@ public final class MaxineVM {
     public static boolean profileThatObject(Hub hub) {
         if (numaProfiler != null) {
             String type = hub.classActor.name();
-            if (NUMAProfiler.AllocationProfilerFlareAllocationThreshold != 0
-                && (NUMAProfiler.AllocationProfilerFlareAllocationThreshold + NUMAProfiler.AllocationProfilerFlareProfileWindow < flareObjectCounter)
-                && type.contains(NUMAProfiler.AllocationProfilerFlareObject)) {
+            if (NUMAProfiler.NUMAProfilerFlareAllocationThreshold != 0
+                && (NUMAProfiler.NUMAProfilerFlareAllocationThreshold + NUMAProfiler.NUMAProfilerFlareProfileWindow < flareObjectCounter)
+                && type.contains(NUMAProfiler.NUMAProfilerFlareObject)) {
                 flareObjectCounter++;
             }
             assert isRunning() && CompilationBroker.NUMAProfilerEntryPoint != null || NUMAProfiler.profileAll() :
-                    "The Allocation Profiler should only be initialized when the VM is running and profiling is enabled";
+                    "The NUMA Profiler should only be initialized when the VM is running and profiling is enabled";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
             inProfilingSession = (profilerTLA == 1 || NUMAProfiler.profileAll()) && NUMAProfiler.warmupFinished() && NUMAProfiler.objectWarmupFinished() && VmThread.current() != VmThread.vmOperationThread;
             return inProfilingSession;
