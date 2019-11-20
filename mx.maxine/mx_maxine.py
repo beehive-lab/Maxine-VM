@@ -838,15 +838,6 @@ def allocprofiler(args):
             del vmArgs[vmArgs.index('validate')]
             profilerArgs.append('-XX:+NUMAProfilerDebug')
 
-        if 'stella' in vmArgs:
-            del vmArgs[vmArgs.index('stella')]
-            profilerArgs.append('-XX:NUMAProfilerHWConfig=1')
-        elif 'numascale' in vmArgs:
-            del vmArgs[vmArgs.index('numascale')]
-            profilerArgs.append('-XX:NUMAProfilerHWConfig=2')
-        else:
-            profilerArgs.append('-XX:NUMAProfilerHWConfig=0')
-
     print('==================================================')
     print('== Launching Maxine VM with NUMA Profiler ==')
     print('==================================================')
