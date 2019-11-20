@@ -187,8 +187,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.terminate();
         }
-        if (MaxineVM.NUMAProfiler != null) {
-            MaxineVM.NUMAProfiler.terminate();
+        if (MaxineVM.numaProfiler != null) {
+            MaxineVM.numaProfiler.terminate();
         }
     }
 
@@ -260,7 +260,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 if (CompilationBroker.AllocationProfilerEntryPoint != null || NUMAProfiler.profileAll()) {
                     float beforeAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
                     // Initialize Allocation Profiler
-                    MaxineVM.NUMAProfiler = new NUMAProfiler();
+                    MaxineVM.numaProfiler = new NUMAProfiler();
                     float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
 
                     if (NUMAProfiler.AllocationProfilerDebug) {

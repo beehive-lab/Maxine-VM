@@ -37,14 +37,14 @@ public class ProfilerGCCallback implements Heap.GCCallback {
     @Override
     public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
 
-        if (MaxineVM.NUMAProfiler == null || !MaxineVM.isRunning()) {
+        if (MaxineVM.numaProfiler == null || !MaxineVM.isRunning()) {
             return;
         }
 
         if (gcCallbackPhase == Heap.GCCallbackPhase.BEFORE) {
-            MaxineVM.NUMAProfiler.preGCActions();
+            MaxineVM.numaProfiler.preGCActions();
         } else if (gcCallbackPhase == Heap.GCCallbackPhase.AFTER) {
-            MaxineVM.NUMAProfiler.postGCActions();
+            MaxineVM.numaProfiler.postGCActions();
         }
 
     }

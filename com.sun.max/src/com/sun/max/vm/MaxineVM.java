@@ -127,10 +127,10 @@ public final class MaxineVM {
     /**
      * The Dynamic NUMAProfiler object. It's initialized during Java Run Scheme initialization (if it's needed).
      */
-    public static NUMAProfiler NUMAProfiler;
+    public static NUMAProfiler numaProfiler;
 
     /**
-     * The {@link #useNUMAProfiler} variable is a flag which takes its value from the {@link BootImageGenerator#useProfiler}
+     * The {@link #useNUMAProfiler} variable is a flag which takes its value from the {@link BootImageGenerator#useNumaProfiler}
      * Option during {@link BootImageGenerator}. If set to true then it allows MaxineVM to inject the NUMA Profiler
      * calls into the precompiled C1X Snippets for New Object Allocation (buildTLABAllocate, buildTLABAllocateArray),
      * Object Write (buildPutFieldTemplate, buildArrayStore) and Object Read (buildGetFieldTemplate, buildArrayLoad).
@@ -158,7 +158,7 @@ public final class MaxineVM {
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject(Hub hub) {
-        if (NUMAProfiler != null) {
+        if (numaProfiler != null) {
             String type = hub.classActor.name();
             if (NUMAProfiler.AllocationProfilerFlareAllocationThreshold != 0
                 && (NUMAProfiler.AllocationProfilerFlareAllocationThreshold + NUMAProfiler.AllocationProfilerFlareProfileWindow < flareObjectCounter)
