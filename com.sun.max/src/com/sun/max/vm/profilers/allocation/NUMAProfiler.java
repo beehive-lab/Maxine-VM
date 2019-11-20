@@ -39,7 +39,7 @@ import com.sun.max.vm.thread.VmThread;
 import static com.sun.max.vm.MaxineVM.isHosted;
 import static com.sun.max.vm.MaxineVM.vm;
 
-public class AllocationProfiler {
+public class NUMAProfiler {
 
     @C_FUNCTION
     static native void allocationProfiler_lock();
@@ -50,12 +50,12 @@ public class AllocationProfiler {
     public static int profilingCycle;
     public static int uniqueId = 0;
     /**
-     * The AllocationProfiler Buffer for newly allocated objects.
+     * The NUMAProfiler Buffer for newly allocated objects.
      */
     public static RecordBuffer newObjects;
 
     /**
-     * The AllocationProfiler Buffers for survivor objects. We use two identical buffers because
+     * The NUMAProfiler Buffers for survivor objects. We use two identical buffers because
      * allocation is disabled at the point we need to move the data in a clean buffer.
      */
     public static RecordBuffer survivors1;
@@ -95,9 +95,9 @@ public class AllocationProfiler {
     /**
      * This field stores the GC type information (implicit or explicit).
      * By default is false. It is set to true, when an explicit GC is triggered
-     * at JDK_java_lang_Runtime class. It is then accessed by the AllocationProfiler at the post-gc phase.
+     * at JDK_java_lang_Runtime class. It is then accessed by the NUMAProfiler at the post-gc phase.
      * If an explicit gc is found, the explicit gc counter is incremented.
-     * This way, the Explicit-GC Policy is, timing-wise, more accurate since the AllocationProfiler
+     * This way, the Explicit-GC Policy is, timing-wise, more accurate since the NUMAProfiler
      * is switched on exactly at the point when the last warm-up iteration has been finished
      * and therefore, profiles only what it should.
      */
@@ -145,21 +145,21 @@ public class AllocationProfiler {
      * The options a user can pass to the Allocation Profiler.
      */
     static {
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", AllocationProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerVerbose", AllocationProfiler.class, "Verbose allocation profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerBufferSize", AllocationProfiler.class, "Allocation Profiler's Buffer Size.");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerExplicitGCThreshold", AllocationProfiler.class, "The number of the Explicit GCs to be performed before the Allocation Profiler starts recording. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareObject", AllocationProfiler.class, "The Class of the Object to be sought after by the Allocation Profiler to drive the profiling process. (default: 'AllocationProfilerFlareObject')");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareAllocationThreshold", AllocationProfiler.class, "The number of the Flare objects to be allocated before the Allocation Profiler starts recording. (default: 0)");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareProfileWindow", AllocationProfiler.class, "The number of the Flare objects to be allocated before the Allocation Profiler stops recording. (default: 1)");
-        VMOptions.addFieldOption("-XX:", "AllocationProfilerDebug", AllocationProfiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerAll", NUMAProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerVerbose", NUMAProfiler.class, "Verbose allocation profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerBufferSize", NUMAProfiler.class, "Allocation Profiler's Buffer Size.");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerExplicitGCThreshold", NUMAProfiler.class, "The number of the Explicit GCs to be performed before the Allocation Profiler starts recording. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareObject", NUMAProfiler.class, "The Class of the Object to be sought after by the Allocation Profiler to drive the profiling process. (default: 'AllocationProfilerFlareObject')");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareAllocationThreshold", NUMAProfiler.class, "The number of the Flare objects to be allocated before the Allocation Profiler starts recording. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerFlareProfileWindow", NUMAProfiler.class, "The number of the Flare objects to be allocated before the Allocation Profiler stops recording. (default: 1)");
+        VMOptions.addFieldOption("-XX:", "AllocationProfilerDebug", NUMAProfiler.class, "Print information to help in Allocation Profiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
-    public AllocationProfiler() {
-        assert NUMALib.numalib_available() != -1 : "AllocationProfiler cannot be run without NUMA support";
+    public NUMAProfiler() {
+        assert NUMALib.numalib_available() != -1 : "NUMAProfiler cannot be run without NUMA support";
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): AllocationProfiler Initialization.");
+            Log.println("(Allocation Profiler): NUMAProfiler Initialization.");
         }
 
         if (AllocationProfilerBufferSize != 0) {
@@ -178,7 +178,7 @@ public class AllocationProfiler {
         newObjects = new RecordBuffer(allocBufferSize, "New Objects Buffer");
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Initialize the Survivor Objects AllocationProfiler Buffers.");
+            Log.println("(Allocation Profiler): Initialize the Survivor Objects NUMAProfiler Buffers.");
         }
         survivors1 = new RecordBuffer(survBufferSize, "Survivors Buffer No1");
         survivors2 = new RecordBuffer(survBufferSize, "Survivors Buffer No2");
@@ -393,7 +393,7 @@ public class AllocationProfiler {
     }
 
     /**
-     * Dump AllocationProfiler Buffer to Maxine's Log output.
+     * Dump NUMAProfiler Buffer to Maxine's Log output.
      */
     public void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
@@ -585,7 +585,7 @@ public class AllocationProfiler {
         }
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Dump AllocationProfiler Buffer. [pre-GC phase]");
+            Log.println("(Allocation Profiler): Dump NUMAProfiler Buffer. [pre-GC phase]");
         }
 
         if (!AllocationProfilerDebug) {
@@ -596,7 +596,7 @@ public class AllocationProfiler {
             Log.print("Cycle ");
             Log.println(profilingCycle);
 
-            Log.print("=> (AllocationProfiler Reports): New Objects Size =");
+            Log.print("=> (NUMAProfiler Reports): New Objects Size =");
             Log.print((float) totalNewSize / (1024 * 1024));
             Log.println(" MB");
 
@@ -642,7 +642,7 @@ public class AllocationProfiler {
         }
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Clean-up AllocationProfiler Buffer. [post-gc phase]");
+            Log.println("(Allocation Profiler): Clean-up NUMAProfiler Buffer. [post-gc phase]");
         }
         newObjects.resetBuffer();
 
@@ -659,7 +659,7 @@ public class AllocationProfiler {
             dumpSurvivors();
         } else {
             //in validation mode don't dump buffer
-            Log.print("=> (AllocationProfiler Reports): Survivor Objects Size =");
+            Log.print("=> (NUMAProfiler Reports): Survivor Objects Size =");
             Log.print((float) totalSurvSize / (1024 * 1024));
             Log.println(" MB");
 
@@ -739,7 +739,7 @@ public class AllocationProfiler {
             Log.print("Cycle ");
             Log.println(profilingCycle);
 
-            Log.print("=> (AllocationProfiler Reports): New Objects Size =");
+            Log.print("=> (NUMAProfiler Reports): New Objects Size =");
             Log.print((float) totalNewSize / (1024 * 1024));
             Log.println(" MB");
 
@@ -783,7 +783,7 @@ public class AllocationProfiler {
         }
 
         boolean wasDisabled = SafepointPoll.disable();
-        AllocationProfiler.allocationProfiler_lock();
+        NUMAProfiler.allocationProfiler_lock();
         if (lockDepth == 0) {
             FatalError.check(lockOwner == null, "allocation profiler lock should have no owner with depth 0");
             lockOwner = VmThread.current();
@@ -809,8 +809,8 @@ public class AllocationProfiler {
         if (lockDepth == 0) {
             lockOwner = null;
         }
-        AllocationProfiler.allocationProfiler_unlock();
-        ProgramError.check(SafepointPoll.isDisabled(), "Safepoints must not be re-enabled in code surrounded by AllocationProfiler.lock() and AllocationProfiler.unlock()");
+        NUMAProfiler.allocationProfiler_unlock();
+        ProgramError.check(SafepointPoll.isDisabled(), "Safepoints must not be re-enabled in code surrounded by NUMAProfiler.lock() and NUMAProfiler.unlock()");
         if (lockDisabledSafepoints) {
             SafepointPoll.enable();
         }

@@ -47,7 +47,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.profilers.allocation.AllocationProfiler;
+import com.sun.max.vm.profilers.allocation.NUMAProfiler;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
@@ -125,9 +125,9 @@ public final class MaxineVM {
     private static long startupTimeNano;
 
     /**
-     * The Dynamic AllocationProfiler object. It's initialized during Java Run Scheme initialization (if it's needed).
+     * The Dynamic NUMAProfiler object. It's initialized during Java Run Scheme initialization (if it's needed).
      */
-    public static AllocationProfiler allocationProfiler;
+    public static NUMAProfiler NUMAProfiler;
 
     /**
      * The {@link #useNUMAProfiler} variable is a flag which takes its value from the {@link BootImageGenerator#useProfiler}
@@ -153,22 +153,22 @@ public final class MaxineVM {
      *
      *  the -XX:ProfileAll option has been used
      *
-     *  In any case we ignore the warmup phase of the application (see {@link AllocationProfiler#warmupFinished}).
+     *  In any case we ignore the warmup phase of the application (see {@link NUMAProfiler#warmupFinished}).
      *
      * @return true if all the above conditions are true.
      */
     public static boolean profileThatObject(Hub hub) {
-        if (allocationProfiler != null) {
+        if (NUMAProfiler != null) {
             String type = hub.classActor.name();
-            if (AllocationProfiler.AllocationProfilerFlareAllocationThreshold != 0
-                && (AllocationProfiler.AllocationProfilerFlareAllocationThreshold + AllocationProfiler.AllocationProfilerFlareProfileWindow < flareObjectCounter)
-                && type.contains(AllocationProfiler.AllocationProfilerFlareObject)) {
+            if (NUMAProfiler.AllocationProfilerFlareAllocationThreshold != 0
+                && (NUMAProfiler.AllocationProfilerFlareAllocationThreshold + NUMAProfiler.AllocationProfilerFlareProfileWindow < flareObjectCounter)
+                && type.contains(NUMAProfiler.AllocationProfilerFlareObject)) {
                 flareObjectCounter++;
             }
-            assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null || AllocationProfiler.profileAll() :
+            assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null || NUMAProfiler.profileAll() :
                     "The Allocation Profiler should only be initialized when the VM is running and profiling is enabled";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            inProfilingSession = (profilerTLA == 1 || AllocationProfiler.profileAll()) && AllocationProfiler.warmupFinished() && AllocationProfiler.objectWarmupFinished() && VmThread.current() != VmThread.vmOperationThread;
+            inProfilingSession = (profilerTLA == 1 || NUMAProfiler.profileAll()) && NUMAProfiler.warmupFinished() && NUMAProfiler.objectWarmupFinished() && VmThread.current() != VmThread.vmOperationThread;
             return inProfilingSession;
         }
         inProfilingSession = false;

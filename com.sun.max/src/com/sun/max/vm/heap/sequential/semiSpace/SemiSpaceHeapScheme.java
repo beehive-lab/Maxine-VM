@@ -21,7 +21,6 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
-import static com.sun.max.vm.MaxineVM.allocationProfiler;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;

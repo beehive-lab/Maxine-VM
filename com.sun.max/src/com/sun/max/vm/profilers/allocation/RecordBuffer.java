@@ -262,7 +262,7 @@ class RecordBuffer {
             Log.print(";");
 
             //threadNumaNode
-            Log.print(AllocationProfiler.numaConfig.getNUMANodeOfCPU(readInt(coreIDs, i)));
+            Log.print(NUMAProfiler.numaConfig.getNUMANodeOfCPU(readInt(coreIDs, i)));
             Log.print(";");
 
             // read and store the string in the readStringBuffer.

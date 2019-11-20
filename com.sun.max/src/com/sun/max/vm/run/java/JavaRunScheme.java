@@ -38,7 +38,7 @@ import com.sun.max.vm.instrument.InstrumentationManager;
 import com.sun.max.vm.jdk.JDK_sun_launcher_LauncherHelper;
 import com.sun.max.vm.jni.JniFunctions;
 import com.sun.max.vm.log.VMLog;
-import com.sun.max.vm.profilers.allocation.AllocationProfiler;
+import com.sun.max.vm.profilers.allocation.NUMAProfiler;
 import com.sun.max.vm.profilers.allocation.ProfilerGCCallback;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.RunScheme;
@@ -187,8 +187,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.terminate();
         }
-        if (MaxineVM.allocationProfiler != null) {
-            MaxineVM.allocationProfiler.terminate();
+        if (MaxineVM.NUMAProfiler != null) {
+            MaxineVM.NUMAProfiler.terminate();
         }
     }
 
@@ -257,13 +257,13 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
                 // The same for the Allocation Profiler
-                if (CompilationBroker.AllocationProfilerEntryPoint != null || AllocationProfiler.profileAll()) {
+                if (CompilationBroker.AllocationProfilerEntryPoint != null || NUMAProfiler.profileAll()) {
                     float beforeAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
                     // Initialize Allocation Profiler
-                    MaxineVM.allocationProfiler = new AllocationProfiler();
+                    MaxineVM.NUMAProfiler = new NUMAProfiler();
                     float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
 
-                    if (AllocationProfiler.AllocationProfilerDebug) {
+                    if (NUMAProfiler.AllocationProfilerDebug) {
                         Log.println("*===================================================*\n" +
                             "* Allocation Profiler is on validation mode.\n" +
                             "*===================================================*\n" +
