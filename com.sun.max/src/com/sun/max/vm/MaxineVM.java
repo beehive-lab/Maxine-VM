@@ -129,6 +129,12 @@ public final class MaxineVM {
      */
     public static AllocationProfiler allocationProfiler;
 
+    /**
+     * The {@link #useNUMAProfiler} variable is a flag which takes its value from the {@link BootImageGenerator#useProfiler}
+     * Option during {@link BootImageGenerator}. If set to true then it allows MaxineVM to inject the NUMA Profiler
+     * calls into the precompiled C1X Snippets for New Object Allocation (buildTLABAllocate, buildTLABAllocateArray),
+     * Object Write (buildPutFieldTemplate, buildArrayStore) and Object Read (buildGetFieldTemplate, buildArrayLoad).
+     */
     public static boolean useNUMAProfiler;
     public static boolean inProfilingSession = false;
     public static boolean isProfilingPaused = false;
