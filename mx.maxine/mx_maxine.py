@@ -658,7 +658,7 @@ def ignoreTheRestOptions(vmArgs, profilerOptions):
                 del vmArgs[vmArgs.index(arg)+1]
             del vmArgs[vmArgs.index(arg)]
 
-def allocProfilerOutputProcessing(filename):
+def numaProfilerOutputProcessing(filename):
     if type(filename) == list:
         oldFileName = os.path.abspath(filename[0])
     else:
@@ -666,7 +666,7 @@ def allocProfilerOutputProcessing(filename):
 
     #extract the benchmark name
     #we assume that the file name follows the following format
-    #benchmark_allocprofiler_out.csv
+    #benchmark_numaprofiler_out.csv
     benchmark = os.path.basename(oldFileName).split('.')[0].split('_')[0]
     path = os.path.dirname(oldFileName)
 
@@ -772,7 +772,7 @@ def allocProfilerOutputProcessing(filename):
     print('=> Results directory:')
     print('a)' + oldFileName + '\nb)' + hbFileName)
 
-def allocprofiler(args):
+def numaprofiler(args):
     """launch Maxine VM with NUMA Profiler
 
     Run the Maxine VM with the NUMA Profiler and the given options and arguments.
@@ -787,7 +787,7 @@ def allocprofiler(args):
 
     If no option given will run with the -XX:+NUMAProfilerAll option. This will profile all objects.
 
-    Use "mx allocprofiler -help" to see what other options this command accepts."""
+    Use "mx numaprofiler -help" to see what other options this command accepts."""
 
     cwdArgs = check_cwd_change(args)
     cwd = cwdArgs[0]
@@ -853,7 +853,7 @@ def allocprofiler(args):
 
     print('==================================================')
     print('The execution is finished.')
-    allocProfilerOutputProcessing(os.path.basename(os.getenv('MAXINE_LOG_FILE')))
+    numaProfilerOutputProcessing(os.path.basename(os.getenv('MAXINE_LOG_FILE')))
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
@@ -1039,8 +1039,8 @@ def mx_init(suite):
                     help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
 
     commands = {
-        'allocprofiler': [allocprofiler, ''],
-        'allocProfilerOutputProcessing': [allocProfilerOutputProcessing, ''],
+        'numaprofiler': [numaprofiler, ''],
+        'numaProfilerOutputProcessing': [numaProfilerOutputProcessing, ''],
         'build': [build, '"for help run mx :build -h"'],
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],
