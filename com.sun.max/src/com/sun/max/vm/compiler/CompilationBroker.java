@@ -96,8 +96,8 @@ public class CompilationBroker {
     private static Integer tmCounter = 0;
     static int PrintCodeCacheMetrics;
 
-    public static String   AllocationProfilerEntryPoint;
-    public static String   AllocationProfilerExitPoint;
+    public static String   NUMAProfilerEntryPoint;
+    public static String   NUMAProfilerExitPoint;
     private static boolean LogCompiledMethods = false;
 
     private static boolean offline = false;

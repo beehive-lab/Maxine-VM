@@ -364,7 +364,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         if (MaxineVM.isRunning() &&
-                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.AllocationProfilerEntryPoint)) {
+                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.NUMAProfilerEntryPoint)) {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
             XirConstant constantOne     = asm.i(1);
@@ -389,7 +389,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             return null;
         }
         if (MaxineVM.isRunning() &&
-                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.AllocationProfilerExitPoint)) {
+                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.NUMAProfilerExitPoint)) {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
             XirConstant constantZero    = asm.i(0);

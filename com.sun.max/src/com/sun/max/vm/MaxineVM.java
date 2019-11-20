@@ -165,7 +165,7 @@ public final class MaxineVM {
                 && type.contains(NUMAProfiler.AllocationProfilerFlareObject)) {
                 flareObjectCounter++;
             }
-            assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null || NUMAProfiler.profileAll() :
+            assert isRunning() && CompilationBroker.NUMAProfilerEntryPoint != null || NUMAProfiler.profileAll() :
                     "The Allocation Profiler should only be initialized when the VM is running and profiling is enabled";
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
             inProfilingSession = (profilerTLA == 1 || NUMAProfiler.profileAll()) && NUMAProfiler.warmupFinished() && NUMAProfiler.objectWarmupFinished() && VmThread.current() != VmThread.vmOperationThread;

@@ -257,7 +257,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
                 // The same for the Allocation Profiler
-                if (CompilationBroker.AllocationProfilerEntryPoint != null || NUMAProfiler.profileAll()) {
+                if (CompilationBroker.NUMAProfilerEntryPoint != null || NUMAProfiler.profileAll()) {
                     float beforeAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
                     // Initialize Allocation Profiler
                     MaxineVM.numaProfiler = new NUMAProfiler();
