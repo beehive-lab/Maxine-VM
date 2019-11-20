@@ -178,7 +178,7 @@ public class NUMAProfiler {
         newObjects = new RecordBuffer(allocBufferSize, "New Objects Buffer");
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Initialize the Survivor Objects NUMAProfiler Buffers.");
+            Log.println("(NUMA Profiler): Initialize the Survivor Objects NUMAProfiler Buffers.");
         }
         survivors1 = new RecordBuffer(survBufferSize, "Survivors Buffer No1");
         survivors2 = new RecordBuffer(survBufferSize, "Survivors Buffer No2");
@@ -186,7 +186,7 @@ public class NUMAProfiler {
         charArrayBuffer = new char[RecordBuffer.MAX_CHARS];
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Initialize the Heap Boundaries Buffer.");
+            Log.println("(NUMA Profiler): Initialize the Heap Boundaries Buffer.");
         }
         initializeHeapBoundariesBuffer();
 
@@ -194,9 +194,9 @@ public class NUMAProfiler {
 
         profilingCycle = 1;
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Initialization Complete.");
+            Log.println("(NUMA Profiler): Initialization Complete.");
 
-            Log.print("(Allocation Profiler): Start Profiling. [Cycle ");
+            Log.print("(NUMA Profiler): Start Profiling. [Cycle ");
             Log.print(getProfilingCycle());
             Log.println("]");
         }
@@ -377,18 +377,18 @@ public class NUMAProfiler {
      * Print the stats for Object Accesses.
      */
     public void printObjectAccessStats() {
-        Log.print("(Allocation Profiler): Total Tuple Writes = ");
+        Log.print("(NUMA Profiler): Total Tuple Writes = ");
         Log.println(tupleWrites);
-        Log.print("(Allocation Profiler): Remote Tuple Writes = ");
+        Log.print("(NUMA Profiler): Remote Tuple Writes = ");
         Log.println(remoteTupleWrites);
-        Log.print("(Allocation Profiler): Local Tuple Writes = ");
+        Log.print("(NUMA Profiler): Local Tuple Writes = ");
         Log.println(localTupleWrites);
 
-        Log.print("(Allocation Profiler): Total Array Writes = ");
+        Log.print("(NUMA Profiler): Total Array Writes = ");
         Log.println(arrayWrites);
-        Log.print("(Allocation Profiler): Remote Array Writes = ");
+        Log.print("(NUMA Profiler): Remote Array Writes = ");
         Log.println(remoteArrayWrites);
-        Log.print("(Allocation Profiler): Local Array Writes = ");
+        Log.print("(NUMA Profiler): Local Array Writes = ");
         Log.println(localArrayWrites);
     }
 
@@ -507,7 +507,7 @@ public class NUMAProfiler {
      */
     public void storeSurvivors(RecordBuffer from, RecordBuffer to) {
         if (AllocationProfilerVerbose) {
-            Log.print("(Allocation Profiler): Copy Survived Objects from ");
+            Log.print("(NUMA Profiler): Copy Survived Objects from ");
             Log.print(from.buffersName);
             Log.print(" to ");
             Log.println(to.buffersName);
@@ -572,8 +572,8 @@ public class NUMAProfiler {
         }
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Entering Pre-GC Phase.");
-            Log.print("(Allocation Profiler): Cycle ");
+            Log.println("(NUMA Profiler): Entering Pre-GC Phase.");
+            Log.print("(NUMA Profiler): Cycle ");
             Log.print(getProfilingCycle());
             Log.println(" Profiling Is Now Complete. [pre-GC phase]");
         }
@@ -585,7 +585,7 @@ public class NUMAProfiler {
         }
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Dump NUMAProfiler Buffer. [pre-GC phase]");
+            Log.println("(NUMA Profiler): Dump NUMAProfiler Buffer. [pre-GC phase]");
         }
 
         if (!AllocationProfilerDebug) {
@@ -614,7 +614,7 @@ public class NUMAProfiler {
         }
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Leaving Pre-GC Phase.");
+            Log.println("(NUMA Profiler): Leaving Pre-GC Phase.");
         }
     }
 
@@ -624,35 +624,35 @@ public class NUMAProfiler {
     public void postGCActions() {
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Entering Post-GC Phase.");
+            Log.println("(NUMA Profiler): Entering Post-GC Phase.");
         }
 
         profileSurvivors();
 
         if ((profilingCycle % 2) == 0) {
             if (AllocationProfilerVerbose) {
-                Log.println("(Allocation Profiler): Clean-up Survivor1 Buffer. [post-gc phase]");
+                Log.println("(NUMA Profiler): Clean-up Survivor1 Buffer. [post-gc phase]");
             }
             survivors1.resetBuffer();
         } else {
             if (AllocationProfilerVerbose) {
-                Log.println("(Allocation Profiler): Clean-up Survivor2 Buffer. [post-gc phase]");
+                Log.println("(NUMA Profiler): Clean-up Survivor2 Buffer. [post-gc phase]");
             }
             survivors2.resetBuffer();
         }
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Clean-up NUMAProfiler Buffer. [post-gc phase]");
+            Log.println("(NUMA Profiler): Clean-up NUMAProfiler Buffer. [post-gc phase]");
         }
         newObjects.resetBuffer();
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Reset HeapBoundaries Buffer. [post-gc phase]");
+            Log.println("(NUMA Profiler): Reset HeapBoundaries Buffer. [post-gc phase]");
         }
         resetHeapBoundaries();
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Dump Survivors Buffer. [pre-GC phase]");
+            Log.println("(NUMA Profiler): Dump Survivors Buffer. [pre-GC phase]");
         }
 
         if (!AllocationProfilerDebug) {
@@ -685,8 +685,8 @@ public class NUMAProfiler {
         profilingCycle++;
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Leaving Post-GC Phase.");
-            Log.print("(Allocation Profiler): Start Profiling. [Cycle ");
+            Log.println("(NUMA Profiler): Leaving Post-GC Phase.");
+            Log.print("(NUMA Profiler): Start Profiling. [Cycle ");
             Log.print(getProfilingCycle());
             Log.println("]");
         }
@@ -719,7 +719,7 @@ public class NUMAProfiler {
         MaxineVM.inProfilingSession = false;
 
         if (AllocationProfilerVerbose) {
-            Log.println("(Allocation Profiler): Termination");
+            Log.println("(NUMA Profiler): Termination");
         }
 
         //heapPages.print(profilingCycle);
@@ -752,12 +752,12 @@ public class NUMAProfiler {
 
         if (AllocationProfilerVerbose) {
             printObjectAccessStats();
-            Log.print("(Allocation Profiler): Release Reserved Memory.");
+            Log.println("(NUMA Profiler): Release Reserved Memory.");
         }
         releaseReservedMemory();
 
         if (AllocationProfilerVerbose) {
-            Log.print("(Allocation Profiler): Terminating... Bye!");
+            Log.println("(NUMA Profiler): Terminating... Bye!");
         }
     }
 
