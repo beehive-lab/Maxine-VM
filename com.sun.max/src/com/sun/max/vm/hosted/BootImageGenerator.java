@@ -95,7 +95,7 @@ public final class BootImageGenerator {
     private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
             "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
-    private static final Option<Boolean> useProfiler = options.newBooleanOption("use-numa-profiler", false,
+    private static final Option<Boolean> useNumaProfiler = options.newBooleanOption("use-numa-profiler", false,
             "Uses NUMA memory profiler.");
 
     // Options shared with the Inspector
@@ -221,7 +221,7 @@ public final class BootImageGenerator {
                 return;
             }
 
-            MaxineVM.useNUMAProfiler = useProfiler.getValue();
+            MaxineVM.useNUMAProfiler = useNumaProfiler.getValue();
 
             if (MaxineVM.useNUMAProfiler && !platform().target.arch.isX86()) {
                 FatalError.unimplemented("NUMA memory profiler not supported on non-x86 Architectures.");
