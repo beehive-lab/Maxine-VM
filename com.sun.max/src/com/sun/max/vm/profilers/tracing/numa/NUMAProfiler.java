@@ -42,10 +42,10 @@ import static com.sun.max.vm.MaxineVM.vm;
 public class NUMAProfiler {
 
     @C_FUNCTION
-    static native void allocationProfiler_lock();
+    static native void numaProfiler_lock();
 
     @C_FUNCTION
-    static native void allocationProfiler_unlock();
+    static native void numaProfiler_unlock();
 
     public static int profilingCycle;
     public static int uniqueId = 0;
@@ -783,7 +783,7 @@ public class NUMAProfiler {
         }
 
         boolean wasDisabled = SafepointPoll.disable();
-        NUMAProfiler.allocationProfiler_lock();
+        NUMAProfiler.numaProfiler_lock();
         if (lockDepth == 0) {
             FatalError.check(lockOwner == null, "numa profiler lock should have no owner with depth 0");
             lockOwner = VmThread.current();
@@ -809,7 +809,7 @@ public class NUMAProfiler {
         if (lockDepth == 0) {
             lockOwner = null;
         }
-        NUMAProfiler.allocationProfiler_unlock();
+        NUMAProfiler.numaProfiler_unlock();
         ProgramError.check(SafepointPoll.isDisabled(), "Safepoints must not be re-enabled in code surrounded by NUMAProfiler.lock() and NUMAProfiler.unlock()");
         if (lockDisabledSafepoints) {
             SafepointPoll.enable();

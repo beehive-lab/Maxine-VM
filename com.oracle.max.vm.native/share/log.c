@@ -75,7 +75,7 @@ void log_lock(void) {
 	}
 }
 
-void allocationProfiler_lock(void) {
+void numaProfiler_lock(void) {
     int result;
     result = mutex_enter_nolog(&allocationProfiler_mutexStruct);
     if (result != 0) {
@@ -90,7 +90,7 @@ void log_unlock(void) {
 	}
 }
 
-void allocationProfiler_unlock(void) {
+void numaProfiler_unlock(void) {
     int result;
     result = mutex_exit_nolog(&allocationProfiler_mutexStruct);
     if (result != 0) {
