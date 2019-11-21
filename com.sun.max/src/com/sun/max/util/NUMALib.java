@@ -26,6 +26,16 @@ public class NUMALib {
     private int numOfCores;
 
     /**
+     * This variable holds the value of EFAULT return code.
+     * This error code is returned by numa_move_pages system call when a page is NOT found.
+     *
+     * Not found might mean:
+     * either the address is out of the dedicated to the process allocated range,
+     * or the page has not been touched so far, so it has not been placed on a physical NUMA node yet.
+     */
+    public static final int EFAULT = -14;
+
+    /**
      * This array holds the configuration. The index is the core/cpu id and the value is the numa node of the core/cpu.
      */
     private int[] coreToNUMANodeMap;

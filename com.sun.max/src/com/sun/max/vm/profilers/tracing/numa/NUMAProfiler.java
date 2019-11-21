@@ -299,6 +299,17 @@ public class NUMAProfiler {
         return numaConfig.getNUMANodeOfCPU(coreId);
     }
 
+    /**
+     * Fetch the physical NUMA node id from {@link NUMALib#coreToNUMANodeMap}
+     *
+     * We check whether the NUMA node is found. It might return EFAULT in case the page was still
+     * unallocated to a physical NUMA node by the last {@link NUMALib#coreToNUMANodeMap}'s update.
+     * In that case the system call from NUMALib is called directly and the values are updated.
+     *
+     * @param firstPageAddress
+     * @param address
+     * @return physical NUMA node id
+     */
     public int getObjectNumaNode(long firstPageAddress, long address) {
         int pageSize = NUMALib.numaPageSize();
         long numerator = address - firstPageAddress;
@@ -306,8 +317,8 @@ public class NUMAProfiler {
         int pageIndex = (int) div;
 
         int objNumaNode = heapPages.readNumaNode(pageIndex);
-        // if no node found use jnumatils to find it and update heapPages accordingly
-        if (objNumaNode == -14) {
+        // check whether the numa node is found
+        if (objNumaNode == NUMALib.EFAULT) {
             long pageAddr = heapPages.readAddr(pageIndex);
             int node = NUMALib.numaNodeOfAddress(pageAddr);
             heapPages.writeNumaNode(pageIndex, node);
