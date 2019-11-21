@@ -294,6 +294,7 @@ public class NUMAProfiler {
     }
 
     public int getThreadNumaNode() {
+        // apply mod 128 (7 right shifts) to discard the 7 LSBs and keep only the coreID
         final int coreId = Intrinsics.getCpuID() % 128;
         return numaConfig.getNUMANodeOfCPU(coreId);
     }

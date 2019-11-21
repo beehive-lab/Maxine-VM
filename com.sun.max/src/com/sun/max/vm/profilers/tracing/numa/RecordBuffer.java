@@ -217,6 +217,7 @@ class RecordBuffer {
             throw FatalError.unimplemented("RecordBuffer.record");
         }
         final long timestamp = Intrinsics.getTicks();
+        // apply mod 128 (7 right shifts) to discard the 7 LSBs and keep only the coreID
         final int  coreID    = Intrinsics.getCpuID() % 128;
         writeLong(timestamps, currentIndex, timestamp);
         writeInt(coreIDs, currentIndex, coreID);
