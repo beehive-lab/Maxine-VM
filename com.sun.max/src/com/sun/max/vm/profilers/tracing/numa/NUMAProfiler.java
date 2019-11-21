@@ -403,7 +403,7 @@ public class NUMAProfiler {
             Log.print(profilingCycle);
             Log.println(" ====");
         }
-        //newObjects.print(profilingCycle, 1);
+        newObjects.print(profilingCycle, 1);
         unlock(lockDisabledSafepoints);
     }
 
@@ -415,9 +415,9 @@ public class NUMAProfiler {
             Log.println(" ====");
         }
         if ((profilingCycle % 2) == 0) {
-            //survivors2.print(profilingCycle, 0);
+            survivors2.print(profilingCycle, 0);
         } else {
-            //survivors1.print(profilingCycle, 0);
+            survivors1.print(profilingCycle, 0);
         }
         unlock(lockDisabledSafepoints);
     }
