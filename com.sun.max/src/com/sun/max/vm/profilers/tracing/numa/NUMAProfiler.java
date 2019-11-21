@@ -32,6 +32,7 @@ import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.thread.VmThread;
@@ -294,9 +295,7 @@ public class NUMAProfiler {
     }
 
     public int getThreadNumaNode() {
-        // apply mod 128 (7 right shifts) to discard the 7 LSBs and keep only the coreID
-        final int coreId = Intrinsics.getCpuID() % 128;
-        return numaConfig.getNUMANodeOfCPU(coreId);
+        return Intrinsics.getCpuID() >> MaxineIntrinsicIDs.NUMA_NODE_SHIFT;
     }
 
     /**

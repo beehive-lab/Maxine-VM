@@ -28,6 +28,7 @@ import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Size;
 import com.sun.max.vm.Intrinsics;
 import com.sun.max.vm.Log;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.runtime.FatalError;
 
 /**
@@ -217,8 +218,7 @@ class RecordBuffer {
             throw FatalError.unimplemented("RecordBuffer.record");
         }
         final long timestamp = Intrinsics.getTicks();
-        // apply mod 128 (7 right shifts) to discard the 7 LSBs and keep only the coreID
-        final int  coreID    = Intrinsics.getCpuID() % 128;
+        final int  coreID    = Intrinsics.getCpuID() & MaxineIntrinsicIDs.CPU_MASK;
         writeLong(timestamps, currentIndex, timestamp);
         writeInt(coreIDs, currentIndex, coreID);
         writeInt(ids, currentIndex, id);
