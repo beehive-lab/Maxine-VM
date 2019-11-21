@@ -130,13 +130,23 @@ public final class MaxineVM {
     public static NUMAProfiler numaProfiler;
 
     /**
-     * The {@link #useNUMAProfiler} variable is a flag which takes its value from the {@link BootImageGenerator#useNumaProfiler}
+     * The {@link #useNUMAProfiler} static variable is a flag which takes its value from the {@link BootImageGenerator#useNumaProfiler}
      * Option during {@link BootImageGenerator}. If set to true then it allows MaxineVM to inject the NUMA Profiler
      * calls into the precompiled C1X Snippets for New Object Allocation (buildTLABAllocate, buildTLABAllocateArray),
      * Object Write (buildPutFieldTemplate, buildArrayStore) and Object Read (buildGetFieldTemplate, buildArrayLoad).
      */
     public static boolean useNUMAProfiler;
+
+    /**
+     * The {@link #inProfilingSession} static variable stores the return value of {@link #profileThatObject(Hub)} method.
+     * It is used to flag whether a read/write is within an ongoing profiling session.
+     */
     public static boolean inProfilingSession = false;
+
+    /**
+     * The {@link #inProfilingSession} static variable flags whether an ongoing profiling session is currently paused.
+     * The above let us separate the ongoing but paused profiling session from the disabled profile.
+     */
     public static boolean isProfilingPaused = false;
 
     /**
