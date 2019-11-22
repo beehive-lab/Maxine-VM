@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -31,9 +33,7 @@ public class RuntimeTest0 {
         System.out.println("Start");
         int numCpus = Runtime.getRuntime().availableProcessors();
         assert numCpus > 0 : "Cannot have less than 1 processor returned";
-        if (args.length > 0 && args[0].equals("-p")) {
-            System.out.println("Runtime.getRuntime().availableProcessors() : " + numCpus);
-        }
+        System.out.println("Runtime.getRuntime().availableProcessors() : " + numCpus);
         System.out.println("Done");
     }
 
