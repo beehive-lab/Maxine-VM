@@ -143,6 +143,8 @@ public class NUMAProfiler {
     public static int remoteArrayWrites = 0;
 
     public static int tupleReads = 0;
+    public static int localTupleReads = 0;
+    public static int remoteTupleReads = 0;
 
     /**
      * The options a user can pass to the NUMA Profiler.
@@ -389,6 +391,22 @@ public class NUMAProfiler {
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public void profileReadAccessTuple(long tupleAddress) {
+        long firstPageAddress = heapPages.readAddr(0);
+
+        // if the read object is not part of the data heap
+        // TODO: implement some action, currently ignore
+        if (!inDataHeap(firstPageAddress, tupleAddress)) {
+            // no heap object, ignore
+            return;
+        }
+
+        // increment local or remote reads
+        if (isRemoteAccess(firstPageAddress, tupleAddress)) {
+            remoteTupleReads++;
+        } else {
+            localTupleReads++;
+        }
+
         // increment total writes
         tupleReads++;
     }
@@ -410,6 +428,13 @@ public class NUMAProfiler {
         Log.println(remoteArrayWrites);
         Log.print("(NUMA Profiler): Local Array Writes = ");
         Log.println(localArrayWrites);
+
+        Log.print("(NUMA Profiler): Total Tuple Reads = ");
+        Log.println(tupleReads);
+        Log.print("(NUMA Profiler): Remote Tuple Reads = ");
+        Log.println(remoteTupleReads);
+        Log.print("(NUMA Profiler): Local Tuple Reads = ");
+        Log.println(localTupleReads);
     }
 
     /**
