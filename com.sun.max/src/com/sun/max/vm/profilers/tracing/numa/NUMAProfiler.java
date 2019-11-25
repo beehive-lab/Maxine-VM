@@ -142,6 +142,8 @@ public class NUMAProfiler {
     public static int localArrayWrites = 0;
     public static int remoteArrayWrites = 0;
 
+    public static int tupleReads = 0;
+
     /**
      * The options a user can pass to the NUMA Profiler.
      */
@@ -382,6 +384,13 @@ public class NUMAProfiler {
 
         // increment total writes
         arrayWrites++;
+    }
+
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
+    @NEVER_INLINE
+    public void profileReadAccessTuple(long tupleAddress) {
+        // increment total writes
+        tupleReads++;
     }
 
     /**

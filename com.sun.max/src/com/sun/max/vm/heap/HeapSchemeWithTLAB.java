@@ -40,6 +40,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.runtime.*;
@@ -510,6 +511,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final void profileWriteArray(Pointer arrayCell) {
         final long arrayAddress = arrayCell.toLong();
         numaProfiler.profileWriteAccessArray(arrayAddress);
+    }
+
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public final void profileReadTuple(Pointer cell) {
+        final long tupleAddress = cell.toLong();
+        numaProfiler.profileReadAccessTuple(tupleAddress);
     }
 
     /**

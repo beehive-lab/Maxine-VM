@@ -60,7 +60,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.aarch64.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.runtime.arm.*;
-import com.sun.max.vm.runtime.riscv64.RISCV64SafepointPoll;
+import com.sun.max.vm.runtime.riscv64.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -1552,6 +1552,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter fieldOffset = asm.createConstantInputParameter("fieldOffset", CiKind.Int);
             asm.pload(kind, result, object, fieldOffset, true);
+            maybeInvokeNUMAProfiler(kind, object);
             xirTemplate = finishTemplate(asm, "getfield<" + kind + ">");
         } else {
             // unresolved case
@@ -1565,9 +1566,35 @@ public class MaxXirGenerator implements RiXirGenerator {
                 callRuntimeThroughStub(asm, "resolveGetField", fieldOffset, guard);
             }
             asm.pload(kind, result, object, fieldOffset, true);
+
+            maybeInvokeNUMAProfiler(kind, object);
             xirTemplate = finishTemplate(asm, "getfield<" + kind + ">-unresolved");
         }
         return xirTemplate;
+    }
+
+    @HOSTED_ONLY
+    private void maybeInvokeNUMAProfiler(CiKind kind, XirParameter object) {
+        if (MaxineVM.useNUMAProfiler && kind == CiKind.Object) {
+            XirLabel    skip            = asm.createInlineLabel("skip");
+            XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
+            XirConstant offsetToProfile = asm.i(VmThreadLocal.ongoingProfiling.offset);
+            XirOperand  isOngoing       = asm.createTemp("isOngoing", CiKind.Int);
+            XirConstant constantZero    = asm.i(0);
+            XirOperand  cell            = asm.createTemp("cell", WordUtil.archKind());
+
+            // load tla
+            asm.pload(CiKind.Int, isOngoing, tla, offsetToProfile, false);
+            // if not 0 go to skip
+            asm.jneq(skip, isOngoing, constantZero);
+            // store 1 to tla
+            asm.pstore(CiKind.Int, tla, offsetToProfile, asm.i(1), false);
+            asm.mov(cell, object);
+            callRuntimeThroughStub(asm, "callProfileReadTuple", null, cell);
+            // store 0 to tla
+            asm.pstore(CiKind.Int, tla, offsetToProfile, constantZero, false);
+            asm.bindInline(skip);
+        }
     }
 
     @HOSTED_ONLY
@@ -2190,6 +2217,14 @@ public class MaxXirGenerator implements RiXirGenerator {
             assert MaxineVM.useNUMAProfiler;
             if (MaxineVM.inProfilingSession) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteArray(arrayCell);
+            }
+        }
+
+        @PLATFORM(cpu = "amd64")
+        public static void callProfileReadTuple(Pointer cell) {
+            assert MaxineVM.useNUMAProfiler;
+            if (MaxineVM.inProfilingSession) {
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileReadTuple(cell);
             }
         }
 
