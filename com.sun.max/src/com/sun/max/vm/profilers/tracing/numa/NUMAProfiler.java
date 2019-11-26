@@ -24,7 +24,7 @@ import com.sun.max.annotate.C_FUNCTION;
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
 import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.*;
 import com.sun.max.util.NUMALib;
 import com.sun.max.vm.Intrinsics;
 import com.sun.max.vm.Log;
@@ -35,10 +35,12 @@ import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
 import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.SafepointPoll;
-import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.thread.*;
 
 import static com.sun.max.vm.MaxineVM.isHosted;
 import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.thread.VmThread.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 public class NUMAProfiler {
 
@@ -145,6 +147,8 @@ public class NUMAProfiler {
     public static int tupleReads = 0;
     public static int localTupleReads = 0;
     public static int remoteTupleReads = 0;
+
+    private int wasProfiling;
 
     /**
      * The options a user can pass to the NUMA Profiler.
@@ -604,16 +608,44 @@ public class NUMAProfiler {
     }
 
     /**
+     * A procedure for resetting PROFILING_TLA of a thread.
+     */
+    private static final Pointer.Procedure resetProfilingTLA = new Pointer.Procedure() {
+        public void run(Pointer tla) {
+            PROFILER_TLA.store3(tla, Address.fromInt(0));
+        }
+    };
+
+    /**
+     * A procedure for resetting PROFILING_TLA of a thread.
+     */
+    private static final Pointer.Procedure setProfilingTLA = new Pointer.Procedure() {
+        public void run(Pointer tla) {
+            PROFILER_TLA.store3(tla, Address.fromInt(1));
+        }
+    };
+
+    // FIXME: if a single thread had profiling enabled all threads will end up with profiling enabled, ideally we
+    //  would like a map to be able to restore profiling only on threads where it was actually enabled.
+    private final Pointer.Procedure readProfilingTLA = new Pointer.Procedure() {
+        @Override
+        public void run(Pointer tla) {
+            if (PROFILER_TLA.load(tla).toInt() == 1) {
+                wasProfiling = 1;
+            }
+        }
+    };
+
+    /**
      * This method is called by ProfilerGCCallbacks in every pre-gc callback phase.
      */
     public void preGCActions() {
 
-        /**
-         * Pause Profiling during GC
-         */
-        if (MaxineVM.inProfilingSession) {
-            MaxineVM.inProfilingSession = false;
-            MaxineVM.isProfilingPaused = true;
+        // Disable profiling
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, readProfilingTLA);
+        if (wasProfiling == 1) {
+            Log.println("(NUMA Profiler): Disabling profiling for GC. [pre-GC phase]");
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, resetProfilingTLA);
         }
 
         if (NUMAProfilerVerbose) {
@@ -697,7 +729,7 @@ public class NUMAProfiler {
         resetHeapBoundaries();
 
         if (NUMAProfilerVerbose) {
-            Log.println("(NUMA Profiler): Dump Survivors Buffer. [pre-GC phase]");
+            Log.println("(NUMA Profiler): Dump Survivors Buffer. [post-GC phase]");
         }
 
         if (!NUMAProfilerDebug) {
@@ -725,6 +757,12 @@ public class NUMAProfiler {
         if (isExplicitGC) {
             iteration++;
             isExplicitGC = false;
+            if (iteration > NUMAProfiler.NUMAProfilerExplicitGCThreshold) {
+                if (NUMAProfilerVerbose) {
+                    Log.println("(NUMA Profiler): Enabling profiling. [post-GC phase]");
+                }
+                wasProfiling = 1; // don't set the TLA here to avoid profiling inside the method
+            }
         }
 
         profilingCycle++;
@@ -736,12 +774,12 @@ public class NUMAProfiler {
             Log.println("]");
         }
 
-        /**
-         *  Re-enable Profiling if it's paused
-         */
-        if (MaxineVM.isProfilingPaused) {
-            MaxineVM.inProfilingSession = true;
-            MaxineVM.isProfilingPaused = false;
+        // Re-enable profiling if needed
+        if (wasProfiling == 1) {
+            if (NUMAProfilerVerbose) {
+                Log.println("(NUMA Profiler): Re-enabling profiling. [post-GC phase]");
+            }
+            VmThreadMap.ACTIVE.forAllThreadLocals(null, setProfilingTLA);
         }
     }
 
@@ -760,8 +798,11 @@ public class NUMAProfiler {
      */
     public void terminate() {
 
-        //end profiling
-        MaxineVM.inProfilingSession = false;
+        if (NUMAProfilerVerbose) {
+            Log.println("(NUMA Profiler): Disable profiling for termination");
+        }
+        // Disable profiling
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, resetProfilingTLA);
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Termination");

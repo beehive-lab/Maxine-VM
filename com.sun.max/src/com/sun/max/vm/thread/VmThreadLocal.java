@@ -311,9 +311,6 @@ public class VmThreadLocal implements FormatWithToString {
     public static final VmThreadLocal PROFILER_TLA
         = new VmThreadLocal("PROFILER_TLA", false, "points to TLA used for profiler on/off", Nature.Single);
 
-    public static final VmThreadLocal ongoingProfiling
-        = new VmThreadLocal("ongoingProfiling", false, "points to TLA used for profiler on/off", Nature.Single);
-
     private static VmThreadLocal[] valuesNeedingInitialization;
 
     /**

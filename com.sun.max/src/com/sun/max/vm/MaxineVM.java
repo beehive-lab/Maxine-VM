@@ -138,18 +138,6 @@ public final class MaxineVM {
     public static boolean useNUMAProfiler;
 
     /**
-     * The {@link #inProfilingSession} static variable stores the return value of {@link #profileThatObject(Hub)} method.
-     * It is used to flag whether a read/write is within an ongoing profiling session.
-     */
-    public static boolean inProfilingSession = false;
-
-    /**
-     * The {@link #inProfilingSession} static variable flags whether an ongoing profiling session is currently paused.
-     * The above let us separate the ongoing but paused profiling session from the disabled profile.
-     */
-    public static boolean isProfilingPaused = false;
-
-    /**
      * This method is used to guard object allocation code sections.
      *
      * An object will be profiled only if:
@@ -167,22 +155,46 @@ public final class MaxineVM {
      *
      * @return true if all the above conditions are true.
      */
-    public static boolean profileThatObject(Hub hub) {
-        if (numaProfiler != null) {
-            String type = hub.classActor.name();
-            if (NUMAProfiler.NUMAProfilerFlareAllocationThreshold != 0
-                && (NUMAProfiler.NUMAProfilerFlareAllocationThreshold + NUMAProfiler.NUMAProfilerFlareProfileWindow < flareObjectCounter)
-                && type.contains(NUMAProfiler.NUMAProfilerFlareObject)) {
-                flareObjectCounter++;
-            }
-            assert isRunning() && CompilationBroker.NUMAProfilerEntryPoint != null || NUMAProfiler.profileAll() :
-                    "The NUMA Profiler should only be initialized when the VM is running and profiling is enabled";
+    public static boolean shouldProfile() {
+        if (MaxineVM.useNUMAProfiler) {
             int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            inProfilingSession = (profilerTLA == 1 || NUMAProfiler.profileAll()) && NUMAProfiler.warmupFinished() && NUMAProfiler.objectWarmupFinished() && VmThread.current() != VmThread.vmOperationThread;
-            return inProfilingSession;
+            return MaxineVM.numaProfiler != null &&
+                            (profilerTLA == 1 || NUMAProfiler.profileAll()) &&
+                            NUMAProfiler.warmupFinished() &&
+                            NUMAProfiler.objectWarmupFinished() &&
+                            VmThread.current() != VmThread.vmOperationThread;
         }
-        inProfilingSession = false;
-        return inProfilingSession;
+        return false;
+    }
+
+    /**
+     * Check if the given hub is a hub of a Flare object and increase the
+     * {@link #flareObjectCounter} if so.
+     *
+     * @param hub
+     */
+    public static void checkForFlareObject(Hub hub) {
+        if (MaxineVM.useNUMAProfiler) {
+            String type = hub.classActor.name();
+            if (NUMAProfiler.NUMAProfilerFlareAllocationThreshold != 0 &&
+                            (NUMAProfiler.NUMAProfilerFlareAllocationThreshold + NUMAProfiler.NUMAProfilerFlareProfileWindow > flareObjectCounter) &&
+                            type.contains(NUMAProfiler.NUMAProfilerFlareObject)) {
+                flareObjectCounter++;
+                // FIXME: currently enables profiling only for current thread
+                if (flareObjectCounter > NUMAProfiler.NUMAProfilerFlareAllocationThreshold &&
+                                flareObjectCounter < (NUMAProfiler.NUMAProfilerFlareAllocationThreshold + NUMAProfiler.NUMAProfilerFlareProfileWindow)) {
+                    VmThreadLocal.PROFILER_TLA.store3(VmThread.currentTLA(), Address.fromInt(1));
+                    if (NUMAProfiler.NUMAProfilerVerbose) {
+                        Log.println("Enable profiling Flare");
+                    }
+                } else if (flareObjectCounter >= (NUMAProfiler.NUMAProfilerFlareAllocationThreshold + NUMAProfiler.NUMAProfilerFlareProfileWindow)) {
+                    VmThreadLocal.PROFILER_TLA.store3(VmThread.currentTLA(), Address.fromInt(0));
+                    if (NUMAProfiler.NUMAProfilerVerbose) {
+                        Log.println("Disable profiling Flare");
+                    }
+                }
+            }
+        }
     }
 
     /**
