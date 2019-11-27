@@ -650,6 +650,15 @@ public class NUMAProfiler {
         }
     };
 
+    /**
+     * A procedure for resetting PROFILING_TLA of a thread.
+     */
+    private static final Pointer.Procedure terminateProfilingTLA = new Pointer.Procedure() {
+        public void run(Pointer tla) {
+            PROFILER_TLA.store3(tla, Address.fromInt(-1));
+        }
+    };
+
     // FIXME: if a single thread had profiling enabled all threads will end up with profiling enabled, ideally we
     //  would like a map to be able to restore profiling only on threads where it was actually enabled.
     private final Pointer.Procedure readProfilingTLA = new Pointer.Procedure() {
@@ -836,7 +845,7 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): Disable profiling for termination");
         }
         // Disable profiling
-        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, resetProfilingTLA);
+        VmThreadMap.ACTIVE.forAllThreadLocals(null, terminateProfilingTLA);
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Termination");

@@ -1565,24 +1565,28 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private void maybeInvokeNUMAProfiler(CiKind kind, XirParameter object, String runtimeMethod) {
         if (MaxineVM.useNUMAProfiler && kind == CiKind.Object) {
-            XirLabel    skip            = asm.createInlineLabel("skip");
-            XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
-            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
-            XirOperand  isProfiling     = asm.createTemp("isProfiling", CiKind.Int);
-            XirConstant constantZero    = asm.i(0);
-            XirConstant constantOne     = asm.i(1);
-            XirOperand  cell            = asm.createTemp("cell", WordUtil.archKind());
+            XirLabel    skip                = asm.createInlineLabel("skip");
+            XirOperand  tla                 = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
+            XirOperand  profilingTlaAddress = asm.createTemp("TLAAddress", WordUtil.archKind());
+            XirOperand  isProfiling         = asm.createTemp("isProfiling", CiKind.Int);
+            XirConstant constantOne         = asm.i(1);
+            XirOperand  tempRegister        = asm.createTemp("tempRegister", CiKind.Int);
+            XirConstant constantTwo         = asm.i(2);
+            XirOperand  cell                = asm.createTemp("cell", WordUtil.archKind());
 
-            // load tla
-            asm.pload(CiKind.Int, isProfiling, tla, offsetToProfile, false);
-            // if 0 skip profiling
-            asm.jeq(skip, isProfiling, constantZero);
+            // Calculate PROFILER_TLA address
+            asm.add(profilingTlaAddress, tla, asm.i(VmThreadLocal.PROFILER_TLA.offset));
+            // Load PROFILER_TLA value
+            asm.pload(CiKind.Int, isProfiling, profilingTlaAddress, false);
+            // if not 1 skip profiling
+            asm.jneq(skip, isProfiling, constantOne);
             // Disable profiling to avoid nested profiling
-            asm.pstore(CiKind.Int, tla, offsetToProfile, constantZero, false);
+            asm.pstore(CiKind.Int, profilingTlaAddress, constantTwo, false);
             asm.mov(cell, object);
             callRuntimeThroughStub(asm, runtimeMethod, null, cell);
-            // Re-enable profiling
-            asm.pstore(CiKind.Int, tla, offsetToProfile, constantOne, false);
+            // Re-enable profiling using CAS to avoif re-enabling after termination (see NUMAProfiler.terminate())
+            asm.mov(tempRegister, constantOne);
+            asm.icas(CiKind.Int, isProfiling, profilingTlaAddress, tempRegister, constantTwo);
             asm.bindInline(skip);
         }
     }
