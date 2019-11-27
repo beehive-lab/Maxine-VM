@@ -636,16 +636,25 @@ public class NUMAProfiler {
         }
     };
 
+    private final Pointer.Predicate profilingPredicate = new Pointer.Predicate() {
+        @Override
+        public boolean evaluate(Pointer tla) {
+            VmThread vmThread = VmThread.fromTLA(tla);
+            return vmThread.javaThread() != null &&
+                    !vmThread.isVmOperationThread();
+        }
+    };
+
     /**
      * This method is called by ProfilerGCCallbacks in every pre-gc callback phase.
      */
     public void preGCActions() {
 
         // Disable profiling
-        VmThreadMap.ACTIVE.forAllThreadLocals(null, readProfilingTLA);
+        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, readProfilingTLA);
         if (wasProfiling == 1) {
             Log.println("(NUMA Profiler): Disabling profiling for GC. [pre-GC phase]");
-            VmThreadMap.ACTIVE.forAllThreadLocals(null, resetProfilingTLA);
+            VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, resetProfilingTLA);
         }
 
         if (NUMAProfilerVerbose) {
@@ -779,7 +788,7 @@ public class NUMAProfiler {
             if (NUMAProfilerVerbose) {
                 Log.println("(NUMA Profiler): Re-enabling profiling. [post-GC phase]");
             }
-            VmThreadMap.ACTIVE.forAllThreadLocals(null, setProfilingTLA);
+            VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, setProfilingTLA);
         }
     }
 
@@ -802,7 +811,7 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): Disable profiling for termination");
         }
         // Disable profiling
-        VmThreadMap.ACTIVE.forAllThreadLocals(null, resetProfilingTLA);
+        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, resetProfilingTLA);
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Termination");
