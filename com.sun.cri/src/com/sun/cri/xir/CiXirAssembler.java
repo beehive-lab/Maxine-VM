@@ -510,6 +510,11 @@ public abstract class CiXirAssembler {
          */
         PointerCAS,
         /**
+         * Compare value at at address {@code x} with value in {@code y} and store value {@code z} at address {@code x}
+         * if it was equal to {@code y}.
+         */
+        IntCAS,
+        /**
          * Call the {@link XirTemplate.GlobalFlags#GLOBAL_STUB shared stub} defined by {@code extra} with {@code args} and put the result in {@code r}.
          */
         CallStub,
@@ -720,6 +725,10 @@ public abstract class CiXirAssembler {
 
     public void pcas(CiKind kind, XirOperand result, XirOperand pointer, XirOperand newValue, XirOperand oldValue) {
         append(new XirInstruction(kind, null, PointerCAS, result, pointer, newValue, oldValue));
+    }
+
+    public void icas(CiKind kind, XirOperand result, XirOperand pointer, XirOperand newValue, XirOperand oldValue) {
+        append(new XirInstruction(kind, null, IntCAS, result, pointer, newValue, oldValue));
     }
 
     public void jmp(XirLabel l) {

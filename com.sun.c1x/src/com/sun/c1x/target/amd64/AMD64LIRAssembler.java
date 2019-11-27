@@ -1895,8 +1895,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     masm.repeatMoveWords();
                     break;
 
-                case PointerCAS:
-
+                case PointerCAS: {
                     if ((Boolean) inst.extra && info != null) {
                         tasm.recordImplicitException(codePos(), info);
                     }
@@ -1909,7 +1908,18 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     masm.cmpxchgq(exchangedVal.asRegister(), addr);
 
                     break;
+                }
+                case IntCAS: {
+                    assert operands[inst.z().index].asRegister().equals(AMD64.rax) : "wrong input z: " + operands[inst.x().index];
 
+                    CiValue         exchangedVal     = operands[inst.y().index];
+                    CiValue         exchangedAddress = operands[inst.x().index];
+                    CiRegisterValue pointerRegister  = assureInRegister(exchangedAddress);
+                    CiAddress       addr             = new CiAddress(target.wordKind, pointerRegister);
+                    masm.cmpxchgl(exchangedVal.asRegister(), addr);
+
+                    break;
+                }
                 case CallStub: {
                     XirTemplate stubId = (XirTemplate) inst.extra;
                     CiRegister result = CiRegister.None;

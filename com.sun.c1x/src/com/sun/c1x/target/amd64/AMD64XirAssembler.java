@@ -144,6 +144,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case PointerStoreDisp:
                     break;
                 case PointerCAS:
+                case IntCAS:
                     if (fixedRAX == null) {
                         fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, AMD64.rax);
                     }
