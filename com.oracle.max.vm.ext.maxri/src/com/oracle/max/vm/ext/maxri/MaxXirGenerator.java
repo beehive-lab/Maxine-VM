@@ -56,6 +56,7 @@ import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profilers.tracing.numa.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.aarch64.*;
 import com.sun.max.vm.runtime.amd64.*;
@@ -2177,7 +2178,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
-            MaxineVM.checkForFlareObject(hub);
+            NUMAProfiler.checkForFlareObject(hub);
             if (MaxineVM.shouldProfile()) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileNewTuple(size, hub, cell);
             }
@@ -2189,7 +2190,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
-            MaxineVM.checkForFlareObject(hub);
+            NUMAProfiler.checkForFlareObject(hub);
             if (MaxineVM.shouldProfile()) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileNewArray(size, hub, cell);
             }

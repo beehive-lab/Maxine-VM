@@ -20,29 +20,24 @@
 
 package com.sun.max.vm.profilers.tracing.numa;
 
-import com.sun.max.annotate.C_FUNCTION;
-import com.sun.max.annotate.NEVER_INLINE;
-import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
-import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.*;
-import com.sun.max.util.NUMALib;
-import com.sun.max.vm.Intrinsics;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.sequential.semiSpace.SemiSpaceHeapScheme;
-import com.sun.max.vm.intrinsics.*;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.SafepointPoll;
-import com.sun.max.vm.thread.*;
-
-import static com.sun.max.vm.MaxineVM.isHosted;
-import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.thread.VmThread.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import com.sun.max.annotate.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.sequential.semiSpace.*;
+import com.sun.max.vm.intrinsics.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
+
 public class NUMAProfiler {
+
+    public static int flareObjectCounter = 0;
 
     @C_FUNCTION
     static native void numaProfiler_lock();
@@ -212,6 +207,36 @@ public class NUMAProfiler {
     }
 
     /**
+     * Check if the given hub is a hub of a Flare object and increase the
+     * {@link #flareObjectCounter} if so.
+     *
+     * @param hub
+     */
+    public static void checkForFlareObject(Hub hub) {
+        if (MaxineVM.useNUMAProfiler) {
+            String type = hub.classActor.name();
+            if (NUMAProfilerFlareAllocationThreshold != 0 &&
+                            (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow > flareObjectCounter) &&
+                            type.contains(NUMAProfilerFlareObject)) {
+                flareObjectCounter++;
+                // FIXME: currently enables profiling only for current thread
+                if (flareObjectCounter > NUMAProfilerFlareAllocationThreshold &&
+                                flareObjectCounter < (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow)) {
+                    PROFILER_TLA.store3(VmThread.currentTLA(), Address.fromInt(1));
+                    if (NUMAProfilerVerbose) {
+                        Log.println("Enable profiling Flare");
+                    }
+                } else if (flareObjectCounter >= (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow)) {
+                    PROFILER_TLA.store3(VmThread.currentTLA(), Address.fromInt(0));
+                    if (NUMAProfilerVerbose) {
+                        Log.println("Disable profiling Flare");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Find heap's first page address and Numa Node and set it in heapPages.
      */
     public void findFirstHeapPage() {
@@ -241,7 +266,7 @@ public class NUMAProfiler {
     }
 
     public static boolean objectWarmupFinished() {
-        return MaxineVM.flareObjectCounter >= NUMAProfilerFlareAllocationThreshold && MaxineVM.flareObjectCounter <= NUMAProfilerFlareAllocationThreshold + (NUMAProfilerFlareProfileWindow - 1);
+        return flareObjectCounter >= NUMAProfilerFlareAllocationThreshold && flareObjectCounter <= NUMAProfilerFlareAllocationThreshold + (NUMAProfilerFlareProfileWindow - 1);
     }
 
     /**

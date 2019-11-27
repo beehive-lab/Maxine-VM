@@ -119,8 +119,6 @@ public final class MaxineVM {
      */
     private static int exitCode = 0;
 
-    public static int flareObjectCounter = 0;
-
     private static long startupTime;
     private static long startupTimeNano;
 
@@ -165,36 +163,6 @@ public final class MaxineVM {
                             VmThread.current() != VmThread.vmOperationThread;
         }
         return false;
-    }
-
-    /**
-     * Check if the given hub is a hub of a Flare object and increase the
-     * {@link #flareObjectCounter} if so.
-     *
-     * @param hub
-     */
-    public static void checkForFlareObject(Hub hub) {
-        if (MaxineVM.useNUMAProfiler) {
-            String type = hub.classActor.name();
-            if (NUMAProfiler.NUMAProfilerFlareAllocationThreshold != 0 &&
-                            (NUMAProfiler.NUMAProfilerFlareAllocationThreshold + NUMAProfiler.NUMAProfilerFlareProfileWindow > flareObjectCounter) &&
-                            type.contains(NUMAProfiler.NUMAProfilerFlareObject)) {
-                flareObjectCounter++;
-                // FIXME: currently enables profiling only for current thread
-                if (flareObjectCounter > NUMAProfiler.NUMAProfilerFlareAllocationThreshold &&
-                                flareObjectCounter < (NUMAProfiler.NUMAProfilerFlareAllocationThreshold + NUMAProfiler.NUMAProfilerFlareProfileWindow)) {
-                    VmThreadLocal.PROFILER_TLA.store3(VmThread.currentTLA(), Address.fromInt(1));
-                    if (NUMAProfiler.NUMAProfilerVerbose) {
-                        Log.println("Enable profiling Flare");
-                    }
-                } else if (flareObjectCounter >= (NUMAProfiler.NUMAProfilerFlareAllocationThreshold + NUMAProfiler.NUMAProfilerFlareProfileWindow)) {
-                    VmThreadLocal.PROFILER_TLA.store3(VmThread.currentTLA(), Address.fromInt(0));
-                    if (NUMAProfiler.NUMAProfilerVerbose) {
-                        Log.println("Disable profiling Flare");
-                    }
-                }
-            }
-        }
     }
 
     /**
