@@ -35,6 +35,7 @@ import static com.sun.max.vm.compiler.CallEntryPoint.BASELINE_ENTRY_POINT;
 import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
 
 import com.oracle.max.asm.NumUtil;
+import com.oracle.max.cri.intrinsics.MemoryBarriers;
 import com.sun.cri.ci.CiCalleeSaveLayout;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.platform.Platform;
@@ -142,20 +143,23 @@ public final class Aarch64TargetMethodUtil {
     /**
      * Patch a callsite: if the target is within range of a single branch instruction then
      * that is patched at the callsite; otherwise the trampoline is patched. The target prior
-     * to patching is returned.
+     * to patching is returned. If concurrent is true, consideration to concurrent modification
+     * and execution must be taken, for example i-cache and d-cache coherence and ordering of
+     * memory accesses.
      * 
      * @param tm
      * @param callOffset
      * @param target
+     * @param concurrent respect synchronisation for concurrent modification and execution
      * @return
      */
-    private static long patchCallSite(TargetMethod tm, CodePointer callSite, Pointer target) {
+    private static long patchCallSite(TargetMethod tm, CodePointer callSite, Pointer target, boolean concurrent) {
         long disp = target.toLong() - callSite.toLong();
         int disp32 = (int) disp;
         if (inBranchRange(disp32)) {
-            return maybePatchBranchImmediate(callSite, disp32);
+            return maybePatchBranchImmediate(callSite, disp32, concurrent);
         }
-        return maybePatchTrampolineCall(tm, callSite, target, disp32);
+        return maybePatchTrampolineCall(tm, callSite, target, disp32, concurrent);
     }
 
     /**
@@ -167,9 +171,10 @@ public final class Aarch64TargetMethodUtil {
      * @param callSite
      * @param target
      * @param disp
+     * @param concurrent
      * @return
      */
-    private static long maybePatchTrampolineCall(TargetMethod tm, CodePointer callSite, Pointer target, int disp) {
+    private static long maybePatchTrampolineCall(TargetMethod tm, CodePointer callSite, Pointer target, int disp, boolean concurrent) {
         int callOffset = (int) (callSite.toLong() - tm.codeStart().toLong());
         // locate the trampoline site that corresponds to the call site.
         int pos = Safepoints.safepointPosForCall(callOffset, RIP_CALL_INSTRUCTION_SIZE);
@@ -180,9 +185,17 @@ public final class Aarch64TargetMethodUtil {
 
         if (target.toLong() != oldTarget) {
             trampolineSite.toPointer().writeLong(TRAMPOLINE_ADDRESS_OFFSET, target.toLong());
+            /*
+             * For concurrent modification and execution a memory barrier here prevents the possibility
+             * of the previous store of the target address being ordered after the call site store (if it
+             * is updated).
+             */
+            if (concurrent) {
+                MemoryBarriers.barrier(MemoryBarriers.STORE_LOAD);
+            }
         }
 
-        long callTarget = maybePatchBranchImmediate(callSite, trampolineSite.minus(callSite).toInt());
+        long callTarget = maybePatchBranchImmediate(callSite, trampolineSite.minus(callSite).toInt(), concurrent);
 
         if (callTarget != trampolineSite.toLong()) {
             return callTarget;
@@ -197,15 +210,16 @@ public final class Aarch64TargetMethodUtil {
      * 
      * @param callSite
      * @param disp32
+     * @param concurrent
      * @return
      */
-    private static long maybePatchBranchImmediate(CodePointer callSite, int disp32) {
+    private static long maybePatchBranchImmediate(CodePointer callSite, int disp32, boolean concurrent) {
         int instruction = callSite.toPointer().readInt(0);
         assert isBimmInstruction(instruction) : instruction;
         int oldDisp = bImmExtractDisplacement(instruction);
         boolean isLinked = isBranchInstructionLinked(instruction);
         if (oldDisp != disp32) {
-            patchBranchImmediate(callSite.toPointer(), disp32, isLinked);
+            patchBranchImmediate(callSite.toPointer(), disp32, isLinked, concurrent);
         }
         return callSite.plus(oldDisp).toLong();
     }
@@ -218,13 +232,21 @@ public final class Aarch64TargetMethodUtil {
      * @param callSite
      * @param displacement
      * @param isLinked
+     * @param concurrent
      * @return
      */
-    private static void patchBranchImmediate(Pointer callSite, int displacement, boolean isLinked) {
+    private static void patchBranchImmediate(Pointer callSite, int displacement, boolean isLinked, boolean concurrent) {
         int instruction = unconditionalBranchImmInstructionHelper(displacement, isLinked);
         callSite.writeInt(0, instruction);
-        // cache_flush is inclusive on the low side, exclusive on the high side.
-        MaxineVM.maxine_cache_flush(callSite, INSTRUCTION_SIZE);
+        /*
+         * Although no explicit synchronisation is mandated by the architecture when patching b -> b, doing
+         * so here makes the modified instruction observable. A memory barrier will only be useful if the
+         * branch has been prefetched on another core.
+         */
+        if (concurrent) {
+            MaxineVM.maxine_cache_flush(callSite, INSTRUCTION_SIZE);
+            MaxineVM.syscall_membarrier();
+        }
     }
 
     /**
@@ -260,7 +282,12 @@ public final class Aarch64TargetMethodUtil {
             code.writeInt(offset, LDR_X16_8);
             code.writeInt(offset += INSTRUCTION_SIZE, BR_X16);
             code.writeLong(offset += INSTRUCTION_SIZE, target.toLong());
+            /*
+             * After modifying instructions outside the permissible set the following cache maintenance is required
+             * by the architecture. See B2.2.5 ARM ARM (issue E.a).
+             */
             MaxineVM.maxine_cache_flush(code.plus(BASELINE_ENTRY_POINT.offset()), offset);
+            MaxineVM.syscall_membarrier();
         }
     }
 
@@ -303,7 +330,7 @@ public final class Aarch64TargetMethodUtil {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
                 // (although the lock excludes ALL concurrent patching)
-                patchCallSite(tm, callSite, target.toPointer());
+                patchCallSite(tm, callSite, target.toPointer(), true);
             }
         }
         return oldTarget;
@@ -354,7 +381,7 @@ public final class Aarch64TargetMethodUtil {
             final int oldDisplacement = fixupCall28Site(code, callOffset, disp32);
             return callSite.plus(oldDisplacement);
         } else {
-            return CodePointer.from(patchCallSite(tm, callSite, target.toPointer()));
+            return CodePointer.from(patchCallSite(tm, callSite, target.toPointer(), false));
         }
     }
 
