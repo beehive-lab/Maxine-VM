@@ -68,6 +68,7 @@ public class NUMAProfiler {
     public static boolean NUMAProfilerVerbose;
     public static int NUMAProfilerBufferSize;
     public static boolean NUMAProfilerDebug;
+    public static boolean NUMAProfilerIncludeFinalization;
 
     public static int totalNewSize = 0;
     public static int totalSurvSize = 0;
@@ -157,6 +158,7 @@ public class NUMAProfiler {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareAllocationThreshold", NUMAProfiler.class, "The number of the Flare objects to be allocated before the NUMAProfiler starts recording. (default: 0)");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareProfileWindow", NUMAProfiler.class, "The number of the Flare objects to be allocated before the NUMAProfiler stops recording. (default: 1)");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerDebug", NUMAProfiler.class, "Print information to help in NUMAProfiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerIncludeFinalization", NUMAProfiler.class, "Include memory accesses performed due to Finalization. (default: false)", MaxineVM.Phase.PRISTINE);
     }
 
     public NUMAProfiler() {
@@ -675,7 +677,8 @@ public class NUMAProfiler {
         public boolean evaluate(Pointer tla) {
             VmThread vmThread = VmThread.fromTLA(tla);
             return vmThread.javaThread() != null &&
-                    !vmThread.isVmOperationThread();
+                    !vmThread.isVmOperationThread() &&
+                    (NUMAProfilerIncludeFinalization || !vmThread.getName().equals("Finalizer"));
         }
     };
 
