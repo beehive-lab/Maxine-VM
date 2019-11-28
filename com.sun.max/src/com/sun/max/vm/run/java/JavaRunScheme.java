@@ -263,6 +263,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     MaxineVM.numaProfiler = new NUMAProfiler();
                     float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
 
+                    if (NUMAProfiler.profileAll() && NUMAProfiler.warmupFinished() && NUMAProfiler.objectWarmupFinished()) {
+                        NUMAProfiler.enableProfiling();
+                    }
+
                     if (NUMAProfiler.NUMAProfilerDebug) {
                         Log.println("*===================================================*\n" +
                             "* NUMA Profiler is on validation mode.\n" +
