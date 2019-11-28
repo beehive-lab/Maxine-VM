@@ -18,20 +18,22 @@
  */
 
 /*
- * The functions in this module perform the membarrier system call on linux.
+ * The functions in this module perform the membarrier Linux system call.
  * This system call causes an inter-processor-interrupt (IPI) to be delivered
  * to concurrently executing cores on the current system. On Aarch64 platforms
  * we use that mechanism to synchronise instruction streams on multi-cores.
  */
-#include "isa.h"
+
+#include "log.h"
 #include "os.h"
+#if os_LINUX
+#include "isa.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <linux/membarrier.h>
 #include <linux/version.h>
-#include "log.h"
 
 
 /*
@@ -60,7 +62,7 @@ static int membarrier_init(void) __attribute__ ((unused));
 void
 syscall_membarrier()
 {
-#if os_LINUX && isa_AARCH64
+#if isa_AARCH64
 # if USE_SYS_MEMBARRIER
     static volatile int initialised = 0;
     static int barrier_kind = 0;
@@ -72,14 +74,12 @@ syscall_membarrier()
 # endif /* USE_SYS_MEMBARRIER */
 #else
     log_exit(1, "membarrier not configured on this platform");
-#endif /* os_LINUX && isa_AARCH64 */
+#endif /* isa_AARCH64 */
 }
 
 static int
 membarrier_init(void)
 {
-    int barrier = 0;
-#if os_LINUX
     long lv;
 
     lv = membarrier(MEMBARRIER_CMD_QUERY, 0);
@@ -119,7 +119,14 @@ membarrier_init(void)
     }
     /* No useable barrier available. */
     log_exit(1, "No useable barrier on this platform.");
-#endif /* os_LINUX */
-    return barrier;
 }
+
+#else
+/* Print an informative message if called on a non-Linux OS. */
+void
+syscall_membarrier()
+{
+    log_exit(1, "membarrier not available on this platform");
+}
+#endif /* os_LINUX */
 
