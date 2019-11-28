@@ -670,7 +670,7 @@ public class NUMAProfiler {
         }
     };
 
-    private final Pointer.Predicate profilingPredicate = new Pointer.Predicate() {
+    private static final Pointer.Predicate profilingPredicate = new Pointer.Predicate() {
         @Override
         public boolean evaluate(Pointer tla) {
             VmThread vmThread = VmThread.fromTLA(tla);
@@ -822,8 +822,12 @@ public class NUMAProfiler {
             if (NUMAProfilerVerbose) {
                 Log.println("(NUMA Profiler): Re-enabling profiling. [post-GC phase]");
             }
-            VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, setProfilingTLA);
+            enableProfiling();
         }
+    }
+
+    public static void enableProfiling() {
+        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, setProfilingTLA);
     }
 
     public void releaseReservedMemory() {
