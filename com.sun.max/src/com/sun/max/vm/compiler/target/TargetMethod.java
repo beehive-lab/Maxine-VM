@@ -884,7 +884,6 @@ public abstract class TargetMethod extends MemoryRegion {
         if (trampolines != null && trampolines.length > 0) {
             System.arraycopy(trampolines, 0, this.trampolines, 0, this.trampolinesLength());
         }
-        cleanCache();
     }
 
     protected final void setData(byte[] scalarLiterals, Object[] objectLiterals, byte[] codeBuffer) {
@@ -893,14 +892,17 @@ public abstract class TargetMethod extends MemoryRegion {
 
     public void cleanCache() {
         if (!MaxineVM.isHosted() && (platform().target.arch.isARM() || platform().target.arch.isAarch64() || platform().target.arch.isRISCV64())) {
-            int codePreAmble = 0;
-            if (scalarLiterals != null) {
-                codePreAmble = scalarLiterals.length;
+            long longSize = size().toLong();
+            int size = (int) longSize;
+            assert size == longSize : "Integer overflow";
+            MaxineVM.maxine_cache_flush(start, size);
+            /*
+             * Aarch64 requires an ISB instruction is executed on concurrently executing CPUs to discard
+             * speculatively pre-fetched addresses from buffers. See B2.2.5 ARM ARM (issue E.a).
+             */
+            if (platform().target.arch.isAarch64()) {
+                MaxineVM.syscall_membarrier();
             }
-            if (referenceLiterals != null) {
-                codePreAmble = codePreAmble + (referenceLiterals.length * 4);
-            }
-            MaxineVM.maxine_cache_flush(CodePointer.from(codeStart.minus(codePreAmble)).toPointer(), codeLength() + codePreAmble);
         }
     }
 
