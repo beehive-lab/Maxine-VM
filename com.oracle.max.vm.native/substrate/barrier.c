@@ -24,12 +24,12 @@
  * we use that mechanism to synchronise instruction streams on multi-cores.
  */
 
+#include <stdlib.h>
+#include <stdio.h>
 #include "log.h"
 #include "os.h"
 #if os_LINUX
 #include "isa.h"
-#include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <linux/membarrier.h>
