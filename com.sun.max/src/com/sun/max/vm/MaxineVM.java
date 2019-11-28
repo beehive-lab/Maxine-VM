@@ -133,6 +133,7 @@ public final class MaxineVM {
      * calls into the precompiled C1X Snippets for New Object Allocation (buildTLABAllocate, buildTLABAllocateArray),
      * Object Write (buildPutFieldTemplate, buildArrayStore) and Object Read (buildGetFieldTemplate, buildArrayLoad).
      */
+    @CONSTANT
     public static boolean useNUMAProfiler;
 
     /**
