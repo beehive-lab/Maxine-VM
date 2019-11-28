@@ -257,13 +257,12 @@ public class T1XTargetMethod extends TargetMethod {
             }
         }
 
-        if (!MaxineVM.isHosted()) {
-            if (install) {
-                linkDirectCalls();
-                if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64() || Platform.target().arch.isRISCV64()) {
-                    MaxineVM.maxine_cache_flush(codeStart().toPointer(), code().length);
-                }
-            }  // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+        if (!MaxineVM.isHosted() && install) {
+            linkDirectCalls();
+            // Perform cache maintenance after linking calls to ensure visibility of fixed call-sites.
+            if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64() || Platform.target().arch.isRISCV64()) {
+                cleanCache();
+            }
         }
 
         // if the VM is running, validate freshly generated code
