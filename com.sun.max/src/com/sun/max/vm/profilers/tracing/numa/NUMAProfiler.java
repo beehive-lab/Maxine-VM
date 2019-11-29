@@ -221,15 +221,14 @@ public class NUMAProfiler {
                             (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow > flareObjectCounter) &&
                             type.contains(NUMAProfilerFlareObject)) {
                 flareObjectCounter++;
-                // FIXME: currently enables profiling only for current thread
                 if (flareObjectCounter > NUMAProfilerFlareAllocationThreshold &&
                                 flareObjectCounter < (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow)) {
-                    PROFILER_TLA.store3(VmThread.currentTLA(), Address.fromInt(1));
+                    enableProfiling();
                     if (NUMAProfilerVerbose) {
                         Log.println("Enable profiling Flare");
                     }
                 } else if (flareObjectCounter >= (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow)) {
-                    PROFILER_TLA.store3(VmThread.currentTLA(), Address.fromInt(0));
+                    disableProfiling();
                     if (NUMAProfilerVerbose) {
                         Log.println("Disable profiling Flare");
                     }
@@ -635,64 +634,9 @@ public class NUMAProfiler {
     }
 
     /**
-     * A procedure for resetting PROFILING_TLA of a thread.
-     */
-    private static final Pointer.Procedure resetProfilingTLA = new Pointer.Procedure() {
-        public void run(Pointer tla) {
-            PROFILER_TLA.store3(tla, Address.fromInt(0));
-        }
-    };
-
-    /**
-     * A procedure for resetting PROFILING_TLA of a thread.
-     */
-    private static final Pointer.Procedure setProfilingTLA = new Pointer.Procedure() {
-        public void run(Pointer tla) {
-            PROFILER_TLA.store3(tla, Address.fromInt(1));
-        }
-    };
-
-    /**
-     * A procedure for resetting PROFILING_TLA of a thread.
-     */
-    private static final Pointer.Procedure terminateProfilingTLA = new Pointer.Procedure() {
-        public void run(Pointer tla) {
-            PROFILER_TLA.store3(tla, Address.fromInt(-1));
-        }
-    };
-
-    // FIXME: if a single thread had profiling enabled all threads will end up with profiling enabled, ideally we
-    //  would like a map to be able to restore profiling only on threads where it was actually enabled.
-    private final Pointer.Procedure readProfilingTLA = new Pointer.Procedure() {
-        @Override
-        public void run(Pointer tla) {
-            if (PROFILER_TLA.load(tla).toInt() == 1) {
-                wasProfiling = 1;
-            }
-        }
-    };
-
-    private static final Pointer.Predicate profilingPredicate = new Pointer.Predicate() {
-        @Override
-        public boolean evaluate(Pointer tla) {
-            VmThread vmThread = VmThread.fromTLA(tla);
-            return vmThread.javaThread() != null &&
-                    !vmThread.isVmOperationThread() &&
-                    (NUMAProfilerIncludeFinalization || !vmThread.getName().equals("Finalizer"));
-        }
-    };
-
-    /**
      * This method is called by ProfilerGCCallbacks in every pre-gc callback phase.
      */
     public void preGCActions() {
-
-        // Disable profiling
-        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, readProfilingTLA);
-        if (wasProfiling == 1) {
-            Log.println("(NUMA Profiler): Disabling profiling for GC. [pre-GC phase]");
-            VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, resetProfilingTLA);
-        }
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Entering Pre-GC Phase.");
@@ -807,7 +751,7 @@ public class NUMAProfiler {
                 if (NUMAProfilerVerbose) {
                     Log.println("(NUMA Profiler): Enabling profiling. [post-GC phase]");
                 }
-                wasProfiling = 1; // don't set the TLA here to avoid profiling inside the method
+                enableProfiling();
             }
         }
 
@@ -820,17 +764,38 @@ public class NUMAProfiler {
             Log.println("]");
         }
 
-        // Re-enable profiling if needed
-        if (wasProfiling == 1) {
-            if (NUMAProfilerVerbose) {
-                Log.println("(NUMA Profiler): Re-enabling profiling. [post-GC phase]");
-            }
-            enableProfiling();
-        }
     }
+
+    private static final Pointer.Predicate profilingPredicate = new Pointer.Predicate() {
+        @Override
+        public boolean evaluate(Pointer tla) {
+            VmThread vmThread = VmThread.fromTLA(tla);
+            return vmThread.javaThread() != null &&
+                    !vmThread.isVmOperationThread() &&
+                    (NUMAProfilerIncludeFinalization || !vmThread.getName().equals("Finalizer"));
+        }
+    };
+
+    private static final Pointer.Procedure setProfilingTLA = new Pointer.Procedure() {
+        public void run(Pointer tla) {
+            Pointer etla = ETLA.load(tla);
+            PROFILER_TLA.store(etla, Address.fromInt(1));
+        }
+    };
 
     public static void enableProfiling() {
         VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, setProfilingTLA);
+    }
+
+    private static final Pointer.Procedure resetProfilingTLA = new Pointer.Procedure() {
+        public void run(Pointer tla) {
+            Pointer etla = ETLA.load(tla);
+            PROFILER_TLA.store(etla, Address.fromInt(0));
+        }
+    };
+
+    public static void disableProfiling() {
+        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, resetProfilingTLA);
     }
 
     public void releaseReservedMemory() {
@@ -851,8 +816,9 @@ public class NUMAProfiler {
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Disable profiling for termination");
         }
-        // Disable profiling
-        VmThreadMap.ACTIVE.forAllThreadLocals(null, terminateProfilingTLA);
+
+        // Disable profiling for shutdown
+        PROFILER_TLA.store(VmThread.currentTLA(), Address.fromInt(0));
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Termination");
@@ -890,7 +856,10 @@ public class NUMAProfiler {
             printObjectAccessStats();
             Log.println("(NUMA Profiler): Release Reserved Memory.");
         }
-        releaseReservedMemory();
+
+        if (!NUMAProfilerIncludeFinalization) {
+            releaseReservedMemory();
+        }
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Terminating... Bye!");

@@ -369,7 +369,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
             XirConstant constantOne     = asm.i(1);
-            asm.pstore(WordUtil.archKind(), tla, offsetToProfile, constantOne, false);
+            asm.pstore(CiKind.Int, tla, offsetToProfile, constantOne, false);
         }
 
         return new XirSnippet(finishTemplate(asm, "prologue"));
@@ -394,7 +394,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
             XirConstant constantZero    = asm.i(0);
-            asm.pstore(WordUtil.archKind(), tla, offsetToProfile, constantZero, false);
+            asm.pstore(CiKind.Int, tla, offsetToProfile, constantZero, false);
         }
         return new XirSnippet(epilogueTemplate);
     }
@@ -1565,26 +1565,26 @@ public class MaxXirGenerator implements RiXirGenerator {
     @HOSTED_ONLY
     private void maybeInvokeNUMAProfiler(CiKind kind, XirParameter object, String runtimeMethod) {
         if (MaxineVM.useNUMAProfiler && kind == CiKind.Object) {
-            XirLabel    skip                = asm.createInlineLabel("skip");
-            XirOperand  tla                 = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
-            XirOperand  profilingTlaAddress = asm.createTemp("TLAAddress", WordUtil.archKind());
-            XirOperand  isProfiling         = asm.createTemp("isProfiling", CiKind.Int);
-            XirConstant constantOne         = asm.i(1);
-            XirOperand  tempRegister        = asm.createTemp("tempRegister", CiKind.Int);
-            XirConstant constantTwo         = asm.i(2);
-            XirOperand  cell                = asm.createTemp("cell", WordUtil.archKind());
+            final XirLabel    skip                = asm.createInlineLabel("skip");
+            final XirOperand  tla                 = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
+            final XirOperand  profilingTlaAddress = asm.createTemp("TLAAddress", WordUtil.archKind());
+            final XirOperand  isProfiling         = asm.createTemp("isProfiling", CiKind.Int);
+            final XirConstant constantOne         = asm.i(1);
+            final XirConstant constantTwo         = asm.i(2);
+            final XirOperand  tempRegister        = asm.createTemp("tempRegister", CiKind.Int);
+            final XirOperand  cell                = asm.createTemp("cell", WordUtil.archKind());
 
             // Calculate PROFILER_TLA address
             asm.add(profilingTlaAddress, tla, asm.i(VmThreadLocal.PROFILER_TLA.offset));
-            // Load PROFILER_TLA value
-            asm.pload(CiKind.Int, isProfiling, profilingTlaAddress, false);
-            // if not 1 skip profiling
+            // Attempt to change the profiling state
+            asm.mov(tempRegister, constantTwo);
+            asm.icas(CiKind.Int, isProfiling, profilingTlaAddress, tempRegister, constantOne);
+            // if state was not 1 skip profiling
             asm.jneq(skip, isProfiling, constantOne);
-            // Disable profiling to avoid nested profiling
-            asm.pstore(CiKind.Int, profilingTlaAddress, constantTwo, false);
             asm.mov(cell, object);
             callRuntimeThroughStub(asm, runtimeMethod, null, cell);
-            // Re-enable profiling using CAS to avoif re-enabling after termination (see NUMAProfiler.terminate())
+            // Attempt to re-enable profiling using CAS to avoid re-enabling after termination
+            // (see NUMAProfiler.terminate())
             asm.mov(tempRegister, constantOne);
             asm.icas(CiKind.Int, isProfiling, profilingTlaAddress, tempRegister, constantTwo);
             asm.bindInline(skip);
