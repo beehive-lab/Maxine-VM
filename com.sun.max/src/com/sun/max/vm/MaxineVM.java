@@ -46,7 +46,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
+import com.sun.max.vm.profilers.tracing.numa.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
@@ -156,11 +156,7 @@ public final class MaxineVM {
     public static boolean shouldProfile() {
         if (MaxineVM.useNUMAProfiler) {
             int profilerTLA = VmThreadLocal.PROFILER_STATE.load(VmThread.currentTLA()).toInt();
-            return MaxineVM.numaProfiler != null &&
-                            (profilerTLA == NUMAProfiler.PROFILING_STATE.ENABLED.getValue() || NUMAProfiler.profileAll()) &&
-                            NUMAProfiler.warmupFinished() &&
-                            NUMAProfiler.objectWarmupFinished() &&
-                            VmThread.current() != VmThread.vmOperationThread;
+            return profilerTLA == NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
         }
         return false;
     }
