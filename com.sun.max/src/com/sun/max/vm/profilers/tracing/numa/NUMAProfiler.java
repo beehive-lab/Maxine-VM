@@ -250,17 +250,16 @@ public class NUMAProfiler {
                             (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow > flareObjectCounter) &&
                             type.contains(NUMAProfilerFlareObject)) {
                 flareObjectCounter++;
-                if (flareObjectCounter > NUMAProfilerFlareAllocationThreshold &&
-                                flareObjectCounter < (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow)) {
+                if (flareObjectCounter == NUMAProfilerFlareAllocationThreshold) {
+                    if (NUMAProfilerVerbose) {
+                        Log.println("(NUMA Profiler): Enable profiling due to flare object allocation");
+                    }
                     enableProfiling();
+                } else if (flareObjectCounter == (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow)) {
                     if (NUMAProfilerVerbose) {
-                        Log.println("Enable profiling Flare");
+                        Log.println("(NUMA Profiler): Disable profiling due to flare object allocation");
                     }
-                } else if (flareObjectCounter >= (NUMAProfilerFlareAllocationThreshold + NUMAProfilerFlareProfileWindow)) {
                     disableProfiling();
-                    if (NUMAProfilerVerbose) {
-                        Log.println("Disable profiling Flare");
-                    }
                 }
             }
         }
@@ -297,14 +296,6 @@ public class NUMAProfiler {
 
     public static boolean profileAll() {
         return NUMAProfilerAll;
-    }
-
-    public static boolean warmupFinished() {
-        return iteration > NUMAProfilerExplicitGCThreshold || NUMAProfilerExplicitGCThreshold == 0;
-    }
-
-    public static boolean objectWarmupFinished() {
-        return flareObjectCounter >= NUMAProfilerFlareAllocationThreshold && flareObjectCounter <= NUMAProfilerFlareAllocationThreshold + (NUMAProfilerFlareProfileWindow - 1);
     }
 
     /**
@@ -784,7 +775,7 @@ public class NUMAProfiler {
         if (isExplicitGC) {
             iteration++;
             isExplicitGC = false;
-            if (iteration > NUMAProfiler.NUMAProfilerExplicitGCThreshold) {
+            if (iteration == NUMAProfiler.NUMAProfilerExplicitGCThreshold) {
                 if (NUMAProfilerVerbose) {
                     Log.println("(NUMA Profiler): Enabling profiling. [post-GC phase]");
                 }
