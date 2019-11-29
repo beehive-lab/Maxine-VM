@@ -153,6 +153,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     // z = old value (i.e., the one compared to). Must be in RAX (and so must the result).
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRAX, i.z()));
                     currentList.add(new XirInstruction(i.kind, i.op, i.result, i.x(), i.y(), fixedRAX));
+                    currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, i.result, fixedRAX));
                     appended = true;
                     break;
                 case CallStub:
