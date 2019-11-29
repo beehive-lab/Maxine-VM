@@ -2202,23 +2202,18 @@ public class MaxXirGenerator implements RiXirGenerator {
         @PLATFORM(cpu = "amd64")
         public static void callProfileWriteTuple(Pointer cell) {
             assert MaxineVM.useNUMAProfiler;
-            if (MaxineVM.shouldProfile()) {
-                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteTuple(cell);
-            }
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteTuple(cell);
         }
 
         @PLATFORM(cpu = "amd64")
         public static void callProfileWriteArray(Pointer arrayCell) {
             assert MaxineVM.useNUMAProfiler;
-            if (MaxineVM.shouldProfile()) {
-                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteArray(arrayCell);
-            }
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteArray(arrayCell);
         }
 
         @PLATFORM(cpu = "amd64")
         public static void callProfileReadTuple(Pointer cell) {
             assert MaxineVM.useNUMAProfiler;
-            assert MaxineVM.shouldProfile();
             ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileReadTuple(cell);
         }
 
