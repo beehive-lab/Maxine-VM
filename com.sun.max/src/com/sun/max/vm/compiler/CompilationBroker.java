@@ -500,20 +500,20 @@ public class CompilationBroker {
                     // TODO: we don't ever want to be waiting on a compilation
                     return compilation.get();
                 }
-            } catch (Throwable t) {
+            } catch (CiBailout bailout) {
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
                     Log.println(": Compilation of " + cma + " by " + compilation.compiler + " failed with:");
-                    t.printStackTrace(Log.out);
+                    bailout.printStackTrace(Log.out);
                     Log.unlock(lockDisabledSafepoints);
                 }
                 if (failFast) {
-                    throw t;
+                    throw bailout;
                 }
                 if (!FailOverCompilation || retryRun || (baselineCompiler == null) || (isHosted() && compilation.compiler == optimizingCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled
-                    throw FatalError.unexpected("Compilation of " + cma + " by " + compilation.compiler + " failed (final attempt)", t);
+                    throw FatalError.unexpected("Compilation of " + cma + " by " + compilation.compiler + " failed (final attempt)", bailout);
                 }
                 // cannot retry if specific compilation nature is specified so fall back to previous compilations if
                 // available, else throw an exception
@@ -523,7 +523,7 @@ public class CompilationBroker {
                         return compilation.prevCompilations.currentTargetMethod(nature);
                     } else {
                         throw FatalError.unexpected("Cannot retry compilation of " + cma
-                                + " because a specific compilation nature is specified (" + nature + ")", t);
+                                + " because a specific compilation nature is specified (" + nature + ")", bailout);
                     }
                 }
                 retryRun = true;
@@ -533,6 +533,8 @@ public class CompilationBroker {
                     Log.println(": Retrying with " + selectRetryCompiler(cma, nature, compilation.compiler) + "...");
                     Log.unlock(lockDisabledSafepoints);
                 }
+            } catch (Throwable t) {
+                throw FatalError.unexpected("Compilation of " + cma + " by " + compilation.compiler + " failed", t);
             }
         }
     }
