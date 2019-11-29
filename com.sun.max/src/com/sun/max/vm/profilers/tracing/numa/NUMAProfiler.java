@@ -389,7 +389,7 @@ public class NUMAProfiler {
     }
 
     public boolean inDataHeap(long firstPageAddress, long address) {
-        return address >= firstPageAddress;
+        return vm().config.heapScheme().contains(Address.fromLong(address));
     }
 
     public boolean isRemoteAccess(long firstPageAddress, long address) {
