@@ -569,7 +569,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer cell = tlabAllocate(size);
 
         NUMAProfiler.checkForFlareObject(dynamicHub);
-        if (MaxineVM.shouldProfile()) {
+        if (NUMAProfiler.shouldProfile()) {
             final String objectType = dynamicHub.classActor.name();
             final long address = cell.toLong();
             numaProfiler.profileNew(size.toInt(), objectType, address);
@@ -587,7 +587,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             return result;
         } else {
             NUMAProfiler.checkForFlareObject(hub);
-            if (MaxineVM.shouldProfile()) {
+            if (NUMAProfiler.shouldProfile()) {
                 final String objectType = hub.classActor.name();
                 final long address = cell.toLong();
                 numaProfiler.profileNew(hub.tupleSize.toInt(), objectType, address);
@@ -602,7 +602,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer cell = tlabAllocate(size);
 
         NUMAProfiler.checkForFlareObject(hub);
-        if (MaxineVM.shouldProfile()) {
+        if (NUMAProfiler.shouldProfile()) {
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
             numaProfiler.profileNew(size.toInt(), objectType, address);
@@ -630,7 +630,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Pointer oldOrigin = Reference.fromJava(object).toOrigin();
         final Hub hub = Layout.getHub(oldOrigin);
         NUMAProfiler.checkForFlareObject(hub);
-        if (MaxineVM.shouldProfile()) {
+        if (NUMAProfiler.shouldProfile()) {
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
             numaProfiler.profileNew(size.toInt(), objectType, address);

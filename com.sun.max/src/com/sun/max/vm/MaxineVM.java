@@ -136,32 +136,6 @@ public final class MaxineVM {
     public static boolean useNUMAProfiler;
 
     /**
-     * This method is used to guard object allocation code sections.
-     *
-     * An object will be profiled only if:
-     *  1) MaxineVM is Running
-     *  2) -XX:+NUMAProfilerEntryPoint is used
-     *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
-     *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
-     *  5) The object is not allocated by the VmOperationThread
-     *
-     *  OR
-     *
-     *  the -XX:ProfileAll option has been used
-     *
-     *  In any case we ignore the warmup phase of the application (see {@link NUMAProfiler#warmupFinished}).
-     *
-     * @return true if all the above conditions are true.
-     */
-    public static boolean shouldProfile() {
-        if (MaxineVM.useNUMAProfiler) {
-            int profilerTLA = VmThreadLocal.PROFILER_STATE.load(VmThread.currentTLA()).toInt();
-            return profilerTLA == NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
-        }
-        return false;
-    }
-
-    /**
      * Allows the Inspector access to the thread locals block for the primordial thread.
      */
     @INSPECTED

@@ -266,6 +266,14 @@ public class NUMAProfiler {
         }
     }
 
+    public static boolean shouldProfile() {
+        if (MaxineVM.useNUMAProfiler) {
+            int profilerTLA = PROFILER_STATE.load(VmThread.currentTLA()).toInt();
+            return profilerTLA == PROFILING_STATE.ENABLED.getValue();
+        }
+        return false;
+    }
+
     /**
      * Find heap's first page address and Numa Node and set it in heapPages.
      */

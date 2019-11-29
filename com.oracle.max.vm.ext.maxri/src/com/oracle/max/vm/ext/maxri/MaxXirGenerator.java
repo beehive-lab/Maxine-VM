@@ -2182,7 +2182,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
 
             NUMAProfiler.checkForFlareObject(hub);
-            if (MaxineVM.shouldProfile()) {
+            if (NUMAProfiler.shouldProfile()) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileNewTuple(size, hub, cell);
             }
         }
@@ -2194,7 +2194,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
 
             NUMAProfiler.checkForFlareObject(hub);
-            if (MaxineVM.shouldProfile()) {
+            if (NUMAProfiler.shouldProfile()) {
                 ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileNewArray(size, hub, cell);
             }
         }
