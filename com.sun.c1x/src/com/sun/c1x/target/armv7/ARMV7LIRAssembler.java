@@ -677,8 +677,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             ARMV7Label label = new ARMV7Label(target.label());
             int offsetToJumpTableBase = buf.position() - jumpTablePos;
             if (label.isBound()) {
-                int imm32 = label.position() - jumpTablePos;
-                buf.emitInt(imm32);
+                masm.b(ConditionFlag.Always, label.position() - jumpTablePos);
             } else {
                 BranchInfo info = new BranchInfo(BranchType.TABLESWITCH, ConditionFlag.Always);
                 label.addPatchAt(buf.position(), info);
