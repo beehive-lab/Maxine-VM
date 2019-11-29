@@ -37,6 +37,35 @@ import com.sun.max.vm.thread.*;
 
 public class NUMAProfiler {
 
+    /**
+     * Values that {@link VmThreadLocal#PROFILER_STATE} can take.
+     */
+    public enum PROFILING_STATE {
+        /**
+         * Indicates that profiling is disabled on this thread.
+         */
+        DISABLED(0),
+        /**
+         * Indicates that profiling is enabled on this thread.
+         */
+        ENABLED(1),
+        /**
+         * Indicates that profiling is enabled on this thread, and the thread is currently profiling a memory access.
+         * This state is used to avoid nested profiling.
+         */
+        ONGOING(2);
+
+        public int getValue() {
+            return value;
+        }
+
+        private final int value;
+
+        PROFILING_STATE(int i) {
+            value = i;
+        }
+    }
+
     public static int flareObjectCounter = 0;
 
     @C_FUNCTION
@@ -779,7 +808,7 @@ public class NUMAProfiler {
     private static final Pointer.Procedure setProfilingTLA = new Pointer.Procedure() {
         public void run(Pointer tla) {
             Pointer etla = ETLA.load(tla);
-            PROFILER_TLA.store(etla, Address.fromInt(1));
+            PROFILER_STATE.store(etla, Address.fromInt(PROFILING_STATE.ENABLED.value));
         }
     };
 
@@ -790,7 +819,7 @@ public class NUMAProfiler {
     private static final Pointer.Procedure resetProfilingTLA = new Pointer.Procedure() {
         public void run(Pointer tla) {
             Pointer etla = ETLA.load(tla);
-            PROFILER_TLA.store(etla, Address.fromInt(0));
+            PROFILER_STATE.store(etla, Address.fromInt(PROFILING_STATE.DISABLED.value));
         }
     };
 
@@ -818,7 +847,7 @@ public class NUMAProfiler {
         }
 
         // Disable profiling for shutdown
-        PROFILER_TLA.store(VmThread.currentTLA(), Address.fromInt(0));
+        PROFILER_STATE.store(VmThread.currentTLA(), Address.fromInt(PROFILING_STATE.DISABLED.value));
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Termination");

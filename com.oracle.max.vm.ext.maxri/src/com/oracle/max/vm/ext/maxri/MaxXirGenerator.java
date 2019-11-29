@@ -367,9 +367,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (MaxineVM.isRunning() &&
                 methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.NUMAProfilerEntryPoint)) {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
-            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
-            XirConstant constantOne     = asm.i(1);
-            asm.pstore(CiKind.Int, tla, offsetToProfile, constantOne, false);
+            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_STATE.offset);
+            XirConstant enabled         = asm.i(NUMAProfiler.PROFILING_STATE.ENABLED.getValue());
+            asm.pstore(CiKind.Int, tla, offsetToProfile, enabled, false);
         }
 
         return new XirSnippet(finishTemplate(asm, "prologue"));
@@ -392,9 +392,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (MaxineVM.isRunning() &&
                 methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.NUMAProfilerExitPoint)) {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
-            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
-            XirConstant constantZero    = asm.i(0);
-            asm.pstore(CiKind.Int, tla, offsetToProfile, constantZero, false);
+            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_STATE.offset);
+            XirConstant disabled        = asm.i(NUMAProfiler.PROFILING_STATE.DISABLED.getValue());
+            asm.pstore(CiKind.Int, tla, offsetToProfile, disabled, false);
         }
         return new XirSnippet(epilogueTemplate);
     }
@@ -1569,24 +1569,23 @@ public class MaxXirGenerator implements RiXirGenerator {
             final XirOperand  tla                 = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             final XirOperand  profilingTlaAddress = asm.createTemp("TLAAddress", WordUtil.archKind());
             final XirOperand  isProfiling         = asm.createTemp("isProfiling", CiKind.Int);
-            final XirConstant constantOne         = asm.i(1);
-            final XirConstant constantTwo         = asm.i(2);
+            final XirConstant enabled             = asm.i(NUMAProfiler.PROFILING_STATE.ENABLED.getValue());
+            final XirConstant ongoing             = asm.i(NUMAProfiler.PROFILING_STATE.ONGOING.getValue());
             final XirOperand  tempRegister        = asm.createTemp("tempRegister", CiKind.Int);
             final XirOperand  cell                = asm.createTemp("cell", WordUtil.archKind());
 
             // Calculate PROFILER_TLA address
-            asm.add(profilingTlaAddress, tla, asm.i(VmThreadLocal.PROFILER_TLA.offset));
+            asm.add(profilingTlaAddress, tla, asm.i(VmThreadLocal.PROFILER_STATE.offset));
             // Attempt to change the profiling state
-            asm.mov(tempRegister, constantTwo);
-            asm.icas(CiKind.Int, isProfiling, profilingTlaAddress, tempRegister, constantOne);
-            // if state was not 1 skip profiling
-            asm.jneq(skip, isProfiling, constantOne);
+            asm.mov(tempRegister, ongoing);
+            asm.icas(CiKind.Int, isProfiling, profilingTlaAddress, tempRegister, enabled);
+            // if state was not ENABLED skip profiling
+            asm.jneq(skip, isProfiling, enabled);
             asm.mov(cell, object);
             callRuntimeThroughStub(asm, runtimeMethod, null, cell);
-            // Attempt to re-enable profiling using CAS to avoid re-enabling after termination
-            // (see NUMAProfiler.terminate())
-            asm.mov(tempRegister, constantOne);
-            asm.icas(CiKind.Int, isProfiling, profilingTlaAddress, tempRegister, constantTwo);
+            // Attempt to re-enable profiling
+            asm.mov(tempRegister, enabled);
+            asm.icas(CiKind.Int, isProfiling, profilingTlaAddress, tempRegister, ongoing);
             asm.bindInline(skip);
         }
     }

@@ -37,7 +37,6 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.actor.holder.Hub;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
@@ -156,9 +155,9 @@ public final class MaxineVM {
      */
     public static boolean shouldProfile() {
         if (MaxineVM.useNUMAProfiler) {
-            int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
+            int profilerTLA = VmThreadLocal.PROFILER_STATE.load(VmThread.currentTLA()).toInt();
             return MaxineVM.numaProfiler != null &&
-                            (profilerTLA == 1 || NUMAProfiler.profileAll()) &&
+                            (profilerTLA == NUMAProfiler.PROFILING_STATE.ENABLED.getValue() || NUMAProfiler.profileAll()) &&
                             NUMAProfiler.warmupFinished() &&
                             NUMAProfiler.objectWarmupFinished() &&
                             VmThread.current() != VmThread.vmOperationThread;

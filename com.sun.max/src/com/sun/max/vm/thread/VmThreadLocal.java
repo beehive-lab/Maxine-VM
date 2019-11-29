@@ -305,11 +305,12 @@ public class VmThreadLocal implements FormatWithToString {
         = new VmThreadLocal("SUSPEND", false, "Bitset for thread suspension", Nature.Single);
 
     /**
-     * The {@linkplain VmThread#currentTLA() current} thread local storage when profiler is
-     * {@linkplain SafepointPoll#enable() enabled}.
+     * Used by {@link com.sun.max.vm.profilers.tracing.numa.NUMAProfiler} to determine the state of the profiling.
+     * See {@link com.sun.max.vm.profilers.tracing.numa.NUMAProfiler.PROFILING_STATE} for the possible values it can
+     * take.
      */
-    public static final VmThreadLocal PROFILER_TLA
-        = new VmThreadLocal("PROFILER_TLA", false, "points to TLA used for profiler on/off", Nature.Single);
+    public static final VmThreadLocal PROFILER_STATE
+        = new VmThreadLocal("PROFILER_STATE", false, "points to TLA used for profiler on/off", Nature.Single);
 
     private static VmThreadLocal[] valuesNeedingInitialization;
 
