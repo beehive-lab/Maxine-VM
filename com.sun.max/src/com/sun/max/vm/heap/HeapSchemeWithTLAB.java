@@ -488,7 +488,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final void profileNewTuple(int size, Hub hub, Pointer cell) {
         final String objectType = hub.classActor.name();
         final long address = cell.toLong();
-        numaProfiler.profileNew(size, objectType, address);
+        NUMAProfiler.profileNew(size, objectType, address);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
@@ -496,28 +496,28 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final void profileNewArray(int size, Hub hub, Pointer cell) {
         final String objectType = hub.classActor.name();
         final long address = cell.toLong();
-        numaProfiler.profileNew(size, objectType, address);
+        NUMAProfiler.profileNew(size, objectType, address);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public final void profileWriteTuple(Pointer cell) {
         final long tupleAddress = cell.toLong();
-        numaProfiler.profileWriteAccessTuple(tupleAddress);
+        NUMAProfiler.profileWriteAccessTuple(tupleAddress);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public final void profileWriteArray(Pointer arrayCell) {
         final long arrayAddress = arrayCell.toLong();
-        numaProfiler.profileWriteAccessArray(arrayAddress);
+        NUMAProfiler.profileWriteAccessArray(arrayAddress);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
     public final void profileReadTuple(Pointer cell) {
         final long tupleAddress = cell.toLong();
-        numaProfiler.profileReadAccessTuple(tupleAddress);
+        NUMAProfiler.profileReadAccessTuple(tupleAddress);
     }
 
     /**
@@ -572,7 +572,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (NUMAProfiler.shouldProfile()) {
             final String objectType = dynamicHub.classActor.name();
             final long address = cell.toLong();
-            numaProfiler.profileNew(size.toInt(), objectType, address);
+            NUMAProfiler.profileNew(size.toInt(), objectType, address);
         }
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -590,7 +590,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             if (NUMAProfiler.shouldProfile()) {
                 final String objectType = hub.classActor.name();
                 final long address = cell.toLong();
-                numaProfiler.profileNew(hub.tupleSize.toInt(), objectType, address);
+                NUMAProfiler.profileNew(hub.tupleSize.toInt(), objectType, address);
             }
             return Cell.plantTuple(cell, hub);
         }
@@ -605,7 +605,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (NUMAProfiler.shouldProfile()) {
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
-            numaProfiler.profileNew(size.toInt(), objectType, address);
+            NUMAProfiler.profileNew(size.toInt(), objectType, address);
         }
         return Cell.plantHybrid(cell, size, hub);
     }
@@ -633,7 +633,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         if (NUMAProfiler.shouldProfile()) {
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
-            numaProfiler.profileNew(size.toInt(), objectType, address);
+            NUMAProfiler.profileNew(size.toInt(), objectType, address);
         }
     }
 

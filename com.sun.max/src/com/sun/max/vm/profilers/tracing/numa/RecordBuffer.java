@@ -54,7 +54,7 @@ class RecordBuffer {
     private Pointer coreIDs;
 
     String buffersName;
-    public int bufferSize;
+    int bufferSize;
     int currentIndex;
 
     /**

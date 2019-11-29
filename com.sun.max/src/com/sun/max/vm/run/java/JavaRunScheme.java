@@ -258,28 +258,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 }
                 // The same for the NUMA Profiler
                 if (CompilationBroker.NUMAProfilerEntryPoint != null || NUMAProfiler.profileAll()) {
-                    float beforeAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
                     // Initialize NUMA Profiler
                     MaxineVM.numaProfiler = new NUMAProfiler();
-                    float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
-
-                    if (NUMAProfiler.profileAll() && NUMAProfiler.NUMAProfilerExplicitGCThreshold == 0) {
-                        NUMAProfiler.enableProfiling();
-                    }
-
-                    if (NUMAProfiler.NUMAProfilerDebug) {
-                        Log.println("*===================================================*\n" +
-                            "* NUMA Profiler is on validation mode.\n" +
-                            "*===================================================*\n" +
-                            "* You can use NUMA Profiler with confidence if:\n" +
-                            "* => a) VM Reported Heap Used Space = Initial Used Heap Space + NUMA Profiler Size + New Objects Size\n" +
-                            "* => b) VM Reported Heap Used Space after GC = Initial Used Heap Space + NUMA Profiler Size + Survivor Objects Size\n" +
-                            "* => c) Next Cycle's VM Reported Heap Used Space = Initial Used Heap Space + NUMA Profiler Size + Survivor Object Size\n" +
-                            "*===================================================*\n");
-                        Log.println("Initial Used Heap Size = " + beforeAllocProfiler + " MB");
-                        float allocProfilerSize = afterAllocProfiler - beforeAllocProfiler;
-                        Log.println("NUMA Profiler Size = " + allocProfilerSize + " MB\n");
-                    }
                 }
                 break;
             }

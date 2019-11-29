@@ -66,7 +66,7 @@ public class NUMAProfiler {
         }
     }
 
-    public static int flareObjectCounter = 0;
+    private static int flareObjectCounter = 0;
 
     @C_FUNCTION
     static native void numaProfiler_lock();
@@ -74,39 +74,43 @@ public class NUMAProfiler {
     @C_FUNCTION
     static native void numaProfiler_unlock();
 
-    public static int profilingCycle;
-    public static int uniqueId = 0;
+    private static int          profilingCycle;
+    private static int          uniqueId = 0;
     /**
      * The NUMAProfiler Buffer for newly allocated objects.
      */
-    public static RecordBuffer newObjects;
+    private static RecordBuffer newObjects;
 
     /**
      * The NUMAProfiler Buffers for survivor objects. We use two identical buffers because
      * allocation is disabled at the point we need to move the data in a clean buffer.
      */
-    public static RecordBuffer survivors1;
-    public static RecordBuffer survivors2;
+    private static RecordBuffer survivors1;
+    private static RecordBuffer survivors2;
 
     /**
      * The Buffer who keeps track of the physical NUMA node of any virtual memory page allocated for the JVM Heap.
      */
-    public static VirtualPagesBuffer heapPages;
+    private static VirtualPagesBuffer heapPages;
 
+    @SuppressWarnings("unused")
     private static boolean NUMAProfilerAll;
-    public static boolean NUMAProfilerVerbose;
-    public static int NUMAProfilerBufferSize;
-    public static boolean NUMAProfilerDebug;
-    public static boolean NUMAProfilerIncludeFinalization;
+    @SuppressWarnings("unused")
+    private static boolean NUMAProfilerVerbose;
+    @SuppressWarnings("unused")
+    private static int     NUMAProfilerBufferSize;
+    @SuppressWarnings("unused")
+    private static boolean NUMAProfilerDebug;
+    @SuppressWarnings("unused")
+    private static boolean NUMAProfilerIncludeFinalization;
 
-    public static int totalNewSize = 0;
-    public static int totalSurvSize = 0;
+    private static int totalNewSize  = 0;
+    private static int totalSurvSize = 0;
 
     /**
      * A buffer to transform a String object to char array.
      */
     private static char[] charArrayBuffer;
-    public static int charArrayBufferLength;
 
     /**
      * PROFILING POLICY 1: Explicit GC Driven
@@ -117,8 +121,9 @@ public class NUMAProfiler {
      * method returns false as long as the iteration counter is below the NUMAProfilerExplicitGCThreshold, which
      * is given by the user, ignoring any object allocation up to that point.
      */
-    public static int NUMAProfilerExplicitGCThreshold;
-    public static int iteration = 0;
+    @SuppressWarnings("unused")
+    private static int NUMAProfilerExplicitGCThreshold;
+    public static  int iteration = 0;
 
     /**
      * This field stores the GC type information (implicit or explicit).
@@ -141,43 +146,33 @@ public class NUMAProfiler {
      * The NUMAProfilerFlareProfileWindow (default 1) indicates how many Flare Objects we need
      * to allocate before we stop the profiling.
      */
-    public static int NUMAProfilerFlareAllocationThreshold;
-    public static int NUMAProfilerFlareProfileWindow = 1;
-    public static String NUMAProfilerFlareObject = "NUMAProfilerFlareObject";
+    @SuppressWarnings("unused")
+    private static int    NUMAProfilerFlareAllocationThreshold;
+    @SuppressWarnings("FieldCanBeLocal")
+    private static int    NUMAProfilerFlareProfileWindow = 1;
+    @SuppressWarnings("FieldCanBeLocal")
+    private static String NUMAProfilerFlareObject        = "NUMAProfilerFlareObject";
 
-    public final static int MINIMUMBUFFERSIZE = 500000;
-    /**
-     * The size of the Allocation Profiling Buffer.
-     */
-    public int allocBufferSize = MINIMUMBUFFERSIZE;
-
-    /**
-     * The size of each Survivors Profiling Buffer.
-     */
-    public int survBufferSize = MINIMUMBUFFERSIZE;
+    private static final int MINIMUMBUFFERSIZE = 500000;
 
     /**
      * The underlying hardware configuration.
      */
-    public static NUMALib numaConfig;
+    static NUMALib numaConfig;
 
-    public static int tupleWrites = 0;
-    public static int localTupleWrites = 0;
-    public static int remoteTupleWrites = 0;
+    private static int tupleWrites       = 0;
+    private static int localTupleWrites  = 0;
+    private static int remoteTupleWrites = 0;
 
-    public static int arrayWrites = 0;
-    public static int localArrayWrites = 0;
-    public static int remoteArrayWrites = 0;
+    private static int arrayWrites       = 0;
+    private static int localArrayWrites  = 0;
+    private static int remoteArrayWrites = 0;
 
-    public static int tupleReads = 0;
-    public static int localTupleReads = 0;
-    public static int remoteTupleReads = 0;
+    private static int tupleReads       = 0;
+    private static int localTupleReads  = 0;
+    private static int remoteTupleReads = 0;
 
-    private int wasProfiling;
-
-    /**
-     * The options a user can pass to the NUMA Profiler.
-     */
+    // The options a user can pass to the NUMA Profiler.
     static {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerAll", NUMAProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerVerbose", NUMAProfiler.class, "Verbose numa profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
@@ -193,30 +188,35 @@ public class NUMAProfiler {
     public NUMAProfiler() {
         assert NUMALib.numalib_available() != -1 : "NUMAProfiler cannot be run without NUMA support";
 
+        float beforeAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
+
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): NUMAProfiler Initialization.");
         }
+
+        int survivorBufferSize = MINIMUMBUFFERSIZE;
+        int allocatorBufferSize = MINIMUMBUFFERSIZE;
 
         if (NUMAProfilerBufferSize != 0) {
             if (NUMAProfilerBufferSize < MINIMUMBUFFERSIZE) {
                 Log.print("WARNING: Small Buffer Size. Minimum Buffer Size applied! (=");
                 Log.print(MINIMUMBUFFERSIZE);
                 Log.println(")");
-                allocBufferSize = MINIMUMBUFFERSIZE;
-                survBufferSize = MINIMUMBUFFERSIZE;
+                allocatorBufferSize = MINIMUMBUFFERSIZE;
+                survivorBufferSize = MINIMUMBUFFERSIZE;
             } else {
-                allocBufferSize = NUMAProfilerBufferSize;
-                survBufferSize = NUMAProfilerBufferSize;
+                allocatorBufferSize = NUMAProfilerBufferSize;
+                survivorBufferSize = NUMAProfilerBufferSize;
             }
         }
 
-        newObjects = new RecordBuffer(allocBufferSize, "New Objects Buffer");
+        newObjects = new RecordBuffer(allocatorBufferSize, "New Objects Buffer");
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Initialize the Survivor Objects NUMAProfiler Buffers.");
         }
-        survivors1 = new RecordBuffer(survBufferSize, "Survivors Buffer No1");
-        survivors2 = new RecordBuffer(survBufferSize, "Survivors Buffer No2");
+        survivors1 = new RecordBuffer(survivorBufferSize, "Survivors Buffer No1");
+        survivors2 = new RecordBuffer(survivorBufferSize, "Survivors Buffer No2");
 
         charArrayBuffer = new char[RecordBuffer.MAX_CHARS];
 
@@ -232,8 +232,28 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): Initialization Complete.");
 
             Log.print("(NUMA Profiler): Start Profiling. [Cycle ");
-            Log.print(getProfilingCycle());
+            Log.print(profilingCycle);
             Log.println("]");
+        }
+
+        float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
+
+        if (profileAll() && NUMAProfilerExplicitGCThreshold == 0) {
+            enableProfiling();
+        }
+
+        if (NUMAProfilerDebug) {
+            Log.println("*===================================================*\n" +
+                    "* NUMA Profiler is on validation mode.\n" +
+                    "*===================================================*\n" +
+                    "* You can use NUMA Profiler with confidence if:\n" +
+                    "* => a) VM Reported Heap Used Space = Initial Used Heap Space + NUMA Profiler Size + New Objects Size\n" +
+                    "* => b) VM Reported Heap Used Space after GC = Initial Used Heap Space + NUMA Profiler Size + Survivor Objects Size\n" +
+                    "* => c) Next Cycle's VM Reported Heap Used Space = Initial Used Heap Space + NUMA Profiler Size + Survivor Object Size\n" +
+                    "*===================================================*\n");
+            Log.println("Initial Used Heap Size = " + beforeAllocProfiler + " MB");
+            float allocProfilerSize = afterAllocProfiler - beforeAllocProfiler;
+            Log.println("NUMA Profiler Size = " + allocProfilerSize + " MB\n");
         }
     }
 
@@ -276,22 +296,18 @@ public class NUMAProfiler {
     /**
      * Find heap's first page address and Numa Node and set it in heapPages.
      */
-    public void findFirstHeapPage() {
+    private void findFirstHeapPage() {
         Address startAddress = vm().config.heapScheme().getHeapStartAddress();
         int node = NUMALib.numaNodeOfAddress(startAddress.toLong());
         heapPages.writeAddr(0, startAddress.toLong());
         heapPages.writeNumaNode(0, node);
     }
 
-    public void initializeHeapBoundariesBuffer() {
+    private void initializeHeapBoundariesBuffer() {
         int pageSize = NUMALib.numaPageSize();
         int bufSize = Heap.maxSize().dividedBy(pageSize).toInt();
         heapPages = new VirtualPagesBuffer(bufSize);
         findFirstHeapPage();
-    }
-
-    public int getProfilingCycle() {
-        return profilingCycle;
     }
 
     public static boolean profileAll() {
@@ -303,32 +319,24 @@ public class NUMAProfiler {
      * we avoid the new object creation.
      * @param str, The String to be converted to char array.
      */
-    public static char[] asCharArray(String str) {
+    private static char[] asCharArray(String str) {
         int i = 0;
         while (i < str.length()) {
             charArrayBuffer[i] = str.charAt(i);
             i++;
         }
         charArrayBuffer[i] = '\0';
-        charArrayBufferLength = i;
         return charArrayBuffer;
     }
 
-    public void printCharArrayBuffer(char[] array, int length) {
-        for (int i = 0; i < length; i++) {
-            Log.print(array[i]);
-        }
-        Log.println("");
-    }
-
-    public static boolean ongoingAllocation = false;
+    private static boolean ongoingAllocation = false;
 
     /**
      * This method is called when a profiled object is allocated.
      */
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
-    public void profileNew(int size, String type, long address) {
+    public static void profileNew(int size, String type, long address) {
         /* PROFILER_TLA is currently a thread local that has it's value maintained
          * only in the {@linkplain VmThreadLocal#ETLA safepoints-enabled} TLA. That
          * said if we lock and disable safepoints it is no longer accessible, thus
@@ -338,12 +346,14 @@ public class NUMAProfiler {
         charArrayBuffer = asCharArray(type);
         final int threadId = VmThread.current().id();
         //detect recursive allocations if another allocation is ongoing
-        if (ongoingAllocation) {
-            Log.println("Recursive Allocation. ");
-            Log.println(type);
-            throw FatalError.unexpected("Recursive Allocation.");
+        if (NUMAProfilerDebug) {
+            if (ongoingAllocation) {
+                Log.println("Recursive Allocation. ");
+                Log.println(type);
+                throw FatalError.unexpected("Recursive Allocation.");
+            }
+            ongoingAllocation = true;
         }
-        ongoingAllocation = true;
         //guard RecordBuffer from overflow
         if (newObjects.currentIndex >= newObjects.bufferSize) {
             Log.print("Allocations Buffer out of bounds. Increase the Buffer Size.");
@@ -352,16 +362,14 @@ public class NUMAProfiler {
         newObjects.record(uniqueId, threadId, charArrayBuffer, size, address);
         uniqueId++;
         totalNewSize = totalNewSize + size;
-        ongoingAllocation = false;
+        if (NUMAProfilerDebug) {
+            ongoingAllocation = false;
+        }
         unlock(lockDisabledSafepoints);
     }
 
-    public int getThreadNumaNode() {
-        return Intrinsics.getCpuID() >> MaxineIntrinsicIDs.NUMA_NODE_SHIFT;
-    }
-
     /**
-     * Fetch the physical NUMA node id from {@link NUMALib#coreToNUMANodeMap}
+     * Get the physical NUMA node id for a virtual address.
      *
      * We check whether the NUMA node is found. It might return EFAULT in case the page was still
      * unallocated to a physical NUMA node by the last {@link NUMALib#coreToNUMANodeMap}'s update.
@@ -371,7 +379,7 @@ public class NUMAProfiler {
      * @param address
      * @return physical NUMA node id
      */
-    public int getObjectNumaNode(long firstPageAddress, long address) {
+    private static int getObjectNumaNode(long firstPageAddress, long address) {
         int pageSize = NUMALib.numaPageSize();
         long numerator = address - firstPageAddress;
         long div = numerator / (long) pageSize;
@@ -388,13 +396,9 @@ public class NUMAProfiler {
         return objNumaNode;
     }
 
-    public boolean inDataHeap(long firstPageAddress, long address) {
-        return vm().config.heapScheme().contains(Address.fromLong(address));
-    }
-
-    public boolean isRemoteAccess(long firstPageAddress, long address) {
+    private static boolean isRemoteAccess(long firstPageAddress, long address) {
         // get the Numa Node where the thread which is performing the write is running
-        final int threadNumaNode = getThreadNumaNode();
+        final int threadNumaNode = Intrinsics.getCpuID() >> MaxineIntrinsicIDs.NUMA_NODE_SHIFT;
         // get the Numa Node where the written object is placed
         final int objectNumaNode = getObjectNumaNode(firstPageAddress, address);
 
@@ -403,13 +407,12 @@ public class NUMAProfiler {
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
-    public void profileWriteAccessTuple(long tupleAddress) {
+    public static void profileWriteAccessTuple(long tupleAddress) {
         long firstPageAddress = heapPages.readAddr(0);
 
         // if the written object is not part of the data heap
         // TODO: implement some action, currently ignore
-        if (!inDataHeap(firstPageAddress, tupleAddress)) {
-            // no heap object, ignore
+        if (!vm().config.heapScheme().contains(Address.fromLong(tupleAddress))) {
             return;
         }
 
@@ -425,13 +428,12 @@ public class NUMAProfiler {
     }
 
 
-    public void profileWriteAccessArray(long arrayAddress) {
+    public static void profileWriteAccessArray(long arrayAddress) {
         long firstPageAddress = heapPages.readAddr(0);
 
         // if the written array is not part of the data heap
         // TODO: implement some action, currently ignore
-        if (!inDataHeap(firstPageAddress, arrayAddress)) {
-            // no heap array, ignore
+        if (!vm().config.heapScheme().contains(Address.fromLong(arrayAddress))) {
             return;
         }
 
@@ -448,13 +450,12 @@ public class NUMAProfiler {
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
-    public void profileReadAccessTuple(long tupleAddress) {
+    public static void profileReadAccessTuple(long tupleAddress) {
         long firstPageAddress = heapPages.readAddr(0);
 
         // if the read object is not part of the data heap
         // TODO: implement some action, currently ignore
-        if (!inDataHeap(firstPageAddress, tupleAddress)) {
-            // no heap object, ignore
+        if (!vm().config.heapScheme().contains(Address.fromLong(tupleAddress))) {
             return;
         }
 
@@ -472,7 +473,7 @@ public class NUMAProfiler {
     /**
      * Print the stats for Object Accesses.
      */
-    public void printObjectAccessStats() {
+    private void printObjectAccessStats() {
         Log.print("(NUMA Profiler): Total Tuple Writes = ");
         Log.println(tupleWrites);
         Log.print("(NUMA Profiler): Remote Tuple Writes = ");
@@ -498,7 +499,7 @@ public class NUMAProfiler {
     /**
      * Dump NUMAProfiler Buffer to Maxine's Log output.
      */
-    public void dumpBuffer() {
+    private void dumpBuffer() {
         final boolean lockDisabledSafepoints = lock();
         if (NUMAProfilerVerbose) {
             Log.print("==== Profiling Cycle ");
@@ -509,7 +510,7 @@ public class NUMAProfiler {
         unlock(lockDisabledSafepoints);
     }
 
-    public void dumpSurvivors() {
+    private void dumpSurvivors() {
         final boolean lockDisabledSafepoints = lock();
         if (NUMAProfilerVerbose) {
             Log.print("==== Survivors Cycle ");
@@ -524,13 +525,13 @@ public class NUMAProfiler {
         unlock(lockDisabledSafepoints);
     }
 
-    public void dumpHeapBoundaries() {
+    private void dumpHeapBoundaries() {
         final boolean lockDisabledSafepoints = lock();
         heapPages.printStats(profilingCycle);
         unlock(lockDisabledSafepoints);
     }
 
-    public void resetHeapBoundaries() {
+    private void resetHeapBoundaries() {
         final boolean lockDisabledSafepoints = lock();
         heapPages.resetBuffer();
         findFirstHeapPage();
@@ -541,7 +542,7 @@ public class NUMAProfiler {
      * Find the NUMA Node for each allocated Object.
      * For every object, find the virtual memory page where the object is placed and get its physical NUMA Node.
      */
-    public void findObjectNumaNode() {
+    private void findObjectNumaNode() {
         int pageSize = NUMALib.numaPageSize();
         long objectAddress;
         long firstPageAddress = heapPages.readAddr(0);
@@ -576,10 +577,9 @@ public class NUMAProfiler {
     /**
      * Find the NUMA Node for each virtual memory page of the JVM Heap.
      */
-    public void findNumaNodeForPages() {
+    private void findNumaNodeForPages() {
         assert vm().config.heapScheme() instanceof SemiSpaceHeapScheme;
-        Address startAddress = vm().config.heapScheme().getHeapStartAddress();
-        Address currentAddress = startAddress;
+        Address currentAddress = vm().config.heapScheme().getHeapStartAddress();
         int     index          = 0;
         while (vm().config.heapScheme().contains(currentAddress)) {
             int node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
@@ -608,7 +608,7 @@ public class NUMAProfiler {
      * @param from the source buffer in which we search for survivor objects.
      * @param to the destination buffer in which we store the survivor objects.
      */
-    public void storeSurvivors(RecordBuffer from, RecordBuffer to) {
+    private void storeSurvivors(RecordBuffer from, RecordBuffer to) {
         if (NUMAProfilerVerbose) {
             Log.print("(NUMA Profiler): Copy Survived Objects from ");
             Log.print(from.buffersName);
@@ -648,7 +648,7 @@ public class NUMAProfiler {
      * In even profiling cycles we use the survivor2 buffer.
      * In odd profiling cycles we use the survivor1 buffer.
      */
-    public void profileSurvivors() {
+    private void profileSurvivors() {
 
         if ((profilingCycle % 2) == 0) {
             //even cycles
@@ -661,15 +661,30 @@ public class NUMAProfiler {
         }
     }
 
+    private void printProfilingCyclyStats() {
+        Log.print("Cycle ");
+        Log.println(profilingCycle);
+
+        Log.print("=> (NUMAProfiler Reports): New Objects Size =");
+        Log.print((float) totalNewSize / (1024 * 1024));
+        Log.println(" MB");
+
+        Log.print("=> (VM Reports): Heap Used Space =");
+        Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
+        Log.println(" MB");
+
+        newObjects.printUsage();
+    }
+
     /**
      * This method is called by ProfilerGCCallbacks in every pre-gc callback phase.
      */
-    public void preGCActions() {
+    void preGCActions() {
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Entering Pre-GC Phase.");
             Log.print("(NUMA Profiler): Cycle ");
-            Log.print(getProfilingCycle());
+            Log.print(profilingCycle);
             Log.println(" Profiling Is Now Complete. [pre-GC phase]");
         }
 
@@ -683,32 +698,17 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): Dump NUMAProfiler Buffer. [pre-GC phase]");
         }
 
-        if (!NUMAProfilerDebug) {
+        if (NUMAProfilerDebug) {
+            //in validation mode don't dump buffer
+            printProfilingCyclyStats();
+            Log.println("Garbage Collection");
+        } else {
             dumpHeapBoundaries();
             dumpBuffer();
-        } else {
-            //in validation mode don't dump buffer
-            Log.print("Cycle ");
-            Log.println(profilingCycle);
-
-            Log.print("=> (NUMAProfiler Reports): New Objects Size =");
-            Log.print((float) totalNewSize / (1024 * 1024));
-            Log.println(" MB");
-
-            Log.print("=> (VM Reports): Heap Used Space =");
-            Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
-            Log.println(" MB");
-
-            newObjects.printUsage();
-
-            Log.println("Garbage Collection");
         }
 
         if (NUMAProfilerVerbose) {
             printObjectAccessStats();
-        }
-
-        if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Leaving Pre-GC Phase.");
         }
     }
@@ -716,7 +716,7 @@ public class NUMAProfiler {
     /**
      *  This method is called every time a GC has been completed.
      */
-    public void postGCActions() {
+    void postGCActions() {
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Entering Post-GC Phase.");
@@ -750,9 +750,7 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): Dump Survivors Buffer. [post-GC phase]");
         }
 
-        if (!NUMAProfilerDebug) {
-            dumpSurvivors();
-        } else {
+        if (NUMAProfilerDebug) {
             //in validation mode don't dump buffer
             Log.print("=> (NUMAProfiler Reports): Survivor Objects Size =");
             Log.print((float) totalSurvSize / (1024 * 1024));
@@ -764,14 +762,14 @@ public class NUMAProfiler {
 
             survivors1.printUsage();
             survivors2.printUsage();
+        } else {
+            dumpSurvivors();
         }
 
         totalNewSize = totalSurvSize;
         totalSurvSize = 0;
 
-        /**
-         * Check if the current GC is explicit. If yes, increase the iteration counter.
-         */
+        // Check if the current GC is explicit. If yes, increase the iteration counter.
         if (isExplicitGC) {
             iteration++;
             isExplicitGC = false;
@@ -788,7 +786,7 @@ public class NUMAProfiler {
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Leaving Post-GC Phase.");
             Log.print("(NUMA Profiler): Start Profiling. [Cycle ");
-            Log.print(getProfilingCycle());
+            Log.print(profilingCycle);
             Log.println("]");
         }
 
@@ -811,7 +809,7 @@ public class NUMAProfiler {
         }
     };
 
-    public static void enableProfiling() {
+    private static void enableProfiling() {
         VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, setProfilingTLA);
     }
 
@@ -822,11 +820,11 @@ public class NUMAProfiler {
         }
     };
 
-    public static void disableProfiling() {
+    private static void disableProfiling() {
         VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, resetProfilingTLA);
     }
 
-    public void releaseReservedMemory() {
+    private void releaseReservedMemory() {
         newObjects.deallocateAll();
         survivors1.deallocateAll();
         survivors2.deallocateAll();
@@ -866,18 +864,7 @@ public class NUMAProfiler {
             dumpBuffer();
         } else {
             //in validation mode don't dump buffer
-            Log.print("Cycle ");
-            Log.println(profilingCycle);
-
-            Log.print("=> (NUMAProfiler Reports): New Objects Size =");
-            Log.print((float) totalNewSize / (1024 * 1024));
-            Log.println(" MB");
-
-            Log.print("=> (VM Reports): Heap Used Space =");
-            Log.print((float) Heap.reportUsedSpace() / (1024 * 1024));
-            Log.println(" MB");
-
-            newObjects.printUsage();
+            printProfilingCyclyStats();
         }
 
         if (NUMAProfilerVerbose) {
@@ -896,13 +883,6 @@ public class NUMAProfiler {
 
     private static VmThread lockOwner;
     private static int lockDepth;
-
-    /**
-     * Gets the thread that current holds the log lock.
-     */
-    public static VmThread lockOwner() {
-        return lockOwner;
-    }
 
     /**
      * lock() and unlock() methods have been implemented according to the Log.lock() and Log.unlock() ones.
