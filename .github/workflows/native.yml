@@ -1,6 +1,9 @@
 name: Native CI
 
-on: push
+on:
+  schedule:
+    # Run every Monday morning at 6:00
+    - cron:  '0 6 * * 1'
 
 jobs:
   clone-and-build:
