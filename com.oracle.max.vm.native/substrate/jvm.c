@@ -262,7 +262,8 @@ JVM_ActiveProcessorCount(void) {
     // pid 0 means the current thread - which we have to assume represents the process
     if (sched_getaffinity(0, cpus_size, &cpus) == 0) {
         // only look up to the number of configured processors
-        for (int i = 0; i < processor_count; i++) {
+        int i;
+        for (i = 0; i < processor_count; i++) {
             if (CPU_ISSET(i, &cpus)) {
                 cpu_count++;
             }
