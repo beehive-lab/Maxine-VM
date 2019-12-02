@@ -124,6 +124,8 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirPair[] getFieldTemplates;
     private XirPair[] putStaticFieldTemplates;
     private XirPair[] getStaticFieldTemplates;
+    private XirPair[] getTemplateFieldTemplates;
+    private XirPair[] getTemplateStaticFieldTemplates;
 
     private XirPair invokeVirtualTemplates;
     private XirPair invokeInterfaceTemplates;
@@ -240,6 +242,8 @@ public class MaxXirGenerator implements RiXirGenerator {
         getFieldTemplates = new XirPair[kinds.length];
         putStaticFieldTemplates = new XirPair[kinds.length];
         getStaticFieldTemplates = new XirPair[kinds.length];
+        getTemplateFieldTemplates = new XirPair[kinds.length];
+        getTemplateStaticFieldTemplates = new XirPair[kinds.length];
 
         newArrayTemplates = new XirPair[kinds.length];
         tlabNewArrayTemplates = new XirPair[kinds.length];
@@ -269,9 +273,11 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             if (kind != CiKind.Void) {
                 putFieldTemplates[index] = buildPutFieldTemplates(kind, kind == CiKind.Object, false);
-                getFieldTemplates[index] = buildGetFieldTemplates(kind, false);
+                getFieldTemplates[index] = buildGetFieldTemplates(kind, false, false);
                 putStaticFieldTemplates[index] = buildPutFieldTemplates(kind, kind == CiKind.Object, true);
-                getStaticFieldTemplates[index] = buildGetFieldTemplates(kind, true);
+                getStaticFieldTemplates[index] = buildGetFieldTemplates(kind, true, false);
+                getTemplateFieldTemplates[index] = buildGetFieldTemplates(kind, false, true);
+                getTemplateStaticFieldTemplates[index] = buildGetFieldTemplates(kind, true, true);
                 arrayLoadTemplates[index] = buildArrayLoad(kind, asm, true);
                 arrayLoadNoBoundsCheckTemplates[index] = buildArrayLoad(kind, asm, false);
                 arrayStoreTemplates[index] = buildArrayStore(kind, asm, true, kind == CiKind.Object, kind == CiKind.Object);
@@ -545,6 +551,32 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         XirArgument guard = XirArgument.forObject(guardFor(field));
         return new XirSnippet(pair.unresolved, staticTuple, value, guard);
+    }
+
+    @Override
+    public XirSnippet genTemplateGetField(XirSite site, XirArgument receiver, RiField field) {
+        XirPair pair = getTemplateFieldTemplates[field.kind(true).ordinal()];
+        if (field instanceof RiResolvedField) {
+            FieldActor fieldActor = (FieldActor) field;
+            XirArgument offset = XirArgument.forInt(fieldActor.offset());
+            return new XirSnippet(pair.resolved, receiver, offset);
+        }
+
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(pair.unresolved, receiver, guard);
+    }
+
+    @Override
+    public XirSnippet genTemplateGetStatic(XirSite site, XirArgument receiver, RiField field) {
+        XirPair pair = getTemplateFieldTemplates[field.kind(true).ordinal()];
+        if (field instanceof RiResolvedField) {
+            FieldActor fieldActor = (FieldActor) field;
+            XirArgument offset = XirArgument.forInt(fieldActor.offset());
+            return new XirSnippet(pair.resolved, receiver, offset);
+        }
+
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(pair.unresolved, receiver, guard);
     }
 
 
@@ -846,7 +878,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (genWriteBarrier) {
             writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.ARRAY_POST_BARRIER).genWriteBarrier(asm, array, index);
         }
-        maybeInvokeNUMAProfiler(kind, array, "callProfileWriteArray");
+        maybeInvokeNUMAProfiler(kind, array, "callProfileWriteArray", false);
         if (genBoundsCheck) {
             asm.bindOutOfLine(failBoundsCheck);
             callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, array, index);
@@ -1503,7 +1535,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.TUPLE_POST_BARRIER).genWriteBarrier(asm, object);
             }
-            maybeInvokeNUMAProfiler(kind, object, "callProfileWriteTuple");
+            maybeInvokeNUMAProfiler(kind, object, "callProfileWriteTuple", false);
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">");
         } else {
             // unresolved case
@@ -1521,19 +1553,19 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 writeBarrier(asm, object, null, value);
             }
-            maybeInvokeNUMAProfiler(kind, object, "callProfileWriteTuple");
+            maybeInvokeNUMAProfiler(kind, object, "callProfileWriteTuple", false);
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
         return xirTemplate;
     }
 
     @HOSTED_ONLY
-    private XirPair buildGetFieldTemplates(CiKind kind, boolean isStatic) {
-        return new XirPair(buildGetFieldTemplate(kind, isStatic, true), buildGetFieldTemplate(kind, isStatic, false));
+    private XirPair buildGetFieldTemplates(CiKind kind, boolean isStatic, boolean isTemplate) {
+        return new XirPair(buildGetFieldTemplate(kind, isStatic, isTemplate, true), buildGetFieldTemplate(kind, isStatic, isTemplate, false));
     }
 
     @HOSTED_ONLY
-    private XirTemplate buildGetFieldTemplate(CiKind kind, boolean isStatic, boolean resolved) {
+    private XirTemplate buildGetFieldTemplate(CiKind kind, boolean isStatic, boolean isTemplate, boolean resolved) {
         XirTemplate xirTemplate;
         if (resolved) {
             // resolved case
@@ -1541,7 +1573,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter fieldOffset = asm.createConstantInputParameter("fieldOffset", CiKind.Int);
             asm.pload(kind, result, object, fieldOffset, true);
-            maybeInvokeNUMAProfiler(kind, object, "callProfileReadTuple");
+            maybeInvokeNUMAProfiler(kind, object, "callProfileReadTuple", isTemplate);
             xirTemplate = finishTemplate(asm, "getfield<" + kind + ">");
         } else {
             // unresolved case
@@ -1556,15 +1588,15 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             asm.pload(kind, result, object, fieldOffset, true);
 
-            maybeInvokeNUMAProfiler(kind, object, "callProfileReadTuple");
+            maybeInvokeNUMAProfiler(kind, object, "callProfileReadTuple", isTemplate);
             xirTemplate = finishTemplate(asm, "getfield<" + kind + ">-unresolved");
         }
         return xirTemplate;
     }
 
     @HOSTED_ONLY
-    private void maybeInvokeNUMAProfiler(CiKind kind, XirParameter object, String runtimeMethod) {
-        if (MaxineVM.useNUMAProfiler && kind == CiKind.Object) {
+    private void maybeInvokeNUMAProfiler(CiKind kind, XirParameter object, String runtimeMethod, boolean isTemplate) {
+        if (MaxineVM.useNUMAProfiler && !isTemplate && kind == CiKind.Object) {
             final XirLabel    skip                = asm.createInlineLabel("skip");
             final XirOperand  tla                 = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
             final XirOperand  profilingTlaAddress = asm.createTemp("TLAAddress", WordUtil.archKind());
