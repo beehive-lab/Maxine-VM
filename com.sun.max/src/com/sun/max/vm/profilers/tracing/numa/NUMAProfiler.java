@@ -172,6 +172,23 @@ public class NUMAProfiler {
     private static int localTupleReads  = 0;
     private static int remoteTupleReads = 0;
 
+    /**
+     *
+     */
+    public static int numOfCounters = 8;
+    public static String[] objectAccessCounterNames = new String[numOfCounters];
+
+    static {
+        objectAccessCounterNames[0] = "REMOTE_TUPLE_WRITES";
+        objectAccessCounterNames[1] = "LOCAL_TUPLE_WRITES";
+        objectAccessCounterNames[2] = "REMOTE_ARRAY_WRITES";
+        objectAccessCounterNames[3] = "LOCAL_ARRAY_WRITES";
+        objectAccessCounterNames[4] = "REMOTE_TUPLE_READS";
+        objectAccessCounterNames[5] = "LOCAL_TUPLE_READS";
+        objectAccessCounterNames[6] = "REMOTE_ARRAY_READS";
+        objectAccessCounterNames[7] = "LOCAL_ARRAY_READS";
+    }
+
     // The options a user can pass to the NUMA Profiler.
     static {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerAll", NUMAProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
