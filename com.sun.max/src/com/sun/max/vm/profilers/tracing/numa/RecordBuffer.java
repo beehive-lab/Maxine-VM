@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.sun.max.vm.profilers.allocation;
+package com.sun.max.vm.profilers.tracing.numa;
 
 import com.sun.max.annotate.NEVER_INLINE;
 import com.sun.max.annotate.NO_SAFEPOINT_POLLS;
@@ -28,6 +28,7 @@ import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Size;
 import com.sun.max.vm.Intrinsics;
 import com.sun.max.vm.Log;
+import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.runtime.FatalError;
 
 /**
@@ -53,7 +54,7 @@ class RecordBuffer {
     private Pointer coreIDs;
 
     String buffersName;
-    public int bufferSize;
+    int bufferSize;
     int currentIndex;
 
     /**
@@ -132,12 +133,13 @@ class RecordBuffer {
         VirtualMemory.deallocate(sizes.asAddress(), intSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(addresses.asAddress(), longSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(nodes.asAddress(), intSize, VirtualMemory.Type.DATA);
+        VirtualMemory.deallocate(threadIds.asAddress(), intSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(timestamps.asAddress(), longSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(coreIDs.asAddress(), intSize, VirtualMemory.Type.DATA);
     }
 
     private void writeType(int index, char[] value) {
-        long stringIndex = index * MAX_CHARS;
+        long stringIndex = (long) index * MAX_CHARS;
         int charIndex = 0;
         long writeIndex = stringIndex + charIndex;
         char c;
@@ -160,7 +162,7 @@ class RecordBuffer {
     }
 
     void readType(int index) {
-        long stringIndex = index * MAX_CHARS;
+        long stringIndex = (long) index * MAX_CHARS;
         int charIndex = 0;
         long readIndex = stringIndex + charIndex;
         char c;
@@ -209,14 +211,14 @@ class RecordBuffer {
         return readInt(threadIds, index);
     }
 
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int id, int threadId, char[] type, int size, long address) {
         if (Platform.platform().isa != ISA.AMD64) {
             throw FatalError.unimplemented("RecordBuffer.record");
         }
         final long timestamp = Intrinsics.getTicks();
-        final int  coreID    = Intrinsics.getCpuID();
+        final int  coreID    = Intrinsics.getCpuID() & MaxineIntrinsicIDs.CPU_MASK;
         writeLong(timestamps, currentIndex, timestamp);
         writeInt(coreIDs, currentIndex, coreID);
         writeInt(ids, currentIndex, id);
@@ -233,7 +235,7 @@ class RecordBuffer {
         }
     }
 
-    @NO_SAFEPOINT_POLLS("allocation profiler call chain must be atomic")
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public void record(int id, int threadId, char[] type, int size, long address, int node) {
         writeNode(currentIndex, node);
@@ -242,7 +244,7 @@ class RecordBuffer {
 
     /**
      * Allocation Profiler Output format.
-     * Cycle; isAllocation; UniqueId; ThreadId; Type/Class; Size; NumaNode
+     * Cycle; isAllocation; UniqueId; ThreadId; ThreadNumaNode; Type/Class; Size; NumaNode; TimeStamp; CoreId
      * @param cycle
      * @param allocation
      */
@@ -258,6 +260,10 @@ class RecordBuffer {
             Log.print(";");
 
             Log.print(readInt(threadIds, i));
+            Log.print(";");
+
+            //threadNumaNode
+            Log.print(NUMAProfiler.numaConfig.getNUMANodeOfCPU(readInt(coreIDs, i)));
             Log.print(";");
 
             // read and store the string in the readStringBuffer.

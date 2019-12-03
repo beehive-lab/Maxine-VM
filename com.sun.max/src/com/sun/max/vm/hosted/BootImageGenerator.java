@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -23,7 +23,6 @@ package com.sun.max.vm.hosted;
 import java.io.*;
 import java.util.*;
 
-import com.oracle.max.asm.*;
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -43,6 +42,8 @@ import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
+
+import static com.sun.max.platform.Platform.platform;
 
 /**
  * Construction of a virtual machine image begins here by running on a host virtual
@@ -93,6 +94,9 @@ public final class BootImageGenerator {
     // TODO: clean this up. Just for getting perf numbers.
     private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
             "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
+
+    private static final Option<Boolean> useNumaProfiler = options.newBooleanOption("use-numa-profiler", false,
+            "Uses NUMA memory profiler.");
 
     // Options shared with the Inspector
     public static final OptionSet inspectorSharedOptions = new OptionSet();
@@ -215,6 +219,12 @@ public final class BootImageGenerator {
             if (help.getValue()) {
                 options.printHelp(System.out, 80);
                 return;
+            }
+
+            MaxineVM.useNUMAProfiler = useNumaProfiler.getValue();
+
+            if (MaxineVM.useNUMAProfiler && !platform().target.arch.isX86()) {
+                FatalError.unimplemented("NUMA memory profiler not supported on non-x86 Architectures.");
             }
 
             if (compilationBrokerClassOption.getValue() != null) {

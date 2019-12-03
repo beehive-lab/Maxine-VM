@@ -56,6 +56,7 @@ import com.sun.cri.xir.CiXirAssembler.XirParameter;
 import com.sun.cri.xir.CiXirAssembler.XirRegister;
 import com.sun.cri.xir.CiXirAssembler.XirTemp;
 import com.sun.cri.xir.*;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.FatalError;
 
 /**
@@ -913,7 +914,15 @@ public abstract class LIRGenerator extends ValueVisitor {
         }
 
         XirArgument receiver = toXirArgument(x.object());
-        XirSnippet snippet = x.isStatic() ? xir.genGetStatic(site(x), receiver, field) : xir.genGetField(site(x), receiver, field);
+        assert compilation.method instanceof ClassMethodActor;
+        ClassMethodActor method = (ClassMethodActor) compilation.method;
+        XirSnippet snippet;
+        if (method.isTemplate()) {
+            snippet = x.isStatic() ? xir.genTemplateGetStatic(site(x), receiver, field) :
+                    xir.genTemplateGetField(site(x), receiver, field);
+        } else {
+            snippet = x.isStatic() ? xir.genGetStatic(site(x), receiver, field) : xir.genGetField(site(x), receiver, field);
+        }
         emitXir(snippet, x, info, null, true);
 
         if (x.isVolatile()) {

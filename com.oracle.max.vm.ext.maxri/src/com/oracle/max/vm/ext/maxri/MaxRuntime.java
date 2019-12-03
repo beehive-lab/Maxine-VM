@@ -105,7 +105,8 @@ public class MaxRuntime implements RiRuntime {
         // search for the runtime call and register critical methods
         for (Method m : RuntimeCalls.class.getDeclaredMethods()) {
             int flags = m.getModifiers();
-            if (Modifier.isStatic(flags) && Modifier.isPublic(flags)) {
+            final PLATFORM platformAnnotation = m.getAnnotation(PLATFORM.class);
+            if (Modifier.isStatic(flags) && Modifier.isPublic(flags) && platform().isAcceptedBy(platformAnnotation)) {
                 new CriticalMethod(RuntimeCalls.class, m.getName(), SignatureDescriptor.create(m.getReturnType(), m.getParameterTypes()));
             }
         }

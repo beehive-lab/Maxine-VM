@@ -37,7 +37,6 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.actor.holder.Hub;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
@@ -47,7 +46,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
-import com.sun.max.vm.profilers.allocation.AllocationProfiler;
+import com.sun.max.vm.profilers.tracing.numa.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
@@ -119,48 +118,22 @@ public final class MaxineVM {
      */
     private static int exitCode = 0;
 
-    public static int flareObjectCounter = 0;
-
     private static long startupTime;
     private static long startupTimeNano;
 
     /**
-     * The Dynamic AllocationProfiler object. It's initialized during Java Run Scheme initialization (if it's needed).
+     * The Dynamic NUMAProfiler object. It's initialized during Java Run Scheme initialization (if it's needed).
      */
-    public static AllocationProfiler allocationProfiler;
+    public static NUMAProfiler numaProfiler;
 
     /**
-     * This method is used to guard object allocation code sections.
-     *
-     * An object will be profiled only if:
-     *  1) MaxineVM is Running
-     *  2) -XX:+AllocationProfilerEntryPoint is used
-     *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
-     *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
-     *
-     *  OR
-     *
-     *  the -XX:ProfileAll option has been used
-     *
-     *  In any case we ignore the warmup phase of the application (see {@link AllocationProfiler#warmupFinished}).
-     *
-     * @return true if all the above conditions are true.
+     * The {@link #useNUMAProfiler} static variable is a flag which takes its value from the {@link BootImageGenerator#useNumaProfiler}
+     * Option during {@link BootImageGenerator}. If set to true then it allows MaxineVM to inject the NUMA Profiler
+     * calls into the precompiled C1X Snippets for New Object Allocation (buildTLABAllocate, buildTLABAllocateArray),
+     * Object Write (buildPutFieldTemplate, buildArrayStore) and Object Read (buildGetFieldTemplate, buildArrayLoad).
      */
-    public static boolean profileThatObject(Hub hub) {
-        if (allocationProfiler != null) {
-            String type = hub.classActor.name();
-            if (AllocationProfiler.AllocationProfilerFlareAllocationThreshold != 0
-                && (AllocationProfiler.AllocationProfilerFlareAllocationThreshold + AllocationProfiler.AllocationProfilerFlareProfileWindow < flareObjectCounter)
-                && type.contains(AllocationProfiler.AllocationProfilerFlareObject)) {
-                flareObjectCounter++;
-            }
-            assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null || AllocationProfiler.profileAll() :
-                    "The Allocation Profiler should only be initialized when the VM is running and profiling is enabled";
-            int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            return (profilerTLA == 1 || AllocationProfiler.profileAll()) && AllocationProfiler.warmupFinished() && AllocationProfiler.objectWarmupFinished();
-        }
-        return false;
-    }
+    @CONSTANT
+    public static boolean useNUMAProfiler;
 
     /**
      * Allows the Inspector access to the thread locals block for the primordial thread.

@@ -32,7 +32,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.armv7.*;
-import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
@@ -57,11 +56,12 @@ import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profilers.tracing.numa.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.aarch64.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.runtime.arm.*;
-import com.sun.max.vm.runtime.riscv64.RISCV64SafepointPoll;
+import com.sun.max.vm.runtime.riscv64.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -124,6 +124,8 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirPair[] getFieldTemplates;
     private XirPair[] putStaticFieldTemplates;
     private XirPair[] getStaticFieldTemplates;
+    private XirPair[] getTemplateFieldTemplates;
+    private XirPair[] getTemplateStaticFieldTemplates;
 
     private XirPair invokeVirtualTemplates;
     private XirPair invokeInterfaceTemplates;
@@ -240,6 +242,8 @@ public class MaxXirGenerator implements RiXirGenerator {
         getFieldTemplates = new XirPair[kinds.length];
         putStaticFieldTemplates = new XirPair[kinds.length];
         getStaticFieldTemplates = new XirPair[kinds.length];
+        getTemplateFieldTemplates = new XirPair[kinds.length];
+        getTemplateStaticFieldTemplates = new XirPair[kinds.length];
 
         newArrayTemplates = new XirPair[kinds.length];
         tlabNewArrayTemplates = new XirPair[kinds.length];
@@ -269,9 +273,11 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
             if (kind != CiKind.Void) {
                 putFieldTemplates[index] = buildPutFieldTemplates(kind, kind == CiKind.Object, false);
-                getFieldTemplates[index] = buildGetFieldTemplates(kind, false);
+                getFieldTemplates[index] = buildGetFieldTemplates(kind, false, false);
                 putStaticFieldTemplates[index] = buildPutFieldTemplates(kind, kind == CiKind.Object, true);
-                getStaticFieldTemplates[index] = buildGetFieldTemplates(kind, true);
+                getStaticFieldTemplates[index] = buildGetFieldTemplates(kind, true, false);
+                getTemplateFieldTemplates[index] = buildGetFieldTemplates(kind, false, true);
+                getTemplateStaticFieldTemplates[index] = buildGetFieldTemplates(kind, true, true);
                 arrayLoadTemplates[index] = buildArrayLoad(kind, asm, true);
                 arrayLoadNoBoundsCheckTemplates[index] = buildArrayLoad(kind, asm, false);
                 arrayStoreTemplates[index] = buildArrayStore(kind, asm, true, kind == CiKind.Object, kind == CiKind.Object);
@@ -365,11 +371,11 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         if (MaxineVM.isRunning() &&
-                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.AllocationProfilerEntryPoint)) {
+                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.NUMAProfilerEntryPoint)) {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
-            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
-            XirConstant constantOne     = asm.i(1);
-            asm.pstore(WordUtil.archKind(), tla, offsetToProfile, constantOne, false);
+            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_STATE.offset);
+            XirConstant enabled         = asm.i(NUMAProfiler.PROFILING_STATE.ENABLED.getValue());
+            asm.pstore(CiKind.Int, tla, offsetToProfile, enabled, false);
         }
 
         return new XirSnippet(finishTemplate(asm, "prologue"));
@@ -390,11 +396,11 @@ public class MaxXirGenerator implements RiXirGenerator {
             return null;
         }
         if (MaxineVM.isRunning() &&
-                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.AllocationProfilerExitPoint)) {
+                methodIsAllocationProfilerEntryOrExitPoint(method, CompilationBroker.NUMAProfilerExitPoint)) {
             XirOperand  tla             = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
-            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_TLA.offset);
-            XirConstant constantZero    = asm.i(0);
-            asm.pstore(WordUtil.archKind(), tla, offsetToProfile, constantZero, false);
+            XirConstant offsetToProfile = asm.i(VmThreadLocal.PROFILER_STATE.offset);
+            XirConstant disabled        = asm.i(NUMAProfiler.PROFILING_STATE.DISABLED.getValue());
+            asm.pstore(CiKind.Int, tla, offsetToProfile, disabled, false);
         }
         return new XirSnippet(epilogueTemplate);
     }
@@ -545,6 +551,32 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         XirArgument guard = XirArgument.forObject(guardFor(field));
         return new XirSnippet(pair.unresolved, staticTuple, value, guard);
+    }
+
+    @Override
+    public XirSnippet genTemplateGetField(XirSite site, XirArgument receiver, RiField field) {
+        XirPair pair = getTemplateFieldTemplates[field.kind(true).ordinal()];
+        if (field instanceof RiResolvedField) {
+            FieldActor fieldActor = (FieldActor) field;
+            XirArgument offset = XirArgument.forInt(fieldActor.offset());
+            return new XirSnippet(pair.resolved, receiver, offset);
+        }
+
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(pair.unresolved, receiver, guard);
+    }
+
+    @Override
+    public XirSnippet genTemplateGetStatic(XirSite site, XirArgument receiver, RiField field) {
+        XirPair pair = getTemplateFieldTemplates[field.kind(true).ordinal()];
+        if (field instanceof RiResolvedField) {
+            FieldActor fieldActor = (FieldActor) field;
+            XirArgument offset = XirArgument.forInt(fieldActor.offset());
+            return new XirSnippet(pair.resolved, receiver, offset);
+        }
+
+        XirArgument guard = XirArgument.forObject(guardFor(field));
+        return new XirSnippet(pair.unresolved, receiver, guard);
     }
 
 
@@ -846,6 +878,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         if (genWriteBarrier) {
             writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.ARRAY_POST_BARRIER).genWriteBarrier(asm, array, index);
         }
+        maybeInvokeNUMAProfiler(kind, array, "callProfileWriteArray", false);
         if (genBoundsCheck) {
             asm.bindOutOfLine(failBoundsCheck);
             callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, array, index);
@@ -1132,7 +1165,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfilerArray", null, arraySize, hub, cell);
+        if (MaxineVM.useNUMAProfiler) {
+            callRuntimeThroughStub(asm, "callProfileNewArray", null, arraySize, hub, cell);
+        }
 
         asm.bindOutOfLine(reportNegativeIndexError);
         callRuntimeThroughStub(asm, "throwNegativeArraySizeException", null, length);
@@ -1180,7 +1215,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         asm.pstore(CiKind.Int, cell, asm.i(arrayLayout().arrayLengthOffset()), length, false);
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfiler", null, arraySize, hub, cell);
+        if (MaxineVM.useNUMAProfiler) {
+            callRuntimeThroughStub(asm, "callProfileNewTuple", null, arraySize, hub, cell);
+        }
 
         asm.bindOutOfLine(reportNegativeIndexError);
         callRuntimeThroughStub(asm, "throwNegativeArraySizeException", null, length);
@@ -1325,7 +1362,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub, cell);
+        if (MaxineVM.useNUMAProfiler) {
+            callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
+        }
     }
 
     @HOSTED_ONLY
@@ -1392,7 +1431,9 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         asm.mov(result, cell);
 
-        callRuntimeThroughStub(asm, "callProfiler", null, tupleSize, hub, cell);
+        if (MaxineVM.useNUMAProfiler) {
+            callRuntimeThroughStub(asm, "callProfileNewTuple", null, tupleSize, hub, cell);
+        }
 
         asm.bindOutOfLine(slowPath);
         callRuntimeThroughStub(asm, "slowPathAllocate", cell, tupleSize, etla);
@@ -1494,6 +1535,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 writeBarrierSpecification.barrierGenerator(WriteBarrierSpecification.TUPLE_POST_BARRIER).genWriteBarrier(asm, object);
             }
+            maybeInvokeNUMAProfiler(kind, object, "callProfileWriteTuple", false);
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">");
         } else {
             // unresolved case
@@ -1511,18 +1553,19 @@ public class MaxXirGenerator implements RiXirGenerator {
             if (genWriteBarrier) {
                 writeBarrier(asm, object, null, value);
             }
+            maybeInvokeNUMAProfiler(kind, object, "callProfileWriteTuple", false);
             xirTemplate = finishTemplate(asm, "putfield<" + kind + ", " + genWriteBarrier + ">-unresolved");
         }
         return xirTemplate;
     }
 
     @HOSTED_ONLY
-    private XirPair buildGetFieldTemplates(CiKind kind, boolean isStatic) {
-        return new XirPair(buildGetFieldTemplate(kind, isStatic, true), buildGetFieldTemplate(kind, isStatic, false));
+    private XirPair buildGetFieldTemplates(CiKind kind, boolean isStatic, boolean isTemplate) {
+        return new XirPair(buildGetFieldTemplate(kind, isStatic, isTemplate, true), buildGetFieldTemplate(kind, isStatic, isTemplate, false));
     }
 
     @HOSTED_ONLY
-    private XirTemplate buildGetFieldTemplate(CiKind kind, boolean isStatic, boolean resolved) {
+    private XirTemplate buildGetFieldTemplate(CiKind kind, boolean isStatic, boolean isTemplate, boolean resolved) {
         XirTemplate xirTemplate;
         if (resolved) {
             // resolved case
@@ -1530,6 +1573,7 @@ public class MaxXirGenerator implements RiXirGenerator {
             XirParameter object = asm.createInputParameter("object", CiKind.Object);
             XirParameter fieldOffset = asm.createConstantInputParameter("fieldOffset", CiKind.Int);
             asm.pload(kind, result, object, fieldOffset, true);
+            maybeInvokeNUMAProfiler(kind, object, "callProfileReadTuple", isTemplate);
             xirTemplate = finishTemplate(asm, "getfield<" + kind + ">");
         } else {
             // unresolved case
@@ -1543,9 +1587,39 @@ public class MaxXirGenerator implements RiXirGenerator {
                 callRuntimeThroughStub(asm, "resolveGetField", fieldOffset, guard);
             }
             asm.pload(kind, result, object, fieldOffset, true);
+
+            maybeInvokeNUMAProfiler(kind, object, "callProfileReadTuple", isTemplate);
             xirTemplate = finishTemplate(asm, "getfield<" + kind + ">-unresolved");
         }
         return xirTemplate;
+    }
+
+    @HOSTED_ONLY
+    private void maybeInvokeNUMAProfiler(CiKind kind, XirParameter object, String runtimeMethod, boolean isTemplate) {
+        if (MaxineVM.useNUMAProfiler && !isTemplate && kind == CiKind.Object) {
+            final XirLabel    skip                = asm.createInlineLabel("skip");
+            final XirOperand  tla                 = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
+            final XirOperand  profilingTlaAddress = asm.createTemp("TLAAddress", WordUtil.archKind());
+            final XirOperand  isProfiling         = asm.createTemp("isProfiling", CiKind.Int);
+            final XirConstant enabled             = asm.i(NUMAProfiler.PROFILING_STATE.ENABLED.getValue());
+            final XirConstant ongoing             = asm.i(NUMAProfiler.PROFILING_STATE.ONGOING.getValue());
+            final XirOperand  tempRegister        = asm.createTemp("tempRegister", CiKind.Int);
+            final XirOperand  cell                = asm.createTemp("cell", WordUtil.archKind());
+
+            // Calculate PROFILER_TLA address
+            asm.add(profilingTlaAddress, tla, asm.i(VmThreadLocal.PROFILER_STATE.offset));
+            // Attempt to change the profiling state
+            asm.mov(tempRegister, ongoing);
+            asm.icas(CiKind.Int, isProfiling, profilingTlaAddress, tempRegister, enabled);
+            // if state was not ENABLED skip profiling
+            asm.jneq(skip, isProfiling, enabled);
+            asm.mov(cell, object);
+            callRuntimeThroughStub(asm, runtimeMethod, null, cell);
+            // Attempt to re-enable profiling
+            asm.mov(tempRegister, enabled);
+            asm.icas(CiKind.Int, isProfiling, profilingTlaAddress, tempRegister, ongoing);
+            asm.bindInline(skip);
+        }
     }
 
     @HOSTED_ONLY
@@ -2133,24 +2207,46 @@ public class MaxXirGenerator implements RiXirGenerator {
          * @param size of the profiled object.
          * @param hub object hub to obtain the type of the profiled object.
          */
-        public static void callProfiler(int size, Hub hub, Pointer cell) {
+        public static void callProfileNewTuple(int size, Hub hub, Pointer cell) {
+            assert MaxineVM.useNUMAProfiler;
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
-            if (MaxineVM.profileThatObject(hub)) {
-                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profile(size, hub, cell);
+            NUMAProfiler.checkForFlareObject(hub);
+            if (NUMAProfiler.shouldProfile()) {
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileNewTuple(size, hub, cell);
             }
         }
 
-        public static void callProfilerArray(int size, Hub hub, Pointer cell) {
+        public static void callProfileNewArray(int size, Hub hub, Pointer cell) {
+            assert MaxineVM.useNUMAProfiler;
             if (MaxineVM.isDebug()) {
                 FatalError.check(vmConfig().heapScheme().usesTLAB(), "HeapScheme must use TLAB");
             }
 
-            if (MaxineVM.profileThatObject(hub)) {
-                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileArray(size, hub, cell);
+            NUMAProfiler.checkForFlareObject(hub);
+            if (NUMAProfiler.shouldProfile()) {
+                ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileNewArray(size, hub, cell);
             }
+        }
+
+        @PLATFORM(cpu = "amd64")
+        public static void callProfileWriteTuple(Pointer cell) {
+            assert MaxineVM.useNUMAProfiler;
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteTuple(cell);
+        }
+
+        @PLATFORM(cpu = "amd64")
+        public static void callProfileWriteArray(Pointer arrayCell) {
+            assert MaxineVM.useNUMAProfiler;
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileWriteArray(arrayCell);
+        }
+
+        @PLATFORM(cpu = "amd64")
+        public static void callProfileReadTuple(Pointer cell) {
+            assert MaxineVM.useNUMAProfiler;
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileReadTuple(cell);
         }
 
         public static Pointer flushLog(Pointer logTail) {

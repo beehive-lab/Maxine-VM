@@ -314,8 +314,20 @@ public class MaxineIntrinsicIDs {
      */
     public static final String CMP_BYTECODE = p + "CMP_BYTECODE";
 
+    /**
+     * Returns the number of ticks as read from a hardware register (performance counter).
+     */
     public static final String GET_TICKS = p + "GET_TICKS";
+
+    /**
+     * Returns the CPUID as set by Linux in IA32_TSC_AUX on x86-64 (not implemented for other platforms yet)
+     * Linux encodes CPUID as {@code numa_id <<12 + core_id}.
+     * {@link #CPU_MASK} and {@link #NUMA_NODE_SHIFT} can be used to extract the numa node and the core id from the
+     * returned value
+     */
     public static final String GET_CPU_ID = p + "GET_CPU_ID";
+    public static final int CPU_MASK = (1 << 12) - 1;
+    public static final int NUMA_NODE_SHIFT = 12;
 
     /**
      * A vehicle for testing snippets.

@@ -34,3 +34,15 @@ int numaNodeOfAddress(jlong address) {
     numa_move_pages(0, 1, &ptr, NULL, &status, 0);
     return status;
 }
+
+int numaConfiguredCPUs() {
+    return numa_num_configured_cpus();
+}
+
+int numaNodeOfCPU(int cpuID) {
+    return numa_node_of_cpu(cpuID);
+}
+
+int numaPageSize() {
+    return numa_pagesize();
+}

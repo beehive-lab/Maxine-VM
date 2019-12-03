@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -395,6 +397,11 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
     @Override
     public void unpin(Object object) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Address getHeapStartAddress() {
+        return null;
     }
 
     @INLINE

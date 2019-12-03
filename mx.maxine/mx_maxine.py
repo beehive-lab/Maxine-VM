@@ -658,8 +658,17 @@ def ignoreTheRestOptions(vmArgs, profilerOptions):
                 del vmArgs[vmArgs.index(arg)+1]
             del vmArgs[vmArgs.index(arg)]
 
-def applynumathreadmap(filename):
-    oldFileName = filename[0]
+def numaProfilerOutputProcessing(filename):
+    if type(filename) == list:
+        oldFileName = os.path.abspath(filename[0])
+    else:
+        oldFileName = os.path.abspath(filename)
+
+    #extract the benchmark name
+    #we assume that the file name follows the following format
+    #benchmark_numaprofiler_out.csv
+    benchmark = os.path.basename(oldFileName).split('.')[0].split('_')[0]
+    path = os.path.dirname(oldFileName)
 
     #open the profiler output file
     oldFile = open(oldFileName, 'r')
@@ -667,19 +676,27 @@ def applynumathreadmap(filename):
     oldFile.close
 
     #open a new file for profiler output with numa thread map applied
-    newFileName = os.getcwd()+"/tmp.csv"
-    
+    newFileName = path+'/tmp.csv'
+
     newFile = open(newFileName, 'a')
     #with the following format
-    newFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type/Class;Size;NumaNode\n')
+    newFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type;Size;NumaNode;Timestamp;CoreID\n')
 
     #thread map regex
     threadMapPattern = r'\(Run\)\sThread\s([0-9]+)\,\sCPU\s([0-9]+),\sNuma\sNode\s([0-9]+)'
 
+    #open a new file for heap boundaries
+    hbFileName = path+'/'+benchmark+'_heap_boundaries.csv'
+    hbNewFile = open(hbFileName, 'w')
+    hbNewFile.write('Cycle;NumaNode;NumOfPages\n')
+
+    #heap boundaries regex
+    heapBoundariesPattern = r'\(heapBoundaries\)+\;[0-9]+\;[0-9]+\;[0-9]'
+
     #object allocation regex
     #Format: 
-    #Cycle ; is New Allocation ; ID ; Thread id ; Class/Type ; Size ; NUMA Node
-    recordPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[^\;.]*\;[0-9]+\;[0-9]+'
+    #Cycle ; is New Allocation ; ID ; Thread id ; Class/Type ; Size ; NUMA Node ; Timestamp
+    recordPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[0-9]+\;[^\;.]*\;[0-9]+\;[0-9]+\;[0-9]+\;[0-9]'
 
     #index     - content
     #thread id - numa node
@@ -687,9 +704,11 @@ def applynumathreadmap(filename):
     #there is no thread 0 so put a garbage value
     threadMap.insert(0, -9)
 
-    print('Applying NUMA Thread Map...')
+    print('\n=> Processing NUMAProfiler\'s Output:')
+    print('Generating Object Allocation Trace and Heap Boundaries Trace...')
     for line in lines:
         threadMapLineMatch = re.findall(threadMapPattern, line)
+        heapBoundariesLineMatch = re.match(heapBoundariesPattern, line)
         recordLineMatch = re.match(recordPattern, line)
         if (threadMapLineMatch):
             # NUMA Thread Map line found
@@ -716,17 +735,30 @@ def applynumathreadmap(filename):
             cycle = fields[0]
             isAllocation = fields[1]
             uniqueId = fields[2]
-            threadId = int(fields[3])
-            threadNumaNode = threadMap[threadId]
-            classOrType = fields[4]
-            size = fields[5]
-            numaNode = fields[6]
+            threadId = fields[3]
+            threadNumaNode = fields[4]
+            classOrType = fields[5]
+            size = fields[6]
+            numaNode = fields[7]
+            timestamp = fields[8]
+            coreid = fields[9]
 
             # Create the New Line
-            newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + str(threadId) + ';' + str(threadNumaNode) + ';' + classOrType + ';' + size + ';' + numaNode
+            newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + threadId + ';' + threadNumaNode + ';' + classOrType + ';' + size + ';' + numaNode + ';' + timestamp + ';' + coreid
             newFile.write(newLine)
+
+        elif (heapBoundariesLineMatch):
+            # Heap Boundaries line found
+            fields = line.split(';')
+            cycle = fields[1]
+            numaNode = fields[2]
+            numOfPages = fields[3]
+            #write on the heap boundaries file
+            hbNewLine = cycle + ';' + numaNode + ';' + numOfPages
+            hbNewFile.write(hbNewLine + '\n')
             
     newFile.close
+    hbNewFile.close
 
     # After NUMA Thread Map has been applied to the Allocation Profiler's Output,
     # replace the old Allocation Profile's Output file with the new one
@@ -736,22 +768,26 @@ def applynumathreadmap(filename):
     # replace with the new output
     shutil.move(newFileName, oldFileName)
     
-def allocprofiler(args):
-    """launch Maxine VM with Allocation Profiler
+    print('The Output Processing is Finished.\n')
+    print('=> Results directory:')
+    print('a)' + oldFileName + '\nb)' + hbFileName)
 
-    Run the Maxine VM with the Allocation Profiler and the given options and arguments.
+def numaprofiler(args):
+    """launch Maxine VM with NUMA Profiler
+
+    Run the Maxine VM with the NUMA Profiler and the given options and arguments.
 
     where options include:
         all                                                         profile the allocated objects by any method. 1st priority (after log) if present.
         bufferSize                                                  the profiler's buffer size.
         entry <entry point method> [ | exit <exit point method> ]   profile the allocated objects from the entry until the exit method. If no exitpoint given profiles until the end.
         log                                                         execute the application and log the compiled methods by C1X and T1X. 1st priority if present.
-        verbose                                                     enable allocation profiler's verbosity.
+        verbose                                                     enable NUMA profiler's verbosity.
         warmup <num>                                                num of iterations to be considered as warmup and consequently to be ignored.
 
-    If no option given will run with the -XX:+AllocationProfilerAll option. This will profile all objects.
+    If no option given will run with the -XX:+NUMAProfilerAll option. This will profile all objects.
 
-    Use "mx allocprofiler -help" to see what other options this command accepts."""
+    Use "mx numaprofiler -help" to see what other options this command accepts."""
 
     cwdArgs = check_cwd_change(args)
     cwd = cwdArgs[0]
@@ -769,7 +805,7 @@ def allocprofiler(args):
         # all | entry | entry exit | none
         if 'all' in vmArgs:
             #if the all option is present, ignore the rest
-            profilerArgs.append('-XX:+AllocationProfilerAll')
+            profilerArgs.append('-XX:+NUMAProfilerAll')
             ignoreTheRestOptions(vmArgs, profilerOptions)
         elif 'entry' in vmArgs:
             profilerArgs.append(getEntryOrExitPoint('entry', vmArgs))
@@ -777,50 +813,47 @@ def allocprofiler(args):
                 profilerArgs.append(getEntryOrExitPoint('exit', vmArgs))
         else:
             #if none option is present, use the all option
-            profilerArgs.append('-XX:+AllocationProfilerAll')
+            profilerArgs.append('-XX:+NUMAProfilerAll')
 
         #enable/disable verbosity
         if 'verbose' in vmArgs:
             del vmArgs[vmArgs.index('verbose')]
-            profilerArgs.append('-XX:+AllocationProfilerVerbose')
+            profilerArgs.append('-XX:+NUMAProfilerVerbose')
 
         if 'warmup' in vmArgs:
             index = vmArgs.index('warmup')
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
-            profilerArgs.append('-XX:AllocationProfilerExplicitGCThreshold='+num)
+            profilerArgs.append('-XX:NUMAProfilerExplicitGCThreshold='+num)
 
         if 'buffersize' in vmArgs:
             index = vmArgs.index('buffersize')
             num = vmArgs[index+1]
             del vmArgs[index+1]
             del vmArgs[index]
-            profilerArgs.append('-XX:AllocationProfilerBufferSize='+num)
+            profilerArgs.append('-XX:NUMAProfilerBufferSize='+num)
 
         if 'validate' in vmArgs:
             del vmArgs[vmArgs.index('validate')]
-            profilerArgs.append('-XX:+AllocationProfilerDebug')
+            profilerArgs.append('-XX:+NUMAProfilerDebug')
 
     print('==================================================')
-    print('== Launching Maxine VM with Allocation Profiler ==')
+    print('== Launching Maxine VM with NUMA Profiler ==')
     print('==================================================')
     print('== Profiler Args:')
     for args in profilerArgs:
-        print('\t'), args
+        print('\t', args)
     print('== VM and Application Args:')
     for args in vmArgs:
-        print('\t'), args
+        print('\t', args)
     print('==================================================')
 
     mx.run([join(_vmdir, 'maxvm')] + profilerArgs + vmArgs, cwd=cwd, env=ldenv)
 
     print('==================================================')
     print('The execution is finished.')
-    applynumathreadmap(os.getenv('MAXINE_LOG_FILE'))
-    print('Finished.')
-    print('=> Results directory: ' + os.getenv('MAXINE_LOG_FILE'))
-    print('=> Results format: Cycle; isNewAllocation; ID; ThreadId; Class/Type; Size; NUMA Node; ThreadNUMANode')
+    numaProfilerOutputProcessing(os.path.basename(os.getenv('MAXINE_LOG_FILE')))
 
 def site(args):
     """creates a website containing javadoc and the project dependency graph"""
@@ -1006,8 +1039,8 @@ def mx_init(suite):
                     help='directory for VM executable, shared libraries boot image and related files', metavar='<path>')
 
     commands = {
-        'allocprofiler': [allocprofiler, ''],
-        'applynumathreadmap': [applynumathreadmap, ''],
+        'numaprofiler': [numaprofiler, ''],
+        'numaProfilerOutputProcessing': [numaProfilerOutputProcessing, ''],
         'build': [build, '"for help run mx :build -h"'],
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],
