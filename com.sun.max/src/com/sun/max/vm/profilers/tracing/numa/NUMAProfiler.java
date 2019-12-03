@@ -837,6 +837,25 @@ public class NUMAProfiler {
         VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, resetProfilingTLA);
     }
 
+    private static final Pointer.Procedure printThreadLocalProfilingCounters = new Pointer.Procedure() {
+        public void run(Pointer tla) {
+            Log.print("Thread: ");
+            Log.println(tla);
+            for(int i = 0; i < numOfCounters; i++) {
+                Log.print('[');
+                Log.print(i);
+                Log.print(']');
+                Log.print('=');
+                Log.println(profilingCounters[i].load(tla).toInt());
+            }
+            Log.print('\n');
+        }
+    };
+
+    private static void printProfilingCounters() {
+        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, printThreadLocalProfilingCounters);
+    }
+
     private void releaseReservedMemory() {
         newObjects.deallocateAll();
         survivors1.deallocateAll();
