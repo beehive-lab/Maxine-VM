@@ -813,6 +813,19 @@ public class NUMAProfiler {
         VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, setProfilingTLA);
     }
 
+    private static final Pointer.Procedure initThreadLocalProfilingCounters = new Pointer.Procedure() {
+        public void run(Pointer tla) {
+            Pointer etla = ETLA.load(tla);
+            for(int i = 0; i < numOfCounters; i++) {
+                profilingCounters[i].store(etla, Address.fromInt(0));
+            }
+        }
+    };
+
+    private static void initProfilingCounters() {
+        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, initThreadLocalProfilingCounters);
+    }
+
     private static final Pointer.Procedure resetProfilingTLA = new Pointer.Procedure() {
         public void run(Pointer tla) {
             Pointer etla = ETLA.load(tla);
