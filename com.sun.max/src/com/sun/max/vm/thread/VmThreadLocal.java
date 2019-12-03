@@ -312,6 +312,21 @@ public class VmThreadLocal implements FormatWithToString {
     public static final VmThreadLocal PROFILER_STATE
         = new VmThreadLocal("PROFILER_STATE", false, "points to TLA used for profiler on/off", Nature.Single);
 
+    /**
+     * 0 = remote tuple writes, 1 = local tuple writes
+     * 2 = remote array writes, 3 = local array writes
+     * 4 = remote tuple reads, 5 = local tuple reads
+     * 6 = remote array reads, 7 = local array reads
+     */
+    public static int numOfCounters = 8;
+    public static VmThreadLocal[] profilingCounters = new VmThreadLocal[numOfCounters];
+
+    static {
+        for(int i = 0; i < numOfCounters; i++) {
+            profilingCounters[i] = new VmThreadLocal("counter"+i, false, "counter", Nature.Single);
+        }
+    }
+
     private static VmThreadLocal[] valuesNeedingInitialization;
 
     /**
