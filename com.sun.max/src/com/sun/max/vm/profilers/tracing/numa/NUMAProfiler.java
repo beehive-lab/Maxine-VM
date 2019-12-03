@@ -238,6 +238,9 @@ public class NUMAProfiler {
 
         float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
 
+        //initialize thread local counters
+        initProfilingCounters();
+
         if (profileAll() && NUMAProfilerExplicitGCThreshold == 0) {
             enableProfiling();
         }
