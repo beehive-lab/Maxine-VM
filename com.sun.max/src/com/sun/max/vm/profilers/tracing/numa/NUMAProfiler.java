@@ -811,19 +811,6 @@ public class NUMAProfiler {
         VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, setProfilingTLA);
     }
 
-    private static final Pointer.Procedure initThreadLocalProfilingCounters = new Pointer.Procedure() {
-        public void run(Pointer tla) {
-            Pointer etla = ETLA.load(tla);
-            for (int i = 0; i < numOfCounters; i++) {
-                profilingCounters[i].store(etla, Address.fromInt(0));
-            }
-        }
-    };
-
-    private static void initProfilingCounters() {
-        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, initThreadLocalProfilingCounters);
-    }
-
     private static final Pointer.Procedure resetProfilingTLA = new Pointer.Procedure() {
         public void run(Pointer tla) {
             Pointer etla = ETLA.load(tla);
@@ -835,6 +822,9 @@ public class NUMAProfiler {
         VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, resetProfilingTLA);
     }
 
+    /**
+     * A {@link Pointer.Procedure} that prints a thread's all Object Access Profiling Counters}.
+     */
     private static final Pointer.Procedure printThreadLocalProfilingCounters = new Pointer.Procedure() {
         public void run(Pointer tla) {
             Log.print("Object Accesses from Thread ");
@@ -851,8 +841,30 @@ public class NUMAProfiler {
         }
     };
 
+    /**
+     * Call {@link #initThreadLocalProfilingCounters} for all ACTIVE threads.
+     */
     private static void printProfilingCounters() {
         VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, printThreadLocalProfilingCounters);
+    }
+
+    /**
+     * A {@link Pointer.Procedure} that initializes a thread's all Object Access Profiling Counters}.
+     */
+    private static final Pointer.Procedure initThreadLocalProfilingCounters = new Pointer.Procedure() {
+        public void run(Pointer tla) {
+            Pointer etla = ETLA.load(tla);
+            for (int i = 0; i < numOfCounters; i++) {
+                profilingCounters[i].store(etla, Address.fromInt(0));
+            }
+        }
+    };
+
+    /**
+     * Call {@link #initThreadLocalProfilingCounters} for all ACTIVE threads.
+     */
+    private static void initProfilingCounters() {
+        VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, initThreadLocalProfilingCounters);
     }
 
     private void releaseReservedMemory() {
