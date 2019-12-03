@@ -1182,7 +1182,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * Fixup a call site in the method. This differs from the above in that the call site is updated before any thread
-     * can see it. Thus there isn't any concurrency between modifying the call site and threads trying to run it.
+     * can execute it. Thus there isn't any concurrency between modifying the call site and threads trying to run it.
      *
      * @param callOffset offset to a call site relative to the start of the code of this target method
      * @param callEntryPoint entry point the call site should call after fixup
