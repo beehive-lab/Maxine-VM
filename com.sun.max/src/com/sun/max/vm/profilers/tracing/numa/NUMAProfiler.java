@@ -505,6 +505,8 @@ public class NUMAProfiler {
         Log.println(remoteTupleReads);
         Log.print("(NUMA Profiler): Local Tuple Reads = ");
         Log.println(localTupleReads);
+
+        printProfilingCounters();
     }
 
     /**
