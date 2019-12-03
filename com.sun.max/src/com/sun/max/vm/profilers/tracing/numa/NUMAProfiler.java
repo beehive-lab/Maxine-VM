@@ -438,21 +438,18 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (isRemoteAccess(firstPageAddress, tupleAddress)) {
-            //remoteTupleWrites++;
+            // remote tuple writes is counter 0
             Pointer tla = VmThread.currentTLA();
             Pointer etla = ETLA.load(tla);
-            int value = profilingCounters[0].load(tla).toInt()+1;
-            profilingCounters[0].store(etla,Address.fromInt(value));
+            int value = profilingCounters[0].load(tla).toInt() + 1;
+            profilingCounters[0].store(etla, Address.fromInt(value));
         } else {
-            //localTupleWrites++;
+            // local tuple writes is counter 1
             Pointer tla = VmThread.currentTLA();
             Pointer etla = ETLA.load(tla);
-            int value = profilingCounters[1].load(tla).toInt()+1;
-            profilingCounters[1].store(etla,Address.fromInt(value));
+            int value = profilingCounters[1].load(tla).toInt() + 1;
+            profilingCounters[1].store(etla, Address.fromInt(value));
         }
-
-        // increment total writes
-        tupleWrites++;
     }
 
 
@@ -467,13 +464,18 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (isRemoteAccess(firstPageAddress, arrayAddress)) {
-            remoteArrayWrites++;
+            // remote array writes is counter 2
+            Pointer tla = VmThread.currentTLA();
+            Pointer etla = ETLA.load(tla);
+            int value = profilingCounters[2].load(tla).toInt() + 1;
+            profilingCounters[2].store(etla, Address.fromInt(value));
         } else {
-            localArrayWrites++;
+            // local array writes is counter 3
+            Pointer tla = VmThread.currentTLA();
+            Pointer etla = ETLA.load(tla);
+            int value = profilingCounters[3].load(tla).toInt() + 1;
+            profilingCounters[3].store(etla, Address.fromInt(value));
         }
-
-        // increment total writes
-        arrayWrites++;
     }
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
@@ -489,20 +491,25 @@ public class NUMAProfiler {
 
         // increment local or remote reads
         if (isRemoteAccess(firstPageAddress, tupleAddress)) {
-            remoteTupleReads++;
+            // remote tuple reads is counter 4
+            Pointer tla = VmThread.currentTLA();
+            Pointer etla = ETLA.load(tla);
+            int value = profilingCounters[4].load(tla).toInt() + 1;
+            profilingCounters[4].store(etla, Address.fromInt(value));
         } else {
-            localTupleReads++;
+            // local tuple reads is counter 5
+            Pointer tla = VmThread.currentTLA();
+            Pointer etla = ETLA.load(tla);
+            int value = profilingCounters[5].load(tla).toInt() + 1;
+            profilingCounters[5].store(etla, Address.fromInt(value));
         }
-
-        // increment total writes
-        tupleReads++;
     }
 
     /**
      * Print the stats for Object Accesses.
      */
     private void printObjectAccessStats() {
-        Log.print("(NUMA Profiler): Total Tuple Writes = ");
+        /*Log.print("(NUMA Profiler): Total Tuple Writes = ");
         Log.println(tupleWrites);
         Log.print("(NUMA Profiler): Remote Tuple Writes = ");
         Log.println(remoteTupleWrites);
@@ -521,7 +528,7 @@ public class NUMAProfiler {
         Log.print("(NUMA Profiler): Remote Tuple Reads = ");
         Log.println(remoteTupleReads);
         Log.print("(NUMA Profiler): Local Tuple Reads = ");
-        Log.println(localTupleReads);
+        Log.println(localTupleReads);*/
 
         printProfilingCounters();
     }
