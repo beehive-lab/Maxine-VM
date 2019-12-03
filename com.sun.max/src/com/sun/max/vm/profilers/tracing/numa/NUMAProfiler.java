@@ -421,9 +421,17 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (isRemoteAccess(firstPageAddress, tupleAddress)) {
-            remoteTupleWrites++;
+            //remoteTupleWrites++;
+            Pointer tla = VmThread.currentTLA();
+            Pointer etla = ETLA.load(tla);
+            int value = profilingCounters[0].load(tla).toInt()+1;
+            profilingCounters[0].store(etla,Address.fromInt(value));
         } else {
-            localTupleWrites++;
+            //localTupleWrites++;
+            Pointer tla = VmThread.currentTLA();
+            Pointer etla = ETLA.load(tla);
+            int value = profilingCounters[1].load(tla).toInt()+1;
+            profilingCounters[1].store(etla,Address.fromInt(value));
         }
 
         // increment total writes
