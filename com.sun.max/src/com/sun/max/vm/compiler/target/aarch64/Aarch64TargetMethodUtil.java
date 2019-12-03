@@ -173,7 +173,7 @@ public final class Aarch64TargetMethodUtil {
      * @param callSite
      * @param target
      * @param disp
-     * @param fixingUp
+     * @param fixingUp identifies when fixing up as opposed to patching a concurrently executable call-site.
      * @return
      */
     private static long maybePatchTrampolineCall(TargetMethod tm, CodePointer callSite, Pointer target, int disp, boolean fixingUp) {
@@ -212,7 +212,7 @@ public final class Aarch64TargetMethodUtil {
      * 
      * @param callSite
      * @param disp32
-     * @param fixingUp
+     * @param fixingUp identifies when fixing up as opposed to patching a concurrently executable call-site.
      * @return
      */
     private static long maybePatchBranchImmediate(CodePointer callSite, int disp32, boolean fixingUp) {
@@ -234,7 +234,7 @@ public final class Aarch64TargetMethodUtil {
      * @param callSite
      * @param displacement
      * @param isLinked
-     * @param fixingUp
+     * @param fixingUp identifies when fixing up as opposed to patching a concurrently executable call-site.
      * @return
      */
     private static void patchBranchImmediate(Pointer callSite, int displacement, boolean isLinked, boolean fixingUp) {
