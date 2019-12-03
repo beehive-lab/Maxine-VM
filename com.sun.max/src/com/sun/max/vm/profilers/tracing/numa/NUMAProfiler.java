@@ -160,34 +160,11 @@ public class NUMAProfiler {
      */
     static NUMALib numaConfig;
 
-    private static int tupleWrites       = 0;
-    private static int localTupleWrites  = 0;
-    private static int remoteTupleWrites = 0;
-
-    private static int arrayWrites       = 0;
-    private static int localArrayWrites  = 0;
-    private static int remoteArrayWrites = 0;
-
-    private static int tupleReads       = 0;
-    private static int localTupleReads  = 0;
-    private static int remoteTupleReads = 0;
-
     /**
-     *
+     * This String array holds the counters' names. Those names are passed to each VmThreadLocal instance initialization.
      */
     public static int numOfCounters = 8;
-    public static String[] objectAccessCounterNames = new String[numOfCounters];
-
-    static {
-        objectAccessCounterNames[0] = "REMOTE_TUPLE_WRITES";
-        objectAccessCounterNames[1] = "LOCAL_TUPLE_WRITES";
-        objectAccessCounterNames[2] = "REMOTE_ARRAY_WRITES";
-        objectAccessCounterNames[3] = "LOCAL_ARRAY_WRITES";
-        objectAccessCounterNames[4] = "REMOTE_TUPLE_READS";
-        objectAccessCounterNames[5] = "LOCAL_TUPLE_READS";
-        objectAccessCounterNames[6] = "REMOTE_ARRAY_READS";
-        objectAccessCounterNames[7] = "LOCAL_ARRAY_READS";
-    }
+    public static String[] objectAccessCounterNames;
 
     // The options a user can pass to the NUMA Profiler.
     static {
@@ -200,6 +177,11 @@ public class NUMAProfiler {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareProfileWindow", NUMAProfiler.class, "The number of the Flare objects to be allocated before the NUMAProfiler stops recording. (default: 1)");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerDebug", NUMAProfiler.class, "Print information to help in NUMAProfiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerIncludeFinalization", NUMAProfiler.class, "Include memory accesses performed due to Finalization. (default: false)", MaxineVM.Phase.PRISTINE);
+
+        objectAccessCounterNames = new String[]{"REMOTE_TUPLE_WRITES", "LOCAL_TUPLE_WRITES",
+            "REMOTE_ARRAY_WRITES", "LOCAL_ARRAY_WRITES",
+            "REMOTE_TUPLE_READS", "LOCAL_TUPLE_READS",
+            "REMOTE_ARRAY_READS", "LOCAL_ARRAY_READS"};
     }
 
     public NUMAProfiler() {
@@ -509,27 +491,6 @@ public class NUMAProfiler {
      * Print the stats for Object Accesses.
      */
     private void printObjectAccessStats() {
-        /*Log.print("(NUMA Profiler): Total Tuple Writes = ");
-        Log.println(tupleWrites);
-        Log.print("(NUMA Profiler): Remote Tuple Writes = ");
-        Log.println(remoteTupleWrites);
-        Log.print("(NUMA Profiler): Local Tuple Writes = ");
-        Log.println(localTupleWrites);
-
-        Log.print("(NUMA Profiler): Total Array Writes = ");
-        Log.println(arrayWrites);
-        Log.print("(NUMA Profiler): Remote Array Writes = ");
-        Log.println(remoteArrayWrites);
-        Log.print("(NUMA Profiler): Local Array Writes = ");
-        Log.println(localArrayWrites);
-
-        Log.print("(NUMA Profiler): Total Tuple Reads = ");
-        Log.println(tupleReads);
-        Log.print("(NUMA Profiler): Remote Tuple Reads = ");
-        Log.println(remoteTupleReads);
-        Log.print("(NUMA Profiler): Local Tuple Reads = ");
-        Log.println(localTupleReads);*/
-
         printProfilingCounters();
     }
 
@@ -853,7 +814,7 @@ public class NUMAProfiler {
     private static final Pointer.Procedure initThreadLocalProfilingCounters = new Pointer.Procedure() {
         public void run(Pointer tla) {
             Pointer etla = ETLA.load(tla);
-            for(int i = 0; i < numOfCounters; i++) {
+            for (int i = 0; i < numOfCounters; i++) {
                 profilingCounters[i].store(etla, Address.fromInt(0));
             }
         }
@@ -876,13 +837,14 @@ public class NUMAProfiler {
 
     private static final Pointer.Procedure printThreadLocalProfilingCounters = new Pointer.Procedure() {
         public void run(Pointer tla) {
-            Log.print("Thread: ");
-            Log.println(tla);
-            for(int i = 0; i < numOfCounters; i++) {
-                Log.print('[');
-                Log.print(i);
-                Log.print(']');
-                Log.print('=');
+            Log.print("Object Accesses from Thread ");
+            Log.print(VmThread.fromTLA(tla).id());
+            Log.print(" - [");
+            Log.print(VmThread.fromTLA(tla).getName());
+            Log.println("]:");
+            for (int i = 0; i < numOfCounters; i++) {
+                Log.print(profilingCounters[i].name);
+                Log.print(" = ");
                 Log.println(profilingCounters[i].load(tla).toInt());
             }
             Log.print('\n');
