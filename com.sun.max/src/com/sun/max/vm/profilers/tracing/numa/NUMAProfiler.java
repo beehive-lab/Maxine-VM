@@ -505,13 +505,6 @@ public class NUMAProfiler {
     }
 
     /**
-     * Print the stats for Object Accesses.
-     */
-    private void printObjectAccessStats() {
-        printProfilingCounters();
-    }
-
-    /**
      * Dump NUMAProfiler Buffer to Maxine's Log output.
      */
     private void dumpBuffer() {
@@ -723,7 +716,7 @@ public class NUMAProfiler {
         }
 
         if (NUMAProfilerVerbose) {
-            printObjectAccessStats();
+            printProfilingCounters();
             Log.println("(NUMA Profiler): Leaving Pre-GC Phase.");
         }
     }
@@ -928,7 +921,7 @@ public class NUMAProfiler {
         }
 
         if (NUMAProfilerVerbose) {
-            printObjectAccessStats();
+            printProfilingCounters();
             Log.println("(NUMA Profiler): Release Reserved Memory.");
         }
 
