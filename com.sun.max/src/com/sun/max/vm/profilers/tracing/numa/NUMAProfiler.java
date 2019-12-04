@@ -437,13 +437,11 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (isRemoteAccess(firstPageAddress, tupleAddress)) {
-            // remote tuple writes is counter 0
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
             int value = profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_WRITE.value].load(tla).toInt() + 1;
             profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_WRITE.value].store(tla, Address.fromInt(value));
         } else {
-            // local tuple writes is counter 1
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
             int value = profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_WRITE.value].load(tla).toInt() + 1;
@@ -463,13 +461,11 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (isRemoteAccess(firstPageAddress, arrayAddress)) {
-            // remote array writes is counter 2
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
             int value = profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_ARRAY_WRITE.value].load(tla).toInt() + 1;
             profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_ARRAY_WRITE.value].store(tla, Address.fromInt(value));
         } else {
-            // local array writes is counter 3
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
             int value = profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_ARRAY_WRITE.value].load(tla).toInt() + 1;
@@ -490,13 +486,11 @@ public class NUMAProfiler {
 
         // increment local or remote reads
         if (isRemoteAccess(firstPageAddress, tupleAddress)) {
-            // remote tuple reads is counter 4
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
             int value = profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_READ.value].load(tla).toInt() + 1;
             profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_READ.value].store(tla, Address.fromInt(value));
         } else {
-            // local tuple reads is counter 5
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
             int value = profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_READ.value].load(tla).toInt() + 1;
@@ -846,9 +840,10 @@ public class NUMAProfiler {
             Log.print(VmThread.fromTLA(tla).getName());
             Log.println("]:");
             for (int i = 0; i < profilingCounters.length; i++) {
-                Log.print(profilingCounters[i].name);
+                VmThreadLocal profilingCounter = profilingCounters[i];
+                Log.print(profilingCounter.name);
                 Log.print(" = ");
-                Log.println(profilingCounters[i].load(tla).toInt());
+                Log.println(profilingCounter.load(tla).toInt());
             }
             Log.print('\n');
         }
@@ -868,7 +863,8 @@ public class NUMAProfiler {
         public void run(Pointer tla) {
             Pointer etla = ETLA.load(tla);
             for (int i = 0; i < profilingCounters.length; i++) {
-                profilingCounters[i].store(etla, Address.fromInt(0));
+                VmThreadLocal profilingCounter = profilingCounters[i];
+                profilingCounter.store(etla, Address.fromInt(0));
             }
         }
     };
