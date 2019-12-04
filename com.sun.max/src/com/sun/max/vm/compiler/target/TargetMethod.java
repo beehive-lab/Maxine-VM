@@ -96,9 +96,9 @@ public abstract class TargetMethod extends MemoryRegion {
         boolean doCodePos(ClassMethodActor method, int bci);
     }
 
-    static boolean UseSystemMembarrier = false;
+    static boolean UseSystemMembarrier = true;
 
-    static boolean UseNonMandatedSystemMembarrier = false;
+    static boolean UseNonMandatedSystemMembarrier = true;
 
     static {
         addFieldOption("-XX:", "UseSystemMembarrier", TargetMethod.class, "Use the membarrier system call after cache maintenance"
