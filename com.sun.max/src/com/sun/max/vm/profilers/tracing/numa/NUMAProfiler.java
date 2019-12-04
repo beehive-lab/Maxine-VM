@@ -838,7 +838,9 @@ public class NUMAProfiler {
      */
     private static final Pointer.Procedure printThreadLocalProfilingCounters = new Pointer.Procedure() {
         public void run(Pointer tla) {
-            Log.print("Object Accesses from Thread ");
+            Log.print("Object Accesses Counters in Cycle ");
+            Log.print(profilingCycle);
+            Log.print(" from Thread ");
             Log.print(VmThread.fromTLA(tla).id());
             Log.print(" - [");
             Log.print(VmThread.fromTLA(tla).getName());
