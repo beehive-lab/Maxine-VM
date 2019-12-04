@@ -75,6 +75,7 @@ extern void log_flush(void);
 
 #define log_ALL 0
 
+#define log_MEMBARRIER (log_ALL || 0)
 #define log_LOADER (log_ALL || 0)
 #define log_TRAP (log_ALL || 0)
 #define log_MONITORS (log_ALL || 0)

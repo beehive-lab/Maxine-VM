@@ -148,16 +148,10 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
 
         debugInfo = new DebugInfo(debugInfos, this);
 
-        if (!isHosted()) {
-            if (install) {
-                linkDirectCalls();
-                if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64() || Platform.target().arch.isRISCV64()) {
-                    MaxineVM.maxine_cache_flush(codeStart().toPointer(), code().length);
-                }
-            } else {
-                // the displacement between a call site in the heap and a code cache location may not fit in the offset
-                // operand of a call
-            }
+        if (!isHosted() && install) {
+            linkDirectCalls();
+            // Perform cache maintenance after linking calls to ensure visibility of fixed call-sites.
+            maybeCleanCache();
         }
     }
 

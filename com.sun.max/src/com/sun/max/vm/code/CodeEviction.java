@@ -339,7 +339,12 @@ public final class CodeEviction extends VmOperation {
                     null : (byte[]) relocate(from, to, targetMethod.scalarLiterals());
                 final Object[] referenceLiterals = targetMethod.referenceLiterals() == null ?
                     null : (Object[]) relocate(from, to, targetMethod.referenceLiterals());
+                /* Two calls to cleanCache() are required. The first ensures that old instructions are cleaned from
+                 * caches and prefetch buffers. The second ensures that the effects of any prefetching from the addresses
+                 * that the code is moved to are discarded. */
+                targetMethod.maybeCleanCache();
                 targetMethod.setCodeArrays(code, codeStart, trampolines, trampolineStart, scalarLiterals, referenceLiterals);
+                targetMethod.maybeCleanCache();
                 cr.setMark(cr.mark().plus(size));
                 CodeManager.runtimeBaselineCodeRegion.add(targetMethod);
                 targetMethod.survivedEviction();

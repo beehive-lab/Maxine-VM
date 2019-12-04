@@ -180,9 +180,8 @@ public final class Stub extends TargetMethod {
         }
         if (!isHosted()) {
             linkDirectCalls();
-            if (platform().target.arch.isARM() || platform().target.arch.isAarch64() || platform().target.arch.isRISCV64()) {
-                MaxineVM.maxine_cache_flush(codeStart().toPointer(), code().length);
-            }
+            // Perform cache maintenance after linking calls to ensure visibility of fixed call-sites.
+            maybeCleanCache();
         }
     }
 
@@ -200,6 +199,7 @@ public final class Stub extends TargetMethod {
         for (CiDebugInfo info : debugInfos) {
             assert info == null;
         }
+        maybeCleanCache();
     }
 
     @Override

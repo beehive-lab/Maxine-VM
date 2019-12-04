@@ -565,7 +565,13 @@ public final class MaxineVM {
      * @param length the number of instructions * sizeof one instruction
      */
     @C_FUNCTION
-    public static native void maxine_cache_flush(Pointer start, int length);
+    public static native void maxine_cache_flush(Address start, int length);
+
+    /**
+     * Executes a membarrier(2) system call on Linux systems.
+     */
+    @C_FUNCTION
+    public static native void syscall_membarrier();
 
     @C_FUNCTION
     public static native long arithmeticldiv(long x, long y);
