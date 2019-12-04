@@ -33,6 +33,8 @@ import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.CALL_BRANC
 import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.RIP_CALL_INSTRUCTION_SIZE;
 import static com.sun.max.vm.compiler.CallEntryPoint.BASELINE_ENTRY_POINT;
 import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+import static com.sun.max.vm.compiler.target.TargetMethod.useSystemMembarrier;
+import static com.sun.max.vm.compiler.target.TargetMethod.useNonMandatedSystemMembarrier;
 
 import com.oracle.max.asm.NumUtil;
 import com.oracle.max.cri.intrinsics.MemoryBarriers;
@@ -249,7 +251,9 @@ public final class Aarch64TargetMethodUtil {
             /* The following memory barrier is not mandated by the architecture, however it ensures that the
              * modified branch is globally visible at the expense of the barrier.
              */
-            MaxineVM.syscall_membarrier();
+            if (useSystemMembarrier() && useNonMandatedSystemMembarrier()) {
+                MaxineVM.syscall_membarrier();
+            }
         }
     }
 
@@ -291,7 +295,9 @@ public final class Aarch64TargetMethodUtil {
              * by the architecture. See B2.2.5 ARM ARM (issue E.a).
              */
             MaxineVM.maxine_cache_flush(code.plus(BASELINE_ENTRY_POINT.offset()), offset);
-            MaxineVM.syscall_membarrier();
+            if (useSystemMembarrier()) {
+                MaxineVM.syscall_membarrier();
+            }
         }
     }
 

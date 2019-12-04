@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.VMOptions.addFieldOption;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.io.*;
@@ -93,6 +94,19 @@ public abstract class TargetMethod extends MemoryRegion {
          *         now
          */
         boolean doCodePos(ClassMethodActor method, int bci);
+    }
+
+    static boolean UseSystemMembarrier = false;
+
+    static boolean UseNonMandatedSystemMembarrier = false;
+
+    static {
+        addFieldOption("-XX:", "UseSystemMembarrier", TargetMethod.class, "Use the membarrier system call after cache maintenance"
+                + " operations to guarantee instruction stream synchronisation with concurrent threads (Linux).");
+
+        addFieldOption("-XX:", "UseNonMandatedSystemMembarrier", TargetMethod.class, "Use the membarrier system call after cache"
+                + " maintenance operations to guarantee instruction stream synchronisation with concurrent threads (Linux)"
+                + " in cases that aren't mandated by the architecture e.g. patching the address operand in a direct branch (Aarch64).");
     }
 
     /**
@@ -892,7 +906,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * For architectures with weak or relaxed memory models.
-     * Concrete sub-classes of TargetMethod should call cleanCache() after installing code and fixing
+     * Concrete sub-classes of TargetMethod should call maybeCleanCache() after installing code and fixing
      * up any call-sites that need to be patched.
      */
     public void maybeCleanCache() {
@@ -905,7 +919,7 @@ public abstract class TargetMethod extends MemoryRegion {
              * Aarch64 requires an ISB instruction is executed on concurrently executing CPUs to discard
              * speculatively pre-fetched addresses from buffers. See B2.2.5 ARM ARM (issue E.a).
              */
-            if (platform().target.arch.isAarch64()) {
+            if (UseSystemMembarrier && platform().target.arch.isAarch64()) {
                 MaxineVM.syscall_membarrier();
             }
         }
@@ -1441,6 +1455,21 @@ public abstract class TargetMethod extends MemoryRegion {
         oldStart = Address.zero();
     }
 
+    /**
+     * Query the UseSystemMembarrier runtime option.
+     * @return
+     */
+    public static final boolean useSystemMembarrier() {
+        return UseSystemMembarrier;
+    }
+
+    /**
+     * Query the UseNonMandatedSystemMembarrier runtime option.
+     * @return
+     */
+    public static final boolean useNonMandatedSystemMembarrier() {
+        return UseNonMandatedSystemMembarrier;
+    }
     /**
      * Determines if this method was marked to survive {@linkplain CodeEviction code eviction}.
      */
