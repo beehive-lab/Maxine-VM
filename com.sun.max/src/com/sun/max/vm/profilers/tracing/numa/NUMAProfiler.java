@@ -168,7 +168,7 @@ public class NUMAProfiler {
     /**
      * An enum that maps each Object Access Counter name with a {@link VmThreadLocal#profilingCounters} index.
      */
-    public enum OBJECT_ACCESS_COUNTERS {
+    private enum ACCESS_COUNTER {
         REMOTE_TUPLE_WRITE(0), LOCAL_TUPLE_WRITE(1),
         REMOTE_ARRAY_WRITE(2), LOCAL_ARRAY_WRITE(3),
         REMOTE_TUPLE_READ(4), LOCAL_TUPLE_READ(5),
@@ -176,7 +176,7 @@ public class NUMAProfiler {
 
         private final int value;
 
-        OBJECT_ACCESS_COUNTERS(int i) {
+        ACCESS_COUNTER(int i) {
             value = i;
         }
     }
@@ -424,6 +424,13 @@ public class NUMAProfiler {
         return threadNumaNode != objectNumaNode;
     }
 
+    private static void increaseAccessCounter(ACCESS_COUNTER counter) {
+        Pointer tla = VmThread.currentTLA();
+        assert ETLA.load(tla) == tla;
+        int value = profilingCounters[counter.value].load(tla).toInt() + 1;
+        profilingCounters[counter.value].store(tla, Address.fromInt(value));
+    }
+
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public static void profileWriteAccessTuple(long tupleAddress) {
@@ -437,18 +444,11 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (isRemoteAccess(firstPageAddress, tupleAddress)) {
-            Pointer tla = VmThread.currentTLA();
-            assert ETLA.load(tla) == tla;
-            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_WRITE.value].load(tla).toInt() + 1;
-            profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_WRITE.value].store(tla, Address.fromInt(value));
+            increaseAccessCounter(ACCESS_COUNTER.REMOTE_TUPLE_WRITE);
         } else {
-            Pointer tla = VmThread.currentTLA();
-            assert ETLA.load(tla) == tla;
-            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_WRITE.value].load(tla).toInt() + 1;
-            profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_WRITE.value].store(tla, Address.fromInt(value));
+            increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_WRITE);
         }
     }
-
 
     public static void profileWriteAccessArray(long arrayAddress) {
         long firstPageAddress = heapPages.readAddr(0);
@@ -461,15 +461,9 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (isRemoteAccess(firstPageAddress, arrayAddress)) {
-            Pointer tla = VmThread.currentTLA();
-            assert ETLA.load(tla) == tla;
-            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_ARRAY_WRITE.value].load(tla).toInt() + 1;
-            profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_ARRAY_WRITE.value].store(tla, Address.fromInt(value));
+            increaseAccessCounter(ACCESS_COUNTER.REMOTE_ARRAY_WRITE);
         } else {
-            Pointer tla = VmThread.currentTLA();
-            assert ETLA.load(tla) == tla;
-            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_ARRAY_WRITE.value].load(tla).toInt() + 1;
-            profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_ARRAY_WRITE.value].store(tla, Address.fromInt(value));
+            increaseAccessCounter(ACCESS_COUNTER.LOCAL_ARRAY_WRITE);
         }
     }
 
@@ -486,15 +480,9 @@ public class NUMAProfiler {
 
         // increment local or remote reads
         if (isRemoteAccess(firstPageAddress, tupleAddress)) {
-            Pointer tla = VmThread.currentTLA();
-            assert ETLA.load(tla) == tla;
-            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_READ.value].load(tla).toInt() + 1;
-            profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_READ.value].store(tla, Address.fromInt(value));
+            increaseAccessCounter(ACCESS_COUNTER.REMOTE_TUPLE_READ);
         } else {
-            Pointer tla = VmThread.currentTLA();
-            assert ETLA.load(tla) == tla;
-            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_READ.value].load(tla).toInt() + 1;
-            profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_READ.value].store(tla, Address.fromInt(value));
+            increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_READ);
         }
     }
 
