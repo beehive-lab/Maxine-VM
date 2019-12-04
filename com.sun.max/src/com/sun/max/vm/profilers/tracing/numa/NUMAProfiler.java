@@ -423,15 +423,15 @@ public class NUMAProfiler {
         if (isRemoteAccess(firstPageAddress, tupleAddress)) {
             // remote tuple writes is counter 0
             Pointer tla = VmThread.currentTLA();
-            Pointer etla = ETLA.load(tla);
+            assert ETLA.load(tla) == tla;
             int value = profilingCounters[0].load(tla).toInt() + 1;
-            profilingCounters[0].store(etla, Address.fromInt(value));
+            profilingCounters[0].store(tla, Address.fromInt(value));
         } else {
             // local tuple writes is counter 1
             Pointer tla = VmThread.currentTLA();
-            Pointer etla = ETLA.load(tla);
+            assert ETLA.load(tla) == tla;
             int value = profilingCounters[1].load(tla).toInt() + 1;
-            profilingCounters[1].store(etla, Address.fromInt(value));
+            profilingCounters[1].store(tla, Address.fromInt(value));
         }
     }
 
@@ -449,15 +449,15 @@ public class NUMAProfiler {
         if (isRemoteAccess(firstPageAddress, arrayAddress)) {
             // remote array writes is counter 2
             Pointer tla = VmThread.currentTLA();
-            Pointer etla = ETLA.load(tla);
+            assert ETLA.load(tla) == tla;
             int value = profilingCounters[2].load(tla).toInt() + 1;
-            profilingCounters[2].store(etla, Address.fromInt(value));
+            profilingCounters[2].store(tla, Address.fromInt(value));
         } else {
             // local array writes is counter 3
             Pointer tla = VmThread.currentTLA();
-            Pointer etla = ETLA.load(tla);
+            assert ETLA.load(tla) == tla;
             int value = profilingCounters[3].load(tla).toInt() + 1;
-            profilingCounters[3].store(etla, Address.fromInt(value));
+            profilingCounters[3].store(tla, Address.fromInt(value));
         }
     }
 
@@ -476,15 +476,15 @@ public class NUMAProfiler {
         if (isRemoteAccess(firstPageAddress, tupleAddress)) {
             // remote tuple reads is counter 4
             Pointer tla = VmThread.currentTLA();
-            Pointer etla = ETLA.load(tla);
+            assert ETLA.load(tla) == tla;
             int value = profilingCounters[4].load(tla).toInt() + 1;
-            profilingCounters[4].store(etla, Address.fromInt(value));
+            profilingCounters[4].store(tla, Address.fromInt(value));
         } else {
             // local tuple reads is counter 5
             Pointer tla = VmThread.currentTLA();
-            Pointer etla = ETLA.load(tla);
+            assert ETLA.load(tla) == tla;
             int value = profilingCounters[5].load(tla).toInt() + 1;
-            profilingCounters[5].store(etla, Address.fromInt(value));
+            profilingCounters[5].store(tla, Address.fromInt(value));
         }
     }
 
