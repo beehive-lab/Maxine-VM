@@ -832,18 +832,19 @@ public class NUMAProfiler {
      */
     private static final Pointer.Procedure printThreadLocalProfilingCounters = new Pointer.Procedure() {
         public void run(Pointer tla) {
+            Pointer etla = ETLA.load(tla);
             Log.print("Object Accesses Counters in Cycle ");
             Log.print(profilingCycle);
             Log.print(" from Thread ");
-            Log.print(VmThread.fromTLA(tla).id());
+            Log.print(VmThread.fromTLA(etla).id());
             Log.print(" - [");
-            Log.print(VmThread.fromTLA(tla).getName());
+            Log.print(VmThread.fromTLA(etla).getName());
             Log.println("]:");
             for (int i = 0; i < profilingCounters.length; i++) {
                 VmThreadLocal profilingCounter = profilingCounters[i];
                 Log.print(profilingCounter.name);
                 Log.print(" = ");
-                Log.println(profilingCounter.load(tla).toInt());
+                Log.println(profilingCounter.load(etla).toInt());
             }
             Log.print('\n');
         }
