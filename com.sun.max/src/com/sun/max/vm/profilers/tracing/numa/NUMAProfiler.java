@@ -715,8 +715,9 @@ public class NUMAProfiler {
             dumpBuffer();
         }
 
+        printProfilingCounters();
+
         if (NUMAProfilerVerbose) {
-            printProfilingCounters();
             Log.println("(NUMA Profiler): Leaving Pre-GC Phase.");
         }
     }
@@ -903,9 +904,6 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): Termination");
         }
 
-        //heapPages.print(profilingCycle);
-        //heapPages.printStats(profilingCycle);
-
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
             findNumaNodeForPages();
@@ -920,8 +918,9 @@ public class NUMAProfiler {
             printProfilingCyclyStats();
         }
 
+        printProfilingCounters();
+
         if (NUMAProfilerVerbose) {
-            printProfilingCounters();
             Log.println("(NUMA Profiler): Release Reserved Memory.");
         }
 
