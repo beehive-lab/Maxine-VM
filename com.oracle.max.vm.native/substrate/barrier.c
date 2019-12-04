@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020, APT Group, School of Computer Science,
+ * Copyright (c) 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,11 +64,9 @@ syscall_membarrier()
 {
 #if isa_AARCH64
 # if USE_SYS_MEMBARRIER
-    static volatile int initialised = 0;
-    static int barrier_kind = 0;
-    if (!initialised) {
+    static volatile int barrier_kind = 0;
+    if (!barrier_kind) {
         barrier_kind = membarrier_init();
-        initialised = 1;
     }
     membarrier(barrier_kind, 0);
 # endif /* USE_SYS_MEMBARRIER */
@@ -84,7 +82,7 @@ membarrier_init(void)
 
     lv = membarrier(MEMBARRIER_CMD_QUERY, 0);
 
-    if (lv == 0) {
+    if (lv <= 0) {
         log_exit(1, "No barriers available on this platform.");
     }
 
@@ -104,7 +102,7 @@ membarrier_init(void)
         if (log_MEMBARRIER) {
             log_println("Using private expedited barrier");
         }
-        return MEMBARRIER_CMD_REGISTER_PRIVATE_EXPEDITED;
+        return MEMBARRIER_CMD_PRIVATE_EXPEDITED;
     }
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(4,14,0) */
 
