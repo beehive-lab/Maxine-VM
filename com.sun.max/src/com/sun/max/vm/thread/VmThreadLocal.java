@@ -40,6 +40,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -311,6 +312,20 @@ public class VmThreadLocal implements FormatWithToString {
      */
     public static final VmThreadLocal PROFILER_STATE
         = new VmThreadLocal("PROFILER_STATE", false, "points to TLA used for profiler on/off", Nature.Single);
+
+    /**
+     * This VmThreadLocal array stores all counters for each object access kind (remote/local, array/tuple, read/write).
+     */
+    public static VmThreadLocal[] profilingCounters;
+
+    static {
+        if (MaxineVM.useNUMAProfiler) {
+            profilingCounters = new VmThreadLocal[NUMAProfiler.objectAccessCounterNames.length];
+            for (int i = 0; i < profilingCounters.length; i++) {
+                profilingCounters[i] = new VmThreadLocal(NUMAProfiler.objectAccessCounterNames[i], false, "counts object accesses", Nature.Single);
+            }
+        }
+    }
 
     private static VmThreadLocal[] valuesNeedingInitialization;
 
