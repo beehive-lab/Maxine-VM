@@ -163,7 +163,6 @@ public class NUMAProfiler {
     /**
      * This String array holds the counters' names. Those names are passed to each VmThreadLocal instance initialization.
      */
-    public static int numOfCounters = 8;
     public static String[] objectAccessCounterNames;
 
     // The options a user can pass to the NUMA Profiler.
@@ -178,10 +177,12 @@ public class NUMAProfiler {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerDebug", NUMAProfiler.class, "Print information to help in NUMAProfiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerIncludeFinalization", NUMAProfiler.class, "Include memory accesses performed due to Finalization. (default: false)", MaxineVM.Phase.PRISTINE);
 
-        objectAccessCounterNames = new String[]{"REMOTE_TUPLE_WRITES", "LOCAL_TUPLE_WRITES",
+        objectAccessCounterNames = new String[]{
+            "REMOTE_TUPLE_WRITES", "LOCAL_TUPLE_WRITES",
             "REMOTE_ARRAY_WRITES", "LOCAL_ARRAY_WRITES",
             "REMOTE_TUPLE_READS", "LOCAL_TUPLE_READS",
-            "REMOTE_ARRAY_READS", "LOCAL_ARRAY_READS"};
+            "REMOTE_ARRAY_READS", "LOCAL_ARRAY_READS"
+        };
     }
 
     public NUMAProfiler() {
@@ -832,7 +833,7 @@ public class NUMAProfiler {
             Log.print(" - [");
             Log.print(VmThread.fromTLA(tla).getName());
             Log.println("]:");
-            for (int i = 0; i < numOfCounters; i++) {
+            for (int i = 0; i < profilingCounters.length; i++) {
                 Log.print(profilingCounters[i].name);
                 Log.print(" = ");
                 Log.println(profilingCounters[i].load(tla).toInt());
@@ -854,7 +855,7 @@ public class NUMAProfiler {
     private static final Pointer.Procedure initThreadLocalProfilingCounters = new Pointer.Procedure() {
         public void run(Pointer tla) {
             Pointer etla = ETLA.load(tla);
-            for (int i = 0; i < numOfCounters; i++) {
+            for (int i = 0; i < profilingCounters.length; i++) {
                 profilingCounters[i].store(etla, Address.fromInt(0));
             }
         }

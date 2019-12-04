@@ -316,10 +316,10 @@ public class VmThreadLocal implements FormatWithToString {
     /**
      * This VmThreadLocal array stores all counters for each object access kind (remote/local, array/tuple, read/write).
      */
-    public static VmThreadLocal[] profilingCounters = new VmThreadLocal[NUMAProfiler.numOfCounters];
+    public static VmThreadLocal[] profilingCounters = new VmThreadLocal[NUMAProfiler.objectAccessCounterNames.length];
 
     static {
-        for (int i = 0; i < NUMAProfiler.numOfCounters; i++) {
+        for (int i = 0; i < profilingCounters.length; i++) {
             profilingCounters[i] = new VmThreadLocal(NUMAProfiler.objectAccessCounterNames[i], false, "counts object accesses", Nature.Single);
         }
     }
