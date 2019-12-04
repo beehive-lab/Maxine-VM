@@ -151,9 +151,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (!isHosted() && install) {
             linkDirectCalls();
             // Perform cache maintenance after linking calls to ensure visibility of fixed call-sites.
-            if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64() || Platform.target().arch.isRISCV64()) {
-                cleanCache();
-            }
+            maybeCleanCache();
         }
     }
 

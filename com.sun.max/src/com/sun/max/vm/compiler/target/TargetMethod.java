@@ -895,7 +895,7 @@ public abstract class TargetMethod extends MemoryRegion {
      * Concrete sub-classes of TargetMethod should call cleanCache() after installing code and fixing
      * up any call-sites that need to be patched.
      */
-    public void cleanCache() {
+    public void maybeCleanCache() {
         if (!MaxineVM.isHosted() && (platform().target.arch.isARM() || platform().target.arch.isAarch64() || platform().target.arch.isRISCV64())) {
             long longSize = size().toLong();
             int size = (int) longSize;

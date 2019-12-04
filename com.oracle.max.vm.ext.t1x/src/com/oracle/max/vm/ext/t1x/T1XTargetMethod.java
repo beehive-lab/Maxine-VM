@@ -260,9 +260,7 @@ public class T1XTargetMethod extends TargetMethod {
         if (!MaxineVM.isHosted() && install) {
             linkDirectCalls();
             // Perform cache maintenance after linking calls to ensure visibility of fixed call-sites.
-            if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64() || Platform.target().arch.isRISCV64()) {
-                cleanCache();
-            }
+            maybeCleanCache();
         }
 
         // if the VM is running, validate freshly generated code

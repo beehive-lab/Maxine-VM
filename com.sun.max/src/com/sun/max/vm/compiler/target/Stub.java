@@ -181,9 +181,7 @@ public final class Stub extends TargetMethod {
         if (!isHosted()) {
             linkDirectCalls();
             // Perform cache maintenance after linking calls to ensure visibility of fixed call-sites.
-            if (platform().target.arch.isARM() || platform().target.arch.isAarch64() || platform().target.arch.isRISCV64()) {
-                cleanCache();
-            }
+            maybeCleanCache();
         }
     }
 
@@ -201,7 +199,7 @@ public final class Stub extends TargetMethod {
         for (CiDebugInfo info : debugInfos) {
             assert info == null;
         }
-        cleanCache();
+        maybeCleanCache();
     }
 
     @Override
