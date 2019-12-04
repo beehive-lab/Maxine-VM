@@ -165,6 +165,22 @@ public class NUMAProfiler {
      */
     public static String[] objectAccessCounterNames;
 
+    /**
+     * An enum that maps each Object Access Counter name with a {@link VmThreadLocal#profilingCounters} index.
+     */
+    public enum OBJECT_ACCESS_COUNTERS {
+        REMOTE_TUPLE_WRITE(0), LOCAL_TUPLE_WRITE(1),
+        REMOTE_ARRAY_WRITE(2), LOCAL_ARRAY_WRITE(3),
+        REMOTE_TUPLE_READ(4), LOCAL_TUPLE_READ(5),
+        REMOTE_ARRAY_READ(6), LOCAL_ARRAY_READ(7);
+
+        private final int value;
+
+        OBJECT_ACCESS_COUNTERS(int i) {
+            value = i;
+        }
+    }
+
     // The options a user can pass to the NUMA Profiler.
     static {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerAll", NUMAProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
@@ -424,14 +440,14 @@ public class NUMAProfiler {
             // remote tuple writes is counter 0
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
-            int value = profilingCounters[0].load(tla).toInt() + 1;
-            profilingCounters[0].store(tla, Address.fromInt(value));
+            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_WRITE.value].load(tla).toInt() + 1;
+            profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_WRITE.value].store(tla, Address.fromInt(value));
         } else {
             // local tuple writes is counter 1
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
-            int value = profilingCounters[1].load(tla).toInt() + 1;
-            profilingCounters[1].store(tla, Address.fromInt(value));
+            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_WRITE.value].load(tla).toInt() + 1;
+            profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_WRITE.value].store(tla, Address.fromInt(value));
         }
     }
 
@@ -450,14 +466,14 @@ public class NUMAProfiler {
             // remote array writes is counter 2
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
-            int value = profilingCounters[2].load(tla).toInt() + 1;
-            profilingCounters[2].store(tla, Address.fromInt(value));
+            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_ARRAY_WRITE.value].load(tla).toInt() + 1;
+            profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_ARRAY_WRITE.value].store(tla, Address.fromInt(value));
         } else {
             // local array writes is counter 3
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
-            int value = profilingCounters[3].load(tla).toInt() + 1;
-            profilingCounters[3].store(tla, Address.fromInt(value));
+            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_ARRAY_WRITE.value].load(tla).toInt() + 1;
+            profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_ARRAY_WRITE.value].store(tla, Address.fromInt(value));
         }
     }
 
@@ -477,14 +493,14 @@ public class NUMAProfiler {
             // remote tuple reads is counter 4
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
-            int value = profilingCounters[4].load(tla).toInt() + 1;
-            profilingCounters[4].store(tla, Address.fromInt(value));
+            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_READ.value].load(tla).toInt() + 1;
+            profilingCounters[OBJECT_ACCESS_COUNTERS.REMOTE_TUPLE_READ.value].store(tla, Address.fromInt(value));
         } else {
             // local tuple reads is counter 5
             Pointer tla = VmThread.currentTLA();
             assert ETLA.load(tla) == tla;
-            int value = profilingCounters[5].load(tla).toInt() + 1;
-            profilingCounters[5].store(tla, Address.fromInt(value));
+            int value = profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_READ.value].load(tla).toInt() + 1;
+            profilingCounters[OBJECT_ACCESS_COUNTERS.LOCAL_TUPLE_READ.value].store(tla, Address.fromInt(value));
         }
     }
 
