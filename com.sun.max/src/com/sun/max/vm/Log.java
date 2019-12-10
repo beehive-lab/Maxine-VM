@@ -1290,8 +1290,10 @@ public final class Log {
         ProgramWarning.setHandler(new Handler() {
             public void handle(String message) {
                 if (MaxineVM.isHosted()) {
+                    System.err.print("WARNING: ");
                     System.err.println(message);
                 } else {
+                    Log.print("WARNING: ");
                     Log.println(message);
                 }
             }
