@@ -70,7 +70,7 @@ jobs:
       run: $MX build
     - name: AArch64-cross-test
       run: |
-        $MX --J @"-Dmax.platform=linux-aarch64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:aarch64.asm+Aarch64T1XTest+Aarch64T1XpTest+Aarch64JTT
+        $MX --J @"-ea" testme -s=t -junit-test-timeout=1800 -tests=junit:aarch64.asm+Aarch64T1XTest+Aarch64T1XpTest+Aarch64JTT
     - uses: actions/upload-artifact@master
       if: failure()
       with:
@@ -105,7 +105,7 @@ jobs:
       run: $MX build
     - name: ARMv7-cross-test
       run: |
-        $MX --J @"-Dmax.platform=linux-arm -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:armv7.asm+ARMV7T1XTest+ARMV7JTT
+        $MX --J @"-ea" testme -s=t -junit-test-timeout=1800 -tests=junit:armv7.asm+ARMV7T1XTest+ARMV7JTT
     - uses: actions/upload-artifact@master
       if: failure()
       with:
@@ -140,7 +140,7 @@ jobs:
       run: $MX build
     - name: RISC-V-cross-test
       run: |
-        $MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x+riscv64.jtt
+        $MX --J @"-ea" testme -s=t -junit-test-timeout=1800 -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x+riscv64.jtt
     - uses: actions/upload-artifact@master
       if: failure()
       with:
