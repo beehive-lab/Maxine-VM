@@ -140,7 +140,7 @@ jobs:
       run: $MX build
     - name: RISC-V-cross-test
       run: |
-        $MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x+riscv64.jtt
+        $MX --J @"-Dmax.platform=linux-riscv64 -Dtest.crossisa.qemu=1 -ea" testme -s=t -junit-test-timeout=1800 -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x+riscv64.jtt
     - uses: actions/upload-artifact@master
       if: failure()
       with:
