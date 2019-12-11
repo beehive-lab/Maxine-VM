@@ -29,6 +29,7 @@ import com.oracle.max.vm.tests.crossisa.riscv64.asm.RISCV64CodeWriter;
 import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.CiRegister;
 import com.sun.max.ide.MaxTestCase;
+import com.sun.max.platform.*;
 import com.sun.max.program.option.OptionSet;
 import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.actor.member.StaticMethodActor;
@@ -148,6 +149,7 @@ public class RISCV64T1XTest extends MaxTestCase {
             RuntimeCompiler.baselineCompilerOption.setValue(baselineCompilerName);
             RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
             if (!initialised) {
+                Platform.set(Platform.parse("linux-riscv64"));
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 vm().phase = Phase.HOSTED_TESTING;
