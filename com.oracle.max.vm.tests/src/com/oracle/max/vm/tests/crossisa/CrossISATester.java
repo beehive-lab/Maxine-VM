@@ -660,7 +660,10 @@ public abstract class CrossISATester {
     }
 
     protected void initializeQemu() {
-        ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0;
+        final Integer enableQemuProperty = Integer.getInteger(ENABLE_QEMU);
+        if (enableQemuProperty != null && enableQemuProperty <= 0) {
+            ENABLE_SIMULATOR = false;
+        }
     }
 
     public enum BitsFlag {

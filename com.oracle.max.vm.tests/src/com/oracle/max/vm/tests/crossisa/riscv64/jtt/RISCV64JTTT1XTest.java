@@ -33,6 +33,7 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.riscv64.*;
 import com.oracle.max.vm.tests.crossisa.riscv64.asm.MaxineRISCV64Tester;
 import com.oracle.max.vm.tests.crossisa.riscv64.asm.RISCV64CodeWriter;
+import com.sun.max.platform.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -169,6 +170,7 @@ public class RISCV64JTTT1XTest {
             }
 
             if (!initialised) {
+                Platform.set(Platform.parse("linux-riscv64"));
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);

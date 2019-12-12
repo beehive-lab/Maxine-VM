@@ -118,6 +118,7 @@ public abstract class Aarch64AdapterTest extends MaxTestCase {
         RuntimeCompiler.baselineCompilerOption.setValue(baselineCompilerName);
         RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
         if (!initialised) {
+            Platform.set(Platform.parse("linux-aarch64"));
             vmConfigurator.create();
             AdapterGenerator.initialiseForOfflineCrossISAtesting();
             CompilationBroker.setNeedOfflineAdapters(true);

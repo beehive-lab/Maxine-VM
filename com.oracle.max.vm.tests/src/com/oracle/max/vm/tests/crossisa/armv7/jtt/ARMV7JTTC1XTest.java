@@ -31,6 +31,7 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.oracle.max.vm.tests.crossisa.armv7.asm.*;
 import com.sun.max.ide.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
@@ -169,6 +170,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
 
             }
             if (!initialised) {
+                Platform.set(Platform.parse("linux-arm"));
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);
