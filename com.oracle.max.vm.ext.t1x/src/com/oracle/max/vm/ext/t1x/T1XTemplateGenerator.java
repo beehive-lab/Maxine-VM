@@ -30,7 +30,10 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
+import com.sun.max.vm.thread.VmThreadLocal;
 import com.sun.max.vm.type.*;
 
 /**
@@ -470,6 +473,13 @@ public class T1XTemplateGenerator {
 
     public static final EnumSet<T1XTemplateTag> PUTFIELD_TEMPLATE_TAGS = tags("PUTFIELD$");
 
+
+    public void injectT1XRuntimeNUMAProfilerCall(String profilingMethod) {
+        out.printf("        if (MaxineVM.useNUMAProfiler) {%n");
+        out.printf("            %s();%n", profilingMethod);
+        out.printf("        }%n");
+    }
+
     /**
      * Generate all the {@link #PUTFIELD_TEMPLATE_TAGS}.
      */
@@ -488,6 +498,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value%s) {%n", ur(k), k.stackSlots, rs(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        TupleAccess.%srite%s(object, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite");
+        }
     }
 
     /**
@@ -522,6 +535,9 @@ public class T1XTemplateGenerator {
         out.printf("        } else {%n");
         out.printf("            TupleAccess.write%s(object, f.offset(), %s);%n", u(k), fromStackKindCast(k, "value"));
         out.printf("        }%n");
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite");
+        }
         out.printf("    }%n");
         out.printf("%n");
         endTemplateMethodGeneration();

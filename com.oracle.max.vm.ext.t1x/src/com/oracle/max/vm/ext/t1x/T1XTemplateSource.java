@@ -41,6 +41,7 @@ import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 
 /**
  * The Java source for the templates used by T1X.
@@ -1762,6 +1763,9 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(PUTFIELD$reference$resolved)
     public static void putfieldReference(@Slot(1) Object object, int offset, @Slot(0) Reference value) {
         TupleAccess.noninlineWriteObject(object, offset, value);
+        if (MaxineVM.useNUMAProfiler) {
+            profileTupleWrite();
+        }
     }
 
     @T1X_TEMPLATE(PUTFIELD$reference)
@@ -1778,6 +1782,9 @@ public class T1XTemplateSource {
             postVolatileWrite();
         } else {
             TupleAccess.writeObject(object, f.offset(), value);
+        }
+        if (MaxineVM.useNUMAProfiler) {
+            profileTupleWrite();
         }
     }
 
