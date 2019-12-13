@@ -250,6 +250,7 @@ class RecordBuffer {
      * @param allocation
      */
     public void print(int cycle, int allocation) {
+        long start = readLong(timestamps, 0);
         for (int i = 0; i < currentIndex; i++) {
             Log.print(cycle);
             Log.print(';');
@@ -282,7 +283,7 @@ class RecordBuffer {
             Log.print(';');
             Log.print(readInt(nodes, i));
             Log.print(';');
-            Log.print(readLong(timestamps, i));
+            Log.print(readLong(timestamps, i) - start);
             Log.print(';');
             Log.println(readInt(coreIDs, i));
         }
