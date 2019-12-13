@@ -616,14 +616,13 @@ public class NUMAProfiler {
                 long newAddr = Heap.getForwardedAddress(address);
                 // update NUMA Node
                 int node = NUMALib.numaNodeOfAddress(newAddr);
-                from.readType(i);
                 //guard survivors RecordBuffer from overflow
                 if (to.currentIndex >= to.bufferSize) {
                     Log.print("Survivor Buffer out of bounds! Increase the Buffer Size.");
                     MaxineVM.exit(1);
                 }
                 // write it to Buffer
-                to.record(from.readId(i), from.readThreadId(i), from.readStringBuffer, from.readSize(i), newAddr, node);
+                to.record(from.readId(i), from.readThreadId(i), from.readType(i), from.readSize(i), newAddr, node);
                 totalSurvSize = totalSurvSize + from.readSize(i);
             }
         }

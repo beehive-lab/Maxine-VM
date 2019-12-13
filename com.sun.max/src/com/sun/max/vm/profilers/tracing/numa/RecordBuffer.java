@@ -161,7 +161,7 @@ class RecordBuffer {
         }
     }
 
-    void readType(int index) {
+    char[] readType(int index) {
         long stringIndex = (long) index * MAX_CHARS;
         int charIndex = 0;
         long readIndex = stringIndex + charIndex;
@@ -173,6 +173,7 @@ class RecordBuffer {
             charIndex++;
             readIndex = stringIndex + charIndex;
         } while (c != '\0');
+        return readStringBuffer;
     }
 
     public int readId(int index) {
@@ -266,16 +267,15 @@ class RecordBuffer {
             Log.print(NUMAProfiler.numaConfig.getNUMANodeOfCPU(readInt(coreIDs, i)));
             Log.print(";");
 
-            // read and store the string in the readStringBuffer.
-            readType(i);
+            char[] type = readType(i);
             // print the string char by char.
             int j = 0;
-            while (readStringBuffer[j] != '\0') {
-                Log.print(readStringBuffer[j]);
+            while (type[j] != '\0') {
+                Log.print(type[j]);
                 j++;
             }
             // print a semicolon only for primitive types because the rest are already followed by one.
-            if (readStringBuffer[j - 1] != ';') {
+            if (type[j - 1] != ';') {
                 Log.print(";");
             }
             Log.print(readInt(sizes, i));
