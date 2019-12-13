@@ -30,9 +30,11 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
+import com.sun.max.unsafe.Pointer;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
+import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.thread.VmThreadLocal;
 import com.sun.max.vm.type.*;
 
@@ -474,9 +476,10 @@ public class T1XTemplateGenerator {
     public static final EnumSet<T1XTemplateTag> PUTFIELD_TEMPLATE_TAGS = tags("PUTFIELD$");
 
 
-    public void injectT1XRuntimeNUMAProfilerCall(String profilingMethod) {
+    public void injectT1XRuntimeNUMAProfilerCall(String profilingMethod, String tupleObject) {
         out.printf("        if (MaxineVM.useNUMAProfiler) {%n");
-        out.printf("            %s();%n", profilingMethod);
+        out.printf("            Pointer address = Reference.fromJava(%s).toOrigin();%n", tupleObject);
+        out.printf("            %s(address.toLong());%n", profilingMethod);
         out.printf("        }%n");
     }
 
@@ -499,7 +502,7 @@ public class T1XTemplateGenerator {
         generateBeforeAdvice(k);
         out.printf("        TupleAccess.%srite%s(object, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
         if (k == Kind.REFERENCE) {
-            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite");
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite", "object");
         }
     }
 
@@ -536,7 +539,7 @@ public class T1XTemplateGenerator {
         out.printf("            TupleAccess.write%s(object, f.offset(), %s);%n", u(k), fromStackKindCast(k, "value"));
         out.printf("        }%n");
         if (k == Kind.REFERENCE) {
-            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite");
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite", "object");
         }
         out.printf("    }%n");
         out.printf("%n");
@@ -564,7 +567,7 @@ public class T1XTemplateGenerator {
         generateBeforeAdvice(k);
         out.printf("        TupleAccess.%srite%s(staticTuple, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
         if (k == Kind.REFERENCE) {
-            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite");
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite", "staticTuple");
         }
     }
 
@@ -603,7 +606,7 @@ public class T1XTemplateGenerator {
         out.printf("            TupleAccess.write%s(f.holder().staticTuple(), f.offset(), %s);%n", u(k), fromStackKindCast(k, "value"));
         out.printf("        }%n");
         if (k == Kind.REFERENCE) {
-            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite");
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite", "f.holder().staticTuple()");
         }
         out.printf("    }%n");
         out.printf("%n");

@@ -450,10 +450,8 @@ public class NUMAProfiler {
         }
     }
 
-    public static void profileT1XWriteAccessTuple() {
-        Log.print('a');
-        Log.print('\n');
-        //increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_WRITE);
+    public static void profileT1XWriteAccessTuple(long address) {
+        
     }
 
     public static void profileWriteAccessArray(long arrayAddress) {

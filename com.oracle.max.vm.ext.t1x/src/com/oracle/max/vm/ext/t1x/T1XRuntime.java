@@ -168,12 +168,12 @@ public class T1XRuntime {
     }
 
     @INLINE
-    public static void profileTupleWrite() {
+    public static void profileTupleWrite(long address) {
         Pointer state = VmThreadLocal.PROFILER_STATE.load(VmThread.currentTLA());
         int enabled = NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
         // if PROFILER_STATE is ENABLED do profile
         if (state.minus(enabled).isZero()) {
-            NUMAProfiler.profileT1XWriteAccessTuple();
+            NUMAProfiler.profileT1XWriteAccessTuple(address);
         }
     }
 

@@ -1764,7 +1764,8 @@ public class T1XTemplateSource {
     public static void putfieldReference(@Slot(1) Object object, int offset, @Slot(0) Reference value) {
         TupleAccess.noninlineWriteObject(object, offset, value);
         if (MaxineVM.useNUMAProfiler) {
-            profileTupleWrite();
+            Pointer address = Reference.fromJava(object).toOrigin();
+            profileTupleWrite(address.toLong());
         }
     }
 
@@ -1784,7 +1785,8 @@ public class T1XTemplateSource {
             TupleAccess.writeObject(object, f.offset(), value);
         }
         if (MaxineVM.useNUMAProfiler) {
-            profileTupleWrite();
+            Pointer address = Reference.fromJava(object).toOrigin();
+            profileTupleWrite(address.toLong());
         }
     }
 
@@ -1792,7 +1794,8 @@ public class T1XTemplateSource {
     public static void putstaticReference(Object staticTuple, int offset, @Slot(0) Reference value) {
         TupleAccess.noninlineWriteObject(staticTuple, offset, value);
         if (MaxineVM.useNUMAProfiler) {
-            profileTupleWrite();
+            Pointer address = Reference.fromJava(staticTuple).toOrigin();
+            profileTupleWrite(address.toLong());
         }
     }
 
@@ -1813,7 +1816,8 @@ public class T1XTemplateSource {
             TupleAccess.writeObject(f.holder().staticTuple(), f.offset(), value);
         }
         if (MaxineVM.useNUMAProfiler) {
-            profileTupleWrite();
+            Pointer address = Reference.fromJava(f.holder().staticTuple()).toOrigin();
+            profileTupleWrite(address.toLong());
         }
     }
 
