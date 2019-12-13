@@ -27,6 +27,7 @@ import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -168,13 +169,10 @@ public class T1XRuntime {
 
     @INLINE
     public static void profileTupleWrite() {
-        if (MaxineVM.isRunning()) {
-            Pointer tla = VmThread.currentTLA();
-            //int profilingState = VmThreadLocal.PROFILER_STATE.load(tla).getInt();
-            //if ( profilingState == NUMAProfiler.PROFILING_STATE.ENABLED.getValue()) {
-                //Log.println("resolveAndPutFieldReference");
-                //int ongoing = NUMAProfiler.PROFILING_STATE.ONGOING.getValue();
-                //VmThreadLocal.PROFILER_STATE.store3(tla, Address.fromInt(ongoing));
+        Pointer state = VmThreadLocal.PROFILER_STATE.load(VmThread.currentTLA());
+        int enabled = NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
+        // if PROFILER_STATE is ENABLED do profile
+        if (state.minus(enabled).isZero()) {
             NUMAProfiler.profileT1XWriteAccessTuple();
         }
     }
