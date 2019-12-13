@@ -173,7 +173,11 @@ public class T1XRuntime {
         int enabled = NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
         // if PROFILER_STATE is ENABLED do profile
         if (state.minus(enabled).isZero()) {
-            NUMAProfiler.profileT1XWriteAccessTuple(address);
+            // set PROFILER_STATE to ONGOING
+            VmThreadLocal.PROFILER_STATE.store3(VmThread.currentTLA(), Address.fromInt(NUMAProfiler.PROFILING_STATE.ONGOING.getValue()));
+            NUMAProfiler.profileWriteAccessTuple(address);
+            // set PROFILER_STATE back to ENABLED
+            VmThreadLocal.PROFILER_STATE.store3(VmThread.currentTLA(), Address.fromInt(enabled));
         }
     }
 

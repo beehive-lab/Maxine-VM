@@ -450,10 +450,6 @@ public class NUMAProfiler {
         }
     }
 
-    public static void profileT1XWriteAccessTuple(long address) {
-        
-    }
-
     public static void profileWriteAccessArray(long arrayAddress) {
         long firstPageAddress = heapPages.readAddr(0);
 
