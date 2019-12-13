@@ -563,6 +563,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value%s) {%n", ur(k), rs(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        TupleAccess.%srite%s(staticTuple, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite");
+        }
     }
 
     /**
@@ -599,6 +602,9 @@ public class T1XTemplateGenerator {
         out.printf("        } else {%n");
         out.printf("            TupleAccess.write%s(f.holder().staticTuple(), f.offset(), %s);%n", u(k), fromStackKindCast(k, "value"));
         out.printf("        }%n");
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite");
+        }
         out.printf("    }%n");
         out.printf("%n");
         endTemplateMethodGeneration();

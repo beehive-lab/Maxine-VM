@@ -1791,6 +1791,9 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(PUTSTATIC$reference$init)
     public static void putstaticReference(Object staticTuple, int offset, @Slot(0) Reference value) {
         TupleAccess.noninlineWriteObject(staticTuple, offset, value);
+        if (MaxineVM.useNUMAProfiler) {
+            profileTupleWrite();
+        }
     }
 
     @T1X_TEMPLATE(PUTSTATIC$reference)
@@ -1808,6 +1811,9 @@ public class T1XTemplateSource {
             postVolatileWrite();
         } else {
             TupleAccess.writeObject(f.holder().staticTuple(), f.offset(), value);
+        }
+        if (MaxineVM.useNUMAProfiler) {
+            profileTupleWrite();
         }
     }
 
