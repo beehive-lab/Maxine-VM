@@ -252,20 +252,20 @@ class RecordBuffer {
     public void print(int cycle, int allocation) {
         for (int i = 0; i < currentIndex; i++) {
             Log.print(cycle);
-            Log.print(";");
+            Log.print(';');
 
             Log.print(allocation);
-            Log.print(";");
+            Log.print(';');
 
             Log.print(readInt(ids, i));
-            Log.print(";");
+            Log.print(';');
 
             Log.print(readInt(threadIds, i));
-            Log.print(";");
+            Log.print(';');
 
             //threadNumaNode
             Log.print(NUMAProfiler.numaConfig.getNUMANodeOfCPU(readInt(coreIDs, i)));
-            Log.print(";");
+            Log.print(';');
 
             char[] type = readType(i);
             // print the string char by char.
@@ -276,14 +276,14 @@ class RecordBuffer {
             }
             // print a semicolon only for primitive types because the rest are already followed by one.
             if (type[j - 1] != ';') {
-                Log.print(";");
+                Log.print(';');
             }
             Log.print(readInt(sizes, i));
-            Log.print(";");
+            Log.print(';');
             Log.print(readInt(nodes, i));
-            Log.print(";");
+            Log.print(';');
             Log.print(readLong(timestamps, i));
-            Log.print(";");
+            Log.print(';');
             Log.println(readInt(coreIDs, i));
         }
     }
