@@ -27,10 +27,14 @@ import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.methodhandle.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.thread.VmThreadLocal;
 
 /**
  * Collection of methods called from (or inlined by) T1X templates.
@@ -160,6 +164,19 @@ public class T1XRuntime {
     @INLINE
     public static void postVolatileWrite() {
         MemoryBarriers.barrier(MemoryBarriers.JMM_POST_VOLATILE_WRITE);
+    }
+
+    @INLINE
+    public static void profileTupleWrite() {
+        if (MaxineVM.isRunning()) {
+            Pointer tla = VmThread.currentTLA();
+            //int profilingState = VmThreadLocal.PROFILER_STATE.load(tla).getInt();
+            //if ( profilingState == NUMAProfiler.PROFILING_STATE.ENABLED.getValue()) {
+                //Log.println("resolveAndPutFieldReference");
+                //int ongoing = NUMAProfiler.PROFILING_STATE.ONGOING.getValue();
+                //VmThreadLocal.PROFILER_STATE.store3(tla, Address.fromInt(ongoing));
+            NUMAProfiler.profileT1XWriteAccessTuple();
+        }
     }
 
     // ==========================================================================================================
