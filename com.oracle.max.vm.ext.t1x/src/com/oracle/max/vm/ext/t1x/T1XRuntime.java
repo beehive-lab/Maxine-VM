@@ -169,15 +169,14 @@ public class T1XRuntime {
 
     @INLINE
     public static void profileTupleWrite(long address) {
-        Pointer state = VmThreadLocal.PROFILER_STATE.load(VmThread.currentTLA());
+        Pointer tla = VmThread.currentTLA();
         int enabled = NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
-        // if PROFILER_STATE is ENABLED do profile
-        if (state.minus(enabled).isZero()) {
-            // set PROFILER_STATE to ONGOING
-            VmThreadLocal.PROFILER_STATE.store3(VmThread.currentTLA(), Address.fromInt(NUMAProfiler.PROFILING_STATE.ONGOING.getValue()));
+        int ongoing = NUMAProfiler.PROFILING_STATE.ONGOING.getValue();
+        // if PROFILER_STATE is ENABLED do profile and set PROFILER_STATE to ONGOING
+        if (VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, enabled, ongoing) == enabled) {
             NUMAProfiler.profileWriteAccessTuple(address);
             // set PROFILER_STATE back to ENABLED
-            VmThreadLocal.PROFILER_STATE.store3(VmThread.currentTLA(), Address.fromInt(enabled));
+            VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, ongoing, enabled);
         }
     }
 
