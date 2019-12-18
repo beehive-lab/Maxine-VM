@@ -797,6 +797,25 @@ public class VmThreadLocal implements FormatWithToString {
         return tla.readReference(offset);
     }
 
+    /**
+     * Compare And Swap operation of this variable from a given TLA.
+     *
+     * It compares the {@code expectedValue} with the actual value of a {@link VmThreadLocal} variable denoted by the {@code offset}.
+     * If they are equal the {@code newValue} is stored to the {@link VmThreadLocal} variable and the {@code expectedValue} is returned.
+     * If they are not equal it returns the actual value.
+     *
+     * The whole is performed in one atomic hardware transaction.
+     *
+     * @param tla
+     * @param expectedValue
+     * @param newValue
+     * @return
+     */
+    @INLINE
+    public final int compareAndSwap(Pointer tla, int expectedValue, int newValue) {
+        return tla.compareAndSwapInt(offset, expectedValue, newValue);
+    }
+
     @Override
     public String toString() {
         return name;
