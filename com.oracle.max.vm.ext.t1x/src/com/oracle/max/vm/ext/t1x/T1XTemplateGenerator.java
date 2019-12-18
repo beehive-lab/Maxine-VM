@@ -476,10 +476,17 @@ public class T1XTemplateGenerator {
     public static final EnumSet<T1XTemplateTag> PUTFIELD_TEMPLATE_TAGS = tags("PUTFIELD$");
 
 
-    public void injectT1XRuntimeNUMAProfilerCall(String profilingMethod, String tupleObject) {
+    /**
+     * Inject a call to a {@link T1XRuntime} {@code method} into a T1X bytecode template.
+     * The {@code method} body is responsible to call the NUMAProfiler.
+     *
+     * @param method The String name of the injected {@link T1XRuntime} method.
+     * @param object Each template handles the object differently, so we pass it dynamically using this String argument.
+     */
+    public void injectT1XRuntimeNUMAProfilerCall(String method, String object) {
         out.printf("        if (MaxineVM.useNUMAProfiler) {%n");
-        out.printf("            Pointer address = Reference.fromJava(%s).toOrigin();%n", tupleObject);
-        out.printf("            %s(address.toLong());%n", profilingMethod);
+        out.printf("            Pointer address = Reference.fromJava(%s).toOrigin();%n", object);
+        out.printf("            %s(address.toLong());%n", method);
         out.printf("        }%n");
     }
 
