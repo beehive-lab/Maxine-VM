@@ -1846,6 +1846,10 @@ public class T1XTemplateSource {
         ArrayAccess.checkIndex(array, index);
         ArrayAccess.checkSetObject(array, value);
         ArrayAccess.setObject(array, index, value);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(array).toOrigin();
+            profileArrayWrite(address.toLong());
+        }
     }
 
     /**

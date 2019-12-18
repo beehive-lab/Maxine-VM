@@ -805,6 +805,9 @@ public class T1XTemplateGenerator {
             out.printf("        ArrayAccess.checkSetObject(array, value);%n");
         }
         out.printf("        ArrayAccess.set%s(array, index, %s);%n", u(k), fromStackKindCast(k, "value"));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileArrayWrite", "array");
+        }
         out.printf("    }%n");
         newLine();
         endTemplateMethodGeneration();
