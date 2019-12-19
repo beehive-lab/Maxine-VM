@@ -520,6 +520,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         NUMAProfiler.profileReadAccessTuple(tupleAddress);
     }
 
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public final void profileReadArray(Pointer arrayCell) {
+        final long arrayAddress = arrayCell.toLong();
+        NUMAProfiler.profileReadAccessArray(arrayAddress);
+    }
+
     /**
      * Handling of custom allocation by sub-classes.
      * The normal allocation path. may be escaped by temporarily enabling use of a custom allocator identified with an opaque identifier.
