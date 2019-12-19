@@ -1854,6 +1854,10 @@ public class T1XTemplateSource {
     public static Reference aaload(@Slot(1) Object array, @Slot(0) int index) {
         ArrayAccess.checkIndex(array, index);
         Object result = ArrayAccess.getObject(array, index);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(array).toOrigin();
+            profileArrayRead(address.toLong());
+        }
         return Reference.fromJava(result);
     }
 

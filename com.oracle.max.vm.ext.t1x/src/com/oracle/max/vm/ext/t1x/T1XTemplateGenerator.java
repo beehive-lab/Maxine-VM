@@ -781,6 +781,9 @@ public class T1XTemplateGenerator {
         generateBeforeAdvice(k);
         out.printf("        %s result = ArrayAccess.get%s(array, index);%n", j(k), u(k));
         generateAfterAdvice(k);
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileArrayRead", "array");
+        }
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
         out.printf("    }%n");
         newLine();
