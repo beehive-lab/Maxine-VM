@@ -486,6 +486,25 @@ public class NUMAProfiler {
         }
     }
 
+    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
+    @NEVER_INLINE
+    public static void profileReadAccessArray(long arrayAddress) {
+        long firstPageAddress = heapPages.readAddr(0);
+
+        // if the read object is not part of the data heap
+        // TODO: implement some action, currently ignore
+        if (!vm().config.heapScheme().contains(Address.fromLong(arrayAddress))) {
+            return;
+        }
+
+        // increment local or remote reads
+        if (isRemoteAccess(firstPageAddress, arrayAddress)) {
+            increaseAccessCounter(ACCESS_COUNTER.REMOTE_ARRAY_READ);
+        } else {
+            increaseAccessCounter(ACCESS_COUNTER.LOCAL_ARRAY_READ);
+        }
+    }
+
     /**
      * Dump NUMAProfiler Buffer to Maxine's Log output.
      */
