@@ -193,6 +193,19 @@ public class T1XRuntime {
         }
     }
 
+    @INLINE
+    public static void profileTupleRead(long address) {
+        Pointer tla = VmThread.currentTLA();
+        int enabled = NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
+        int ongoing = NUMAProfiler.PROFILING_STATE.ONGOING.getValue();
+        // if PROFILER_STATE is ENABLED do profile and set PROFILER_STATE to ONGOING
+        if (VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, enabled, ongoing) == enabled) {
+            NUMAProfiler.profileReadAccessTuple(address);
+            // set PROFILER_STATE back to ENABLED
+            VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, ongoing, enabled);
+        }
+    }
+
     // ==========================================================================================================
     // == Misc routines =========================================================================================
     // ==========================================================================================================
