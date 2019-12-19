@@ -640,6 +640,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset%s) {%n", rs(k), u(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        %s result = TupleAccess.read%s(object, offset);%n", j(k), u(k));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleRead", "object");
+        }
     }
 
     /**
@@ -668,6 +671,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static %s resolveAndGetField%s(ResolutionGuard.InPool guard, Object object%s) {%n", rs(k), ur(k), suffixParams(true));
         out.printf("        FieldActor f = Snippets.resolveInstanceFieldForReading(guard);%n");
         generateBeforeAdvice(k);
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleRead", "object");
+        }
         out.printf("        if (f.isVolatile()) {%n");
         out.printf("            preVolatileRead();%n");
         out.printf("            %s value = TupleAccess.read%s(object, f.offset());%n", j(k), u(k));
@@ -702,6 +708,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static %s getstatic%s(Object staticTuple, int offset%s) {%n", rs(k), u(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        %s result = TupleAccess.read%s(staticTuple, offset);%n", j(k), u(k));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleRead", "staticTuple");
+        }
     }
 
     /**
@@ -731,6 +740,9 @@ public class T1XTemplateGenerator {
         out.printf("        FieldActor f = Snippets.resolveStaticFieldForReading(guard);%n");
         out.printf("        Snippets.makeHolderInitialized(f);%n");
         generateBeforeAdvice(k);
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleRead", "f.holder().staticTuple()");
+        }
         out.printf("        if (f.isVolatile()) {%n");
         out.printf("            preVolatileRead();%n");
         out.printf("            %s value = TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", j(k), u(k));

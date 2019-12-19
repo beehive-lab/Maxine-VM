@@ -1712,6 +1712,10 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(GETFIELD$reference$resolved)
     public static Reference getfieldObject(@Slot(0) Object object, int offset) {
         Object result = TupleAccess.readObject(object, offset);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(object).toOrigin();
+            profileTupleRead(address.toLong());
+        }
         return Reference.fromJava(result);
     }
 
@@ -1723,6 +1727,10 @@ public class T1XTemplateSource {
     @NEVER_INLINE
     public static Reference resolveAndGetFieldReference(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(object).toOrigin();
+            profileTupleRead(address.toLong());
+        }
         if (f.isVolatile()) {
             preVolatileRead();
             Object value = TupleAccess.readObject(object, f.offset());
@@ -1737,6 +1745,10 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(GETSTATIC$reference$init)
     public static Reference getstaticObject(Object staticTuple, int offset) {
         Object result = TupleAccess.readObject(staticTuple, offset);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(staticTuple).toOrigin();
+            profileTupleRead(address.toLong());
+        }
         return Reference.fromJava(result);
     }
 
@@ -1749,6 +1761,10 @@ public class T1XTemplateSource {
     public static Reference resolveAndGetStaticReference(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(f.holder().staticTuple()).toOrigin();
+            profileTupleRead(address.toLong());
+        }
         if (f.isVolatile()) {
             preVolatileRead();
             Object value = TupleAccess.readObject(f.holder().staticTuple(), f.offset());
