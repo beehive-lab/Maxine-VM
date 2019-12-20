@@ -4,6 +4,7 @@
 
 (See [releases](https://github.com/beehive-lab/Maxine-VM/releases) and [CHANGELOG](CHANGELOG.md) for more details)
 
+- 2019-12-20: Maxine VM 2.9.0 Release
 - 2019-06-06: Maxine VM 2.8.0 Release
 - 2019-04-05: Maxine VM 2.7.0 Release
 - 2018-12-05: Maxine VM 2.6.0 Release
