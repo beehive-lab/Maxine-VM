@@ -4,6 +4,29 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2019-12-20
+
+### Added
+
+- RISC-V: Hello World!
+- NUMAProfiler: memory access profiling in C1X
+
+### Changed
+
+- AllocationProfiler renamed to NUMAProfiler
+- NUMAProfiler now needs to be built in the boot image (improves performance)
+- Refactored cross-ISA unit-tests (now simpler to run)
+- CompilationBroker now crashes if compilation exception is not CiBailout
+- Stop relying on external native library for accessing libnuma
+
+### Fixed
+
+- AArch64 call-site patching ala OpenJDK (trampolines)
+- Available processors reporting based on CPU_ISSET macro
+- Tableswitch in AArch64, ARMv7 and RISC-V
+- AArch64 ADRP fix
+- AArch64 page size
+
 ## [2.8.0] - 2019-06-06
 
 ### Added
@@ -78,7 +101,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - Part of the asmdis package for generating assemblers and disassemblers
-- AArch46 callsite pathcing
+- AArch64 callsite patching
 - JDK8 and JSR292 bug and stability fixes
 
 ### Removed
