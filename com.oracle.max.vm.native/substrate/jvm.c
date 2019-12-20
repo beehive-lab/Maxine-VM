@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2019,Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sched.h>
 #if os_DARWIN
 #include <sys/poll.h>
 #else
@@ -172,6 +173,13 @@ void JVM_OnExit(void (*func)(void)) {
     UNIMPLEMENTED();
 }
 
+/*
+ * java.nio.Bits
+ */
+void JVM_CopySwapMemory(JNIEnv *env, jobject srcObj, jlong srcOffset,
+                        jobject dstObj, jlong dstOffset, jlong size, jlong elemSize) {
+    UNIMPLEMENTED_WITH_ENV();
+}
 
 /*
  * java.lang.Runtime
@@ -184,6 +192,11 @@ void JVM_Exit(jint code) {
 void JVM_Halt(jint code) {
     JNIEnv *env = currentJniEnv();
     vm.Halt(env, code);
+}
+
+void JVM_BeforeHalt() {
+    /* Make zulu openjdk happy for github actions */
+    /* FIXME on newer Java versions (>=11) */
 }
 
 void JVM_GC(void) {
@@ -240,7 +253,27 @@ JVM_ActiveProcessorCount(void) {
     }
     // Otherwise return number of online cpus
     return online_cpus;
-#elif os_LINUX || os_DARWIN
+#elif os_LINUX
+    cpu_set_t cpus;  // can represent at most 1024 (CPU_SETSIZE) processors
+    int cpus_size = sizeof(cpu_set_t);
+    int processor_count = sysconf(_SC_NPROCESSORS_CONF);
+    int cpu_count = 0;
+
+    // pid 0 means the current thread - which we have to assume represents the process
+    if (sched_getaffinity(0, cpus_size, &cpus) == 0) {
+        // only look up to the number of configured processors
+        int i;
+        for (i = 0; i < processor_count; i++) {
+            if (CPU_ISSET(i, &cpus)) {
+                cpu_count++;
+            }
+        }
+    } else {
+        cpu_count = sysconf(_SC_NPROCESSORS_ONLN);
+    }
+
+    return cpu_count;
+#elif os_DARWIN
     // Linux doesn't yet have a (official) notion of processor sets,
     // so just return the number of online processors.
     int online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
@@ -619,6 +652,31 @@ JVM_ResolveClass(JNIEnv *env, jclass cls) {
 }
 
 /*
+ * Find a class from a boot class loader. Returns NULL if class not found.
+ */
+jclass
+JVM_FindClassFromBootLoader(JNIEnv *env, const char *name) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
+/*
+ * Find a class from a given class loader.  Throws ClassNotFoundException.
+ *  name:   name of class
+ *  init:   whether initialization is done
+ *  loader: class loader to look up the class. This may not be the same as the caller's
+ *          class loader.
+ *  caller: initiating class. The initiating class may be null when a security
+ *          manager is not installed.
+ */
+jclass
+JVM_FindClassFromCaller(JNIEnv *env, const char *name, jboolean init,
+                        jobject loader, jclass caller) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
+/*
  * Find a class from a given class loader. Throw ClassNotFoundException
  * or NoClassDefFoundError depending on the value of the last
  * argument.
@@ -787,11 +845,32 @@ JVM_GetMethodParameterAnnotations(JNIEnv *env, jobject method) {
     return 0;
 }
 
+/*
+ * java.lang.reflect.Constructor
+ */
+jobject
+JVM_NewInstanceFromConstructor(JNIEnv *env, jobject c, jobjectArray args0) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
 /* Annotations support (JDK 1.8) */
 
 // Type use annotations support (JDK 1.8) */
 jbyteArray
 JVM_GetClassTypeAnnotations(JNIEnv *env, jclass cls) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
+jbyteArray
+JVM_GetFieldTypeAnnotations(JNIEnv *env, jobject field) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
+jbyteArray
+JVM_GetMethodTypeAnnotations(JNIEnv *env, jobject method) {
     UNIMPLEMENTED_WITH_ENV();
     return 0;
 }
@@ -818,6 +897,12 @@ JVM_GetClassDeclaredConstructors(JNIEnv *env, jclass ofClass, jboolean publicOnl
     return 0;
 }
 
+jobjectArray
+JVM_GetMethodParameters(JNIEnv *env, jobject method) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
 /* Differs from JVM_GetClassModifiers in treatment of inner classes.
    This returns the access flags for the class as specified in the
    class file rather than searching the InnerClasses attribute (if
@@ -826,6 +911,16 @@ JVM_GetClassDeclaredConstructors(JNIEnv *env, jclass ofClass, jboolean publicOnl
    valid. */
 jint
 JVM_GetClassAccessFlags(JNIEnv *env, jclass cls) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
+/* The following two reflection routines are still needed due to startup time issues */
+/*
+ * java.lang.reflect.Method
+ */
+jobject
+JVM_InvokeMethod(JNIEnv *env, jobject method, jobject obj, jobjectArray args0) {
     UNIMPLEMENTED_WITH_ENV();
     return 0;
 }
@@ -1459,6 +1554,16 @@ JVM_ReleaseUTF(const char *utf) {
  */
 jboolean
 JVM_IsSameClassPackage(JNIEnv *env, jclass class1, jclass class2) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
+/*
+ * Is the given method generated by the VM.
+ * The method is identified by method_index.
+ */
+jboolean
+JVM_IsVMGeneratedMethodIx(JNIEnv *env, jclass cb, int index) {
     UNIMPLEMENTED_WITH_ENV();
     return 0;
 }
@@ -2228,6 +2333,12 @@ JVM_InitAgentProperties(JNIEnv *env, jobject agent_props) {
     return vm.InitAgentProperties(env, agent_props);
 }
 
+jstring
+JVM_GetTemporaryDirectory(JNIEnv *env) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
 /* Generics reflection support.
  *
  * Returns information about the given class's EnclosingMethod
@@ -2280,6 +2391,39 @@ JVM_GetThreadStateValues(JNIEnv* env, jint javaThreadState) {
 jobjectArray
 JVM_GetThreadStateNames(JNIEnv* env, jint javaThreadState, jintArray values) {
     return vm.GetThreadStateNames(env, javaThreadState,values);
+}
+
+/*
+ * Returns true if the JVM's lookup cache indicates that this class is
+ * known to NOT exist for the given loader.
+ */
+jboolean
+JVM_KnownToNotExist(JNIEnv *env, jobject loader, const char *classname) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
+/*
+ * Returns an array of all URLs that are stored in the JVM's lookup cache
+ * for the given loader. NULL if the lookup cache is unavailable.
+ */
+jobjectArray
+JVM_GetResourceLookupCacheURLs(JNIEnv *env, jobject loader) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
+
+/*
+ * Returns an array of all URLs that *may* contain the resource_name for the
+ * given loader. This function returns an integer array, each element
+ * of which can be used to index into the array returned by
+ * JVM_GetResourceLookupCacheURLs of the same loader to determine the
+ * URLs.
+ */
+jintArray
+JVM_GetResourceLookupCache(JNIEnv *env, jobject loader, const char *resource_name) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
 }
 
 /* =========================================================================

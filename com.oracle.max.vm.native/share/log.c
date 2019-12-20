@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -75,7 +75,7 @@ void log_lock(void) {
 	}
 }
 
-void allocationProfiler_lock(void) {
+void numaProfiler_lock(void) {
     int result;
     result = mutex_enter_nolog(&allocationProfiler_mutexStruct);
     if (result != 0) {
@@ -90,7 +90,7 @@ void log_unlock(void) {
 	}
 }
 
-void allocationProfiler_unlock(void) {
+void numaProfiler_unlock(void) {
     int result;
     result = mutex_exit_nolog(&allocationProfiler_mutexStruct);
     if (result != 0) {

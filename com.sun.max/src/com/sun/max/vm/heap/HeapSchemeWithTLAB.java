@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -24,7 +24,7 @@ package com.sun.max.vm.heap;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
-import static com.sun.max.vm.MaxineVM.allocationProfiler;
+import static com.sun.max.vm.MaxineVM.numaProfiler;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -40,6 +40,7 @@ import com.sun.max.vm.layout.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.runtime.*;
@@ -61,6 +62,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     // TODO: clean this up. Used just for testing with and without inlined XIR tlab allocation.
     public static boolean GenInlinedTLABAlloc = true;
+
 
     /**
      * Determines if TLABs should be traced.
@@ -483,18 +485,39 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
-    public final void profile(int size, Hub hub, Pointer cell) {
+    public final void profileNewTuple(int size, Hub hub, Pointer cell) {
         final String objectType = hub.classActor.name();
         final long address = cell.toLong();
-        allocationProfiler.profile(size, objectType, address);
+        NUMAProfiler.profileNew(size, objectType, address);
     }
 
     @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
     @NEVER_INLINE
-    public final void profileArray(int size, Hub hub, Pointer cell) {
+    public final void profileNewArray(int size, Hub hub, Pointer cell) {
         final String objectType = hub.classActor.name();
         final long address = cell.toLong();
-        allocationProfiler.profile(size, objectType, address);
+        NUMAProfiler.profileNew(size, objectType, address);
+    }
+
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public final void profileWriteTuple(Pointer cell) {
+        final long tupleAddress = cell.toLong();
+        NUMAProfiler.profileWriteAccessTuple(tupleAddress);
+    }
+
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public final void profileWriteArray(Pointer arrayCell) {
+        final long arrayAddress = arrayCell.toLong();
+        NUMAProfiler.profileWriteAccessArray(arrayAddress);
+    }
+
+    @NO_SAFEPOINT_POLLS("dynamic profiler call chain must be atomic")
+    @NEVER_INLINE
+    public final void profileReadTuple(Pointer cell) {
+        final long tupleAddress = cell.toLong();
+        NUMAProfiler.profileReadAccessTuple(tupleAddress);
     }
 
     /**
@@ -545,10 +568,11 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
         final Pointer cell = tlabAllocate(size);
 
-        if (MaxineVM.profileThatObject()) {
+        NUMAProfiler.checkForFlareObject(dynamicHub);
+        if (NUMAProfiler.shouldProfile()) {
             final String objectType = dynamicHub.classActor.name();
             final long address = cell.toLong();
-            allocationProfiler.profile(size.toInt(), objectType, address);
+            NUMAProfiler.profileNew(size.toInt(), objectType, address);
         }
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
@@ -562,11 +586,11 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             Object result = Cell.plantTuple(cell, hub);
             return result;
         } else {
-
-            if (MaxineVM.profileThatObject()) {
+            NUMAProfiler.checkForFlareObject(hub);
+            if (NUMAProfiler.shouldProfile()) {
                 final String objectType = hub.classActor.name();
                 final long address = cell.toLong();
-                allocationProfiler.profile(hub.tupleSize.toInt(), objectType, address);
+                NUMAProfiler.profileNew(hub.tupleSize.toInt(), objectType, address);
             }
             return Cell.plantTuple(cell, hub);
         }
@@ -577,10 +601,11 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
 
-        if (MaxineVM.profileThatObject()) {
+        NUMAProfiler.checkForFlareObject(hub);
+        if (NUMAProfiler.shouldProfile()) {
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
-            allocationProfiler.profile(size.toInt(), objectType, address);
+            NUMAProfiler.profileNew(size.toInt(), objectType, address);
         }
         return Cell.plantHybrid(cell, size, hub);
     }
@@ -589,14 +614,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Size size = Layout.hybridLayout().getArraySize(length);
         final Pointer cell = tlabAllocate(size);
-
-        if (MaxineVM.profileThatObject()) {
-            final Pointer oldOrigin = Reference.fromJava(hybrid).toOrigin();
-            final Hub hub = Layout.getHub(oldOrigin);
-            final String objectType = hub.classActor.name();
-            final long address = cell.toLong();
-            allocationProfiler.profile(size.toInt(), objectType, address);
-        }
+        profileJavaObject(hybrid, size, cell);
         return Cell.plantExpandedHybrid(cell, size, hybrid, length);
     }
 
@@ -604,15 +622,19 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object clone(Object object) {
         final Size size = Layout.size(Reference.fromJava(object));
         final Pointer cell = tlabAllocate(size);
+        profileJavaObject(object, size, cell);
+        return Cell.plantClone(cell, size, object);
+    }
 
-        if (MaxineVM.profileThatObject()) {
-            final Pointer oldOrigin = Reference.fromJava(object).toOrigin();
-            final Hub hub = Layout.getHub(oldOrigin);
+    private void profileJavaObject(Object object, Size size, Pointer cell) {
+        final Pointer oldOrigin = Reference.fromJava(object).toOrigin();
+        final Hub hub = Layout.getHub(oldOrigin);
+        NUMAProfiler.checkForFlareObject(hub);
+        if (NUMAProfiler.shouldProfile()) {
             final String objectType = hub.classActor.name();
             final long address = cell.toLong();
-            allocationProfiler.profile(size.toInt(), objectType, address);
+            NUMAProfiler.profileNew(size.toInt(), objectType, address);
         }
-        return Cell.plantClone(cell, size, object);
     }
 
     @Override

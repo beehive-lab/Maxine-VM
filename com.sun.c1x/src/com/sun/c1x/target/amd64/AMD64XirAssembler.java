@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.target.amd64;
 
@@ -144,6 +142,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                 case PointerStoreDisp:
                     break;
                 case PointerCAS:
+                case IntCAS:
                     if (fixedRAX == null) {
                         fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, AMD64.rax);
                     }
@@ -152,6 +151,7 @@ public class AMD64XirAssembler extends CiXirAssembler {
                     // z = old value (i.e., the one compared to). Must be in RAX (and so must the result).
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRAX, i.z()));
                     currentList.add(new XirInstruction(i.kind, i.op, i.result, i.x(), i.y(), fixedRAX));
+                    currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, i.result, fixedRAX));
                     appended = true;
                     break;
                 case CallStub:

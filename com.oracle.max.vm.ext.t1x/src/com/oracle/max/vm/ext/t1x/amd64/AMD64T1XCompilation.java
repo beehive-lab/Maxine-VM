@@ -41,6 +41,7 @@ import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
@@ -434,6 +435,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             int casesCodePos = buf.position();
             buf.setPosition(pos);
             asm.jcc(ConditionFlag.above.negation(), casesCodePos, false);
+            assert buf.position() - pos == 2;
             buf.setPosition(casesCodePos);
             do_ProfileSwitchCase(switchProfileIndex, rax);
         }
@@ -545,6 +547,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             int matchPos = buf.position();
             buf.setPosition(matchTestPos);
             asm.jcc(ConditionFlag.equal, matchPos, false);
+            assert buf.position() - matchTestPos == 2;
             buf.setPosition(matchPos);
 
             // Load jump case table entry into rbx and jump to it
@@ -641,6 +644,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 fallThroughPos = buf.position();
                 buf.setPosition(jumpNotTakenPos);
                 asm.jcc(ccNeg, fallThroughPos, false);
+                assert buf.position() - jumpNotTakenPos == 2;
                 buf.setPosition(fallThroughPos);
             }
         }
@@ -669,8 +673,8 @@ public class AMD64T1XCompilation extends T1XCompilation {
             do_profileNotTakenBranch(bci);
             jumpNotTakenPos = buf.position();
             placeholderForShortJumpDisp = jumpNotTakenPos + 2;
-            asm.jmp(placeholderForShortJumpDisp, false);
-            assert buf.position() - jumpNotTakenPos == 2;
+            asm.jmp(placeholderForShortJumpDisp, MaxineVM.useNUMAProfiler);
+            assert buf.position() - jumpNotTakenPos == (MaxineVM.useNUMAProfiler ? 5 : 2);
         }
 
         // Start of "taken" code
@@ -679,6 +683,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             int notTakenCodePos = buf.position();
             buf.setPosition(jumpTakenPos);
             asm.jcc(cc, notTakenCodePos, false);
+            assert buf.position() - jumpTakenPos == 2;
             buf.setPosition(notTakenCodePos);
         }
         do_profileTakenBranch(bci, targetBCI);
@@ -695,7 +700,8 @@ public class AMD64T1XCompilation extends T1XCompilation {
         if (isConditionalBranch) {
             fallThroughPos = buf.position();
             buf.setPosition(jumpNotTakenPos);
-            asm.jmp(fallThroughPos, false);
+            asm.jmp(fallThroughPos, MaxineVM.useNUMAProfiler);
+            assert buf.position() - jumpNotTakenPos == (MaxineVM.useNUMAProfiler ? 5 : 2);
             buf.setPosition(fallThroughPos);
         }
 
@@ -735,6 +741,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             int notTakenCodePos = buf.position();
             buf.setPosition(jumpNotTakenPos);
             asm.jcc(ccNeg, notTakenCodePos, false);
+            assert buf.position() - jumpNotTakenPos == 2;
             buf.setPosition(notTakenCodePos);
             do_profileNotTakenBranch(bci);
         }

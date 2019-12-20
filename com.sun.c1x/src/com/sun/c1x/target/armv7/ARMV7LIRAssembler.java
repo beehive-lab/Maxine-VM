@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -46,6 +46,7 @@ import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.*;
 import com.sun.max.platform.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.runtime.FatalError;
 
 public final class ARMV7LIRAssembler extends LIRAssembler {
 
@@ -120,6 +121,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitPause() {
         masm.pause();
+    }
+
+    @Override
+    protected void emitGetTicks(CiValue result) {
+        throw FatalError.unimplemented("ARMV7LIRAssembler.emitGetTicks");
+    }
+
+    @Override
+    protected void emitGetCpuID(CiValue result) {
+        throw FatalError.unimplemented("ARMV7LIRAssembler.emitGetCpuID");
     }
 
     @Override
@@ -666,8 +677,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             ARMV7Label label = new ARMV7Label(target.label());
             int offsetToJumpTableBase = buf.position() - jumpTablePos;
             if (label.isBound()) {
-                int imm32 = label.position() - jumpTablePos;
-                buf.emitInt(imm32);
+                masm.b(ConditionFlag.Always, label.position() - jumpTablePos);
             } else {
                 BranchInfo info = new BranchInfo(BranchType.TABLESWITCH, ConditionFlag.Always);
                 label.addPatchAt(buf.position(), info);

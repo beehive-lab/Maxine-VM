@@ -25,6 +25,7 @@ import com.oracle.max.vm.ext.maxri.Compile;
 import com.oracle.max.vm.tests.crossisa.CrossISATester;
 import com.oracle.max.vm.tests.crossisa.aarch64.asm.Aarch64CodeWriter;
 import com.oracle.max.vm.tests.crossisa.aarch64.asm.MaxineAarch64Tester;
+import com.sun.max.platform.*;
 import com.sun.max.program.option.OptionSet;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.code.Code;
@@ -161,6 +162,7 @@ public class Aarch64JTTC1XTest {
 
             }
             if (!initialised) {
+                Platform.set(Platform.parse("linux-aarch64"));
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);

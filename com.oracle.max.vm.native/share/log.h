@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -38,8 +38,8 @@ extern void log_initialize(const char *path);
 extern void log_lock(void);
 extern void log_unlock(void);
 
-extern void allocationProfiler_lock(void);
-extern void allocationProfiler_unlock(void);
+extern void numaProfiler_lock(void);
+extern void numaProfiler_unlock(void);
 
 extern void log_print_int(int val);
 extern void log_print_boolean(char val);
@@ -75,6 +75,7 @@ extern void log_flush(void);
 
 #define log_ALL 0
 
+#define log_MEMBARRIER (log_ALL || 0)
 #define log_LOADER (log_ALL || 0)
 #define log_TRAP (log_ALL || 0)
 #define log_MONITORS (log_ALL || 0)
@@ -83,6 +84,8 @@ extern void log_flush(void);
 #define log_THREADS (log_ALL || 0)
 #define log_TELE (log_ALL || 0)
 #define log_MMAP (log_ALL || 0)
+// log_NUMA_THREADS can be used only on non-ARM architectures
+#define log_NUMA_THREADS (!isa_ARM && 0)
 
 #if log_JVMNI
 #define jvmni_log_println log_println

@@ -34,6 +34,7 @@ import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.*;
@@ -105,6 +106,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
             // Checkstyle: stop
             if (!initialized) {
+                Platform.set(Platform.parse("linux-arm"));
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 vm().phase = Phase.HOSTED_TESTING;

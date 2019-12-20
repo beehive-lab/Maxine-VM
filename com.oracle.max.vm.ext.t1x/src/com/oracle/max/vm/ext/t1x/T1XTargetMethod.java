@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -216,8 +216,11 @@ public class T1XTargetMethod extends TargetMethod {
         assert comp.protectionLiteralIndex == 0 : "protection literal should be first but is " + comp.protectionLiteralIndex;
         protectionLiteralIndex = comp.protectionLiteralIndex;
 
+        final TargetBundleLayout targetBundleLayout;
+
+        targetBundleLayout = new TargetBundleLayout(0, comp.objectLiterals.size(), comp.buf.position(), comp.trampolines == null ? 0 : comp.trampolines.length);
+
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.objectLiterals.size(), comp.buf.position());
         if (install) {
             Code.allocate(targetBundleLayout, this);
         } else {
@@ -226,6 +229,12 @@ public class T1XTargetMethod extends TargetMethod {
 
         // Copy code
         comp.buf.copyInto(code(), 0, code().length);
+
+        // Check whether the target method uses trampolines. For instance a
+        // method might not have any callees and hence trampolines set.
+        if (trampolines() != null && trampolines().length != 0) {
+            System.arraycopy(comp.trampolines, 0, trampolines(), 0, trampolinesLength());
+        }
 
         // Copy reference literals
         if (referenceLiterals != null) {
@@ -248,13 +257,10 @@ public class T1XTargetMethod extends TargetMethod {
             }
         }
 
-        if (!MaxineVM.isHosted()) {
-            if (install) {
-                linkDirectCalls();
-                if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64()) {
-                    ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
-                }
-            }  // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+        if (!MaxineVM.isHosted() && install) {
+            linkDirectCalls();
+            // Perform cache maintenance after linking calls to ensure visibility of fixed call-sites.
+            maybeCleanCache();
         }
 
         // if the VM is running, validate freshly generated code
@@ -861,7 +867,7 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     private Pointer adjustSPForHandler(Pointer fp) {
-        if (isAMD64() || isARM() || isAARCH64()) {
+        if (isAMD64() || isARM() || isAARCH64() || isRISCV64()) {
             // The Java operand stack of the T1X method that handles the exception is cleared
             // when unwinding. The T1X generated handler is responsible for loading the
             // exception from VmThreadLocal.EXCEPTION_OBJECT to the operand stack.
@@ -935,7 +941,7 @@ public class T1XTargetMethod extends TargetMethod {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            if (isAMD64() || isARM() || isAARCH64()) {
+            if (isAMD64() || isARM() || isAARCH64() || isRISCV64()) {
                 Pointer localVariablesBase = current.fp();
                 Pointer catcherSP = adjustSPForHandler(current.fp());
 
@@ -1042,7 +1048,7 @@ public class T1XTargetMethod extends TargetMethod {
         int dispToRip = frameSize() - sizeOfNonParameterLocals();
         Pointer returnRIP = current.fp().plus(dispToRip);
         int slotSize = Word.size();
-        if (isAARCH64()) { // On Aarch64 stack is 16-byte aligned, so we use this as the slot size
+        if (isAARCH64() || isRISCV64()) { // On Aarch64 stack is 16-byte aligned, so we use this as the slot size
             slotSize = target().stackAlignment;
         }
         Pointer callerFP = sfw.readWord(returnRIP, -slotSize).asPointer();
@@ -1091,7 +1097,7 @@ public class T1XTargetMethod extends TargetMethod {
 
     @Override
     public Pointer returnAddressPointer(StackFrameCursor frame) {
-        if (isAMD64() || isARM() || isAARCH64()) {
+        if (isAMD64() || isARM() || isAARCH64() || isRISCV64()) {
             int dispToRip = frameSize() - sizeOfNonParameterLocals();
             return frame.fp().plus(dispToRip);
         } else {
@@ -1170,7 +1176,7 @@ public class T1XTargetMethod extends TargetMethod {
         }
 
         // add alignment slots
-        int fpSlots = target().arch.isAarch64() ? 2 : 1; // one (or two) extra word(s) for the caller FP
+        int fpSlots = target().arch.isAarch64() || target().arch.isRISCV64() ? 2 : 1; // one (or two) extra word(s) for the caller FP
         int numberOfSlots = fpSlots + templateSlots;
         int unalignedSize = (numberOfSlots + (nonParamLocals * STACK_SLOTS_PER_JVMS_SLOT)) * STACK_SLOT_SIZE;
         int alignedSize = target().alignFrameSize(unalignedSize);
@@ -1183,7 +1189,7 @@ public class T1XTargetMethod extends TargetMethod {
         int callerFPIndex = info.slotsCount();
         info.addSlot(WordUtil.ZERO, "callerFP");
         // in Aarch64 FP and LR are pushed separately and each one takes a whole JVMS_SLOT
-        if (target().arch.isAarch64()) {
+        if (target().arch.isAarch64() || target().arch.isRISCV64()) {
             addSlotPadding(info, "callerFP (pad)");
         }
 
@@ -1191,7 +1197,7 @@ public class T1XTargetMethod extends TargetMethod {
         int returnAddressIndex = info.slotsCount();
         info.addSlot(WordUtil.ZERO, "returnIP");
         // in Aarch64 FP and LR are pushed separately and each one takes a whole JVMS_SLOT
-        if (target().arch.isAarch64()) {
+        if (target().arch.isAarch64() || target().arch.isRISCV64()) {
             addSlotPadding(info, "returnIP (pad)");
         }
 
@@ -1272,7 +1278,7 @@ public class T1XTargetMethod extends TargetMethod {
                 int safepointPos = safepoints.posAt(safepointIndex);
                 if (curPos <= safepointPos && safepointPos < succPos) {
                     if (safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
-                        if (isAMD64() || isAARCH64()) {
+                        if (isAMD64() || isAARCH64() || isRISCV64()) {
                             // On x86 the safepoint position of a call *is* the return position
                             templateCallReturnPos = safepointPos;
                         } else if (isARM()) {

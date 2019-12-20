@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -304,6 +304,14 @@ public final class LIRList {
 
     public void breakpoint() {
         append(new LIROp0(LIROpcode.Breakpoint));
+    }
+
+    public void getTicks(CiValue result) {
+        append(new LIROp0(LIROpcode.GetTicks, result, null));
+    }
+
+    public void getCpuID(CiValue result) {
+        append(new LIROp0(LIROpcode.GetCpuID, result, null));
     }
 
     public void testbit(CiAddress address, CiValue bitNo) {

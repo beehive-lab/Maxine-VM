@@ -23,6 +23,7 @@
  */
 package com.sun.max.vm.runtime.riscv64;
 
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.sun.cri.ci.CiCalleeSaveLayout;
 import com.sun.cri.ci.CiRegister;
 import com.sun.max.unsafe.*;
@@ -48,7 +49,7 @@ public class RISCV64TrapFrameAccess extends TrapFrameAccess {
         size += 8;
         FLAGS_OFFSET = size;
         size += 8;
-        CSL = new CiCalleeSaveLayout(0, size, 8, allRegisters);
+        CSL = new CiCalleeSaveLayout(0, size, 8, csaRegisters);
     }
 
     @Override

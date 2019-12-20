@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -96,8 +96,8 @@ public class CompilationBroker {
     private static Integer tmCounter = 0;
     static int PrintCodeCacheMetrics;
 
-    public static String   AllocationProfilerEntryPoint;
-    public static String   AllocationProfilerExitPoint;
+    public static String   NUMAProfilerEntryPoint;
+    public static String   NUMAProfilerExitPoint;
     private static boolean LogCompiledMethods = false;
 
     private static boolean offline = false;
@@ -116,8 +116,8 @@ public class CompilationBroker {
         addFieldOption("-XX:", "PrintCodeCacheMetrics", CompilationBroker.class, "Print code cache metrics (0 = disabled, 1 = summary, 2 = verbose).");
         addFieldOption("-XX:", "VMExtOpt", CompilationBroker.class, "Compile VM extensions with optimizing compiler (default: false");
         addFieldOption("-XX:", "AddCompiler", CompilationBroker.class, "Add a compiler, Name:Class");
-        addFieldOption("-XX:", "AllocationProfilerEntryPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should start");
-        addFieldOption("-XX:", "AllocationProfilerExitPoint", CompilationBroker.class, "Define the method upon whose invocation allocation profiling should end");
+        addFieldOption("-XX:", "NUMAProfilerEntryPoint", CompilationBroker.class, "Define the method upon whose invocation profiling should start");
+        addFieldOption("-XX:", "NUMAProfilerExitPoint", CompilationBroker.class, "Define the method upon whose invocation profiling should end");
         addFieldOption("-XX:", "LogCompiledMethods", CompilationBroker.class, "Log the names of compiled methods (default: false)");
         addFieldOption("-XX:", "BackgroundCompilation", CompilationBroker.class, "Enable background compilation (default: false)");
     }
@@ -500,20 +500,20 @@ public class CompilationBroker {
                     // TODO: we don't ever want to be waiting on a compilation
                     return compilation.get();
                 }
-            } catch (Throwable t) {
+            } catch (CiBailout bailout) {
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
                     Log.printCurrentThread(false);
-                    Log.print(": Compilation of " + cma + " by " + compilation.compiler + " failed");
-                    t.printStackTrace(Log.out);
+                    Log.println(": Compilation of " + cma + " by " + compilation.compiler + " failed with:");
+                    bailout.printStackTrace(Log.out);
                     Log.unlock(lockDisabledSafepoints);
                 }
                 if (failFast) {
-                    throw t;
+                    throw bailout;
                 }
                 if (!FailOverCompilation || retryRun || (baselineCompiler == null) || (isHosted() && compilation.compiler == optimizingCompiler)) {
                     // This is the final failure: no other compilers available or failover is disabled
-                    throw FatalError.unexpected("Compilation of " + cma + " by " + compilation.compiler + " failed (final attempt)", t);
+                    throw FatalError.unexpected("Compilation of " + cma + " by " + compilation.compiler + " failed (final attempt)", bailout);
                 }
                 // cannot retry if specific compilation nature is specified so fall back to previous compilations if
                 // available, else throw an exception
@@ -523,7 +523,7 @@ public class CompilationBroker {
                         return compilation.prevCompilations.currentTargetMethod(nature);
                     } else {
                         throw FatalError.unexpected("Cannot retry compilation of " + cma
-                                + " because a specific compilation nature is specified (" + nature + ")", t);
+                                + " because a specific compilation nature is specified (" + nature + ")", bailout);
                     }
                 }
                 retryRun = true;
@@ -533,6 +533,8 @@ public class CompilationBroker {
                     Log.println(": Retrying with " + selectRetryCompiler(cma, nature, compilation.compiler) + "...");
                     Log.unlock(lockDisabledSafepoints);
                 }
+            } catch (Throwable t) {
+                throw FatalError.unexpected("Compilation of " + cma + " by " + compilation.compiler + " failed", t);
             }
         }
     }

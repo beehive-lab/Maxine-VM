@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -79,5 +79,17 @@ public class Intrinsics {
      */
     @INTRINSIC(IFLATCHBITREAD)
     public static native boolean readLatchBit(@INTRINSIC.Constant int offset, @INTRINSIC.Constant int bit);
+
+    /**
+     * @see MaxineIntrinsicIDs#GET_TICKS
+     */
+    @INTRINSIC(GET_TICKS)
+    public static native long getTicks();
+
+    /**
+     * @see MaxineIntrinsicIDs#GET_CPU_ID
+     */
+    @INTRINSIC(GET_CPU_ID)
+    public static native int getCpuID();
 
 }

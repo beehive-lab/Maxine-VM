@@ -112,6 +112,7 @@ public abstract class Adapter extends TargetMethod {
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, 0, code.length);
         Code.allocate(targetBundleLayout, this);
         setData(null, null, code);
+        maybeCleanCache();
         setSafepoints(new Safepoints(Safepoints.make(Safepoints.safepointPosForCall(callPos, callSize), callPos, INDIRECT_CALL)), TargetMethod.NO_DIRECT_CALLEES);
     }
 

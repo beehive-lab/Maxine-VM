@@ -32,6 +32,7 @@ import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.aarch64.*;
 import com.oracle.max.vm.tests.crossisa.aarch64.asm.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -168,6 +169,7 @@ public class Aarch64JTTT1XTest {
 
             }
             if (!initialised) {
+                Platform.set(Platform.parse("linux-aarch64"));
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);

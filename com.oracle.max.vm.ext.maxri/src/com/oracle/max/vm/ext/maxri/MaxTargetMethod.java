@@ -148,16 +148,10 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
 
         debugInfo = new DebugInfo(debugInfos, this);
 
-        if (!isHosted()) {
-            if (install) {
-                linkDirectCalls();
-                if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64()) {
-                    ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
-                }
-            } else {
-                // the displacement between a call site in the heap and a code cache location may not fit in the offset
-                // operand of a call
-            }
+        if (!isHosted() && install) {
+            linkDirectCalls();
+            // Perform cache maintenance after linking calls to ensure visibility of fixed call-sites.
+            maybeCleanCache();
         }
     }
 
@@ -290,10 +284,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 ARMTargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
         } else if (platform().isa == ISA.Aarch64) {
-            Aarch64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
-            if (vm().compilationBroker.needsAdapters()) {
-                Aarch64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
-            }
+            // Aarch64 entry points are patched in one pass to avoid overlapping long range call-site patches.
+            Aarch64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.in(tm));
         } else if (platform().isa == ISA.RISCV64) {
             RISCV64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             if (vm().compilationBroker.needsAdapters()) {
@@ -753,7 +745,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     @NEVER_INLINE
     public static void unwindToCalleeEpilogue(CodePointer catchAddress, Pointer stackPointer, TargetMethod lastJavaCallee) {
         // Overwrite return address of callee with catch address
-        final int slotSize = target().arch.isAarch64() ? JVMSFrameLayout.JVMS_SLOT_SIZE : Word.size();
+        final int slotSize = target().arch.isAarch64() || target().arch.isRISCV64() ? JVMSFrameLayout.JVMS_SLOT_SIZE : Word.size();
         final Pointer returnAddressPointer = stackPointer.minus(slotSize);
         returnAddressPointer.setWord(catchAddress.toAddress());
 

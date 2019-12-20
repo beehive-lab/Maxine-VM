@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -46,11 +46,11 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.profilers.tracing.numa.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.profilers.allocation.Profiler;
 
 /**
  * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time.
@@ -71,7 +71,7 @@ public final class MaxineVM {
 
     public static final String NAME = "Maxine Virtual Machine";
     public static final int MAJOR_VERSION = 2;
-    public static final int MINOR_VERSION = 8;
+    public static final int MINOR_VERSION = 9;
     public static final int PATCH_VERSION = 0;
     public static final String VERSION_STRING = Integer.toString(MAJOR_VERSION) + "." + Integer.toString(MINOR_VERSION) + "." + Integer.toString(PATCH_VERSION);
     public static final String HOME_URL = "https://github.com/beehive-lab/Maxine-VM";
@@ -122,38 +122,18 @@ public final class MaxineVM {
     private static long startupTimeNano;
 
     /**
-     * The Dynamic Profiler object. It's initialized during Java Run Scheme initialization (if it's needed).
+     * The Dynamic NUMAProfiler object. It's initialized during Java Run Scheme initialization (if it's needed).
      */
-    public static Profiler allocationProfiler;
-
-    public static boolean isAllocationProfilerInitialized = false;
+    public static NUMAProfiler numaProfiler;
 
     /**
-     * This method is used to guard object allocation code sections.
-     *
-     * An object will be profiled only if:
-     *  1) MaxineVM is Running
-     *  2) -XX:+AllocationProfilerEntryPoint is used
-     *  3) The profiler has been initialized (otherwise means that the VM is not up and running yet => profiling is pointless)
-     *  4) The profiler has been signalled by the compiler to profile that object (ProfilerTLA = 1)
-     *
-     *  OR
-     *
-     *  the -XX:ProfileAll option has been used
-     *
-     *  In any case we ignore the warmup phase of the application (see {@link Profiler#warmupFinished}).
-     *
-     * @return true if all the above conditions are true.
+     * The {@link #useNUMAProfiler} static variable is a flag which takes its value from the {@link BootImageGenerator#useNumaProfiler}
+     * Option during {@link BootImageGenerator}. If set to true then it allows MaxineVM to inject the NUMA Profiler
+     * calls into the precompiled C1X Snippets for New Object Allocation (buildTLABAllocate, buildTLABAllocateArray),
+     * Object Write (buildPutFieldTemplate, buildArrayStore) and Object Read (buildGetFieldTemplate, buildArrayLoad).
      */
-    public static boolean profileThatObject() {
-        if (isAllocationProfilerInitialized) {
-            assert isRunning() && CompilationBroker.AllocationProfilerEntryPoint != null :
-                    "The Allocation Profiler should only be initialized when the VM is running and -XX:+AllocationProfilerEntryPoint is used";
-            int profilerTLA = VmThreadLocal.PROFILER_TLA.load(VmThread.currentTLA()).toInt();
-            return (profilerTLA == 1 || Profiler.profileAll()) && Profiler.warmupFinished();
-        }
-        return false;
-    }
+    @CONSTANT
+    public static boolean useNUMAProfiler;
 
     /**
      * Allows the Inspector access to the thread locals block for the primordial thread.
@@ -570,6 +550,28 @@ public final class MaxineVM {
     public static void registerCriticalMethod(CriticalMethod criticalEntryPoint) {
         registerImageMethod(criticalEntryPoint.classMethodActor);
     }
+
+    /**
+     * Presently this function calls the Gnu __builtin___clear_cache function.
+     * From the documentation for this builtin function:
+     *      "This function is used to flush the processor’s instruction cache for the region of memory between
+     *      begin inclusive and end exclusive."
+     *      
+     * In order to ensure the instruction at the upper bound of the address range is cleaned from the cache
+     * it is necessary to include it's size in the length parameter. On ARMv7 and ARMv8 that is 4bytes (we don't support Thumb)
+     * so for example to clean 2 instructions from the address at start the length parameter should be +8 bytes.
+     * 
+     * @param start the address of the first modified instruction
+     * @param length the number of instructions * sizeof one instruction
+     */
+    @C_FUNCTION
+    public static native void maxine_cache_flush(Address start, int length);
+
+    /**
+     * Executes a membarrier(2) system call on Linux systems.
+     */
+    @C_FUNCTION
+    public static native void syscall_membarrier();
 
     @C_FUNCTION
     public static native long arithmeticldiv(long x, long y);

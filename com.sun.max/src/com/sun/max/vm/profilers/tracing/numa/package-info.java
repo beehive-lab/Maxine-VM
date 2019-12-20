@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -18,6 +18,6 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 /**
- * Maxine Dynamic Object Allocation Profiler
+ * Maxine NUMA-aware Memory Profiler
  */
-package com.sun.max.vm.profilers.allocation;
+package com.sun.max.vm.profilers.tracing.numa;

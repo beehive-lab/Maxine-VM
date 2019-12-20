@@ -1,0 +1,224 @@
+name: Dockerized CI
+
+on: push
+
+jobs:
+  x86:
+    name: x86 build and test
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Check style
+      run: $MX checkstyle
+    - name: Build
+      run: $MX build
+    - name: mx jttgen && canonicalizeprojects
+      run: |
+        $MX jttgen
+        $MX canonicalizeprojects
+    - name: x86-image
+      run: $MX -J-ea image
+    - name: Gate
+      run: $MX -J-Xmx1g gate -maxvm-args=-Xmx1g -refvm-args=-Xmx1g
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: gate-test-results-docker
+        path: maxine-tester
+  aarch64:
+    name: AArch64 cross build and test
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: AArch64-cross-test
+      run: |
+        $MX --J @"-ea" testme -s=t -junit-test-timeout=1800 -tests=junit:aarch64.asm+Aarch64T1XTest+Aarch64T1XpTest+Aarch64JTT
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: aarch64-test-results-docker
+        path: maxine-tester
+    - name: AArch64-cross-image
+      run: $MX image -build=DEBUG -platform linux-aarch64 -isa Aarch64
+  armv7:
+    name: ARMv7 cross build and test
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: ARMv7-cross-test
+      run: |
+        $MX --J @"-ea" testme -s=t -junit-test-timeout=1800 -tests=junit:armv7.asm+ARMV7T1XTest+ARMV7JTT
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: armv7-test-results-docker
+        path: maxine-tester
+    - name: ARMv7-cross-image
+      run: $MX image -build=DEBUG -platform linux-arm -isa ARMV7
+  riscv:
+    name: RISC-V cross build and test
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: RISC-V-cross-test
+      run: |
+        $MX --J @"-ea" testme -s=t -junit-test-timeout=1800 -tests=junit:riscv64.asm+max.asm.target.riscv+riscv64.t1x+riscv64.jtt
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: riscv64-test-results-docker
+        path: maxine-tester
+    - name: RISCV64-cross-image
+      run: $MX image -build=DEBUG -platform linux-riscv64 -isa RISCV64
+  dacapos:
+    name: Run DaCapo benchmark-suite
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: x86-image
+      run: $MX -J-ea image
+    - name: Benchmark
+      run: |
+        wget -nv https://sourceforge.net/projects/dacapobench/files/9.12-bach-MR1/dacapo-9.12-MR1-bach.jar
+        $MX testme -insitu -dacapoBach=`pwd`/dacapo-9.12-MR1-bach.jar -tests=dacapobach
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: dacapo-test-results-docker
+        path: maxine-tester/insitu
+  specjvm2008:
+    name: Run SPECjvm2008 benchmark-suite
+    runs-on: ubuntu-18.04
+    container:
+      image: beehivelab/maxine-dev:latest
+      env:
+        MAXINE_HOME: maxine
+        MX: "../mx/mx --no-download-progress --suite=maxine"
+        MX_GIT_CACHE: refcache
+      volumes:
+        - /github/home/.mx:/github/home/.mx
+        - /github/home/maxine-src:/root/maxine-src
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        path: maxine
+        fetch-depth: 1
+        submodules: true
+    - uses: actions/checkout@v1
+      with:
+        repository: graalvm/mx.git
+        ref: 5.194.3
+        path: mx
+    - name: Build
+      run: $MX build
+    - name: x86-image
+      run: $MX -J-ea image
+    - name: Get and install SPECjvm2008
+      run: |
+        wget -nv http://spec.cs.miami.edu/downloads/osg/java/SPECjvm2008_1_01_setup.jar
+        java -jar SPECjvm2008_1_01_setup.jar -i silent -DUSER_INSTALL_DIR=`pwd`/SPECjvm2008
+    - name: Benchmark
+      run: $MX testme -insitu -specjvm2008=`pwd`/SPECjvm2008/SPECjvm2008.jar -tests=specjvm2008
+    - uses: actions/upload-artifact@master
+      if: failure()
+      with:
+        name: specjvm2008-test-results-docker
+        path: maxine-tester/insitu

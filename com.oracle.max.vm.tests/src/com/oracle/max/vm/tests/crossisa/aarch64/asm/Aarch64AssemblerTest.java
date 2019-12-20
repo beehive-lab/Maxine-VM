@@ -91,25 +91,21 @@ public class Aarch64AssemblerTest {
         tester.setExpectedValue(r0, 0);
     }
 
+    @Test
+    public void adr_adrp() throws Exception {
+        masm.adr(r0, 0); // r0 holds the PC
+        masm.adrp(r1, 0);
+        masm.adrp(r2, 4096);
+        masm.adrp(r3, 8192);
 
-//    @Test
-//    public void adr_adrp() throws Exception {
-//        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
-//
-//        masm.adrp(Aarch64.r0, 0);
-//        masm.adrp(Aarch64.r1, 4096);
-//        masm.adrp(Aarch64.r2, 8192);
-//        masm.adr(Aarch64.r3, 0);
-//        masm.mov(Aarch64.r4, 0xfffL);
-//
-//        long[] reg = generate(expectedValues, testValues, bitmasks,
-//                masm.codeBuffer);
-//
-//        for (int i = 0; i < 5; i++) {
-//            System.out.println("REG-" + i + ": " + reg[i]);
-//        }
-//        assert (reg[3] & ~reg[4]) == reg[0];
-//    }
+        masm.sub(64, r1, r1, r0);
+        masm.sub(64, r2, r2, r0);
+        masm.sub(64, r3, r3, r0);
+
+        tester.setExpectedValue(r1, 0);
+        tester.setExpectedValue(r2, 4096 * 4096);
+        tester.setExpectedValue(r3, 8192 * 4096);
+    }
 
     @Test
     public void mov64() throws Exception {

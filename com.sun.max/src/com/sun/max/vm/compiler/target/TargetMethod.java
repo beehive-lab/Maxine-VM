@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -23,6 +23,7 @@ package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.VMOptions.addFieldOption;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 import java.io.*;
@@ -95,6 +96,19 @@ public abstract class TargetMethod extends MemoryRegion {
         boolean doCodePos(ClassMethodActor method, int bci);
     }
 
+    static boolean UseSystemMembarrier = true;
+
+    static boolean UseNonMandatedSystemMembarrier = true;
+
+    static {
+        addFieldOption("-XX:", "UseSystemMembarrier", TargetMethod.class, "Use the membarrier system call after cache maintenance"
+                + " operations to guarantee instruction stream synchronisation with concurrent threads (Linux).");
+
+        addFieldOption("-XX:", "UseNonMandatedSystemMembarrier", TargetMethod.class, "Use the membarrier system call after cache"
+                + " maintenance operations to guarantee instruction stream synchronisation with concurrent threads (Linux)"
+                + " in cases that aren't mandated by the architecture e.g. patching the address operand in a direct branch (Aarch64).");
+    }
+
     /**
      * The (bytecode) method from which this target method was compiled. This will be {@code null} iff this target
      * method is a {@link Stub} or and {@link Adapter}.
@@ -151,6 +165,16 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     @INSPECTED
     protected Address oldStart = Address.zero();
+
+    /**
+     * Array of call trampolines for architectures that require them.
+     */
+    private byte[] trampolines;
+
+    /**
+     * The address of the start of the trampoline array.
+     */
+    private Pointer trampolineStart = Pointer.zero();
 
     /**
      * If non-null, then this method has been invalidated. Set only by deoptimization operation at safepoint.
@@ -425,6 +449,20 @@ public abstract class TargetMethod extends MemoryRegion {
         return (code == null) ? 0 : code.length;
     }
 
+    @INLINE
+    public final byte[] trampolines() {
+        return this.trampolines;
+    }
+
+    @INLINE
+    public final CodePointer trampolineStart() {
+        return CodePointer.from(trampolineStart);
+    }
+
+    public final int trampolinesLength() {
+        return (trampolines == null) ? 0 : trampolines.length;
+    }
+
     /**
      * Gets the address of the first instruction in this target method's {@linkplain #code() compiled code array} in the
      * form of an eviction-safe {@link CodePointer}.
@@ -432,6 +470,11 @@ public abstract class TargetMethod extends MemoryRegion {
     @INLINE
     public final CodePointer codeStart() {
         return CodePointer.from(codeStart);
+    }
+
+    @HOSTED_ONLY
+    public final void setTrampolineStart(Pointer trampolineStart) {
+        this.trampolineStart = trampolineStart;
     }
 
     /**
@@ -491,11 +534,13 @@ public abstract class TargetMethod extends MemoryRegion {
      * @param scalarLiterals the scalar data referenced from {@code code}
      * @param referenceLiterals the reference data referenced from {@code code}
      */
-    public final void setCodeArrays(byte[] code, Pointer codeStart, byte[] scalarLiterals, Object[] referenceLiterals) {
+    public final void setCodeArrays(byte[] code, Pointer codeStart, byte[] trampolines, Pointer trampolineStart, byte[] scalarLiterals, Object[] referenceLiterals) {
         this.scalarLiterals = scalarLiterals;
         this.referenceLiterals = referenceLiterals;
         this.code = code;
         this.codeStart = codeStart;
+        this.trampolines = trampolines;
+        this.trampolineStart = trampolineStart;
     }
 
     protected final void setSafepoints(Safepoints safepoints, Object[] directCallees) {
@@ -522,7 +567,7 @@ public abstract class TargetMethod extends MemoryRegion {
         Literals literals = new Literals(ciTargetMethod.dataReferences);
 
         // Allocate and set the code and data buffer
-        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(literals.scalars.length, literals.objects.length, ciTargetMethod.targetCodeSize());
+        final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(literals.scalars.length, literals.objects.length, ciTargetMethod.targetCodeSize(), ciTargetMethod.trampolinesSize());
         if (install) {
             Code.allocate(targetBundleLayout, this);
         } else {
@@ -538,7 +583,7 @@ public abstract class TargetMethod extends MemoryRegion {
             }
         }
 
-        setData(literals.scalars, literals.objects, ciTargetMethod.targetCode());
+        setData(literals.scalars, literals.objects, ciTargetMethod.targetCode(), ciTargetMethod.trampolines());
 
         // Patch relative instructions in the code buffer
         assert lifespan() == Lifespan.LONG : "code may move: must protect direct code pointers";
@@ -829,9 +874,9 @@ public abstract class TargetMethod extends MemoryRegion {
      *            offsets
      * @param codeBuffer the buffer containing the compiled code. The compiled code is in the first
      *            {@code this.code.length} bytes of {@code codeBuffer}.
+     * @param trampolines the trampoline array for the current compiled target method.
      */
-    protected final void setData(byte[] scalarLiterals, Object[] objectLiterals, byte[] codeBuffer) {
-
+    protected final void setData(byte[] scalarLiterals, Object[] objectLiterals, byte[] codeBuffer, byte[] trampolines) {
         assert !codeStart.isZero() : "Must call setCodeArrays() first";
 
         // Copy scalar literals
@@ -847,19 +892,36 @@ public abstract class TargetMethod extends MemoryRegion {
 
         // now copy the code
         System.arraycopy(codeBuffer, 0, this.code, 0, this.code.length);
-        cleanCache();
+
+        // Check whether the target method uses trampolines. For instance a
+        // method might not have any callees and hence trampolines set.
+        if (trampolines != null && trampolines.length > 0) {
+            System.arraycopy(trampolines, 0, this.trampolines, 0, this.trampolinesLength());
+        }
     }
 
-    public void cleanCache() {
-        if (!MaxineVM.isHosted() && (platform().target.arch.isARM() || platform().target.arch.isAarch64())) {
-            int codePreAmble = 0;
-            if (scalarLiterals != null) {
-                codePreAmble = scalarLiterals.length;
+    protected final void setData(byte[] scalarLiterals, Object[] objectLiterals, byte[] codeBuffer) {
+        setData(scalarLiterals, objectLiterals, codeBuffer, null);
+    }
+
+    /**
+     * For architectures with weak or relaxed memory models.
+     * Concrete sub-classes of TargetMethod should call maybeCleanCache() after installing code and fixing
+     * up any call-sites that need to be patched.
+     */
+    public void maybeCleanCache() {
+        if (!MaxineVM.isHosted() && (platform().target.arch.isARM() || platform().target.arch.isAarch64() || platform().target.arch.isRISCV64())) {
+            long longSize = size().toLong();
+            int size = (int) longSize;
+            assert size == longSize : "Integer overflow";
+            MaxineVM.maxine_cache_flush(start, size);
+            /*
+             * Aarch64 requires an ISB instruction is executed on concurrently executing CPUs to discard
+             * speculatively pre-fetched addresses from buffers. See B2.2.5 ARM ARM (issue E.a).
+             */
+            if (UseSystemMembarrier && platform().target.arch.isAarch64()) {
+                MaxineVM.syscall_membarrier();
             }
-            if (referenceLiterals != null) {
-                codePreAmble = codePreAmble + (referenceLiterals.length * 4);
-            }
-            ARMTargetMethodUtil.maxine_cache_flush(CodePointer.from(codeStart.minus(codePreAmble)).toPointer(), codeLength() + codePreAmble);
         }
     }
 
@@ -1134,7 +1196,7 @@ public abstract class TargetMethod extends MemoryRegion {
 
     /**
      * Fixup a call site in the method. This differs from the above in that the call site is updated before any thread
-     * can see it. Thus there isn't any concurrency between modifying the call site and threads trying to run it.
+     * can execute it. Thus there isn't any concurrency between modifying the call site and threads trying to run it.
      *
      * @param callOffset offset to a call site relative to the start of the code of this target method
      * @param callEntryPoint entry point the call site should call after fixup
@@ -1393,6 +1455,21 @@ public abstract class TargetMethod extends MemoryRegion {
         oldStart = Address.zero();
     }
 
+    /**
+     * Query the UseSystemMembarrier runtime option.
+     * @return
+     */
+    public static final boolean useSystemMembarrier() {
+        return UseSystemMembarrier;
+    }
+
+    /**
+     * Query the UseNonMandatedSystemMembarrier runtime option.
+     * @return
+     */
+    public static final boolean useNonMandatedSystemMembarrier() {
+        return UseNonMandatedSystemMembarrier;
+    }
     /**
      * Determines if this method was marked to survive {@linkplain CodeEviction code eviction}.
      */

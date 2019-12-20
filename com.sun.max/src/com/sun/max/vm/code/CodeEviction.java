@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -326,13 +326,25 @@ public final class CodeEviction extends VmOperation {
                 assert invalidateCode(targetMethod.code()); // this invalidates the old code as targetMethod's pointers have not been changed yet!
                 targetMethod.setOldStart(targetMethod.start());
                 targetMethod.setStart(to);
+                byte[] trampolines = null;
+                Pointer trampolineStart = Pointer.zero();
                 final byte[] code = (byte[]) relocate(from, to, targetMethod.code());
                 final Pointer codeStart = to.plus(targetMethod.codeStart().toPointer().minus(from));
+
+                if (targetMethod.trampolines() != null) {
+                    trampolines = (byte[]) relocate(from, to, targetMethod.trampolines());
+                    trampolineStart = to.plus(targetMethod.trampolineStart().toPointer().minus(from));
+                }
                 final byte[] scalarLiterals = targetMethod.scalarLiterals() == null ?
                     null : (byte[]) relocate(from, to, targetMethod.scalarLiterals());
                 final Object[] referenceLiterals = targetMethod.referenceLiterals() == null ?
                     null : (Object[]) relocate(from, to, targetMethod.referenceLiterals());
-                targetMethod.setCodeArrays(code, codeStart, scalarLiterals, referenceLiterals);
+                /* Two calls to cleanCache() are required. The first ensures that old instructions are cleaned from
+                 * caches and prefetch buffers. The second ensures that the effects of any prefetching from the addresses
+                 * that the code is moved to are discarded. */
+                targetMethod.maybeCleanCache();
+                targetMethod.setCodeArrays(code, codeStart, trampolines, trampolineStart, scalarLiterals, referenceLiterals);
+                targetMethod.maybeCleanCache();
                 cr.setMark(cr.mark().plus(size));
                 CodeManager.runtimeBaselineCodeRegion.add(targetMethod);
                 targetMethod.survivedEviction();

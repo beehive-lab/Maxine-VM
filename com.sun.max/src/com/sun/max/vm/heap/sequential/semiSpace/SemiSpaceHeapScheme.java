@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2016, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -21,7 +21,6 @@
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
-import static com.sun.max.vm.MaxineVM.allocationProfiler;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.heap.Heap.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
@@ -1173,6 +1172,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         ImmortalHeap.visitCells(visitor);
         Heap.bootHeapRegion.visitCells(visitor);
         visitCells(visitor);
+    }
+
+    @Override
+    public Address getHeapStartAddress() {
+        return toSpace.start();
     }
 
     public boolean pin(Object object) {

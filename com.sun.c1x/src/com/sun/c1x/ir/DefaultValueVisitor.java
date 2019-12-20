@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -105,4 +105,6 @@ public class DefaultValueVisitor extends ValueVisitor {
     @Override public void visitUnsafePutRaw(UnsafePutRaw i) { visit(i); }
     @Override public void visitUnsignedCompareOp(UnsignedCompareOp i) { visit(i); }
     @Override public void visitIfBit(IfBit i) { visit(i); }
+    @Override public void visitGetTicks(GetTicks i) { visit(i); }
+    @Override public void visitGetCpuID(GetCpuID i) { visit(i); }
 }

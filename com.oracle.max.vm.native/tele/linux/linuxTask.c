@@ -46,6 +46,9 @@ typedef struct user_regs user_regs_structure;
 #elif defined __aarch64__
 typedef struct user_fpsimd_struct user_fpregs_structure;
 typedef struct user_regs_struct user_regs_structure;
+#elif defined(__riscv64__) || defined(riscv64) || defined(RISCV64)
+typedef struct user_fpsimd_struct user_fpregs_structure;
+typedef struct user_regs_struct user_regs_structure;
 #else
 typedef struct user_fpregs_struct user_fpregs_structure;
 typedef struct user_regs_struct user_regs_structure;
@@ -932,6 +935,8 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSetInstructionPointer(JNIEnv *
     registers.uregs[13] = instructionPointer;
 #elif defined __aarch64__
     registers.pc = instructionPointer;
+#elif defined(__riscv64__) || defined(riscv64) || defined(RISCV64)
+    registers.pc = instructionPointer;
 #else
     registers.rip = instructionPointer;
 #endif
@@ -1023,7 +1028,7 @@ Java_com_sun_max_tele_debug_linux_LinuxDumpThreadAccess_taskRegisters(JNIEnv *en
                 jbyteArray stateRegisters, jint stateRegistersLength) {
     prstatus_t * prstatus = (prstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer_status));
     elf_fpregset_t *fpregset = (elf_fpregset_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer_fpreg));
-    return copyRegisters(env, class, (user_regs_structure *) &prstatus->pr_reg[0], fpregset,
+    return copyRegisters(env, class, (user_regs_structure *) &prstatus->pr_reg[0], (user_fpregs_structure *) &fpregset,
                     integerRegisters, integerRegistersLength,
                     floatingPointRegisters, floatingPointRegistersLength,
                     stateRegisters, stateRegistersLength);

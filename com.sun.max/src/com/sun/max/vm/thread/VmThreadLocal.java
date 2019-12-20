@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -40,6 +40,7 @@ import com.sun.max.vm.heap.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -305,11 +306,26 @@ public class VmThreadLocal implements FormatWithToString {
         = new VmThreadLocal("SUSPEND", false, "Bitset for thread suspension", Nature.Single);
 
     /**
-     * The {@linkplain VmThread#currentTLA() current} thread local storage when profiler is
-     * {@linkplain SafepointPoll#enable() enabled}.
+     * Used by {@link com.sun.max.vm.profilers.tracing.numa.NUMAProfiler} to determine the state of the profiling.
+     * See {@link com.sun.max.vm.profilers.tracing.numa.NUMAProfiler.PROFILING_STATE} for the possible values it can
+     * take.
      */
-    public static final VmThreadLocal PROFILER_TLA
-        = new VmThreadLocal("PROFILER_TLA", false, "points to TLA used for profiler on/off", Nature.Single);
+    public static final VmThreadLocal PROFILER_STATE
+        = new VmThreadLocal("PROFILER_STATE", false, "points to TLA used for profiler on/off", Nature.Single);
+
+    /**
+     * This VmThreadLocal array stores all counters for each object access kind (remote/local, array/tuple, read/write).
+     */
+    public static VmThreadLocal[] profilingCounters;
+
+    static {
+        if (MaxineVM.useNUMAProfiler) {
+            profilingCounters = new VmThreadLocal[NUMAProfiler.objectAccessCounterNames.length];
+            for (int i = 0; i < profilingCounters.length; i++) {
+                profilingCounters[i] = new VmThreadLocal(NUMAProfiler.objectAccessCounterNames[i], false, "counts object accesses", Nature.Single);
+            }
+        }
+    }
 
     private static VmThreadLocal[] valuesNeedingInitialization;
 

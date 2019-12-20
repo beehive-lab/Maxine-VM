@@ -186,7 +186,7 @@ public class Stubs {
         }
         final int index = tmpindex;
         assert stub.is(VirtualTrampoline) ? (virtualTrampolines.size() > index && virtualTrampolines.get(index) == stub)
-                        : (interfaceTrampolines.size() > index && interfaceTrampolines.get(index) == stub);
+                : (interfaceTrampolines.size() > index && interfaceTrampolines.get(index) == stub);
         return index;
     }
 
@@ -547,9 +547,8 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             final int frameToCSA = csl.frameOffsetToCSA;
 
-            for (int i = 0; i < prologueSize; ++i) {
-                asm.nop();
-            }
+            asm.nop(prologueSize / Aarch64Assembler.INSTRUCTION_SIZE);
+
             asm.push(Aarch64.linkRegister);
 
             // now allocate the frame for this method
@@ -606,7 +605,7 @@ public class Stubs {
             asm.save(csl, frameToCSA);
 
             CiValue[] args = resolveInvokeBasicCallArgs;
-            asm.ldr(64, args[1].asRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameSize));
+            asm.ldru(64, args[1].asRegister(), RISCV64Address.createImmediateAddress(RISCV64.sp, frameSize));
 
             asm.alignForPatchableDirectCall(asm.codeBuffer.position());
             int callPos = asm.codeBuffer.position();
@@ -625,7 +624,7 @@ public class Stubs {
             // pop this method's frame
             asm.addi(RISCV64.sp, RISCV64.sp, frameSize);
             // restore linkRegister
-            asm.pop(64, RISCV64.ra);
+            asm.pop(64, RISCV64.ra, true);
 
             // jump to the resolved method
             asm.jalr(RISCV64.zero, registerConfig.getScratchRegister1(), 0);
@@ -769,9 +768,7 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             final int frameToCSA = csl.frameOffsetToCSA;
 
-            for (int i = 0; i < prologueSize; ++i) {
-                asm.nop();
-            }
+            asm.nop(prologueSize / Aarch64Assembler.INSTRUCTION_SIZE);
             asm.push(Aarch64.linkRegister);
             // now allocate the frame for this method
             asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
@@ -818,7 +815,7 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
-            return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
+            return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset, asm.trampolines(1));
         } else if (platform().isa == ISA.RISCV64) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), registerConfig);
@@ -838,11 +835,10 @@ public class Stubs {
             if (isHosted() && index == 0) {
                 indexMovInstrPos = asm.codeBuffer.position();
             }
+            asm.mov(registerConfig.getScratchRegister(), index);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
-
-            asm.mov(registerConfig.getScratchRegister(), index);
 
             CiValue[] args = isInterface ? resolveInterfaceCallArgs : resolveVirtualCallArgs;
 
@@ -852,7 +848,7 @@ public class Stubs {
             asm.mov(args[1].asRegister(), index);
 
             // load the return address into the third arg register
-            asm.ldr(64, args[2].asRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameSize));
+            asm.ldru(64, args[2].asRegister(), RISCV64Address.createImmediateAddress(RISCV64.sp, frameSize));
 
             asm.alignForPatchableDirectCall(asm.codeBuffer.position());
             int callPos = asm.codeBuffer.position();
@@ -869,7 +865,7 @@ public class Stubs {
             asm.restore(csl, frameToCSA);
 
             asm.addi(RISCV64.sp, RISCV64.sp, frameSize);
-            asm.pop(64, RISCV64.ra);
+            asm.pop(64, RISCV64.ra, true);
 
             // Jump to the entry point of the resolved method
             asm.jalr(RISCV64.zero, registerConfig.getScratchRegister1(), 0);
@@ -1065,9 +1061,7 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
 
-            for (int i = 0; i < prologueSize; ++i) {
-                asm.nop();
-            }
+            asm.nop(prologueSize / Aarch64Assembler.INSTRUCTION_SIZE);
 
             // compute the static trampoline call site
             CiRegister callSite = registerConfig.getScratchRegister();
@@ -1124,9 +1118,7 @@ public class Stubs {
                 asm.nop();
             }
 
-            // compute the static trampoline call site. Since the call to the static trampoline is un-patched the
-            // callSite will be the last command executed before jumping in the trampoline. As a result, we can get the
-            // callsite by subtracting the size of a single instruction from the link register.
+            // compute the static trampoline call site
             CiRegister callSite = registerConfig.getScratchRegister();
             asm.subi(callSite, RISCV64.ra, RISCV64MacroAssembler.RIP_CALL_INSTRUCTION_SIZE);
 
@@ -1156,10 +1148,10 @@ public class Stubs {
             asm.restore(csl, frameToCSA);
 
             // undo the frame
-            asm.add(RISCV64.sp, RISCV64.sp, frameSize);
+            asm.add(64, RISCV64.sp, RISCV64.sp, frameSize);
 
             // Pop the link register
-            asm.pop(64, RISCV64.ra);
+            asm.pop(64, RISCV64.ra, true);
 
             // re-execute the static call. Now that the call has been patched we need to return to the beginning of the
             // patched call site, thus we need to subtract from the link register the size of the segment preparing the call
@@ -1388,23 +1380,23 @@ public class Stubs {
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
-            asm.ldr(64, registerConfig.getScratchRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_LATCH_REGISTER.offset));
-            asm.str(64, registerConfig.getScratchRegister(), RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, frameToCSA + csl.offsetOf(latch)));
+            asm.ldru(64, registerConfig.getScratchRegister(), RISCV64Address.createImmediateAddress(latch, TRAP_LATCH_REGISTER.offset));
+            asm.str(64, registerConfig.getScratchRegister(), RISCV64Address.createImmediateAddress(RISCV64.sp, frameToCSA + csl.offsetOf(latch)));
 
             // write the return address pointer to the end of the frame
-            asm.ldr(64, registerConfig.getScratchRegister1(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_INSTRUCTION_POINTER.offset));
+            asm.ldru(64, registerConfig.getScratchRegister1(), RISCV64Address.createImmediateAddress(latch, TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), RISCV64.rsp, frameSize));
             asm.str(64, registerConfig.getScratchRegister1(), RISCV64Address.createBaseRegisterOnlyAddress(registerConfig.getScratchRegister()));
 
             // load the trap number from the thread locals into the first parameter register
-            asm.ldr(64, args[0].asRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_NUMBER.offset));
+            asm.ldru(64, args[0].asRegister(), RISCV64Address.createImmediateAddress(latch, TRAP_NUMBER.offset));
             // also save the trap number into the trap frame
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), RISCV64.rsp, frameToCSA + RISCV64TrapFrameAccess.TRAP_NUMBER_OFFSET));
             asm.str(64, args[0].asRegister(), RISCV64Address.createBaseRegisterOnlyAddress(registerConfig.getScratchRegister()));
             // load the trap frame pointer into the second parameter register
             asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), RISCV64.rsp, frameToCSA));
             // load the fault address from the thread locals into the third parameter register
-            asm.ldr(64, args[2].asRegister(), RISCV64Address.createUnscaledImmediateAddress(latch, TRAP_FAULT_ADDRESS.offset));
+            asm.ldru(64, args[2].asRegister(), RISCV64Address.createImmediateAddress(latch, TRAP_FAULT_ADDRESS.offset));
 
             asm.alignForPatchableDirectCall(asm.codeBuffer.position());
             int callPos = asm.codeBuffer.position();
@@ -1415,7 +1407,7 @@ public class Stubs {
 
             // now pop the flags register off the stack before returning
             asm.addi(RISCV64.sp, RISCV64.sp, frameSize - platform().target.stackAlignment);
-            asm.pop(64, registerConfig.getScratchRegister());
+            asm.pop(64, registerConfig.getScratchRegister(), true);
             asm.ret();
 
             byte[] code = asm.codeBuffer.close(true);
@@ -1657,6 +1649,9 @@ public class Stubs {
             RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
+            // TODO INFINITE LOOP
+            asm.jal(RISCV64.zero, 0);
+
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -1804,6 +1799,9 @@ public class Stubs {
             RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
+            // TODO INFINITE LOOP
+            asm.jal(RISCV64.zero, 0);
+
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -1874,7 +1872,7 @@ public class Stubs {
             patchAddr.writeInt(0, instruction);
             instruction = ARMV7Assembler.movtHelper(ConditionFlag.Always, ARMV7.r12, (disp >> 16) & 0xffff);
             patchAddr.writeInt(4, instruction);
-            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 8);
+            MaxineVM.maxine_cache_flush(patchAddr, 8);
         }
     }
 
@@ -1961,7 +1959,7 @@ public class Stubs {
                 }
             }
 
-            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 16);
+            MaxineVM.maxine_cache_flush(patchAddr, 16);
         }
     }
 
@@ -1998,36 +1996,50 @@ public class Stubs {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
             long disp = runtimeRoutine.address().toLong();
 
-            // first write nops to make sure previous patches have not left any slli/srli instructions
-            int nop = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x0, RISCV64.x0, 0);
-            for (int i = 0; i < 10; i++) {
-                patchAddr.writeInt(i * 4, nop);
+            // move disp >>> 32 in scratch1
+            int ldips32 = (int) (disp >>> 32);
+            int luiImmediate = ldips32;
+            if ((ldips32 & 0xFFF) >>> 11 != 0b0) {
+                luiImmediate = ldips32 - (ldips32 | 0xFFFFF000);
+            }
+            int instr = RISCV64MacroAssembler.loadUpperImmediateHelper(RISCV64.x29, luiImmediate);
+            patchAddr.writeInt(0, instr);
+
+            if (ldips32 > 0) {
+                // addiw(dst, dst, ldisp32);
+                instr = RISCV64MacroAssembler.addImmediateWordHelper(RISCV64.x29, RISCV64.x29, ldips32);
+            } else {
+                // addi(dst, dst, ldips32);
+                instr = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x29, RISCV64.x29, ldips32);
             }
 
-            // move disp >>> 32 in scratch1
-            int[] instructions = RISCV64MacroAssembler.mov32BitConstantHelper(RISCV64.x29, (int) (disp >>> 32));
-            for (int i = 0; i < instructions.length; i++) {
-                if (instructions[i] != 0) {
-                    patchAddr.writeInt(i * 4, instructions[i]);
-                }
-            }
+            patchAddr.writeInt(4, instr);
 
             int shiftLeftInstr = RISCV64MacroAssembler.shiftLeftLogicImmediateHelper(RISCV64.x29, RISCV64.x29, 32);
-            patchAddr.writeInt(16, shiftLeftInstr);
+            patchAddr.writeInt(8, shiftLeftInstr);
 
             // move disp & 0xFFFF in scratch
-            instructions = RISCV64MacroAssembler.mov32BitConstantHelper(RISCV64.x28, (int) disp);
-            for (int i = 0; i < instructions.length; i++) {
-                if (instructions[i] != 0) {
-                    patchAddr.writeInt(20 + i * 4, instructions[i]);
-                }
+            int rdips32 = (int) disp;
+            luiImmediate = rdips32;
+            if ((rdips32 & 0xFFF) >>> 11 != 0b0) {
+                luiImmediate = rdips32 - (rdips32 | 0xFFFFF000);
             }
+            instr = RISCV64MacroAssembler.loadUpperImmediateHelper(RISCV64.x28, luiImmediate);
+            patchAddr.writeInt(12, instr);
+
+            if (rdips32 > 0) {
+                // addiw(dst, dst, rdips32);
+                instr = RISCV64MacroAssembler.addImmediateWordHelper(RISCV64.x28, RISCV64.x28, rdips32);
+            } else {
+                // addi(dst, dst, rdips32);
+                instr = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x28, RISCV64.x28, rdips32);
+            }
+            patchAddr.writeInt(16, instr);
 
             int addInstr = RISCV64MacroAssembler.addSubInstructionHelper(RISCV64.x28, RISCV64.x28, RISCV64.x29, false);
-            patchAddr.writeInt(36, addInstr);
+            patchAddr.writeInt(20, addInstr);
 
-            // TODO is this also necessary for RISCV?
-            // ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 16);
+            MaxineVM.maxine_cache_flush(patchAddr, 24);
         }
     }
 
@@ -2303,6 +2315,9 @@ public class Stubs {
             RISCV64MacroAssembler asm = new RISCV64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
+            // TODO INFINITE LOOP
+            asm.jal(RISCV64.zero, 0);
+
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
             try {
@@ -2329,7 +2344,7 @@ public class Stubs {
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            asm.ldr(64, arg0, RISCV64Address.createUnscaledImmediateAddress(RISCV64.sp, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.ldru(64, arg0, RISCV64Address.createImmediateAddress(RISCV64.sp, DEOPT_RETURN_ADDRESS_OFFSET));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
@@ -2700,6 +2715,9 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             int cfo = frameSize + target().stackAlignment; // Caller frame offset
 
+            // TODO INFINITE LOOP
+            asm.jal(RISCV64.zero, 0);
+
             String runtimeRoutineName;
             if (kind == null) {
                 runtimeRoutineName = "deoptimizeAtSafepoint";
@@ -2736,7 +2754,7 @@ public class Stubs {
                 } else if (kind.isDouble()) {
                     asm.fldr(64, arg4, src);
                 } else {
-                    asm.ldr(64, arg4, src);
+                    asm.ldru(64, arg4, src);
                 }
             }
 
@@ -2744,7 +2762,7 @@ public class Stubs {
             CiRegister arg0 = args[0].asRegister();
             asm.mov(asm.scratchRegister, RISCV64.sp);
             asm.addi(asm.scratchRegister, asm.scratchRegister, cfo + DEOPT_RETURN_ADDRESS_OFFSET);
-            asm.ldr(64, arg0, RISCV64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.ldru(64, arg0, RISCV64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
@@ -2828,7 +2846,7 @@ public class Stubs {
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(),
-                            false).locations;
+                    false).locations;
 
             // Copy callee save area address into arg 0 (i.e. 'csa')
             CiRegister arg0 = args[0].asRegister();
@@ -2881,7 +2899,7 @@ public class Stubs {
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(),
-                            false).locations;
+                    false).locations;
 
             // Copy callee save area address into arg 0 (i.e. 'csa')
             CiRegister arg0 = args[0].asRegister();
@@ -2925,9 +2943,7 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
 
-            for (int i = 0; i < prologueSize; ++i) {
-                masm.nop();
-            }
+            masm.nop(prologueSize / Aarch64Assembler.INSTRUCTION_SIZE);
             masm.crashme();
 
             // now allocate the frame for this method
@@ -2979,6 +2995,10 @@ public class Stubs {
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
+
+            // TODO INFINITE LOOP
+            masm.jal(RISCV64.zero, 0);
+
 
             for (int i = 0; i < prologueSize; ++i) {
                 masm.nop();

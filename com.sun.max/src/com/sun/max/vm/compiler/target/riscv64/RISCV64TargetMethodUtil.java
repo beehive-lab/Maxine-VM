@@ -95,12 +95,11 @@ public final class RISCV64TargetMethodUtil {
         }
         int luiImm = RISCV64MacroAssembler.extractLuiImmediate(callSitePointer.readInt(8));
         int addiImm = RISCV64MacroAssembler.extractAddiImmediate(callSitePointer.readInt(12));
-        if ((addiImm & 0xFFF) >>> 11 == 0b0) {
-            displacement = luiImm << 12 | addiImm;
-        } else {
-            displacement = ((luiImm - 0b1) << 12) | addiImm;
+        if ((addiImm & 0xFFF) >>> 11 == 0b1) {
+            addiImm = addiImm | 0xFFFFF000;
         }
-        int addSubInstruction = callSitePointer.readInt(20);
+        displacement = (luiImm << 12) + addiImm;
+        int addSubInstruction = callSitePointer.readInt(16);
         if (!isAddInstruction(addSubInstruction)) {
             displacement = -displacement;
         }
@@ -130,16 +129,17 @@ public final class RISCV64TargetMethodUtil {
             if (instruction == 0) { // fill in with asm.nop() if mov32BitConstant did not need those instructions
                 instruction = addImmediateHelper(RISCV64.zero, RISCV64.zero, 0);
             }
-            patchSite.writeInt(offset + 8 + i * INSTRUCTION_SIZE, instruction);
+            patchSite.writeInt(offset + MOV_OFFSET_IN_TRAMPOLINE + i * INSTRUCTION_SIZE, instruction);
         }
         instruction = addSubInstructionHelper(RISCV64.x28, RISCV64.x29, RISCV64.x28, isNegative);
-        patchSite.writeInt(offset + 24, instruction);
+        patchSite.writeInt(offset + MOV_OFFSET_IN_TRAMPOLINE + mov32BitConstantInstructions.length * INSTRUCTION_SIZE, instruction);
         instruction = jumpAndLinkHelper(isLinked ? RISCV64.ra : RISCV64.x0, RISCV64.x28, 0);
         patchSite.writeInt(CALL_BRANCH_OFFSET, instruction);
         // Patch the JAL to jump to the new trampoline
         instruction = jumpAndLinkImmediateHelper(RISCV64.zero, offset);
         patchSite.writeInt(0, instruction);
 
+        MaxineVM.maxine_cache_flush(patchSite, RIP_CALL_INSTRUCTION_SIZE);
     }
 
     private static void writeJump(Pointer patchSite, CodePointer target) {
@@ -237,11 +237,11 @@ public final class RISCV64TargetMethodUtil {
             if (instruction == 0) { // fill in with asm.nop() if mov32BitConstant did not need those instructions
                 instruction = addImmediateHelper(RISCV64.zero, RISCV64.zero, 0);
             }
-            writeInstruction(code, trampolineOffset + 8 + i * INSTRUCTION_SIZE, instruction);
+            writeInstruction(code, trampolineOffset + MOV_OFFSET_IN_TRAMPOLINE + i * INSTRUCTION_SIZE, instruction);
         }
         // Create the new trampoline
         instruction = addSubInstructionHelper(RISCV64.x28, RISCV64.x29, RISCV64.x28, isNegative);
-        writeInstruction(code, trampolineOffset + 24, instruction);
+        writeInstruction(code, trampolineOffset + MOV_OFFSET_IN_TRAMPOLINE + mov32BitConstantInstructions.length * INSTRUCTION_SIZE, instruction);
         instruction = extractInstruction(code, callOffset + CALL_BRANCH_OFFSET);
         final boolean isLinked = isJumpLinked(instruction);
         instruction = jumpAndLinkHelper(isLinked ? RISCV64.ra : RISCV64.x0, RISCV64.x28, 0);
@@ -254,9 +254,9 @@ public final class RISCV64TargetMethodUtil {
 
     private static void writeInstruction(byte[] code, int offset, int instruction) {
         code[offset + 0] = (byte) (instruction       & 0xFF);
-        code[offset + 1] = (byte) (instruction >> 8  & 0xFF);
-        code[offset + 2] = (byte) (instruction >> 16 & 0xFF);
-        code[offset + 3] = (byte) (instruction >> 24 & 0xFF);
+        code[offset + 1] = (byte) ((instruction >> 8)  & 0xFF);
+        code[offset + 2] = (byte) ((instruction >> 16) & 0xFF);
+        code[offset + 3] = (byte) ((instruction >> 24) & 0xFF);
     }
 
     /**
@@ -270,6 +270,7 @@ public final class RISCV64TargetMethodUtil {
      */
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
         CodePointer callSite = tm.codeAt(callOffset);
+
         if (MaxineVM.isHosted()) {
             long disp64 = target.toLong() - callSite.plus(CALL_BRANCH_OFFSET).toLong();
             int disp32 = (int) disp64;
@@ -296,7 +297,7 @@ public final class RISCV64TargetMethodUtil {
 
         long disp64 = target.toLong() - branchSitePointer.toLong();
         int disp32 = (int) disp64;
-        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range: " + disp64);
         patchCallTrampoline(callSitePointer, disp32, isLinked);
 
         return oldTarget;
@@ -346,8 +347,8 @@ public final class RISCV64TargetMethodUtil {
         // Skip the saved link register. Skip stackAlignment bytes since the push is 16-byte aligned as well
         Pointer callerSP = ripPointer.plus(Platform.target().stackAlignment);
         Pointer callerFP;
-        if (!csa.isZero() && csl.contains(RISCV64.fp.getEncoding())) {
-            callerFP = sfw.readWord(csa, csl.offsetOf(RISCV64.fp.getEncoding())).asPointer();
+        if (!csa.isZero() && csl.contains(RISCV64.fp.number)) {
+            callerFP = sfw.readWord(csa, csl.offsetOf(RISCV64.fp.number)).asPointer();
         } else {
             callerFP = current.fp();
         }

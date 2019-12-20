@@ -46,12 +46,12 @@ import static com.sun.max.platform.Platform.target;
  */
 public class ObjdumpDisassembler {
 
-    public static String disassemble(CiTargetMethod tm, byte[] code, int codeSize, long startAddress) {
+    public static String disassemble(CiTargetMethod tm) {
         File tmp = null;
         try {
             tmp = File.createTempFile("compiledBinary", ".bin");
             try (FileOutputStream fos = new FileOutputStream(tmp)) {
-                fos.write(code, 0, codeSize);
+                fos.write(tm.targetCode(), 0, tm.targetCodeSize());
             }
 
             final Platform platform = Platform.platform();
@@ -91,7 +91,7 @@ public class ObjdumpDisassembler {
                 putAnnotation(annotations, site.pcOffset, "{" + site.constant + "}");
             }
 
-            return objdump(tmp, annotations, startAddress);
+            return objdump(tmp, annotations, 0);
         } catch (IOException e) {
             e.printStackTrace();
             return null;

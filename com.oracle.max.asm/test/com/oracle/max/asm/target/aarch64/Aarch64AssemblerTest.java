@@ -117,4 +117,16 @@ public class Aarch64AssemblerTest {
             assertEquals(assemble("dmb " + bkind.optionName), asm.codeBuffer.getInt(0));
         }
     }
+
+    @Test
+    public void adr() {
+        final int[] immediates = {0, 0xff, 0x0fff, 0xf000, 0xf_f000, 0xf_ffff};
+        for (CiRegister dest : Aarch64.cpuRegisters) {
+            for (int imm : immediates) {
+                asm.codeBuffer.reset();
+                asm.adr(dest, imm);
+                assertEquals(assemble("adr x" + dest.getEncoding() + ", " + imm), asm.codeBuffer.getInt(0));
+            }
+        }
+    }
 }

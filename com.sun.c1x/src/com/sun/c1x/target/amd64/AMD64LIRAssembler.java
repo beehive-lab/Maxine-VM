@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -127,6 +127,52 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitPause() {
         masm.pause();
+    }
+
+    @Override
+        // rdtsc changes rax and rdx so we need to store them
+    protected void emitGetTicks(CiValue result) {
+        if (result.asRegister() != AMD64.rax) {
+            masm.push(AMD64.rax);
+        }
+        if (result.asRegister() != AMD64.rdx) {
+            masm.push(AMD64.rdx);
+        }
+        masm.rdtsc();
+        masm.shlq(AMD64.rdx, 32);
+        masm.orq(AMD64.rax, AMD64.rdx);
+        masm.movq(result.asRegister(), AMD64.rax);
+        if (result.asRegister() != AMD64.rdx) {
+            masm.pop(AMD64.rdx);
+        }
+        if (result.asRegister() != AMD64.rax) {
+            masm.pop(AMD64.rax);
+        }
+    }
+
+    @Override
+        // rdtscp changes rax, rdx, and rcx so we need to store them
+    protected void emitGetCpuID(CiValue result) {
+        if (result.asRegister() != AMD64.rax) {
+            masm.push(AMD64.rax);
+        }
+        if (result.asRegister() != AMD64.rdx) {
+            masm.push(AMD64.rdx);
+        }
+        if (result.asRegister() != AMD64.rcx) {
+            masm.push(AMD64.rcx);
+        }
+        masm.rdtscp();
+        masm.movq(result.asRegister(), AMD64.rcx);
+        if (result.asRegister() != AMD64.rcx) {
+            masm.pop(AMD64.rcx);
+        }
+        if (result.asRegister() != AMD64.rdx) {
+            masm.pop(AMD64.rdx);
+        }
+        if (result.asRegister() != AMD64.rax) {
+            masm.pop(AMD64.rax);
+        }
     }
 
     @Override
@@ -1849,8 +1895,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     masm.repeatMoveWords();
                     break;
 
-                case PointerCAS:
-
+                case PointerCAS: {
                     if ((Boolean) inst.extra && info != null) {
                         tasm.recordImplicitException(codePos(), info);
                     }
@@ -1863,7 +1908,18 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     masm.cmpxchgq(exchangedVal.asRegister(), addr);
 
                     break;
+                }
+                case IntCAS: {
+                    assert operands[inst.z().index].asRegister().equals(AMD64.rax) : "wrong input z: " + operands[inst.x().index];
 
+                    CiValue         exchangedVal     = operands[inst.y().index];
+                    CiValue         exchangedAddress = operands[inst.x().index];
+                    CiRegisterValue pointerRegister  = assureInRegister(exchangedAddress);
+                    CiAddress       addr             = new CiAddress(target.wordKind, pointerRegister);
+                    masm.cmpxchgl(exchangedVal.asRegister(), addr);
+
+                    break;
+                }
                 case CallStub: {
                     XirTemplate stubId = (XirTemplate) inst.extra;
                     CiRegister result = CiRegister.None;

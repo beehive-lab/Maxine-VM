@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2019, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.intrinsics;
 
@@ -315,6 +313,21 @@ public class MaxineIntrinsicIDs {
      * </pre>
      */
     public static final String CMP_BYTECODE = p + "CMP_BYTECODE";
+
+    /**
+     * Returns the number of ticks as read from a hardware register (performance counter).
+     */
+    public static final String GET_TICKS = p + "GET_TICKS";
+
+    /**
+     * Returns the CPUID as set by Linux in IA32_TSC_AUX on x86-64 (not implemented for other platforms yet)
+     * Linux encodes CPUID as {@code numa_id <<12 + core_id}.
+     * {@link #CPU_MASK} and {@link #NUMA_NODE_SHIFT} can be used to extract the numa node and the core id from the
+     * returned value
+     */
+    public static final String GET_CPU_ID = p + "GET_CPU_ID";
+    public static final int CPU_MASK = (1 << 12) - 1;
+    public static final int NUMA_NODE_SHIFT = 12;
 
     /**
      * A vehicle for testing snippets.

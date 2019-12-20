@@ -29,6 +29,7 @@ import com.oracle.max.vm.tests.crossisa.riscv64.asm.RISCV64CodeWriter;
 import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.CiRegister;
 import com.sun.max.ide.MaxTestCase;
+import com.sun.max.platform.*;
 import com.sun.max.program.option.OptionSet;
 import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.actor.member.StaticMethodActor;
@@ -148,6 +149,7 @@ public class RISCV64T1XTest extends MaxTestCase {
             RuntimeCompiler.baselineCompilerOption.setValue(baselineCompilerName);
             RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
             if (!initialised) {
+                Platform.set(Platform.parse("linux-riscv64"));
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 vm().phase = Phase.HOSTED_TESTING;
@@ -203,22 +205,22 @@ public class RISCV64T1XTest extends MaxTestCase {
         RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.codeBuffer.reset();
         masm.mov(RISCV64.x5, 0);
-        masm.mov(RISCV64.x6, Long.MAX_VALUE);
-        masm.mov(RISCV64.x7, Long.MIN_VALUE);
-        masm.mov(RISCV64.x30, Integer.MIN_VALUE);
+        masm.mov(RISCV64.x6, Integer.MAX_VALUE);
+        masm.mov(RISCV64.x7, Integer.MIN_VALUE);
+        masm.mov(RISCV64.x28, Integer.MIN_VALUE);
         masm.mov(RISCV64.x31, -1);
 
         masm.increment32(RISCV64.x5, 1);
         masm.increment32(RISCV64.x6, 1);
         masm.increment32(RISCV64.x7, -1);
-        masm.increment32(RISCV64.x30, Integer.MAX_VALUE);
+        masm.increment32(RISCV64.x28, Integer.MAX_VALUE);
         masm.increment32(RISCV64.x31, Integer.MIN_VALUE);
 
         expectedValues[4] = 1;
-        expectedValues[5] = Long.MIN_VALUE;
-        expectedValues[6] = Long.MAX_VALUE;
-        expectedValues[29] = -1;
-        expectedValues[30] = (long) Integer.MIN_VALUE - 1;
+        expectedValues[5] = Integer.MIN_VALUE;
+        expectedValues[6] = Integer.MAX_VALUE;
+        expectedValues[27] = -1;
+        expectedValues[30] = Integer.MAX_VALUE;
 
         long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
         for (int i = 0; i < 31; i++) {
@@ -228,7 +230,7 @@ public class RISCV64T1XTest extends MaxTestCase {
         assert simulatedValues[4] == expectedValues[4] : String.format("Register %d %d expected %d ", 5, simulatedValues[4], expectedValues[4]);
         assert simulatedValues[5] == expectedValues[5] : String.format("Register %d %d expected %d ", 6, simulatedValues[5], expectedValues[5]);
         assert simulatedValues[6] == expectedValues[6] : String.format("Register %d %d expected %d ", 7, simulatedValues[6], expectedValues[6]);
-        assert simulatedValues[29] == expectedValues[29] : String.format("Register %d %d expected %d ", 30, simulatedValues[29], expectedValues[29]);
+        assert simulatedValues[27] == expectedValues[27] : String.format("Register %d %d expected %d ", 28, simulatedValues[27], expectedValues[27]);
         assert simulatedValues[30] == expectedValues[30] : String.format("Register %d %d expected %d ", 31, simulatedValues[30], expectedValues[30]);
     }
 
@@ -577,7 +579,7 @@ public class RISCV64T1XTest extends MaxTestCase {
 
         for (int i = 0; i < 4; i++) {
             theCompiler.do_loadTests(i, Kind.INT);
-            masm.pop(64, RISCV64.x29);
+            masm.pop(64, RISCV64.x29, false);
             masm.mov32BitConstant(RISCV64.x29, 100 + i);
             masm.push(64, RISCV64.x29);
             theCompiler.do_storeTests(i, Kind.INT);
@@ -585,7 +587,7 @@ public class RISCV64T1XTest extends MaxTestCase {
 
         theCompiler.do_loadTests(4, Kind.LONG);
         masm.addi(RISCV64.sp, RISCV64.sp, 16);
-        masm.pop(64, RISCV64.x29);
+        masm.pop(64, RISCV64.x29, false);
         masm.mov32BitConstant(RISCV64.x29, (int) (172L & 0xffff)); //172
         masm.push(64, RISCV64.x29);
         masm.addi(RISCV64.sp, RISCV64.sp, -16);
@@ -596,9 +598,9 @@ public class RISCV64T1XTest extends MaxTestCase {
         theCompiler.do_loadTests(4, Kind.LONG);
 
         masm.addi(RISCV64.sp, RISCV64.sp, 16);
-        masm.pop(64, RISCV64.cpuRegisters[(int) longPair.first]);
+        masm.pop(64, RISCV64.cpuRegisters[(int) longPair.first], false);
         for (int i = pairs.size() - 1; i >= 0; i--) {
-            masm.pop(64, RISCV64.cpuRegisters[(int) pairs.get(i).first]);
+            masm.pop(64, RISCV64.cpuRegisters[(int) pairs.get(i).first], false);
         }
 
         theCompiler.emitEpilogueTests();
@@ -680,7 +682,7 @@ public class RISCV64T1XTest extends MaxTestCase {
         });
 
         for (int i = pairs.size() - 1; i >= 0; i--) {
-            masm.pop(64, RISCV64.cpuRegisters[(int) pairs.get(i).first]);
+            masm.pop(64, RISCV64.cpuRegisters[(int) pairs.get(i).first], false);
         }
 
         long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
@@ -1155,7 +1157,7 @@ public class RISCV64T1XTest extends MaxTestCase {
             initialiseFrameForCompilation(instructions, "(I)I");
             theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, instructions);
             RISCV64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.pop(32, RISCV64.x5);
+            masm.pop(32, RISCV64.x5, false);
             long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
             assert (registerValues[4] & 0xFFFFFFFFL) == (expectedValues[5] & 0xFFFFFFFFL) : "Failed incorrect value " + Long.toString(registerValues[4], 16) + " exp " + Long.toString(expectedValues[5], 16);
             theCompiler.cleanup();

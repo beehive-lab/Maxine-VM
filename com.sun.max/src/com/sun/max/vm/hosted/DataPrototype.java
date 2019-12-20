@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -155,6 +155,7 @@ public final class DataPrototype extends Prototype {
             assignCodeCell(targetMethod.scalarLiterals(), targetMethod.start(), targetBundleLayout, ArrayField.scalarLiterals);
             assignCodeCell(targetMethod.referenceLiterals(), targetMethod.start(), targetBundleLayout, ArrayField.referenceLiterals);
             assignCodeCell(targetMethod.code(), targetMethod.start(), targetBundleLayout, ArrayField.code);
+            assignCodeCell(targetMethod.trampolines(), targetMethod.start(), targetBundleLayout, ArrayField.trampolines);
             size = size.plus(targetMethod.size());
             ++n;
         }
@@ -902,6 +903,7 @@ public final class DataPrototype extends Prototype {
         for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             targetMethod.setStart(targetMethod.start().plus(delta));
             targetMethod.setCodeStart(targetMethod.codeStart().plus(delta).toPointer());
+            targetMethod.setTrampolineStart(targetMethod.trampolineStart().plus(delta).toPointer());
         }
     }
 
@@ -1094,6 +1096,7 @@ public final class DataPrototype extends Prototype {
 
     private static final Utf8Constant codeStart = SymbolTable.makeSymbol("codeStart");
     private static final Utf8Constant start = SymbolTable.makeSymbol("start");
+    private static final Utf8Constant trampolineStart = SymbolTable.makeSymbol("trampolineStart");
 
     /**
      * Assign relocation flags for target methods.
@@ -1104,10 +1107,11 @@ public final class DataPrototype extends Prototype {
         Trace.begin(1, "assignTargetMethodRelocationFlags");
 
         final int codeStartFieldOffset = getInstanceFieldOffsetInTupleCell(TargetMethod.class, codeStart, JavaTypeDescriptor.forJavaClass(Pointer.class));
-
+        final int trampolineStartFieldOffset = getInstanceFieldOffsetInTupleCell(TargetMethod.class, trampolineStart, JavaTypeDescriptor.forJavaClass(Pointer.class));
         for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             setRelocationFlag(objectToCell.get(targetMethod).plus(startFieldOffset));
             setRelocationFlag(objectToCell.get(targetMethod).plus(codeStartFieldOffset));
+            setRelocationFlag(objectToCell.get(targetMethod).plus(trampolineStartFieldOffset));
         }
 
         Trace.end(1, "assignTargetMethodRelocationFlags");

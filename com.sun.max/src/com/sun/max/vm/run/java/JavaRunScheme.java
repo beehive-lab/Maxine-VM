@@ -38,8 +38,8 @@ import com.sun.max.vm.instrument.InstrumentationManager;
 import com.sun.max.vm.jdk.JDK_sun_launcher_LauncherHelper;
 import com.sun.max.vm.jni.JniFunctions;
 import com.sun.max.vm.log.VMLog;
-import com.sun.max.vm.profilers.allocation.Profiler;
-import com.sun.max.vm.profilers.allocation.ProfilerGCCallback;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
+import com.sun.max.vm.profilers.tracing.numa.ProfilerGCCallback;
 import com.sun.max.vm.profilers.sampling.*;
 import com.sun.max.vm.run.RunScheme;
 import com.sun.max.vm.runtime.CriticalMethod;
@@ -51,7 +51,6 @@ import com.sun.max.vm.type.SignatureDescriptor;
 import com.sun.max.vm.type.VMClassLoader;
 import sun.misc.Launcher;
 import sun.misc.Signal;
-import uk.ac.manchester.jnumautils.JNumaUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,7 +68,6 @@ import java.util.List;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-import static com.sun.max.vm.MaxineVM.allocationProfiler;
 import static com.sun.max.vm.MaxineVM.vm;
 import static com.sun.max.vm.VMConfiguration.vmConfig;
 import static com.sun.max.vm.VMOptions.register;
@@ -189,8 +187,8 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.terminate();
         }
-        if (MaxineVM.allocationProfiler != null) {
-            MaxineVM.allocationProfiler.terminate();
+        if (MaxineVM.numaProfiler != null) {
+            MaxineVM.numaProfiler.terminate();
         }
     }
 
@@ -201,7 +199,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         if (heapSamplingProfiler != null) {
             heapSamplingProfiler.restart();
         }
-        // TODO: restart the allocation profiler as well, and dump its findings
+        // TODO: restart the numa profiler as well, and dump its findings
     }
 
     @ALIAS(declaringClass = System.class)
@@ -258,27 +256,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     final String heapProfOptionPrefix = hprofOption.toString();
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
-                // The same for the Allocation Profiler
-                if (CompilationBroker.AllocationProfilerEntryPoint != null || Profiler.profileAll()) {
-                    float beforeAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
-                    // Initialize Allocation Profiler
-                    MaxineVM.allocationProfiler = new Profiler();
-                    MaxineVM.isAllocationProfilerInitialized = true;
-                    float afterAllocProfiler = (float) Heap.reportUsedSpace() / (1024 * 1024);
-
-                    if (Profiler.ValidateAllocationProfiler) {
-                        Log.println("*===================================================*\n" +
-                            "* Allocation Profiler is on validation mode.\n" +
-                            "*===================================================*\n" +
-                            "* You can use Allocation Profiler with confidence if:\n" +
-                            "* => a) VM Reported Heap Used Space = Initial Used Heap Space + Allocation Profiler Size + New Objects Size\n" +
-                            "* => b) VM Reported Heap Used Space after GC = Initial Used Heap Space + Allocation Profiler Size + Survivor Objects Size\n" +
-                            "* => c) Next Cycle's VM Reported Heap Used Space = Initial Used Heap Space + Allocation Profiler Size + Survivor Object Size\n" +
-                            "*===================================================*\n");
-                        Log.println("Initial Used Heap Size = " + beforeAllocProfiler + " MB");
-                        float allocProfilerSize = afterAllocProfiler - beforeAllocProfiler;
-                        Log.println("Allocation Profiler Size = " + allocProfilerSize + " MB\n");
-                    }
+                // The same for the NUMA Profiler
+                if (CompilationBroker.NUMAProfilerEntryPoint != null || NUMAProfiler.profileAll()) {
+                    // Initialize NUMA Profiler
+                    MaxineVM.numaProfiler = new NUMAProfiler();
                 }
                 break;
             }

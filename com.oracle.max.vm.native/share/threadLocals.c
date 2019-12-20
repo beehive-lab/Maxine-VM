@@ -60,9 +60,15 @@ static ThreadLocalsKey theThreadLocalsKey;
 static Address allocateThreadLocalBlock(size_t tlBlockSize) {
 #if os_MAXVE
 	return (Address) maxve_virtualMemory_allocate(tlBlockSize, DATA_VM);
+#elif os_DARWIN
+	Address result;
+	if (posix_memalign((void**)&result, 4096, tlBlockSize) != 0) {
+		printf("posix_memalign failed\n");
+	}
+	return result;
 #else
 	c_ASSERT(tlBlockSize < 100000000);
-	return (Address) valloc(tlBlockSize);
+    return (Address) aligned_alloc(4096, tlBlockSize);
 #endif
 }
 
@@ -342,7 +348,13 @@ void tla_initialize(int tlaSize) {
     theTLASize = tlaSize;
 #if !TELE
 #if os_DARWIN || os_LINUX
-    pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
+    int error = pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor)(void *) threadLocalsBlock_destroy);
+    #if log_THREADS
+        log_println("tla_initialize: pthread_key_create returned code = %d", error);
+    #endif
+    if (error != 0) {
+        log_exit(-1, "tla_initialize: pthread_key_create returned non zero code = %d", error);
+    }
 #elif os_SOLARIS
     thr_keycreate(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
 #elif os_MAXVE

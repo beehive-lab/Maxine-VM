@@ -32,6 +32,7 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
@@ -170,6 +171,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
             RuntimeCompiler.baselineCompilerOption.setValue(baselineCompilerName);
             RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
             if (!initialised) {
+                Platform.set(Platform.parse("linux-aarch64"));
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);

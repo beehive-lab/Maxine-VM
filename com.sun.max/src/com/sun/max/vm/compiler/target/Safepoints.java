@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -154,9 +154,7 @@ public final class Safepoints {
 
     private static final int CAUSE_OFFSET_SHIFT;
     static {
-        if (Platform.target().arch.isRISCV64()) {
-            CAUSE_OFFSET_SHIFT = 21;
-        } else if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64()) {
+        if (Platform.target().arch.isARM() || Platform.target().arch.isAarch64() || Platform.target().arch.isRISCV64()) {
             CAUSE_OFFSET_SHIFT = 22;
         } else {
             CAUSE_OFFSET_SHIFT = 25;
@@ -351,6 +349,26 @@ public final class Safepoints {
             }
         }
         return n;
+    }
+
+    /**
+     * Returns the index of the call (relative to other calls) at a given position in the code.
+     * NB it is not the safepoint index that is returned. If there is no call at the specified
+     * position -1 is returned.
+     * @param pos
+     * @return the call index, or -1
+     */
+    public int indexOfCallAt(int pos) {
+        int index = -1;
+        for (int i = 0; i < safepoints.length; i++) {
+            if (isCall(safepoints[i])) {
+                index++;
+            }
+            if (pos == posAt(i)) {
+                return index;
+            }
+        }
+        return -1;
     }
 
     @Override
