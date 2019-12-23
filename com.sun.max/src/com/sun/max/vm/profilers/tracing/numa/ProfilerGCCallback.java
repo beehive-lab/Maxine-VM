@@ -19,6 +19,7 @@
  */
 package com.sun.max.vm.profilers.tracing.numa;
 
+import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.heap.Heap;
 
@@ -31,15 +32,13 @@ import com.sun.max.vm.heap.Heap;
 public class ProfilerGCCallback implements Heap.GCCallback {
 
     public static void init() {
-        Heap.registerGCCallback(new ProfilerGCCallback());
+        if (MaxineVM.useNUMAProfiler) {
+            Heap.registerGCCallback(new ProfilerGCCallback());
+        }
     }
 
     @Override
     public void gcCallback(Heap.GCCallbackPhase gcCallbackPhase) {
-
-        if (MaxineVM.numaProfiler == null || !MaxineVM.isRunning()) {
-            return;
-        }
 
         if (gcCallbackPhase == Heap.GCCallbackPhase.BEFORE) {
             MaxineVM.numaProfiler.preGCActions();
