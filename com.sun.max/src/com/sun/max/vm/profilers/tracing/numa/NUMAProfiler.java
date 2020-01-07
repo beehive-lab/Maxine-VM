@@ -169,10 +169,10 @@ public class NUMAProfiler {
      * An enum that maps each Object Access Counter name with a {@link VmThreadLocal#profilingCounters} index.
      */
     private enum ACCESS_COUNTER {
-        REMOTE_TUPLE_WRITE(0), LOCAL_TUPLE_WRITE(1),
-        REMOTE_ARRAY_WRITE(2), LOCAL_ARRAY_WRITE(3),
-        REMOTE_TUPLE_READ(4), LOCAL_TUPLE_READ(5),
-        REMOTE_ARRAY_READ(6), LOCAL_ARRAY_READ(7);
+        REMOTE2_TUPLE_WRITE(0), REMOTE_TUPLE_WRITE(1), LOCAL_TUPLE_WRITE(2),
+        REMOTE2_ARRAY_WRITE(3), REMOTE_ARRAY_WRITE(4), LOCAL_ARRAY_WRITE(5),
+        REMOTE2_TUPLE_READ(6), REMOTE_TUPLE_READ(7), LOCAL_TUPLE_READ(8),
+        REMOTE2_ARRAY_READ(9), REMOTE_ARRAY_READ(10), LOCAL_ARRAY_READ(11);
 
         private final int value;
 
@@ -194,10 +194,10 @@ public class NUMAProfiler {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerIncludeFinalization", NUMAProfiler.class, "Include memory accesses performed due to Finalization. (default: false)", MaxineVM.Phase.PRISTINE);
 
         objectAccessCounterNames = new String[]{
-            "REMOTE_TUPLE_WRITES", "LOCAL_TUPLE_WRITES",
-            "REMOTE_ARRAY_WRITES", "LOCAL_ARRAY_WRITES",
-            "REMOTE_TUPLE_READS", "LOCAL_TUPLE_READS",
-            "REMOTE_ARRAY_READS", "LOCAL_ARRAY_READS"
+            "REMOTE2_TUPLE_WRITES", "REMOTE_TUPLE_WRITES", "LOCAL_TUPLE_WRITES",
+            "REMOTE2_ARRAY_WRITES", "REMOTE_ARRAY_WRITES", "LOCAL_ARRAY_WRITES",
+            "REMOTE2_TUPLE_READS", "REMOTE_TUPLE_READS", "LOCAL_TUPLE_READS",
+            "REMOTE2_ARRAY_READS", "REMOTE_ARRAY_READS", "LOCAL_ARRAY_READS"
         };
     }
 
