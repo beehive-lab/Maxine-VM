@@ -415,13 +415,35 @@ public class NUMAProfiler {
         return objNumaNode;
     }
 
-    private static boolean isRemoteAccess(long firstPageAddress, long address) {
+    /**
+     * This method assesses the locality of a memory access.
+     * A memory access can be either local (a thread running on N numa node accesses an object on N numa node),
+     * inter-node (a thread running on N numa node accesses an object on M numa node with both N and M being on the same blade),
+     * or inter-blade (a thread running on N numa node accesses an object on Z numa node which is part of another blade).
+     * @param firstPageAddress
+     * @param address
+     * @return 0 for local access, 1 for inter-node access, -1 for inter-blade access
+     *
+     */
+    private static int assessAccessLocality(long firstPageAddress, long address) {
         // get the Numa Node where the thread which is performing the write is running
         final int threadNumaNode = Intrinsics.getCpuID() >> MaxineIntrinsicIDs.NUMA_NODE_SHIFT;
         // get the Numa Node where the written object is placed
         final int objectNumaNode = getObjectNumaNode(firstPageAddress, address);
 
-        return threadNumaNode != objectNumaNode;
+        if (threadNumaNode != objectNumaNode) {
+            // get the Blade where the thread Numa Node is located
+            final int threadBlade = threadNumaNode / 6;
+            // get the Blade where the object Numa Node is located
+            final int objectBlade = objectNumaNode / 6;
+            if (threadBlade != objectBlade) {
+                return -1;
+            } else {
+                return 1;
+            }
+        } else {
+            return 0;
+        }
     }
 
     private static void increaseAccessCounter(ACCESS_COUNTER counter) {
