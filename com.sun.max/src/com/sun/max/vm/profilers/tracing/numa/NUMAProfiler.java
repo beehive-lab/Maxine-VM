@@ -169,10 +169,10 @@ public class NUMAProfiler {
      * An enum that maps each Object Access Counter name with a {@link VmThreadLocal#profilingCounters} index.
      */
     private enum ACCESS_COUNTER {
-        REMOTE2_TUPLE_WRITE(0), REMOTE_TUPLE_WRITE(1), LOCAL_TUPLE_WRITE(2),
-        REMOTE2_ARRAY_WRITE(3), REMOTE_ARRAY_WRITE(4), LOCAL_ARRAY_WRITE(5),
-        REMOTE2_TUPLE_READ(6), REMOTE_TUPLE_READ(7), LOCAL_TUPLE_READ(8),
-        REMOTE2_ARRAY_READ(9), REMOTE_ARRAY_READ(10), LOCAL_ARRAY_READ(11);
+        LOCAL_TUPLE_WRITE(0), INTERNODE_TUPLE_WRITE(1), INTERBLADE_TUPLE_WRITE(2),
+        LOCAL_ARRAY_WRITE(3), INTERNODE_ARRAY_WRITE(4), INTERBLADE_ARRAY_WRITE(5),
+        LOCAL_TUPLE_READ(6), INTERNODE_TUPLE_READ(7), INTERBLADE_TUPLE_READ(8),
+        LOCAL_ARRAY_READ(9), INTERNODE_ARRAY_READ(10), INTERBLADE_ARRAY_READ(11);
 
         private final int value;
 
@@ -194,10 +194,10 @@ public class NUMAProfiler {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerIncludeFinalization", NUMAProfiler.class, "Include memory accesses performed due to Finalization. (default: false)", MaxineVM.Phase.PRISTINE);
 
         objectAccessCounterNames = new String[]{
-            "REMOTE2_TUPLE_WRITES", "REMOTE_TUPLE_WRITES", "LOCAL_TUPLE_WRITES",
-            "REMOTE2_ARRAY_WRITES", "REMOTE_ARRAY_WRITES", "LOCAL_ARRAY_WRITES",
-            "REMOTE2_TUPLE_READS", "REMOTE_TUPLE_READS", "LOCAL_TUPLE_READS",
-            "REMOTE2_ARRAY_READS", "REMOTE_ARRAY_READS", "LOCAL_ARRAY_READS"
+            "LOCAL_TUPLE_WRITES", "INTERNODE_TUPLE_WRITES", "INTERBLADE_TUPLE_WRITES",
+            "LOCAL_ARRAY_WRITES", "INTERNODE_ARRAY_WRITES", "INTERBLADE_ARRAY_WRITES",
+            "LOCAL_TUPLE_READS", "INTERNODE_TUPLE_READS", "INTERBLADE_TUPLE_READS",
+            "LOCAL_ARRAY_READS", "INTERNODE_ARRAY_READS", "INTERBLADE_ARRAY_READS"
         };
     }
 
@@ -468,9 +468,9 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (accessLocality < 0) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE2_TUPLE_WRITE);
+            increaseAccessCounter(ACCESS_COUNTER.INTERBLADE_TUPLE_WRITE);
         } else if (accessLocality > 0) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE_TUPLE_WRITE);
+            increaseAccessCounter(ACCESS_COUNTER.INTERNODE_TUPLE_WRITE);
         } else {
             increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_WRITE);
         }
@@ -489,9 +489,9 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (accessLocality < 0) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE2_ARRAY_WRITE);
+            increaseAccessCounter(ACCESS_COUNTER.INTERBLADE_ARRAY_WRITE);
         } else if (accessLocality > 0) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE_ARRAY_WRITE);
+            increaseAccessCounter(ACCESS_COUNTER.INTERNODE_ARRAY_WRITE);
         } else {
             increaseAccessCounter(ACCESS_COUNTER.LOCAL_ARRAY_WRITE);
         }
@@ -512,9 +512,9 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (accessLocality < 0) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE2_TUPLE_READ);
+            increaseAccessCounter(ACCESS_COUNTER.INTERBLADE_TUPLE_READ);
         } else if (accessLocality > 0) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE_TUPLE_READ);
+            increaseAccessCounter(ACCESS_COUNTER.INTERNODE_TUPLE_READ);
         } else {
             increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_READ);
         }
@@ -535,9 +535,9 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         if (accessLocality < 0) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE2_ARRAY_READ);
+            increaseAccessCounter(ACCESS_COUNTER.INTERBLADE_ARRAY_READ);
         } else if (accessLocality > 0) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE_ARRAY_READ);
+            increaseAccessCounter(ACCESS_COUNTER.INTERNODE_ARRAY_READ);
         } else {
             increaseAccessCounter(ACCESS_COUNTER.LOCAL_ARRAY_READ);
         }
