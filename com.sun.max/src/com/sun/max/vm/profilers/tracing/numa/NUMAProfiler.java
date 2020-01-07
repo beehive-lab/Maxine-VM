@@ -464,8 +464,12 @@ public class NUMAProfiler {
             return;
         }
 
+        final int accessLocality = assessAccessLocality(firstPageAddress, tupleAddress);
+
         // increment local or remote writes
-        if (isRemoteAccess(firstPageAddress, tupleAddress)) {
+        if (accessLocality < 0) {
+            increaseAccessCounter(ACCESS_COUNTER.REMOTE2_TUPLE_WRITE);
+        } else if (accessLocality > 0) {
             increaseAccessCounter(ACCESS_COUNTER.REMOTE_TUPLE_WRITE);
         } else {
             increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_WRITE);
@@ -481,8 +485,12 @@ public class NUMAProfiler {
             return;
         }
 
+        final int accessLocality = assessAccessLocality(firstPageAddress, arrayAddress);
+
         // increment local or remote writes
-        if (isRemoteAccess(firstPageAddress, arrayAddress)) {
+        if (accessLocality < 0) {
+            increaseAccessCounter(ACCESS_COUNTER.REMOTE2_ARRAY_WRITE);
+        } else if (accessLocality > 0) {
             increaseAccessCounter(ACCESS_COUNTER.REMOTE_ARRAY_WRITE);
         } else {
             increaseAccessCounter(ACCESS_COUNTER.LOCAL_ARRAY_WRITE);
@@ -500,8 +508,12 @@ public class NUMAProfiler {
             return;
         }
 
-        // increment local or remote reads
-        if (isRemoteAccess(firstPageAddress, tupleAddress)) {
+        final int accessLocality = assessAccessLocality(firstPageAddress, tupleAddress);
+
+        // increment local or remote writes
+        if (accessLocality < 0) {
+            increaseAccessCounter(ACCESS_COUNTER.REMOTE2_TUPLE_READ);
+        } else if (accessLocality > 0) {
             increaseAccessCounter(ACCESS_COUNTER.REMOTE_TUPLE_READ);
         } else {
             increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_READ);
@@ -519,8 +531,12 @@ public class NUMAProfiler {
             return;
         }
 
-        // increment local or remote reads
-        if (isRemoteAccess(firstPageAddress, arrayAddress)) {
+        final int accessLocality = assessAccessLocality(firstPageAddress, arrayAddress);
+
+        // increment local or remote writes
+        if (accessLocality < 0) {
+            increaseAccessCounter(ACCESS_COUNTER.REMOTE2_ARRAY_READ);
+        } else if (accessLocality > 0) {
             increaseAccessCounter(ACCESS_COUNTER.REMOTE_ARRAY_READ);
         } else {
             increaseAccessCounter(ACCESS_COUNTER.LOCAL_ARRAY_READ);
