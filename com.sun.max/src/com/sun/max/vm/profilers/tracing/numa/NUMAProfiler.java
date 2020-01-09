@@ -391,7 +391,7 @@ public class NUMAProfiler {
      * Get the physical NUMA node id for a virtual address.
      *
      * We check whether the NUMA node is found. It might return EFAULT in case the page was still
-     * unallocated to a physical NUMA node by the last {@link NUMALib#coreToNUMANodeMap}'s update.
+     * unallocated to a physical NUMA node by the last {@link NUMALib} coreToNUMANodeMap update.
      * In that case the system call from NUMALib is called directly and the values are updated.
      *
      * @param firstPageAddress
@@ -416,16 +416,16 @@ public class NUMAProfiler {
     }
 
     /**
-     * This method assesses the locality of a memory access.
+     * This method assesses the locality of a memory access and returns the {@link ACCESS_COUNTER} value to be incremented.
      * A memory access can be either local (a thread running on N numa node accesses an object on N numa node),
      * inter-node (a thread running on N numa node accesses an object on M numa node with both N and M being on the same blade),
      * or inter-blade (a thread running on N numa node accesses an object on Z numa node which is part of another blade).
      * @param firstPageAddress
      * @param address
-     * @return 0 for local access, 1 for inter-node access, -1 for inter-blade access
+     * @return +0 for LOCAL access, +1 for INTER-NODE access, +2 for INTER-BLADE access (see {@link ACCESS_COUNTER} values)
      *
      */
-    private static int assessAccessLocality(long firstPageAddress, long address) {
+    private static int assessAccessLocality(long firstPageAddress, long address, int accessCounterValue) {
         // get the Numa Node where the thread which is performing the write is running
         final int threadNumaNode = Intrinsics.getCpuID() >> MaxineIntrinsicIDs.NUMA_NODE_SHIFT;
         // get the Numa Node where the written object is placed
@@ -437,20 +437,20 @@ public class NUMAProfiler {
             // get the Blade where the object Numa Node is located
             final int objectBlade = objectNumaNode / 6;
             if (threadBlade != objectBlade) {
-                return -1;
+                return accessCounterValue + 2;
             } else {
-                return 1;
+                return accessCounterValue + 1;
             }
         } else {
-            return 0;
+            return accessCounterValue;
         }
     }
 
-    private static void increaseAccessCounter(ACCESS_COUNTER counter) {
+    private static void increaseAccessCounter(int counter) {
         Pointer tla = VmThread.currentTLA();
         assert ETLA.load(tla) == tla;
-        int value = profilingCounters[counter.value].load(tla).toInt() + 1;
-        profilingCounters[counter.value].store(tla, Address.fromInt(value));
+        int value = profilingCounters[counter].load(tla).toInt() + 1;
+        profilingCounters[counter].store(tla, Address.fromInt(value));
     }
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
@@ -464,16 +464,10 @@ public class NUMAProfiler {
             return;
         }
 
-        final int accessLocality = assessAccessLocality(firstPageAddress, tupleAddress);
+        final int writeAccessTupleCounter = assessAccessLocality(firstPageAddress, tupleAddress, ACCESS_COUNTER.LOCAL_TUPLE_WRITE.value);
 
         // increment local or remote writes
-        if (accessLocality < 0) {
-            increaseAccessCounter(ACCESS_COUNTER.INTERBLADE_TUPLE_WRITE);
-        } else if (accessLocality > 0) {
-            increaseAccessCounter(ACCESS_COUNTER.INTERNODE_TUPLE_WRITE);
-        } else {
-            increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_WRITE);
-        }
+        increaseAccessCounter(writeAccessTupleCounter);
     }
 
     public static void profileWriteAccessArray(long arrayAddress) {
@@ -485,16 +479,10 @@ public class NUMAProfiler {
             return;
         }
 
-        final int accessLocality = assessAccessLocality(firstPageAddress, arrayAddress);
+        final int writeAccessArrayCounter = assessAccessLocality(firstPageAddress, arrayAddress, ACCESS_COUNTER.LOCAL_ARRAY_WRITE.value);
 
         // increment local or remote writes
-        if (accessLocality < 0) {
-            increaseAccessCounter(ACCESS_COUNTER.INTERBLADE_ARRAY_WRITE);
-        } else if (accessLocality > 0) {
-            increaseAccessCounter(ACCESS_COUNTER.INTERNODE_ARRAY_WRITE);
-        } else {
-            increaseAccessCounter(ACCESS_COUNTER.LOCAL_ARRAY_WRITE);
-        }
+        increaseAccessCounter(writeAccessArrayCounter);
     }
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
@@ -508,16 +496,10 @@ public class NUMAProfiler {
             return;
         }
 
-        final int accessLocality = assessAccessLocality(firstPageAddress, tupleAddress);
+        final int readAccessTupleCounter = assessAccessLocality(firstPageAddress, tupleAddress, ACCESS_COUNTER.LOCAL_TUPLE_READ.value);
 
         // increment local or remote writes
-        if (accessLocality < 0) {
-            increaseAccessCounter(ACCESS_COUNTER.INTERBLADE_TUPLE_READ);
-        } else if (accessLocality > 0) {
-            increaseAccessCounter(ACCESS_COUNTER.INTERNODE_TUPLE_READ);
-        } else {
-            increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_READ);
-        }
+        increaseAccessCounter(readAccessTupleCounter);
     }
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
@@ -531,16 +513,10 @@ public class NUMAProfiler {
             return;
         }
 
-        final int accessLocality = assessAccessLocality(firstPageAddress, arrayAddress);
+        final int readAccessArrayCounter = assessAccessLocality(firstPageAddress, arrayAddress, ACCESS_COUNTER.LOCAL_ARRAY_READ.value);
 
         // increment local or remote writes
-        if (accessLocality < 0) {
-            increaseAccessCounter(ACCESS_COUNTER.INTERBLADE_ARRAY_READ);
-        } else if (accessLocality > 0) {
-            increaseAccessCounter(ACCESS_COUNTER.INTERNODE_ARRAY_READ);
-        } else {
-            increaseAccessCounter(ACCESS_COUNTER.LOCAL_ARRAY_READ);
-        }
+        increaseAccessCounter(readAccessArrayCounter);
     }
 
     /**
