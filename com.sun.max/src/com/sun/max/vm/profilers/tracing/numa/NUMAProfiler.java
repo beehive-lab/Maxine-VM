@@ -855,22 +855,22 @@ public class NUMAProfiler {
     private static final Pointer.Procedure printThreadLocalProfilingCounters = new Pointer.Procedure() {
         public void run(Pointer tla) {
             Pointer etla = ETLA.load(tla);
-            Log.print("Object Accesses Counters in Cycle ");
-            Log.print(profilingCycle);
-            Log.print(" from Thread ");
-            Log.print(VmThread.fromTLA(etla).id());
-            Log.print(" - [");
-            Log.print(VmThread.fromTLA(etla).getName());
-            Log.println("]:");
             for (int i = 0; i < profilingCounters.length; i++) {
                 VmThreadLocal profilingCounter = profilingCounters[i];
-                Log.print(profilingCounter.name);
-                Log.print(" = ");
-                Log.println(profilingCounter.load(etla).toInt());
+                final int count = profilingCounter.load(etla).toInt();
+                if (count != 0) {
+                    Log.print("(accessCounter);");
+                    Log.print(profilingCycle);
+                    Log.print(";");
+                    Log.print(VmThread.fromTLA(etla).id());
+                    Log.print(";");
+                    Log.print(profilingCounter.name);
+                    Log.print(";");
+                    Log.println(count);
+                }
                 //reset counter
                 profilingCounter.store(etla, Address.fromInt(0));
             }
-            Log.print('\n');
         }
     };
 
