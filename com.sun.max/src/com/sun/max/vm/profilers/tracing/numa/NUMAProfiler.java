@@ -122,7 +122,7 @@ public class NUMAProfiler {
      * is given by the user, ignoring any object allocation up to that point.
      */
     @SuppressWarnings("unused")
-    private static int NUMAProfilerExplicitGCThreshold;
+    public static int NUMAProfilerExplicitGCThreshold;
     public static  int iteration = 0;
 
     /**
