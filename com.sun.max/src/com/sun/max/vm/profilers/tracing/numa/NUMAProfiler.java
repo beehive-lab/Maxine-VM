@@ -574,7 +574,9 @@ public class NUMAProfiler {
         for (int i = 0; i < newObjects.currentIndex; i++) {
             objectAddress = newObjects.readAddr(i);
             // safe for heap up to 8TB
-            pageIndex = (int) (objectAddress - firstPageAddress) / pageSize;
+            long numerator = objectAddress - firstPageAddress;
+            long div = numerator / (long) pageSize;
+            pageIndex = (int) div;
             if (pageIndex > maxPageIndex) {
                 Log.println("Heap Ranges Overflow");
                 MaxineVM.exit(1);
