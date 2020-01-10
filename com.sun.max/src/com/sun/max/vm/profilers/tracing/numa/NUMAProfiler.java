@@ -880,6 +880,14 @@ public class NUMAProfiler {
     }
 
     /**
+     * A method to print the Access Profiling Counters of one specific thread.
+     * @param tla
+     */
+    public static void printProfilingCountersOfThread(Pointer tla) {
+        printThreadLocalProfilingCounters.run(tla);
+    }
+
+    /**
      * A {@link Pointer.Procedure} that initializes a thread's all Object Access Profiling Counters}.
      */
     private static final Pointer.Procedure initThreadLocalProfilingCounters = new Pointer.Procedure() {

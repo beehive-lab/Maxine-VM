@@ -694,6 +694,10 @@ public class VmThread {
             thread.terminationCause = throwable;
         }
         if (thread != mainThread) {
+            // print the Access Profiling Counters before exit
+            if (MaxineVM.useNUMAProfiler && MaxineVM.numaProfiler != null) {
+                NUMAProfiler.printProfilingCountersOfThread(thread.tla);
+            }
             // call Thread.exit()
             JDK_java_lang_Thread.exitThread(thread.javaThread());
         }
