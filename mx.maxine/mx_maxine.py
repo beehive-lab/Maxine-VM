@@ -675,61 +675,46 @@ def numaProfilerOutputProcessing(filename):
     lines = oldFile.readlines()
     oldFile.close
 
-    #open a new file for profiler output with numa thread map applied
-    newFileName = path+'/tmp.csv'
+    #open a new file for Object Allocations
+    objectAllocationsFileName = path+'/tmp.csv'
+    objectAllocationsFile = open(objectAllocationsFileName, 'a')
+    # Object Allocations File Header
+    objectAllocationsFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type;Size;NumaNode;Timestamp;CoreID\n')
 
-    newFile = open(newFileName, 'a')
-    #with the following format
-    newFile.write('Cycle;isAllocation;UniqueId;ThreadId;ThreadNumaNode;Type;Size;NumaNode;Timestamp;CoreID\n')
+    #open a new file for Heap Boundaries
+    heapBoundariesFileName = path+'/'+benchmark+'_heap_boundaries.csv'
+    heapBoundariesNewFile = open(heapBoundariesFileName, 'w')
+    # Heap Boundaries File Header
+    heapBoundariesNewFile.write('Cycle;NumaNode;NumOfPages\n')
 
-    #thread map regex
-    threadMapPattern = r'\(Run\)\sThread\s([0-9]+)\,\sCPU\s([0-9]+),\sNuma\sNode\s([0-9]+)'
+    #open a new file for Object Accesses
+    objectAccessesFileName = path+'/'+benchmark+'_object_accesses.csv'
+    objectAccessesFile = open(objectAccessesFileName, 'w')
+    # Object Accesses File Header
+    objectAccessesFile.write('Cycle;ThreadId;AccessType;Count\n')
 
-    #open a new file for heap boundaries
-    hbFileName = path+'/'+benchmark+'_heap_boundaries.csv'
-    hbNewFile = open(hbFileName, 'w')
-    hbNewFile.write('Cycle;NumaNode;NumOfPages\n')
+    #object allocations regex
+    #Cycle ; is New Allocation ; ID ; Thread id ; Class/Type ; Size ; NUMA Node ; Timestamp
+    objectAllocationPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[0-9]+\;[^\;.]*\;[0-9]+\;[0-9]+\;[0-9]+\;[0-9]'
 
     #heap boundaries regex
     heapBoundariesPattern = r'\(heapBoundaries\)+\;[0-9]+\;[0-9]+\;[0-9]'
 
-    #object allocation regex
-    #Format: 
-    #Cycle ; is New Allocation ; ID ; Thread id ; Class/Type ; Size ; NUMA Node ; Timestamp
-    recordPattern = r'[0-9]+\;[0-9]+\;[0-9]+\;([0-9]+)\;[0-9]+\;[^\;.]*\;[0-9]+\;[0-9]+\;[0-9]+\;[0-9]'
+    #access counter regex
+    #(accessCounter);Cycle;ThreadId;CounterName;Count
+    objectAccessPattern = r'\(accessCounter\)+.'
 
-    #index     - content
-    #thread id - numa node
-    threadMap = []
-    #there is no thread 0 so put a garbage value
-    threadMap.insert(0, -9)
 
     print('\n=> Processing NUMAProfiler\'s Output:')
-    print('Generating Object Allocation Trace and Heap Boundaries Trace...')
+    print('Generating Object Allocation Trace, Heap Boundaries Trace and Object Access Trace...')
     for line in lines:
-        threadMapLineMatch = re.findall(threadMapPattern, line)
+        objectAllocationLineMatch = re.match(objectAllocationPattern, line)
         heapBoundariesLineMatch = re.match(heapBoundariesPattern, line)
-        recordLineMatch = re.match(recordPattern, line)
-        if (threadMapLineMatch):
-            # NUMA Thread Map line found
-            for item in threadMapLineMatch:
-                threadId = int(item[0])
-                cpu = int(item[1])
-                numaNode = int(item[2])
-                # Update NUMA Thread Map
-                if (threadId > len(threadMap)):
-                    while (threadId > len(threadMap)):
-                        threadMap.insert(len(threadMap), -9)
-                    threadMap.insert(threadId, numaNode)
-                elif (threadId == len(threadMap)):
-                    threadMap.insert(threadId, numaNode)
-                else:
-                    threadMap[threadId] = numaNode
+        accessCounterLineMatch = re.match(objectAccessPattern, line)
 
-        elif (recordLineMatch):
+        if (objectAllocationLineMatch):
             # Allocation Profiler Output line found
-            # Apply NUMA Thread map
-            index = int(recordLineMatch.group(1))
+            index = int(objectAllocationLineMatch.group(1))
             fields = line.split(';')
 
             cycle = fields[0]
@@ -745,7 +730,7 @@ def numaProfilerOutputProcessing(filename):
 
             # Create the New Line
             newLine = cycle + ';' + isAllocation + ';' + uniqueId + ';' + threadId + ';' + threadNumaNode + ';' + classOrType + ';' + size + ';' + numaNode + ';' + timestamp + ';' + coreid
-            newFile.write(newLine)
+            objectAllocationsFile.write(newLine)
 
         elif (heapBoundariesLineMatch):
             # Heap Boundaries line found
@@ -755,22 +740,29 @@ def numaProfilerOutputProcessing(filename):
             numOfPages = fields[3]
             #write on the heap boundaries file
             hbNewLine = cycle + ';' + numaNode + ';' + numOfPages
-            hbNewFile.write(hbNewLine + '\n')
-            
-    newFile.close
-    hbNewFile.close
+            heapBoundariesNewFile.write(hbNewLine + '\n')
 
-    # After NUMA Thread Map has been applied to the Allocation Profiler's Output,
-    # replace the old Allocation Profile's Output file with the new one
+        elif (accessCounterLineMatch):
+            fields = line.split(';')
+            cycle = fields[1]
+            threadId = fields[2]
+            counterName = fields[3]
+            count = int(fields[4])
+            accessesNewLine = cycle + ';' + threadId + ';' + counterName + ';' + str(count)
+            objectAccessesFile.write(accessesNewLine + '\n')
+            
+    objectAllocationsFile.close
+    heapBoundariesNewFile.close
+    objectAccessesFile.close
 
     # delete the old output
     os.unlink(oldFileName)
     # replace with the new output
-    shutil.move(newFileName, oldFileName)
+    shutil.move(objectAllocationsFileName, oldFileName)
     
     print('The Output Processing is Finished.\n')
     print('=> Results directory:')
-    print('a)' + oldFileName + '\nb)' + hbFileName)
+    print('a)' + oldFileName + '\nb)' + heapBoundariesFileName + '\nb)' + objectAccessesFileName)
 
 def numaprofiler(args):
     """launch Maxine VM with NUMA Profiler
