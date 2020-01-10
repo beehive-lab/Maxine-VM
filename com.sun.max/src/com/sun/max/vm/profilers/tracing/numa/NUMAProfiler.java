@@ -867,6 +867,8 @@ public class NUMAProfiler {
                 Log.print(profilingCounter.name);
                 Log.print(" = ");
                 Log.println(profilingCounter.load(etla).toInt());
+                //reset counter
+                profilingCounter.store(etla, Address.fromInt(0));
             }
             Log.print('\n');
         }
