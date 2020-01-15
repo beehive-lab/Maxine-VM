@@ -161,6 +161,8 @@ public class NUMAProfiler {
      */
     private static int[] flareObjectThreadIdBuffer;
 
+    public static boolean disableProfiler = true;
+
     private static final int MINIMUMBUFFERSIZE = 500000;
 
     /**
@@ -318,6 +320,7 @@ public class NUMAProfiler {
                         enableProfiling();
                         break;
                     }
+                    disableProfiler = false;
                 }
             } else if (type.contains(NUMAProfilerFlareObjectEnd)) {
                 for (int i = 0; i < flareObjectThreadIdBuffer.length; i++) {
@@ -327,6 +330,7 @@ public class NUMAProfiler {
                             Log.println(currentThreadID);
                         }
                         disableProfiling();
+                        disableProfiler = true;
                     }
                 }
             }
