@@ -854,6 +854,7 @@ public class NUMAProfiler {
      */
     private static final Pointer.Procedure printThreadLocalProfilingCounters = new Pointer.Procedure() {
         public void run(Pointer tla) {
+            final boolean lockDisabledSafepoints = lock();
             Pointer etla = ETLA.load(tla);
             for (int i = 0; i < profilingCounters.length; i++) {
                 VmThreadLocal profilingCounter = profilingCounters[i];
@@ -871,6 +872,7 @@ public class NUMAProfiler {
                 //reset counter
                 profilingCounter.store(etla, Address.fromInt(0));
             }
+            unlock(lockDisabledSafepoints);
         }
     };
 
