@@ -160,7 +160,7 @@ public class NUMAProfiler {
      * Buffers that keep the threadId of the threads that started profiling due to reaching the flare object
      * allocation threshold.
      */
-    private static int[] flareObjectThreadIdBuffer;
+    public static int[] flareObjectThreadIdBuffer;
 
     public static boolean disableProfiler = true;
 

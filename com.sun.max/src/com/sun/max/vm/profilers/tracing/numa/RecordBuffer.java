@@ -252,7 +252,7 @@ class RecordBuffer {
     public void print(int cycle, int allocation) {
         long start = readLong(timestamps, 0);
         for (int i = 0; i < currentIndex; i++) {
-            if (NUMAProfiler.NUMAProfilerIsolateDominantThread && readInt(threadIds, i) != readInt(threadIds, 0)) {
+            if (NUMAProfiler.NUMAProfilerIsolateDominantThread && readInt(threadIds, i) != NUMAProfiler.flareObjectThreadIdBuffer[0]) {
                 continue;
             }
 
