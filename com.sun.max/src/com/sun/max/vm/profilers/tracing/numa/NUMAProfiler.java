@@ -168,7 +168,7 @@ public class NUMAProfiler {
     /**
      * An enum that maps each Object Access Counter name with a {@link VmThreadLocal#profilingCounters} index.
      */
-    private enum ACCESS_COUNTER {
+    public enum ACCESS_COUNTER {
         LOCAL_TUPLE_WRITE(0), INTERNODE_TUPLE_WRITE(1), INTERBLADE_TUPLE_WRITE(2),
         LOCAL_ARRAY_WRITE(3), INTERNODE_ARRAY_WRITE(4), INTERBLADE_ARRAY_WRITE(5),
         LOCAL_TUPLE_READ(6), INTERNODE_TUPLE_READ(7), INTERBLADE_TUPLE_READ(8),
@@ -455,68 +455,19 @@ public class NUMAProfiler {
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
-    public static void profileWriteAccessTuple(long tupleAddress) {
+    public static void profileAccess(ACCESS_COUNTER counter, long address) {
         long firstPageAddress = heapPages.readAddr(0);
 
         // if the written object is not part of the data heap
         // TODO: implement some action, currently ignore
-        if (!vm().config.heapScheme().contains(Address.fromLong(tupleAddress))) {
+        if (!vm().config.heapScheme().contains(Address.fromLong(address))) {
             return;
         }
 
-        final int writeAccessTupleCounter = assessAccessLocality(firstPageAddress, tupleAddress, ACCESS_COUNTER.LOCAL_TUPLE_WRITE.value);
+        final int accessCounter = assessAccessLocality(firstPageAddress, address, counter.value);
 
         // increment local or remote writes
-        increaseAccessCounter(writeAccessTupleCounter);
-    }
-
-    public static void profileWriteAccessArray(long arrayAddress) {
-        long firstPageAddress = heapPages.readAddr(0);
-
-        // if the written array is not part of the data heap
-        // TODO: implement some action, currently ignore
-        if (!vm().config.heapScheme().contains(Address.fromLong(arrayAddress))) {
-            return;
-        }
-
-        final int writeAccessArrayCounter = assessAccessLocality(firstPageAddress, arrayAddress, ACCESS_COUNTER.LOCAL_ARRAY_WRITE.value);
-
-        // increment local or remote writes
-        increaseAccessCounter(writeAccessArrayCounter);
-    }
-
-    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
-    @NEVER_INLINE
-    public static void profileReadAccessTuple(long tupleAddress) {
-        long firstPageAddress = heapPages.readAddr(0);
-
-        // if the read object is not part of the data heap
-        // TODO: implement some action, currently ignore
-        if (!vm().config.heapScheme().contains(Address.fromLong(tupleAddress))) {
-            return;
-        }
-
-        final int readAccessTupleCounter = assessAccessLocality(firstPageAddress, tupleAddress, ACCESS_COUNTER.LOCAL_TUPLE_READ.value);
-
-        // increment local or remote writes
-        increaseAccessCounter(readAccessTupleCounter);
-    }
-
-    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
-    @NEVER_INLINE
-    public static void profileReadAccessArray(long arrayAddress) {
-        long firstPageAddress = heapPages.readAddr(0);
-
-        // if the read object is not part of the data heap
-        // TODO: implement some action, currently ignore
-        if (!vm().config.heapScheme().contains(Address.fromLong(arrayAddress))) {
-            return;
-        }
-
-        final int readAccessArrayCounter = assessAccessLocality(firstPageAddress, arrayAddress, ACCESS_COUNTER.LOCAL_ARRAY_READ.value);
-
-        // increment local or remote writes
-        increaseAccessCounter(readAccessArrayCounter);
+        increaseAccessCounter(accessCounter);
     }
 
     /**
