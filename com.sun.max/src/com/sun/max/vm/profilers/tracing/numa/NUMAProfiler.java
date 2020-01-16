@@ -66,7 +66,7 @@ public class NUMAProfiler {
         }
     }
 
-    private static int flareObjectCounter = 0;
+    public static int flareObjectCounter = 0;
 
     @C_FUNCTION
     static native void numaProfiler_lock();
@@ -121,10 +121,11 @@ public class NUMAProfiler {
      * warmup iterations in order to profile only the effective part. The iteration
      * is calculated by the number of System.gc() calls. The MaxineVM.profileThatObject()
      * method returns false as long as the iteration counter is below the NUMAProfilerExplicitGCThreshold, which
-     * is given by the user, ignoring any object allocation up to that point.
+     * is given by the user, ignoring any object allocation up to that point. Its default value
+     * has been chosen as -1 because by 0 it means that we want to profile everything.
      */
     @SuppressWarnings("unused")
-    public static int NUMAProfilerExplicitGCThreshold;
+    public static int NUMAProfilerExplicitGCThreshold = -1;
     public static  int iteration = 0;
 
     /**
@@ -149,7 +150,7 @@ public class NUMAProfiler {
      * to allocate before we stop the profiling.
      */
     public static  String NUMAProfilerFlareAllocationThresholds = "0";
-    private static int[]  flareAllocationThresholds;
+    public static int[]  flareAllocationThresholds;
     @SuppressWarnings("FieldCanBeLocal")
     private static String NUMAProfilerFlareObjectStart          = "NUMAProfilerFlareObjectStart";
     @SuppressWarnings("FieldCanBeLocal")
@@ -196,14 +197,16 @@ public class NUMAProfiler {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerAll", NUMAProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerVerbose", NUMAProfiler.class, "Verbose numa profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerBufferSize", NUMAProfiler.class, "NUMAProfiler's Buffer Size.");
-        VMOptions.addFieldOption("-XX:", "NUMAProfilerExplicitGCThreshold", NUMAProfiler.class, "The number of the Explicit GCs to be performed before the NUMAProfiler starts recording. (default: 0)");
+        VMOptions.addFieldOption("-XX:", "NUMAProfilerExplicitGCThreshold", NUMAProfiler.class,
+                "The number of the Explicit GCs to be performed before the NUMAProfiler starts recording. " +
+                "It cannot be used in combination with \"NUMAProfilerFlareAllocationThresholds\". (default: -1)");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareObjectStart", NUMAProfiler.class, "The Class of the Object to be sought after by the NUMAProfiler to start the profiling process. (default: 'AllocationProfilerFlareObject')");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareObjectEnd", NUMAProfiler.class, "The Class of the Object to be sought after by the NUMAProfiler to stop the profiling process. (default: 'AllocationProfilerFlareObject')");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerFlareAllocationThresholds", NUMAProfiler.class,
                 "The number of the Flare start objects to be allocated before the NUMAProfiler starts recording. " +
                 "Multiple \"windows\" may be profiled by providing a comma separated list, " +
                 "e.g. \"100,200,500\" will start profiling after the 100th, the 200th, and the 500th Flare object " +
-                "allocation till the thread that started the profiling allocates a Flare end object. (default: \"0\")");
+                "allocation till the thread that started the profiling allocates a Flare end object. It cannot be used in combination with \"NUMAProfilerExplicitGCThreshold\". (default: \"0\")");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerDebug", NUMAProfiler.class, "Print information to help in NUMAProfiler's Validation. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerIncludeFinalization", NUMAProfiler.class, "Include memory accesses performed due to Finalization. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerIsolateDominantThread", NUMAProfiler.class, "Isolate the dominant thread object allocations (default: false)", MaxineVM.Phase.PRISTINE);
