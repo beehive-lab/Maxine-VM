@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -27,10 +27,15 @@ import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.methodhandle.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.thread.VmThreadLocal;
 
 /**
  * Collection of methods called from (or inlined by) T1X templates.
@@ -160,6 +165,58 @@ public class T1XRuntime {
     @INLINE
     public static void postVolatileWrite() {
         MemoryBarriers.barrier(MemoryBarriers.JMM_POST_VOLATILE_WRITE);
+    }
+
+    @INLINE
+    public static void profileTupleWrite(long address) {
+        Pointer tla = VmThread.currentTLA();
+        int enabled = NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
+        int ongoing = NUMAProfiler.PROFILING_STATE.ONGOING.getValue();
+        // if PROFILER_STATE is ENABLED do profile and set PROFILER_STATE to ONGOING
+        if (VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, enabled, ongoing) == enabled) {
+            NUMAProfiler.profileAccess(NUMAProfiler.ACCESS_COUNTER.LOCAL_TUPLE_WRITE, address);
+            // set PROFILER_STATE back to ENABLED
+            VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, ongoing, enabled);
+        }
+    }
+
+    @INLINE
+    public static void profileArrayWrite(long address) {
+        Pointer tla = VmThread.currentTLA();
+        int enabled = NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
+        int ongoing = NUMAProfiler.PROFILING_STATE.ONGOING.getValue();
+        // if PROFILER_STATE is ENABLED do profile and set PROFILER_STATE to ONGOING
+        if (VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, enabled, ongoing) == enabled) {
+            NUMAProfiler.profileAccess(NUMAProfiler.ACCESS_COUNTER.LOCAL_ARRAY_WRITE, address);
+            // set PROFILER_STATE back to ENABLED
+            VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, ongoing, enabled);
+        }
+    }
+
+    @INLINE
+    public static void profileTupleRead(long address) {
+        Pointer tla = VmThread.currentTLA();
+        int enabled = NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
+        int ongoing = NUMAProfiler.PROFILING_STATE.ONGOING.getValue();
+        // if PROFILER_STATE is ENABLED do profile and set PROFILER_STATE to ONGOING
+        if (VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, enabled, ongoing) == enabled) {
+            NUMAProfiler.profileAccess(NUMAProfiler.ACCESS_COUNTER.LOCAL_TUPLE_READ, address);
+            // set PROFILER_STATE back to ENABLED
+            VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, ongoing, enabled);
+        }
+    }
+
+    @INLINE
+    public static void profileArrayRead(long address) {
+        Pointer tla = VmThread.currentTLA();
+        int enabled = NUMAProfiler.PROFILING_STATE.ENABLED.getValue();
+        int ongoing = NUMAProfiler.PROFILING_STATE.ONGOING.getValue();
+        // if PROFILER_STATE is ENABLED do profile and set PROFILER_STATE to ONGOING
+        if (VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, enabled, ongoing) == enabled) {
+            NUMAProfiler.profileAccess(NUMAProfiler.ACCESS_COUNTER.LOCAL_ARRAY_READ, address);
+            // set PROFILER_STATE back to ENABLED
+            VmThreadLocal.PROFILER_STATE.compareAndSwap(tla, ongoing, enabled);
+        }
     }
 
     // ==========================================================================================================

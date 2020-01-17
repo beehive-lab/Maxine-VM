@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019, APT Group, School of Computer Science,
+ * Copyright (c) 2018-2020, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -122,7 +122,7 @@ public class NUMAProfiler {
      * is given by the user, ignoring any object allocation up to that point.
      */
     @SuppressWarnings("unused")
-    private static int NUMAProfilerExplicitGCThreshold;
+    public static int NUMAProfilerExplicitGCThreshold;
     public static  int iteration = 0;
 
     /**
@@ -168,11 +168,11 @@ public class NUMAProfiler {
     /**
      * An enum that maps each Object Access Counter name with a {@link VmThreadLocal#profilingCounters} index.
      */
-    private enum ACCESS_COUNTER {
-        REMOTE_TUPLE_WRITE(0), LOCAL_TUPLE_WRITE(1),
-        REMOTE_ARRAY_WRITE(2), LOCAL_ARRAY_WRITE(3),
-        REMOTE_TUPLE_READ(4), LOCAL_TUPLE_READ(5),
-        REMOTE_ARRAY_READ(6), LOCAL_ARRAY_READ(7);
+    public enum ACCESS_COUNTER {
+        LOCAL_TUPLE_WRITE(0), INTERNODE_TUPLE_WRITE(1), INTERBLADE_TUPLE_WRITE(2),
+        LOCAL_ARRAY_WRITE(3), INTERNODE_ARRAY_WRITE(4), INTERBLADE_ARRAY_WRITE(5),
+        LOCAL_TUPLE_READ(6), INTERNODE_TUPLE_READ(7), INTERBLADE_TUPLE_READ(8),
+        LOCAL_ARRAY_READ(9), INTERNODE_ARRAY_READ(10), INTERBLADE_ARRAY_READ(11);
 
         private final int value;
 
@@ -194,10 +194,10 @@ public class NUMAProfiler {
         VMOptions.addFieldOption("-XX:", "NUMAProfilerIncludeFinalization", NUMAProfiler.class, "Include memory accesses performed due to Finalization. (default: false)", MaxineVM.Phase.PRISTINE);
 
         objectAccessCounterNames = new String[]{
-            "REMOTE_TUPLE_WRITES", "LOCAL_TUPLE_WRITES",
-            "REMOTE_ARRAY_WRITES", "LOCAL_ARRAY_WRITES",
-            "REMOTE_TUPLE_READS", "LOCAL_TUPLE_READS",
-            "REMOTE_ARRAY_READS", "LOCAL_ARRAY_READS"
+            "LOCAL_TUPLE_WRITES", "INTERNODE_TUPLE_WRITES", "INTERBLADE_TUPLE_WRITES",
+            "LOCAL_ARRAY_WRITES", "INTERNODE_ARRAY_WRITES", "INTERBLADE_ARRAY_WRITES",
+            "LOCAL_TUPLE_READS", "INTERNODE_TUPLE_READS", "INTERBLADE_TUPLE_READS",
+            "LOCAL_ARRAY_READS", "INTERNODE_ARRAY_READS", "INTERBLADE_ARRAY_READS"
         };
     }
 
@@ -391,7 +391,7 @@ public class NUMAProfiler {
      * Get the physical NUMA node id for a virtual address.
      *
      * We check whether the NUMA node is found. It might return EFAULT in case the page was still
-     * unallocated to a physical NUMA node by the last {@link NUMALib#coreToNUMANodeMap}'s update.
+     * unallocated to a physical NUMA node by the last {@link NUMALib} coreToNUMANodeMap update.
      * In that case the system call from NUMALib is called directly and the values are updated.
      *
      * @param firstPageAddress
@@ -415,75 +415,59 @@ public class NUMAProfiler {
         return objNumaNode;
     }
 
-    private static boolean isRemoteAccess(long firstPageAddress, long address) {
+    /**
+     * This method assesses the locality of a memory access and returns the {@link ACCESS_COUNTER} value to be incremented.
+     * A memory access can be either local (a thread running on N numa node accesses an object on N numa node),
+     * inter-node (a thread running on N numa node accesses an object on M numa node with both N and M being on the same blade),
+     * or inter-blade (a thread running on N numa node accesses an object on Z numa node which is part of another blade).
+     * @param firstPageAddress
+     * @param address
+     * @return {@code accessCounterValue} + 0 for LOCAL access, {@code accessCounterValue} + 1 for INTER-NODE access, {@code accessCounterValue} + 2 for INTER-BLADE access (see {@link ACCESS_COUNTER} values)
+     *
+     */
+    private static int assessAccessLocality(long firstPageAddress, long address, int accessCounterValue) {
         // get the Numa Node where the thread which is performing the write is running
         final int threadNumaNode = Intrinsics.getCpuID() >> MaxineIntrinsicIDs.NUMA_NODE_SHIFT;
         // get the Numa Node where the written object is placed
         final int objectNumaNode = getObjectNumaNode(firstPageAddress, address);
 
-        return threadNumaNode != objectNumaNode;
+        if (threadNumaNode != objectNumaNode) {
+            // get the Blade where the thread Numa Node is located
+            final int threadBlade = threadNumaNode / 6;
+            // get the Blade where the object Numa Node is located
+            final int objectBlade = objectNumaNode / 6;
+            if (threadBlade != objectBlade) {
+                return accessCounterValue + 2;
+            } else {
+                return accessCounterValue + 1;
+            }
+        } else {
+            return accessCounterValue;
+        }
     }
 
-    private static void increaseAccessCounter(ACCESS_COUNTER counter) {
+    private static void increaseAccessCounter(int counter) {
         Pointer tla = VmThread.currentTLA();
         assert ETLA.load(tla) == tla;
-        int value = profilingCounters[counter.value].load(tla).toInt() + 1;
-        profilingCounters[counter.value].store(tla, Address.fromInt(value));
+        int value = profilingCounters[counter].load(tla).toInt() + 1;
+        profilingCounters[counter].store(tla, Address.fromInt(value));
     }
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
-    public static void profileWriteAccessTuple(long tupleAddress) {
+    public static void profileAccess(ACCESS_COUNTER counter, long address) {
         long firstPageAddress = heapPages.readAddr(0);
 
         // if the written object is not part of the data heap
         // TODO: implement some action, currently ignore
-        if (!vm().config.heapScheme().contains(Address.fromLong(tupleAddress))) {
+        if (!vm().config.heapScheme().contains(Address.fromLong(address))) {
             return;
         }
+
+        final int accessCounter = assessAccessLocality(firstPageAddress, address, counter.value);
 
         // increment local or remote writes
-        if (isRemoteAccess(firstPageAddress, tupleAddress)) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE_TUPLE_WRITE);
-        } else {
-            increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_WRITE);
-        }
-    }
-
-    public static void profileWriteAccessArray(long arrayAddress) {
-        long firstPageAddress = heapPages.readAddr(0);
-
-        // if the written array is not part of the data heap
-        // TODO: implement some action, currently ignore
-        if (!vm().config.heapScheme().contains(Address.fromLong(arrayAddress))) {
-            return;
-        }
-
-        // increment local or remote writes
-        if (isRemoteAccess(firstPageAddress, arrayAddress)) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE_ARRAY_WRITE);
-        } else {
-            increaseAccessCounter(ACCESS_COUNTER.LOCAL_ARRAY_WRITE);
-        }
-    }
-
-    @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
-    @NEVER_INLINE
-    public static void profileReadAccessTuple(long tupleAddress) {
-        long firstPageAddress = heapPages.readAddr(0);
-
-        // if the read object is not part of the data heap
-        // TODO: implement some action, currently ignore
-        if (!vm().config.heapScheme().contains(Address.fromLong(tupleAddress))) {
-            return;
-        }
-
-        // increment local or remote reads
-        if (isRemoteAccess(firstPageAddress, tupleAddress)) {
-            increaseAccessCounter(ACCESS_COUNTER.REMOTE_TUPLE_READ);
-        } else {
-            increaseAccessCounter(ACCESS_COUNTER.LOCAL_TUPLE_READ);
-        }
+        increaseAccessCounter(accessCounter);
     }
 
     /**
@@ -541,7 +525,9 @@ public class NUMAProfiler {
         for (int i = 0; i < newObjects.currentIndex; i++) {
             objectAddress = newObjects.readAddr(i);
             // safe for heap up to 8TB
-            pageIndex = (int) (objectAddress - firstPageAddress) / pageSize;
+            long numerator = objectAddress - firstPageAddress;
+            long div = numerator / (long) pageSize;
+            pageIndex = (int) div;
             if (pageIndex > maxPageIndex) {
                 Log.println("Heap Ranges Overflow");
                 MaxineVM.exit(1);
@@ -819,21 +805,25 @@ public class NUMAProfiler {
      */
     private static final Pointer.Procedure printThreadLocalProfilingCounters = new Pointer.Procedure() {
         public void run(Pointer tla) {
+            final boolean lockDisabledSafepoints = lock();
             Pointer etla = ETLA.load(tla);
-            Log.print("Object Accesses Counters in Cycle ");
-            Log.print(profilingCycle);
-            Log.print(" from Thread ");
-            Log.print(VmThread.fromTLA(etla).id());
-            Log.print(" - [");
-            Log.print(VmThread.fromTLA(etla).getName());
-            Log.println("]:");
             for (int i = 0; i < profilingCounters.length; i++) {
                 VmThreadLocal profilingCounter = profilingCounters[i];
-                Log.print(profilingCounter.name);
-                Log.print(" = ");
-                Log.println(profilingCounter.load(etla).toInt());
+                final int count = profilingCounter.load(etla).toInt();
+                if (count != 0) {
+                    Log.print("(accessCounter);");
+                    Log.print(profilingCycle);
+                    Log.print(";");
+                    Log.print(VmThread.fromTLA(etla).id());
+                    Log.print(";");
+                    Log.print(profilingCounter.name);
+                    Log.print(";");
+                    Log.println(count);
+                }
+                //reset counter
+                profilingCounter.store(etla, Address.fromInt(0));
             }
-            Log.print('\n');
+            unlock(lockDisabledSafepoints);
         }
     };
 
@@ -842,6 +832,14 @@ public class NUMAProfiler {
      */
     private static void printProfilingCounters() {
         VmThreadMap.ACTIVE.forAllThreadLocals(profilingPredicate, printThreadLocalProfilingCounters);
+    }
+
+    /**
+     * A method to print the Access Profiling Counters of one specific thread.
+     * @param tla
+     */
+    public static void printProfilingCountersOfThread(Pointer tla) {
+        printThreadLocalProfilingCounters.run(tla);
     }
 
     /**

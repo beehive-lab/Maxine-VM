@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2020, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, 2016, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -50,6 +50,7 @@ import com.sun.max.vm.jni.*;
 import com.sun.max.vm.log.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -606,6 +607,13 @@ public class VmThread {
         thread.stackDumpStackFrameWalker.setTLA(etla);
         thread.yellowZone = yellowZone;
 
+        // Enable profiling for the new VM Thread if profiling should be enabled
+        if (MaxineVM.useNUMAProfiler && MaxineVM.numaProfiler != null) {
+            if (NUMAProfiler.iteration >= NUMAProfiler.NUMAProfilerExplicitGCThreshold) {
+                PROFILER_STATE.store(etla, Address.fromInt(NUMAProfiler.PROFILING_STATE.ENABLED.getValue()));
+            }
+        }
+
         VM_THREAD.store3(etla, Reference.fromJava(thread));
         VmThreadMap.addThreadLocals(thread, etla, daemon);
 
@@ -686,6 +694,10 @@ public class VmThread {
             thread.terminationCause = throwable;
         }
         if (thread != mainThread) {
+            // print the Access Profiling Counters before exit
+            if (MaxineVM.useNUMAProfiler && MaxineVM.numaProfiler != null) {
+                NUMAProfiler.printProfilingCountersOfThread(thread.tla);
+            }
             // call Thread.exit()
             JDK_java_lang_Thread.exitThread(thread.javaThread());
         }

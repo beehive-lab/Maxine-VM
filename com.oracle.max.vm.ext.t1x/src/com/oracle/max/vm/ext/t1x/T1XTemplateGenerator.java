@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
@@ -30,7 +30,12 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.thread.VmThreadLocal;
 import com.sun.max.vm.type.*;
 
 /**
@@ -470,6 +475,21 @@ public class T1XTemplateGenerator {
 
     public static final EnumSet<T1XTemplateTag> PUTFIELD_TEMPLATE_TAGS = tags("PUTFIELD$");
 
+
+    /**
+     * Inject a call to a {@link T1XRuntime} {@code method} into a T1X bytecode template.
+     * The {@code method} body is responsible to call the NUMAProfiler.
+     *
+     * @param method The String name of the injected {@link T1XRuntime} method.
+     * @param object Each template handles the object differently, so we pass it dynamically using this String argument.
+     */
+    public void injectT1XRuntimeNUMAProfilerCall(String method, String object) {
+        out.printf("        if (MaxineVM.useNUMAProfiler) {%n");
+        out.printf("            Pointer address = Reference.fromJava(%s).toOrigin();%n", object);
+        out.printf("            %s(address.toLong());%n", method);
+        out.printf("        }%n");
+    }
+
     /**
      * Generate all the {@link #PUTFIELD_TEMPLATE_TAGS}.
      */
@@ -488,6 +508,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static void putfield%s(@Slot(%d) Object object, int offset, @Slot(0) %s value%s) {%n", ur(k), k.stackSlots, rs(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        TupleAccess.%srite%s(object, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite", "object");
+        }
     }
 
     /**
@@ -522,6 +545,9 @@ public class T1XTemplateGenerator {
         out.printf("        } else {%n");
         out.printf("            TupleAccess.write%s(object, f.offset(), %s);%n", u(k), fromStackKindCast(k, "value"));
         out.printf("        }%n");
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite", "object");
+        }
         out.printf("    }%n");
         out.printf("%n");
         endTemplateMethodGeneration();
@@ -547,6 +573,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static void putstatic%s(Object staticTuple, int offset, @Slot(0) %s value%s) {%n", ur(k), rs(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        TupleAccess.%srite%s(staticTuple, offset, %s);%n", m, u(k), fromStackKindCast(k, "value"));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite", "staticTuple");
+        }
     }
 
     /**
@@ -583,6 +612,9 @@ public class T1XTemplateGenerator {
         out.printf("        } else {%n");
         out.printf("            TupleAccess.write%s(f.holder().staticTuple(), f.offset(), %s);%n", u(k), fromStackKindCast(k, "value"));
         out.printf("        }%n");
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleWrite", "f.holder().staticTuple()");
+        }
         out.printf("    }%n");
         out.printf("%n");
         endTemplateMethodGeneration();
@@ -608,6 +640,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static %s getfield%s(@Slot(0) Object object, int offset%s) {%n", rs(k), u(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        %s result = TupleAccess.read%s(object, offset);%n", j(k), u(k));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleRead", "object");
+        }
     }
 
     /**
@@ -636,6 +671,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static %s resolveAndGetField%s(ResolutionGuard.InPool guard, Object object%s) {%n", rs(k), ur(k), suffixParams(true));
         out.printf("        FieldActor f = Snippets.resolveInstanceFieldForReading(guard);%n");
         generateBeforeAdvice(k);
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleRead", "object");
+        }
         out.printf("        if (f.isVolatile()) {%n");
         out.printf("            preVolatileRead();%n");
         out.printf("            %s value = TupleAccess.read%s(object, f.offset());%n", j(k), u(k));
@@ -670,6 +708,9 @@ public class T1XTemplateGenerator {
         out.printf("    public static %s getstatic%s(Object staticTuple, int offset%s) {%n", rs(k), u(k), suffixParams(true));
         generateBeforeAdvice(k);
         out.printf("        %s result = TupleAccess.read%s(staticTuple, offset);%n", j(k), u(k));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleRead", "staticTuple");
+        }
     }
 
     /**
@@ -699,6 +740,9 @@ public class T1XTemplateGenerator {
         out.printf("        FieldActor f = Snippets.resolveStaticFieldForReading(guard);%n");
         out.printf("        Snippets.makeHolderInitialized(f);%n");
         generateBeforeAdvice(k);
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileTupleRead", "f.holder().staticTuple()");
+        }
         out.printf("        if (f.isVolatile()) {%n");
         out.printf("            preVolatileRead();%n");
         out.printf("            %s value = TupleAccess.read%s(f.holder().staticTuple(), f.offset());%n", j(k), u(k));
@@ -737,6 +781,9 @@ public class T1XTemplateGenerator {
         generateBeforeAdvice(k);
         out.printf("        %s result = ArrayAccess.get%s(array, index);%n", j(k), u(k));
         generateAfterAdvice(k);
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileArrayRead", "array");
+        }
         out.printf("        return %s;%n", toStackKindCast(k, "result"));
         out.printf("    }%n");
         newLine();
@@ -773,6 +820,9 @@ public class T1XTemplateGenerator {
             out.printf("        ArrayAccess.checkSetObject(array, value);%n");
         }
         out.printf("        ArrayAccess.set%s(array, index, %s);%n", u(k), fromStackKindCast(k, "value"));
+        if (k == Kind.REFERENCE) {
+            injectT1XRuntimeNUMAProfilerCall("profileArrayWrite", "array");
+        }
         out.printf("    }%n");
         newLine();
         endTemplateMethodGeneration();

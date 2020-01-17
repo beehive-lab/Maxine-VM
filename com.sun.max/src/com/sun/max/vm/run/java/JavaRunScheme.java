@@ -257,7 +257,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
                 // The same for the NUMA Profiler
-                if (CompilationBroker.NUMAProfilerEntryPoint != null || NUMAProfiler.profileAll()) {
+                if (NUMAProfiler.profileAll() || NUMAProfiler.NUMAProfilerExplicitGCThreshold > 0) {
                     // Initialize NUMA Profiler
                     MaxineVM.numaProfiler = new NUMAProfiler();
                 }

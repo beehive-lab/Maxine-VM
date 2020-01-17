@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
@@ -41,6 +41,7 @@ import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
+import com.sun.max.vm.profilers.tracing.numa.NUMAProfiler;
 
 /**
  * The Java source for the templates used by T1X.
@@ -1711,6 +1712,10 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(GETFIELD$reference$resolved)
     public static Reference getfieldObject(@Slot(0) Object object, int offset) {
         Object result = TupleAccess.readObject(object, offset);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(object).toOrigin();
+            profileTupleRead(address.toLong());
+        }
         return Reference.fromJava(result);
     }
 
@@ -1722,6 +1727,10 @@ public class T1XTemplateSource {
     @NEVER_INLINE
     public static Reference resolveAndGetFieldReference(ResolutionGuard.InPool guard, Object object) {
         FieldActor f = Snippets.resolveInstanceFieldForReading(guard);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(object).toOrigin();
+            profileTupleRead(address.toLong());
+        }
         if (f.isVolatile()) {
             preVolatileRead();
             Object value = TupleAccess.readObject(object, f.offset());
@@ -1736,6 +1745,10 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(GETSTATIC$reference$init)
     public static Reference getstaticObject(Object staticTuple, int offset) {
         Object result = TupleAccess.readObject(staticTuple, offset);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(staticTuple).toOrigin();
+            profileTupleRead(address.toLong());
+        }
         return Reference.fromJava(result);
     }
 
@@ -1748,6 +1761,10 @@ public class T1XTemplateSource {
     public static Reference resolveAndGetStaticReference(ResolutionGuard.InPool guard) {
         FieldActor f = Snippets.resolveStaticFieldForReading(guard);
         Snippets.makeHolderInitialized(f);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(f.holder().staticTuple()).toOrigin();
+            profileTupleRead(address.toLong());
+        }
         if (f.isVolatile()) {
             preVolatileRead();
             Object value = TupleAccess.readObject(f.holder().staticTuple(), f.offset());
@@ -1762,6 +1779,10 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(PUTFIELD$reference$resolved)
     public static void putfieldReference(@Slot(1) Object object, int offset, @Slot(0) Reference value) {
         TupleAccess.noninlineWriteObject(object, offset, value);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(object).toOrigin();
+            profileTupleWrite(address.toLong());
+        }
     }
 
     @T1X_TEMPLATE(PUTFIELD$reference)
@@ -1779,11 +1800,19 @@ public class T1XTemplateSource {
         } else {
             TupleAccess.writeObject(object, f.offset(), value);
         }
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(object).toOrigin();
+            profileTupleWrite(address.toLong());
+        }
     }
 
     @T1X_TEMPLATE(PUTSTATIC$reference$init)
     public static void putstaticReference(Object staticTuple, int offset, @Slot(0) Reference value) {
         TupleAccess.noninlineWriteObject(staticTuple, offset, value);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(staticTuple).toOrigin();
+            profileTupleWrite(address.toLong());
+        }
     }
 
     @T1X_TEMPLATE(PUTSTATIC$reference)
@@ -1801,6 +1830,10 @@ public class T1XTemplateSource {
             postVolatileWrite();
         } else {
             TupleAccess.writeObject(f.holder().staticTuple(), f.offset(), value);
+        }
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(f.holder().staticTuple()).toOrigin();
+            profileTupleWrite(address.toLong());
         }
     }
 
@@ -1821,6 +1854,10 @@ public class T1XTemplateSource {
     public static Reference aaload(@Slot(1) Object array, @Slot(0) int index) {
         ArrayAccess.checkIndex(array, index);
         Object result = ArrayAccess.getObject(array, index);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(array).toOrigin();
+            profileArrayRead(address.toLong());
+        }
         return Reference.fromJava(result);
     }
 
@@ -1829,6 +1866,10 @@ public class T1XTemplateSource {
         ArrayAccess.checkIndex(array, index);
         ArrayAccess.checkSetObject(array, value);
         ArrayAccess.setObject(array, index, value);
+        if (MaxineVM.useNUMAProfiler) {
+            Pointer address = Reference.fromJava(array).toOrigin();
+            profileArrayWrite(address.toLong());
+        }
     }
 
     /**

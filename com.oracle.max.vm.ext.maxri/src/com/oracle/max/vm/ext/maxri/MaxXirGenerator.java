@@ -906,6 +906,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
         int elemSize = target().sizeInBytes(kind);
         asm.pload(kind, result, array, index, offsetOfFirstArrayElement(), Scale.fromInt(elemSize), !genBoundsCheck);
+        maybeInvokeNUMAProfiler(kind, array, "callProfileReadArray", false);
         if (genBoundsCheck) {
             asm.bindOutOfLine(fail);
             callRuntimeThroughStub(asm, "throwArrayIndexOutOfBoundsException", null, array, index);
@@ -2247,6 +2248,12 @@ public class MaxXirGenerator implements RiXirGenerator {
         public static void callProfileReadTuple(Pointer cell) {
             assert MaxineVM.useNUMAProfiler;
             ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileReadTuple(cell);
+        }
+
+        @PLATFORM(cpu = "amd64")
+        public static void callProfileReadArray(Pointer arrayCell) {
+            assert MaxineVM.useNUMAProfiler;
+            ((HeapSchemeWithTLAB) vmConfig().heapScheme()).profileReadArray(arrayCell);
         }
 
         public static Pointer flushLog(Pointer logTail) {

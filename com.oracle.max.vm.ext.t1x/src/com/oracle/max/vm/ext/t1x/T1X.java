@@ -613,7 +613,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                 if (T1XTemplateGenerator.generate(true, T1XTemplateSource.class)) {
                     String thisFile = T1XTemplateSource.class.getSimpleName();
                     System.out.printf(
-                                    "%nThe generated content in %s " + " is out of sync. Edit %s instead to make the desired changes and then run 'max t1xgen', " +
+                                    "%nThe generated content in %s " + " is out of sync. Edit %s instead to make the desired changes and then run 'mx t1xgen', " +
                                                     "recompile %s (or refresh it in your IDE) and restart the bootstrapping process.%n%n",
                                     thisFile, T1XTemplateGenerator.class.getSimpleName(), thisFile);
                     System.exit(1);
