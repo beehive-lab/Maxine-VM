@@ -422,7 +422,7 @@ public class NUMAProfiler {
      * or inter-blade (a thread running on N numa node accesses an object on Z numa node which is part of another blade).
      * @param firstPageAddress
      * @param address
-     * @return +0 for LOCAL access, +1 for INTER-NODE access, +2 for INTER-BLADE access (see {@link ACCESS_COUNTER} values)
+     * @return {@code accessCounterValue} + 0 for LOCAL access, {@code accessCounterValue} + 1 for INTER-NODE access, {@code accessCounterValue} + 2 for INTER-BLADE access (see {@link ACCESS_COUNTER} values)
      *
      */
     private static int assessAccessLocality(long firstPageAddress, long address, int accessCounterValue) {
