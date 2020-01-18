@@ -282,7 +282,7 @@ public class NUMAProfiler {
         //initialize thread local counters
         initProfilingCounters();
 
-        if (profileAll() && NUMAProfilerExplicitGCThreshold == 0) {
+        if (profileAll() && NUMAProfilerExplicitGCThreshold == 0 && NUMAProfilerFlareAllocationThresholds.equals("0")) {
             enableProfiling();
         }
 
@@ -785,7 +785,7 @@ public class NUMAProfiler {
         if (isExplicitGC) {
             iteration++;
             isExplicitGC = false;
-            if (iteration == NUMAProfiler.NUMAProfilerExplicitGCThreshold) {
+            if (iteration == NUMAProfiler.NUMAProfilerExplicitGCThreshold && NUMAProfilerFlareAllocationThresholds.equals("0")) {
                 if (NUMAProfilerVerbose) {
                     Log.println("(NUMA Profiler): Enabling profiling. [post-GC phase]");
                 }
