@@ -228,12 +228,7 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): NUMAProfiler Initialization.");
         }
 
-        String[] thresholds = NUMAProfilerFlareAllocationThresholds.split(",");
-        flareObjectThreadIdBuffer = new int[thresholds.length];
-        flareAllocationThresholds = new int[thresholds.length];
-        for (int i = 0; i < thresholds.length; i++) {
-            flareAllocationThresholds[i] = Integer.parseInt(thresholds[i]);
-        }
+        splitStringtoIntegers();
 
         int survivorBufferSize = MINIMUMBUFFERSIZE;
         int allocatorBufferSize = MINIMUMBUFFERSIZE;
@@ -803,6 +798,21 @@ public class NUMAProfiler {
         }
 
     }
+
+    /**
+     *  A method to transform a string of that form "int0,int1,int2" into an integer array [int0, int1, int2].
+     */
+    private void splitStringtoIntegers() {
+
+        String[] thresholds = NUMAProfilerFlareAllocationThresholds.split(",");
+        flareObjectThreadIdBuffer = new int[thresholds.length];
+        flareAllocationThresholds = new int[thresholds.length];
+        for (int i = 0; i < thresholds.length; i++) {
+            flareAllocationThresholds[i] = Integer.parseInt(thresholds[i]);
+        }
+
+    }
+
 
     private static final Pointer.Predicate profilingPredicate = new Pointer.Predicate() {
         @Override
