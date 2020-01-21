@@ -133,7 +133,7 @@ public class HostedHeapScheme extends HeapSchemeAdaptor {
 
     @Override
     public Address getHeapStartAddress() {
-        return null;
+        throw new UnsupportedOperationException("not implemented");
     }
 
     @Override

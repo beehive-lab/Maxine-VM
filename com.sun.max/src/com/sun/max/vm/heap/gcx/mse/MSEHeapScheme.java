@@ -257,7 +257,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
 
     @Override
     public Address getHeapStartAddress() {
-        return null;
+        throw new UnsupportedOperationException("not implemented");
     }
 
     @INLINE

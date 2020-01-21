@@ -866,7 +866,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
 
     @Override
     public Address getHeapStartAddress() {
-        return null;
+        throw new UnsupportedOperationException("not implemented");
     }
 
     @Override
