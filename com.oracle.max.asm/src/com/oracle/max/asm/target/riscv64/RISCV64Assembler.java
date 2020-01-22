@@ -1213,4 +1213,26 @@ public class RISCV64Assembler extends AbstractAssembler {
             this.encoding = encoding;
         }
     }
+
+    // Atomic instructions
+    public void lrw(CiRegister dest, CiRegister addr, int aq, int rl) {
+        int imm32 = 0b00000 + (rl << 5) + (aq << 6) + (0b00010 << 7);
+        itype(LRSC, dest, 0b010, addr, imm32);
+    }
+
+    public void lrd(CiRegister dest, CiRegister addr, int aq, int rl) {
+        int imm32 = 0b00000 + (rl << 5) + (aq << 6) + (0b00010 << 7);
+        itype(LRSC, dest, 0b011, addr, imm32);
+    }
+
+    public void scw(CiRegister dest, CiRegister addr, CiRegister src, int aq, int rl) {
+        int imm32 = rl + (aq << 1) + (0b00011 << 2);
+        rtype(LRSC, dest, 0b010, addr, src, imm32);
+    }
+
+    public void scd(CiRegister dest, CiRegister addr, CiRegister src, int aq, int rl) {
+        int imm32 = rl + (aq << 1) + (0b00011 << 2);
+        rtype(LRSC, dest, 0b011, addr, src, imm32);
+    }
+
 }

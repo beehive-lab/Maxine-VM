@@ -756,14 +756,48 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         assert newValue != compareValue;
         assert size <= 64;
 
-        membar();
+        // No support added for loadReserved/storeConditional with different addressing mode
+        assert address.getAddressingMode() == RISCV64Address.AddressingMode.BASE_REGISTER_ONLY;
+
+        Label atomicFail = new Label();
         Label notEqualTocmpValue = new Label();
-        ldr(size, scratchRegister, address);
-        branchConditionally(ConditionFlag.NE, compareValue, scratchRegister, notEqualTocmpValue);
-        str(size, newValue, address);
+
+        bind(atomicFail);
+        loadReserved(size, scratchRegister, address.getBase(), 0b1, 0b1); // scratch has the current Value
+
+        branchConditionally(ConditionFlag.NE, compareValue, scratchRegister, notEqualTocmpValue); // compare scratch with cmpValue; value was not equal to the cmpValue
+        storeConditional(size, scratchRegister, newValue, address.getBase(), 0b1, 0b1); // store newValue to address and result to scratch register
+
+        // If the Condition is Equal then the storeConditional took place but it MIGHT have failed so we need to test for this.
+        // If the scratch register is not 0 then there was an issue with atomicity so do the operation again
+        branchConditionally(ConditionFlag.NE, scratchRegister, RISCV64.zero, atomicFail);
         mov(scratchRegister, compareValue); // set scratch register to the cmp value to indicate success
         bind(notEqualTocmpValue);
         membar();
+    }
+
+    public void loadReserved(int size, CiRegister dest, CiRegister addr, int aq, int rl) {
+        assert size == 32 || size == 64;
+        assert (aq & 0b1) == aq;
+        assert (rl & 0b1) == rl;
+
+        if (size == 32) {
+            lrw(dest, addr, aq, rl);
+        } else {
+            lrd(dest, addr, aq, rl);
+        }
+    }
+
+    public void storeConditional(int size, CiRegister dest, CiRegister src, CiRegister addr, int aq, int rl) {
+        assert size == 32 || size == 64;
+        assert (aq & 0b1) == aq;
+        assert (rl & 0b1) == rl;
+
+        if (size == 32) {
+            scw(dest, addr, src, aq, rl);
+        } else {
+            scd(dest, addr, src, aq, rl);
+        }
     }
 
     /**

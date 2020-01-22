@@ -62,7 +62,10 @@ public enum RISCV64opCodes {
 
     MUL((byte) 0b0110011),
     MULW((byte) 0b0111011),
-    RV32M((byte) 0b0111011);
+    RV32M((byte) 0b0111011),
+
+    // Atomic instructions
+    LRSC((byte) 0b0101111);
 
     public byte getValue() {
         return value;
