@@ -68,6 +68,9 @@ public class NUMAProfiler {
 
     public static int flareObjectCounter = 0;
 
+    public static int start_counter = 0;
+    public static int end_counter = 0;
+
     @C_FUNCTION
     static native void numaProfiler_lock();
 
@@ -308,28 +311,29 @@ public class NUMAProfiler {
             final int currentThreadID = VmThread.current().id();
             if (type.contains(NUMAProfilerFlareObjectStart)) {
                 flareObjectCounter++;
-                for (int i = 0; i < flareAllocationThresholds.length; i++) {
-                    if (flareObjectCounter == flareAllocationThresholds[i]) {
-                        flareObjectThreadIdBuffer[i] = currentThreadID;
-                        if (NUMAProfilerVerbose) {
-                            Log.print("(NUMA Profiler): Enable profiling due to flare object allocation for id ");
-                            Log.println(currentThreadID);
-                        }
-                        enableProfiling();
-                        break;
+                if (flareObjectCounter == flareAllocationThresholds[start_counter]) {
+                    flareObjectThreadIdBuffer[start_counter] = currentThreadID;
+                    if (NUMAProfilerVerbose) {
+                        Log.print("(NUMA Profiler): Enable profiling due to flare object allocation for id ");
+                        Log.println(currentThreadID);
                     }
+                    if (start_counter < flareAllocationThresholds.length - 1) {
+                        start_counter++;
+                    }
+                    enableProfiling();
                     disableProfiler = false;
                 }
             } else if (type.contains(NUMAProfilerFlareObjectEnd)) {
-                for (int i = 0; i < flareObjectThreadIdBuffer.length; i++) {
-                    if (flareObjectThreadIdBuffer[i] == currentThreadID) {
-                        if (NUMAProfilerVerbose) {
-                            Log.print("(NUMA Profiler): Disable profiling due to flare end object allocation for id ");
-                            Log.println(currentThreadID);
-                        }
-                        disableProfiling();
-                        disableProfiler = true;
+                if (flareObjectThreadIdBuffer[end_counter] == currentThreadID) {
+                    if (NUMAProfilerVerbose) {
+                        Log.print("(NUMA Profiler): Disable profiling due to flare end object allocation for id ");
+                        Log.println(currentThreadID);
                     }
+                    if (end_counter < flareAllocationThresholds.length - 1) {
+                        end_counter++;
+                    }
+                    disableProfiling();
+                    disableProfiler = true;
                 }
             }
         }
