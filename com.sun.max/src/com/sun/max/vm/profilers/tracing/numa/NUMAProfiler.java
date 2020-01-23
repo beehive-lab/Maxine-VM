@@ -320,7 +320,11 @@ public class NUMAProfiler {
                     if (start_counter < flareAllocationThresholds.length - 1) {
                         start_counter++;
                     }
-                    enableProfiling();
+                    if (NUMAProfiler.NUMAProfilerIsolateDominantThread) {
+                        setProfilingTLA.run(VmThread.currentTLA());
+                    } else {
+                        enableProfiling();
+                    }
                     disableProfiler = false;
                 }
             } else if (type.contains(NUMAProfilerFlareObjectEnd)) {
@@ -332,7 +336,11 @@ public class NUMAProfiler {
                     if (end_counter < flareAllocationThresholds.length - 1) {
                         end_counter++;
                     }
-                    disableProfiling();
+                    if (NUMAProfiler.NUMAProfilerIsolateDominantThread) {
+                        resetProfilingTLA.run(VmThread.currentTLA());
+                    } else {
+                        disableProfiling();
+                    }
                     disableProfiler = true;
                 }
             }
