@@ -609,8 +609,8 @@ public class VmThread {
 
         // Enable profiling for the new VM Thread if profiling should be enabled
         if (MaxineVM.useNUMAProfiler && MaxineVM.numaProfiler != null) {
-            if ((NUMAProfiler.iteration >= NUMAProfiler.NUMAProfilerExplicitGCThreshold && NUMAProfiler.NUMAProfilerExplicitGCThreshold >= 0) ||
-                (NUMAProfiler.flareObjectCounter >= NUMAProfiler.flareAllocationThresholds[0] && !NUMAProfiler.NUMAProfilerFlareAllocationThresholds.equals("0"))) {
+            if ((NUMAProfiler.NUMAProfilerExplicitGCThreshold >= 0 && NUMAProfiler.iteration >= NUMAProfiler.NUMAProfilerExplicitGCThreshold) ||
+                (!NUMAProfiler.NUMAProfilerFlareAllocationThresholds.equals("0") && NUMAProfiler.disableProfiler == false)) {
                 PROFILER_STATE.store(etla, Address.fromInt(NUMAProfiler.PROFILING_STATE.ENABLED.getValue()));
             }
         }

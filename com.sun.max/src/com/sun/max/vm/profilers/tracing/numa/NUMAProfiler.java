@@ -97,8 +97,6 @@ public class NUMAProfiler {
     private static VirtualPagesBuffer heapPages;
 
     @SuppressWarnings("unused")
-    private static boolean NUMAProfilerAll;
-    @SuppressWarnings("unused")
     private static boolean NUMAProfilerVerbose;
     @SuppressWarnings("unused")
     private static int     NUMAProfilerBufferSize;
@@ -197,7 +195,6 @@ public class NUMAProfiler {
 
     // The options a user can pass to the NUMA Profiler.
     static {
-        VMOptions.addFieldOption("-XX:", "NUMAProfilerAll", NUMAProfiler.class, "Profile all allocated objects. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerVerbose", NUMAProfiler.class, "Verbose numa profiler output. (default: false)", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "NUMAProfilerBufferSize", NUMAProfiler.class, "NUMAProfiler's Buffer Size.");
         VMOptions.addFieldOption("-XX:", "NUMAProfilerExplicitGCThreshold", NUMAProfiler.class,
@@ -280,7 +277,7 @@ public class NUMAProfiler {
         //initialize thread local counters
         initProfilingCounters();
 
-        if (profileAll() && NUMAProfilerExplicitGCThreshold == 0 && NUMAProfilerFlareAllocationThresholds.equals("0")) {
+        if (NUMAProfilerExplicitGCThreshold == 0) {
             enableProfiling();
         }
 
@@ -370,10 +367,6 @@ public class NUMAProfiler {
         int bufSize = Heap.maxSize().dividedBy(pageSize).toInt();
         heapPages = new VirtualPagesBuffer(bufSize);
         findFirstHeapPage();
-    }
-
-    public static boolean profileAll() {
-        return NUMAProfilerAll;
     }
 
     /**
@@ -792,7 +785,7 @@ public class NUMAProfiler {
         if (isExplicitGC) {
             iteration++;
             isExplicitGC = false;
-            if (iteration == NUMAProfiler.NUMAProfilerExplicitGCThreshold && NUMAProfilerFlareAllocationThresholds.equals("0")) {
+            if (iteration == NUMAProfiler.NUMAProfilerExplicitGCThreshold) {
                 if (NUMAProfilerVerbose) {
                     Log.println("(NUMA Profiler): Enabling profiling. [post-GC phase]");
                 }
