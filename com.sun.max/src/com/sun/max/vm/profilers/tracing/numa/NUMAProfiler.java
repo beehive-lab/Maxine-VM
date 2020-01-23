@@ -35,6 +35,8 @@ import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
+import java.util.Arrays;
+
 public class NUMAProfiler {
 
     /**
@@ -228,7 +230,7 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): NUMAProfiler Initialization.");
         }
 
-        splitStringtoIntegers();
+        splitStringtoSortedIntegers();
 
         int survivorBufferSize = MINIMUMBUFFERSIZE;
         int allocatorBufferSize = MINIMUMBUFFERSIZE;
@@ -807,7 +809,7 @@ public class NUMAProfiler {
     /**
      *  A method to transform a string of that form "int0,int1,int2" into an integer array [int0, int1, int2].
      */
-    private void splitStringtoIntegers() {
+    private void splitStringtoSortedIntegers() {
 
         String[] thresholds = NUMAProfilerFlareAllocationThresholds.split(",");
         flareObjectThreadIdBuffer = new int[thresholds.length];
@@ -815,6 +817,7 @@ public class NUMAProfiler {
         for (int i = 0; i < thresholds.length; i++) {
             flareAllocationThresholds[i] = Integer.parseInt(thresholds[i]);
         }
+        Arrays.sort(flareAllocationThresholds);
 
     }
 
