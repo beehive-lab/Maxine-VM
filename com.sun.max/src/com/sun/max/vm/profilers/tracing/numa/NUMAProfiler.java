@@ -165,7 +165,7 @@ public class NUMAProfiler {
      */
     public static int[] flareObjectThreadIdBuffer;
 
-    public static boolean disableProfiler = true;
+    public static boolean enableProfiler = false;
 
     private static final int MINIMUMBUFFERSIZE = 500000;
 
@@ -310,6 +310,7 @@ public class NUMAProfiler {
             final int currentThreadID = VmThread.current().id();
             if (type.contains(NUMAProfilerFlareObjectStart)) {
                 flareObjectCounter++;
+                Log.println(flareObjectCounter);
                 if (flareObjectCounter == flareAllocationThresholds[start_counter]) {
                     flareObjectThreadIdBuffer[start_counter] = currentThreadID;
                     if (NUMAProfilerVerbose) {
@@ -324,7 +325,7 @@ public class NUMAProfiler {
                     } else {
                         enableProfiling();
                     }
-                    disableProfiler = false;
+                    enableProfiler = true;
                 }
             } else if (type.contains(NUMAProfilerFlareObjectEnd)) {
                 if (flareObjectThreadIdBuffer[end_counter] == currentThreadID) {
@@ -340,7 +341,7 @@ public class NUMAProfiler {
                     } else {
                         disableProfiling();
                     }
-                    disableProfiler = true;
+                    enableProfiler = false;
                 }
             }
         }
