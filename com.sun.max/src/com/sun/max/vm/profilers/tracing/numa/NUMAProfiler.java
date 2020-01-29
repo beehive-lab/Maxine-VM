@@ -534,7 +534,7 @@ public class NUMAProfiler {
      * Find the NUMA Node for each allocated Object.
      * For every object, find the virtual memory page where the object is placed and get its physical NUMA Node.
      */
-    private void findNumaNodesForAllAllocatedObjects() {
+    private void findNumaNodeForAllAllocatedObjects() {
         long objectAddress;
 
         for (int i = 0; i < newObjects.currentIndex; i++) {
@@ -550,25 +550,34 @@ public class NUMAProfiler {
     /**
      * Find the NUMA Node for each virtual memory page of the JVM Heap.
      */
-    private void findNumaNodeForPages() {
+    private void findNumaNodeForAllMemoryPages() {
         assert vm().config.heapScheme() instanceof SemiSpaceHeapScheme;
         Address currentAddress = vm().config.heapScheme().getHeapStartAddress();
-        int     index          = 0;
+        int index = 0;
+        final long memoryPageSize = NUMALib.numaPageSize();
+
         while (vm().config.heapScheme().contains(currentAddress)) {
             int node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
+
             if (VirtualPagesBuffer.debug) {
                 Log.print("write starting address ");
                 Log.print(currentAddress.toLong());
                 Log.print(" of range ");
                 Log.println(index);
             }
+
             heapPages.writeNumaNode(index, node);
             index++;
-            currentAddress = currentAddress.plus(NUMALib.numaPageSize());
-            //update stats
-            if (node < 0) {
+
+            // get next memory page address
+            currentAddress = currentAddress.plus(memoryPageSize);
+
+            // if no NUMA node is found the page is still unallocated
+            if (node == NUMALib.EFAULT) {
                 node = VirtualPagesBuffer.maxNumaNodes;
             }
+
+            // update stats
             int count = heapPages.readStats(node);
             heapPages.writeStats(node, count + 1);
         }
@@ -691,8 +700,8 @@ public class NUMAProfiler {
 
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
-            findNumaNodeForPages();
-            findNumaNodesForAllAllocatedObjects();
+            findNumaNodeForAllMemoryPages();
+            findNumaNodeForAllAllocatedObjects();
         }
 
         if (NUMAProfilerVerbose) {
@@ -932,8 +941,8 @@ public class NUMAProfiler {
 
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
-            findNumaNodeForPages();
-            findNumaNodesForAllAllocatedObjects();
+            findNumaNodeForAllMemoryPages();
+            findNumaNodeForAllAllocatedObjects();
         }
 
         if (!NUMAProfilerDebug) {
