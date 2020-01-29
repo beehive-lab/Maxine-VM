@@ -437,8 +437,8 @@ public class NUMAProfiler {
     /**
      * Get the physical NUMA node id for a virtual address.
      *
-     * We check whether the NUMA node is found. It might return EFAULT in case the page was still
-     * unallocated to a physical NUMA node by the last {@link NUMALib} coreToNUMANodeMap update.
+     * We check whether the NUMA node is found. It might return EFAULT in case it is the first
+     * access on the memory page in the current cycle.
      * In that case the system call from NUMALib is called directly and the values are updated.
      *
      * @param firstPageAddress
@@ -452,10 +452,11 @@ public class NUMAProfiler {
         int pageIndex = (int) div;
 
         int objNumaNode = heapPages.readNumaNode(pageIndex);
-        // check whether the numa node is found
+        // if outdated, use the sys call to get the numa node and update heapPages buffer
         if (objNumaNode == NUMALib.EFAULT) {
-            long pageAddr = heapPages.readAddr(pageIndex);
+            long pageAddr = firstPageAddress + (pageIndex * NUMALib.numaPageSize());
             int node = NUMALib.numaNodeOfAddress(pageAddr);
+            heapPages.writeAddr(pageIndex, pageAddr);
             heapPages.writeNumaNode(pageIndex, node);
             objNumaNode = node;
         }
