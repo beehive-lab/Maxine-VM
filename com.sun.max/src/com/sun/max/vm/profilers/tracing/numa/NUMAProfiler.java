@@ -435,35 +435,6 @@ public class NUMAProfiler {
     }
 
     /**
-     * Get the physical NUMA node id for a virtual address.
-     *
-     * We check whether the NUMA node is found. It might return EFAULT in case it is the first
-     * access on the memory page in the current cycle.
-     * In that case the system call from NUMALib is called directly and the values are updated.
-     *
-     * @param firstPageAddress
-     * @param address
-     * @return physical NUMA node id
-     */
-    private static int getObjectNumaNode(long firstPageAddress, long address) {
-        int pageSize = NUMALib.numaPageSize();
-        long numerator = address - firstPageAddress;
-        long div = numerator / (long) pageSize;
-        int pageIndex = (int) div;
-
-        int objNumaNode = heapPages.readNumaNode(pageIndex);
-        // if outdated, use the sys call to get the numa node and update heapPages buffer
-        if (objNumaNode == NUMALib.EFAULT) {
-            long pageAddr = firstPageAddress + (pageIndex * NUMALib.numaPageSize());
-            int node = NUMALib.numaNodeOfAddress(pageAddr);
-            heapPages.writeAddr(pageIndex, pageAddr);
-            heapPages.writeNumaNode(pageIndex, node);
-            objNumaNode = node;
-        }
-        return objNumaNode;
-    }
-
-    /**
      * This method assesses the locality of a memory access and returns the {@link ACCESS_COUNTER} value to be incremented.
      * A memory access can be either local (a thread running on N numa node accesses an object on N numa node),
      * inter-node (a thread running on N numa node accesses an object on M numa node with both N and M being on the same blade),
@@ -477,7 +448,7 @@ public class NUMAProfiler {
         // get the Numa Node where the thread which is performing the write is running
         final int threadNumaNode = Intrinsics.getCpuID() >> MaxineIntrinsicIDs.NUMA_NODE_SHIFT;
         // get the Numa Node where the written object is placed
-        final int objectNumaNode = getObjectNumaNode(firstPageAddress, address);
+        final int objectNumaNode = getNumaNodeForAddress(address);
 
         if (threadNumaNode != objectNumaNode) {
             // get the Blade where the thread Numa Node is located
@@ -625,6 +596,37 @@ public class NUMAProfiler {
             heapPages.writeStats(node, count + 1);
         }
 
+    }
+
+    /**
+     * Get the physical NUMA node id for a virtual address.
+     *
+     * We use {@code heapPages} (a {@link VirtualPagesBuffer} instance) as a "cache" that stores a mapping
+     * to a physical NUMA node for each virtual memory page. We calculate the index of the memory page into
+     * the cache (to avoid the linear search) and we get the corresponding NUMA node.
+     * It might return EFAULT (=-14) in case it is the first hit of the memory page in the current cycle.
+     * In that case the system call from NUMALib is called directly and the values are updated.
+     *
+     * @param address
+     * @return physical NUMA node id
+     */
+    private static int getNumaNodeForAddress(long address) {
+        long firstPageAddress = vm().config.heapScheme().getHeapStartAddress().toLong();
+        int pageSize = NUMALib.numaPageSize();
+        long numerator = address - firstPageAddress;
+        long div = numerator / (long) pageSize;
+        int pageIndex = (int) div;
+
+        int objNumaNode = heapPages.readNumaNode(pageIndex);
+        // if outdated, use the sys call to get the numa node and update heapPages buffer
+        if (objNumaNode == NUMALib.EFAULT) {
+            long pageAddr = firstPageAddress + (pageIndex * NUMALib.numaPageSize());
+            int node = NUMALib.numaNodeOfAddress(pageAddr);
+            heapPages.writeAddr(pageIndex, pageAddr);
+            heapPages.writeNumaNode(pageIndex, node);
+            objNumaNode = node;
+        }
+        return objNumaNode;
     }
 
     /**
