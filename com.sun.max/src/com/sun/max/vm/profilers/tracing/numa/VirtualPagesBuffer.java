@@ -23,6 +23,7 @@ package com.sun.max.vm.profilers.tracing.numa;
 import com.sun.max.memory.VirtualMemory;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Size;
+import com.sun.max.util.NUMALib;
 import com.sun.max.vm.Log;
 
 public class VirtualPagesBuffer {
@@ -121,6 +122,10 @@ public class VirtualPagesBuffer {
 
     void resetBuffer() {
         pagesCurrentIndex = 0;
+
+        for (int i = 0; i < bufferSize; i++) {
+            writeNumaNode(i, NUMALib.EFAULT);
+        }
 
         for (int i = 0; i <= maxNumaNodes; i++) {
             writeStats(i, 0);
