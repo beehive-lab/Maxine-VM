@@ -48,7 +48,6 @@ public class VirtualPagesBuffer {
     private Pointer heapBoundariesStats;
 
     int bufferSize;
-    int pagesCurrentIndex;
 
     static final int maxNumaNodes = 36;
 
@@ -117,11 +116,9 @@ public class VirtualPagesBuffer {
 
     void writeNumaNode(int index, int value) {
         writeInt(numaNodes, index, value);
-        pagesCurrentIndex++;
     }
 
     void resetBuffer() {
-        pagesCurrentIndex = 0;
 
         for (int i = 0; i < bufferSize; i++) {
             writeNumaNode(i, NUMALib.EFAULT);
@@ -135,7 +132,7 @@ public class VirtualPagesBuffer {
     public void print(int profilingCycle) {
         Log.println("HEAP BOUNDARIES:");
         Log.println("=================");
-        for (int i = 1; i < pagesCurrentIndex; i++) {
+        for (int i = 1; i < bufferSize; i++) {
             Log.print(readNumaNode(i));
             Log.print(" ");
             if (i % 20 == 0) {
