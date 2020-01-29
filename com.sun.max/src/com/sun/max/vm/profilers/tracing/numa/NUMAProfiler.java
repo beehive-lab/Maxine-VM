@@ -369,7 +369,6 @@ public class NUMAProfiler {
     private void findFirstHeapPage() {
         Address startAddress = vm().config.heapScheme().getHeapStartAddress();
         int node = NUMALib.numaNodeOfAddress(startAddress.toLong());
-        heapPages.writeAddr(0, startAddress.toLong());
         heapPages.writeNumaNode(0, node);
     }
 
@@ -475,7 +474,7 @@ public class NUMAProfiler {
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public static void profileAccess(ACCESS_COUNTER counter, long address) {
-        long firstPageAddress = heapPages.readAddr(0);
+        long firstPageAddress = vm().config.heapScheme().getHeapStartAddress().toLong();
 
         // if the written object is not part of the data heap
         // TODO: implement some action, currently ignore
@@ -563,7 +562,6 @@ public class NUMAProfiler {
                 Log.print(" of range ");
                 Log.println(index);
             }
-            heapPages.writeAddr(index, currentAddress.toLong());
             heapPages.writeNumaNode(index, node);
             index++;
             currentAddress = currentAddress.plus(NUMALib.numaPageSize());
@@ -601,7 +599,6 @@ public class NUMAProfiler {
         if (objNumaNode == NUMALib.EFAULT) {
             long pageAddr = firstPageAddress + (pageIndex * NUMALib.numaPageSize());
             int node = NUMALib.numaNodeOfAddress(pageAddr);
-            heapPages.writeAddr(pageIndex, pageAddr);
             heapPages.writeNumaNode(pageIndex, node);
             objNumaNode = node;
         }

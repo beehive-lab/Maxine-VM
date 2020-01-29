@@ -29,8 +29,7 @@ import com.sun.max.vm.Log;
 public class VirtualPagesBuffer {
 
     /**
-     * startAddresses:
-     * An off-heap array to store the start address of each virtual memory page.
+     * The fields of this Buffer are:
      *
      * numaNodes:
      * An off-heap array to store the NUMA Node id of each virtual memory page.
@@ -40,10 +39,9 @@ public class VirtualPagesBuffer {
      * Its length is equal to the max NUMA Node id, plus one to store the number of still untouched pages.
      * Despite all virtual pages are already allocated by the OS and dedicated to their JVM instance
      * they are not mapped to physical memory until they have at least one of their bytes written.
-     * Given that, the NUMA system call used to get the NUMA node of a virtual address returns -14 for
-     * the still untouched pages.
+     * The NUMA system call used to get the NUMA node of a virtual address returns
+     * {@link NUMALib#EFAULT} (= -14) for the still untouched pages.
      */
-    private Pointer startAddresses;
     private Pointer numaNodes;
     private Pointer heapBoundariesStats;
 
@@ -55,7 +53,6 @@ public class VirtualPagesBuffer {
 
     VirtualPagesBuffer(int bufSize) {
         bufferSize = bufSize;
-        startAddresses = allocateLongArrayOffHeap(bufSize);
         numaNodes = allocateIntArrayOffHeap(bufSize);
         heapBoundariesStats = allocateIntArrayOffHeap(maxNumaNodes + 1);
         resetBuffer();
@@ -65,15 +62,10 @@ public class VirtualPagesBuffer {
         return VirtualMemory.allocate(Size.fromInt(size).times(Integer.BYTES), VirtualMemory.Type.DATA);
     }
 
-    private Pointer allocateLongArrayOffHeap(int size) {
-        return VirtualMemory.allocate(Size.fromInt(size).times(Long.BYTES), VirtualMemory.Type.DATA);
-    }
-
     void deallocateAll() {
         final Size intSize = Size.fromInt(bufferSize).times(Integer.BYTES);
         final Size longSize = Size.fromInt(bufferSize).times(Long.BYTES);
         final Size statsSize = Size.fromInt(maxNumaNodes + 1).times(Integer.BYTES);
-        VirtualMemory.deallocate(startAddresses.asAddress(), longSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(numaNodes.asAddress(), intSize, VirtualMemory.Type.DATA);
         VirtualMemory.deallocate(heapBoundariesStats.asAddress(), statsSize, VirtualMemory.Type.DATA);
     }
@@ -92,14 +84,6 @@ public class VirtualPagesBuffer {
 
     private long readLong(Pointer pointer, int index) {
         return pointer.getLong(index);
-    }
-
-    public void writeAddr(int index, long value) {
-        writeLong(startAddresses, index, value);
-    }
-
-    public long readAddr(int index) {
-        return readLong(startAddresses, index);
     }
 
     public int readNumaNode(int index) {
