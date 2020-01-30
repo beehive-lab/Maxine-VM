@@ -546,6 +546,7 @@ public final class JDKInterceptor {
             "instance",
         JDK.sun_misc_SharedSecrets,
             "javaObjectInputStreamAccess",
+            new ZeroField("javaObjectInputStreamReadString").makeOptional(), // Not present before jdk8u242
         JDK.sun_launcher_LauncherHelper,
             "appClass",
    };
