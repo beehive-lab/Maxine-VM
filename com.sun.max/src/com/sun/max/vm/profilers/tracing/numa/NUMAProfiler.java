@@ -364,19 +364,17 @@ public class NUMAProfiler {
     }
 
     /**
-     * Find heap's first page address and Numa Node and set it in heapPages.
+     * Return heap's first memory page address.
      */
-    private void findFirstHeapPage() {
-        Address startAddress = vm().config.heapScheme().getHeapStartAddress();
-        int node = NUMALib.numaNodeOfAddress(startAddress.toLong());
-        heapPages.writeNumaNode(0, node);
+    private static Address getFirstHeapPage() {
+        return vm().config.heapScheme().getHeapStartAddress();
     }
 
     private void initializeHeapBoundariesBuffer() {
         int pageSize = NUMALib.numaPageSize();
         int bufSize = Heap.maxSize().dividedBy(pageSize).toInt();
         heapPages = new VirtualPagesBuffer(bufSize);
-        findFirstHeapPage();
+        heapPages.writeNumaNode(0, NUMALib.numaNodeOfAddress(getFirstHeapPage().toLong()));
     }
 
     /**
@@ -474,7 +472,7 @@ public class NUMAProfiler {
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public static void profileAccess(ACCESS_COUNTER counter, long address) {
-        long firstPageAddress = vm().config.heapScheme().getHeapStartAddress().toLong();
+        long firstPageAddress = getFirstHeapPage().toLong();
 
         // if the written object is not part of the data heap
         // TODO: implement some action, currently ignore
@@ -526,7 +524,7 @@ public class NUMAProfiler {
     private void resetHeapBoundaries() {
         final boolean lockDisabledSafepoints = lock();
         heapPages.resetBuffer();
-        findFirstHeapPage();
+        heapPages.writeNumaNode(0, NUMALib.numaNodeOfAddress(getFirstHeapPage().toLong()));
         unlock(lockDisabledSafepoints);
     }
 
@@ -552,7 +550,7 @@ public class NUMAProfiler {
      */
     private void findNumaNodeForAllMemoryPages() {
         assert vm().config.heapScheme() instanceof SemiSpaceHeapScheme;
-        Address currentAddress = vm().config.heapScheme().getHeapStartAddress();
+        Address currentAddress = getFirstHeapPage();
         int index = 0;
         final long memoryPageSize = NUMALib.numaPageSize();
 
@@ -597,7 +595,7 @@ public class NUMAProfiler {
      * @return physical NUMA node id
      */
     private static int getNumaNodeForAddress(long address) {
-        long firstPageAddress = vm().config.heapScheme().getHeapStartAddress().toLong();
+        long firstPageAddress = getFirstHeapPage().toLong();
         int pageSize = NUMALib.numaPageSize();
         long numerator = address - firstPageAddress;
         long div = numerator / (long) pageSize;
