@@ -336,8 +336,8 @@ public class NUMAProfiler {
                     enableProfiler = true;
                 }
             } else if (type.contains(NUMAProfilerFlareObjectEnd)) {
-                if (flareObjectThreadIdBuffer[end_counter] == currentThreadID) {
-                    if (NUMAProfilerVerbose && enableProfiler == true) {
+                if (flareObjectThreadIdBuffer[end_counter] == currentThreadID && enableProfiler == true) {
+                    if (NUMAProfilerVerbose) {
                         Log.print("(NUMA Profiler): Disable profiling due to flare end object allocation for id ");
                         Log.println(currentThreadID);
                     }
