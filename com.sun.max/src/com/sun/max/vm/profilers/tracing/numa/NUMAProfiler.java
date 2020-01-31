@@ -305,13 +305,21 @@ public class NUMAProfiler {
      * @param hub
      */
     public static void checkForFlareObject(Hub hub) {
+        final boolean lockDisabledSafepoints = lock();
         if (MaxineVM.useNUMAProfiler && !NUMAProfilerFlareAllocationThresholds.equals("0")) {
             String type = hub.classActor.name();
             final int currentThreadID = VmThread.current().id();
             if (type.contains(NUMAProfilerFlareObjectStart)) {
                 flareObjectCounter++;
-                Log.println(flareObjectCounter);
+                if (NUMAProfilerVerbose) {
+                    Log.print("(NUMA Profiler): Start Flare-Object Counter: ");
+                    Log.println(flareObjectCounter);
+                }
                 if (flareObjectCounter == flareAllocationThresholds[start_counter]) {
+                    if (enableProfiler) {
+                        throw FatalError.unexpected("The NUMA Profiler supports only a single profiling instance a time. " +
+                            "It seams that there is already an ongoing Flare-Object profiling");
+                    }
                     flareObjectThreadIdBuffer[start_counter] = currentThreadID;
                     if (NUMAProfilerVerbose) {
                         Log.print("(NUMA Profiler): Enable profiling due to flare object allocation for id ");
@@ -329,7 +337,7 @@ public class NUMAProfiler {
                 }
             } else if (type.contains(NUMAProfilerFlareObjectEnd)) {
                 if (flareObjectThreadIdBuffer[end_counter] == currentThreadID) {
-                    if (NUMAProfilerVerbose) {
+                    if (NUMAProfilerVerbose && enableProfiler == true) {
                         Log.print("(NUMA Profiler): Disable profiling due to flare end object allocation for id ");
                         Log.println(currentThreadID);
                     }
@@ -345,6 +353,7 @@ public class NUMAProfiler {
                 }
             }
         }
+        unlock(lockDisabledSafepoints);
     }
 
     public static boolean shouldProfile() {
