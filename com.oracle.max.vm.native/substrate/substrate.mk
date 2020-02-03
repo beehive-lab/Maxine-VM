@@ -35,12 +35,9 @@ TARGETOS ?= $(shell uname -s)
 ifeq ($(TARGETOS),Linux)
     TARGETISA ?= $(shell uname -m)
     ifeq ($(TARGETISA), x86_64)
-        ISA := amd64
-    endif
+		SOURCES += numa.c
+    endif # x86_64
 endif # Linux
-ifeq ($(ISA),amd64)
-    SOURCES += numa.c
-endif
 
 SOURCE_DIRS = share platform substrate
 
