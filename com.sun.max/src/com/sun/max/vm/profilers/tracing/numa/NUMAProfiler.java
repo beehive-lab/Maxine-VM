@@ -165,7 +165,10 @@ public class NUMAProfiler {
      */
     public static int[] flareObjectThreadIdBuffer;
 
-    public static boolean enableProfiler = false;
+    /**
+     * A boolean variable, to show when the profiler is ON for the Flare Object Policy.
+     */
+    public static boolean enableFlareObjectProfiler = false;
 
     private static final int MINIMUMBUFFERSIZE = 500000;
 
@@ -316,7 +319,7 @@ public class NUMAProfiler {
                     Log.println(flareObjectCounter);
                 }
                 if (flareObjectCounter == flareAllocationThresholds[start_counter]) {
-                    if (enableProfiler) {
+                    if (enableFlareObjectProfiler) {
                         throw FatalError.unexpected("The NUMA Profiler supports only a single profiling instance a time. " +
                             "It seams that there is already an ongoing Flare-Object profiling");
                     }
@@ -333,9 +336,9 @@ public class NUMAProfiler {
                     } else {
                         enableProfiling();
                     }
-                    enableProfiler = true;
+                    enableFlareObjectProfiler = true;
                 }
-            } else if (enableProfiler == true && flareObjectThreadIdBuffer[end_counter] == currentThreadID && type.contains(NUMAProfilerFlareObjectEnd)) {
+            } else if (enableFlareObjectProfiler == true && flareObjectThreadIdBuffer[end_counter] == currentThreadID && type.contains(NUMAProfilerFlareObjectEnd)) {
                 if (NUMAProfilerVerbose) {
                     Log.print("(NUMA Profiler): Disable profiling due to flare end object allocation for id ");
                     Log.println(currentThreadID);
@@ -346,7 +349,7 @@ public class NUMAProfiler {
                 } else {
                     disableProfiling();
                 }
-                enableProfiler = false;
+                enableFlareObjectProfiler = false;
             }
         }
         unlock(lockDisabledSafepoints);
