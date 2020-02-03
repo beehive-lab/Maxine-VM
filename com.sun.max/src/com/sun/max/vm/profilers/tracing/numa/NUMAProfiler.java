@@ -340,9 +340,7 @@ public class NUMAProfiler {
                     Log.print("(NUMA Profiler): Disable profiling due to flare end object allocation for id ");
                     Log.println(currentThreadID);
                 }
-                if (end_counter < flareAllocationThresholds.length - 1) {
-                    end_counter++;
-                }
+                end_counter++;
                 if (NUMAProfiler.NUMAProfilerIsolateDominantThread) {
                     resetProfilingTLA.run(VmThread.currentTLA());
                 } else {
