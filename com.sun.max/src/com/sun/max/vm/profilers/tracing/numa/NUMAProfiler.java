@@ -335,22 +335,20 @@ public class NUMAProfiler {
                     }
                     enableProfiler = true;
                 }
-            } else if (type.contains(NUMAProfilerFlareObjectEnd)) {
-                if (flareObjectThreadIdBuffer[end_counter] == currentThreadID && enableProfiler == true) {
-                    if (NUMAProfilerVerbose) {
-                        Log.print("(NUMA Profiler): Disable profiling due to flare end object allocation for id ");
-                        Log.println(currentThreadID);
-                    }
-                    if (end_counter < flareAllocationThresholds.length - 1) {
-                        end_counter++;
-                    }
-                    if (NUMAProfiler.NUMAProfilerIsolateDominantThread) {
-                        resetProfilingTLA.run(VmThread.currentTLA());
-                    } else {
-                        disableProfiling();
-                    }
-                    enableProfiler = false;
+            } else if (enableProfiler == true && flareObjectThreadIdBuffer[end_counter] == currentThreadID && type.contains(NUMAProfilerFlareObjectEnd)) {
+                if (NUMAProfilerVerbose) {
+                    Log.print("(NUMA Profiler): Disable profiling due to flare end object allocation for id ");
+                    Log.println(currentThreadID);
                 }
+                if (end_counter < flareAllocationThresholds.length - 1) {
+                    end_counter++;
+                }
+                if (NUMAProfiler.NUMAProfilerIsolateDominantThread) {
+                    resetProfilingTLA.run(VmThread.currentTLA());
+                } else {
+                    disableProfiling();
+                }
+                enableProfiler = false;
             }
         }
         unlock(lockDisabledSafepoints);
