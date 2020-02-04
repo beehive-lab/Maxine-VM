@@ -1,4 +1,6 @@
 #
+# Copyright (c) 2020, APT Group, Department of Computer Science,
+# School of Engineering, The University of Manchester. All rights reserved.
 # Copyright (c) 2017-2019, APT Group, School of Computer Science,
 # The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -58,17 +60,27 @@ HOSTOS = $(shell uname -s)
 # Set TARGETOS explicitly to cross-compile for a different target
 # (required for Maxine VE when building tele/inspector)
 TARGETOS ?= $(shell uname -s)
-# TARGETISA is the architecture we are compiling for
-# Set TARGETISA explicitly to cross-compile for a different target
+# HOSTISA is the architecture we are compiling on
 ifeq ($(TARGETOS),Darwin)
-    TARGETISA ?= $(shell uname -p)
+    HOSTISA := $(shell uname -p)
 endif # Darwin
 ifeq ($(TARGETOS),Linux)
-    TARGETISA ?= $(shell uname -m)
+    HOSTISA := $(shell uname -m)
 endif # Linux
 ifeq ($(TARGETOS),SunOS)
-    TARGETISA := $(shell isainfo -n)
+    HOSTISA := $(shell isainfo -n)
 endif # SunOS
+# TARGETISA is the architecture we are compiling for
+# Set TARGETISA explicitly to cross-compile for a different target
+TARGETISA ?= $(HOSTISA)
+# Always use HOSTISA as the TARGETISA for libhosted
+ifeq ($(TARGET), HOSTED)
+	ifneq ($(TARGETISA), $(HOSTISA))
+	    TARGETISA := $(HOSTISA)
+	    CROSS_COMPILING := 1
+	endif
+endif
+
 DARWIN_RELEASE ?= $(shell echo $$(($$(uname -r | cut -d'.' -f 1) > 13 ? 1 : 0)))
 
 ifeq ($(TARGETOS),Darwin)
@@ -204,6 +216,13 @@ else
     endif
 endif
 
+
+# Always build libhosted wih gcc when cross-compiling
+ifeq ($(TARGET), HOSTED)
+	ifeq ($(CROSS_COMPILING), 1)
+        CC := gcc
+    endif
+endif
 
 ifeq ($(OS),darwin)
     ifneq "$(findstring def, $(origin CC))" ""

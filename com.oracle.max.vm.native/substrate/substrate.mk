@@ -1,4 +1,6 @@
 #
+# Copyright (c) 2020, APT Group, Department of Computer Science,
+# School of Engineering, The University of Manchester. All rights reserved.
 # Copyright (c) 2019, APT Group, School of Computer Science,
 # The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -35,12 +37,9 @@ TARGETOS ?= $(shell uname -s)
 ifeq ($(TARGETOS),Linux)
     TARGETISA ?= $(shell uname -m)
     ifeq ($(TARGETISA), x86_64)
-        ISA := amd64
-    endif
+		SOURCES += numa.c
+    endif # x86_64
 endif # Linux
-ifeq ($(ISA),amd64)
-    SOURCES += numa.c
-endif
 
 SOURCE_DIRS = share platform substrate
 
