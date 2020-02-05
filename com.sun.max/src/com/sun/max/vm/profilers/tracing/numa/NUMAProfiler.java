@@ -307,10 +307,6 @@ public class NUMAProfiler {
             float allocProfilerSize = afterAllocProfiler - beforeAllocProfiler;
             Log.println("NUMA Profiler Size = " + allocProfilerSize + " MB\n");
         }
-
-        heapStart = vm().config.heapScheme().getHeapStartAddress();
-        Log.print("heap Start = ");
-        Log.println(heapStart);
     }
 
     /**
@@ -484,7 +480,6 @@ public class NUMAProfiler {
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public static void profileAccess(ACCESS_COUNTER counter, long address) {
-        /*
         long firstPageAddress = getFirstHeapPage().toLong();
 
         // if the written object is not part of the data heap
@@ -497,7 +492,6 @@ public class NUMAProfiler {
 
         // increment local or remote writes
         increaseAccessCounter(accessCounter);
-        */
     }
 
     /**
@@ -510,7 +504,7 @@ public class NUMAProfiler {
             Log.print(profilingCycle);
             Log.println(" ====");
         }
-        //newObjects.print(profilingCycle, 1);
+        newObjects.print(profilingCycle, 1);
         unlock(lockDisabledSafepoints);
     }
 
@@ -522,9 +516,9 @@ public class NUMAProfiler {
             Log.println(" ====");
         }
         if ((profilingCycle % 2) == 0) {
-            //survivors2.print(profilingCycle, 0);
+            survivors2.print(profilingCycle, 0);
         } else {
-            //survivors1.print(profilingCycle, 0);
+            survivors1.print(profilingCycle, 0);
         }
         unlock(lockDisabledSafepoints);
     }
@@ -569,66 +563,54 @@ public class NUMAProfiler {
      */
     private void findNumaNodeForAllMemoryPages() {
         assert vm().config.heapScheme() instanceof SemiSpaceHeapScheme;
-        ////////////DEBUGING///////////////////
-        fromStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().start();
-        Address fromEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().end();
+
+        // Get the start and end addresses of the spaces
         toStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().start();
         Address toEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().end();
-        /////////////////////////////////////
-        //////////////////DEBUG//////////////
-        Log.print("From Space = ");
-        Log.println(fromStart);
-        Log.print("To Space = ");
-        Log.println(toStart);
-        Log.print("Cycle ");
-        Log.print(profilingCycle);
-        Log.println(" HEAP BOUNDARIES:");
-        Log.println("=================");
-        /////////////////////////////////////
+        fromStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().start();
+        Address fromEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().end();
+
         // Scan the heap sequentially. First the toSpace and then the fromSpace
         Address currentAddress = toStart;
+        //debug
         int index = 1;
         int pageIndex = 0;
         final int memoryPageSize = NUMALib.numaPageSize();
 
         int node;
-        int prevNode;
 
-        // scan from space
-        Log.println("========== TO SPACE ===========");
+        // Scan toSpace
         while (currentAddress.lessThan(toEnd)) {
-            pageIndex = currentAddress.minus(heapStart).dividedBy(memoryPageSize).toInt();
+            // Get NUMA node of address using NUMALib
             node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
-            prevNode = heapPages.readNumaNode(pageIndex);
-
-            if (node != prevNode && prevNode != -14) {
-                //Log.print("node = ");
-                //Log.print(node);
-                //Log.print(", prevNode = ");
-                //Log.println(prevNode);
-                pageMigrations++;
-                toPageMigrations++;
-            }
-
-            //////////////////DEBUG//////////////
-            /*Log.print(node);
-            Log.print(" ");
-            if (index % 64 == 0) {
-                Log.println("|");
-            }*/
-            ////////////////////////////////////
+            // Get the index of the memory page in the heapPages Buffer
+            pageIndex = currentAddress.minus(heapStart).dividedBy(memoryPageSize).toInt();
+            // Write the NUMA node of the page in the heapPages Buffer
+            heapPages.writeNumaNode(pageIndex, node);
 
             if (VirtualPagesBuffer.debug) {
+                // Track page migrations
+                int prevNode;
+                prevNode = heapPages.readNumaNode(pageIndex);
+                if (node != prevNode && prevNode != -14) {
+                    pageMigrations++;
+                    toPageMigrations++;
+                }
+                // Print page-node map
+                Log.print(node);
+                Log.print(" ");
+                if (index % 64 == 0) {
+                    Log.println("|");
+                }
+                index++;
+                // Log
                 Log.print("write starting address ");
                 Log.print(currentAddress.toLong());
                 Log.print(" of range ");
                 Log.println(index);
             }
 
-            heapPages.writeNumaNode(pageIndex, node);
-            index++;
-
-            // get next memory page address
+            // Get the next memory page address
             currentAddress = currentAddress.plus(memoryPageSize);
 
             // if no NUMA node is found the page is still unallocated
@@ -640,51 +622,67 @@ public class NUMAProfiler {
             int count = heapPages.readStats(node);
             heapPages.writeStats(node, count + 1);
         }
-        Log.print("\n*** Current address = ");
-        Log.println(currentAddress);
-        Log.print("*** From Start = ");
-        Log.println(fromStart);
 
         index = 1;
-        // scan to space
+        // scan fromSpace
         currentAddress = fromStart;
-        Log.println("========== FROM SPACE ==========");
-        //while (vm().config.heapScheme().contains(currentAddress)) {
         while (currentAddress.lessThan(fromEnd)) {
-            pageIndex = (currentAddress.minus(heapStart)).dividedBy(memoryPageSize).toInt();
+            // Get NUMA node of address using NUMALib
             node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
-            prevNode = heapPages.readNumaNode(pageIndex);
+            // Get the index of the memory page in the heapPages Buffer
+            pageIndex = currentAddress.minus(heapStart).dividedBy(memoryPageSize).toInt();
+            // Write the NUMA node of the page in the heapPages Buffer
+            heapPages.writeNumaNode(pageIndex, node);
 
-            if (node != prevNode && prevNode != -14) {
-                //Log.print("node = ");
-                //Log.print(node);
-                //Log.print(", prevNode = ");
-                //Log.println(prevNode);
-                pageMigrations++;
-                fromPageMigrations++;
+            if (VirtualPagesBuffer.debug) {
+                // Track page migrations
+                int prevNode;
+                prevNode = heapPages.readNumaNode(pageIndex);
+                if (node != prevNode && prevNode != -14) {
+                    pageMigrations++;
+                    toPageMigrations++;
+                }
+                // Print page-node map
+                Log.print(node);
+                Log.print(" ");
+                if (index % 64 == 0) {
+                    Log.println("|");
+                }
+                index++;
+                // Log
+                Log.print("write starting address ");
+                Log.print(currentAddress.toLong());
+                Log.print(" of range ");
+                Log.println(index);
             }
 
-            //////////////////DEBUG//////////////
-            /*Log.print(node);
-            Log.print(" ");
-            if (index % 64 == 0) {
-                Log.println("|");
-            }*/
-            ////////////////////////////////////
-
-            heapPages.writeNumaNode(pageIndex, node);
-            index++;
             currentAddress = currentAddress.plus(memoryPageSize);
+
+            // if no NUMA node is found the page is still unallocated
+            if (node == NUMALib.EFAULT) {
+                node = VirtualPagesBuffer.maxNumaNodes;
+            }
+
+            // update stats
+            int count = heapPages.readStats(node);
+            heapPages.writeStats(node, count + 1);
         }
 
-        Log.print("\nMigrated Pages = ");
-        Log.println(pageMigrations);
+        if (VirtualPagesBuffer.debug) {
+            Log.print("\nMigrated Pages = ");
+            Log.println(pageMigrations);
 
-        Log.print("Migrated To Pages = ");
-        Log.println(toPageMigrations);
+            Log.print("Migrated To Pages = ");
+            Log.println(toPageMigrations);
 
-        Log.print("Migrated From Pages = ");
-        Log.println(fromPageMigrations);
+            Log.print("Migrated From Pages = ");
+            Log.println(fromPageMigrations);
+
+            //reset migration counters
+            pageMigrations = 0;
+            toPageMigrations = 0;
+            fromPageMigrations = 0;
+        }
 
     }
 
@@ -790,38 +788,6 @@ public class NUMAProfiler {
         newObjects.printUsage();
     }
 
-    public void diffHeaps() {
-        /*int numOfMigrations = 0;
-
-        int currentNode;
-        int previousNode;
-        for (int i = 0; i < heapPages.bufferSize; i++) {
-            currentNode = heapPages.readNumaNode(i);
-            previousNode = previousHeapPages.readNumaNode(i);
-            if ((currentNode >= 0 && previousNode >= 0) && (currentNode != previousNode)) {
-                numOfMigrations++;
-            }
-        }*/
-        //float migrationPercentage = (float) numOfMigrations / heapPages.bufferSize;
-        float migrationPercentage = (float) pageMigrations / heapPages.bufferSize;
-        migrationPercentage = migrationPercentage * 100;
-        Log.print("Migration Percentage = ");
-        Log.print(migrationPercentage);
-        Log.println("%");
-
-        float toMigrationPercentage = (float) toPageMigrations / (heapPages.bufferSize / 2);
-        toMigrationPercentage = toMigrationPercentage * 100;
-        Log.print("To Migration Percentage = ");
-        Log.print(toMigrationPercentage);
-        Log.println("%");
-
-        float fromMigrationPercentage = (float) fromPageMigrations / (heapPages.bufferSize / 2);
-        fromMigrationPercentage = fromMigrationPercentage * 100;
-        Log.print("From Migration Percentage = ");
-        Log.print(fromMigrationPercentage);
-        Log.println("%");
-    }
-
     /**
      * This method is called by ProfilerGCCallbacks in every pre-gc callback phase.
      */
@@ -837,17 +803,7 @@ public class NUMAProfiler {
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
             findNumaNodeForAllMemoryPages();
-            //findNumaNodeForAllAllocatedObjects();
-
-            //previousHeapPages.print(profilingCycle, true);
-            //heapPages.print(profilingCycle, false);
-            diffHeaps();
-            diffs = 0;
-            pageMigrations = 0;
-            toPageMigrations = 0;
-            fromPageMigrations = 0;
-
-            //previousHeapPages = heapPages;
+            findNumaNodeForAllAllocatedObjects();
         }
 
         if (NUMAProfilerVerbose) {
@@ -898,9 +854,9 @@ public class NUMAProfiler {
         }
         newObjects.resetBuffer();
 
-        if (NUMAProfilerVerbose) {
-            Log.println("(NUMA Profiler): Reset HeapBoundaries Buffer. [post-gc phase]");
-        }
+        //if (NUMAProfilerVerbose) {
+            //Log.println("(NUMA Profiler): Reset HeapBoundaries Buffer. [post-gc phase]");
+        //}
         //resetHeapBoundaries();
 
         if (NUMAProfilerVerbose) {
@@ -946,9 +902,6 @@ public class NUMAProfiler {
             Log.print(profilingCycle);
             Log.println("]");
         }
-
-        //findNumaNodeForAllMemoryPages();
-        //diffs = 0;
 
     }
 
@@ -1011,14 +964,14 @@ public class NUMAProfiler {
                 VmThreadLocal profilingCounter = profilingCounters[i];
                 final int count = profilingCounter.load(etla).toInt();
                 if (count != 0) {
-                    /*Log.print("(accessCounter);");
+                    Log.print("(accessCounter);");
                     Log.print(profilingCycle);
                     Log.print(";");
                     Log.print(VmThread.fromTLA(etla).id());
                     Log.print(";");
                     Log.print(profilingCounter.name);
                     Log.print(";");
-                    Log.println(count);*/
+                    Log.println(count);
                 }
                 //reset counter
                 profilingCounter.store(etla, Address.fromInt(0));

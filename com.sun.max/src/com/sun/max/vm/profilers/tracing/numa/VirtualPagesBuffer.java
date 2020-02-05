@@ -113,18 +113,12 @@ public class VirtualPagesBuffer {
         }
     }
 
-    public void print(int profilingCycle, boolean isPrevious) {
-        if (!isPrevious) {
-            Log.print("Cycle ");
-            Log.print(profilingCycle);
-            Log.println(" HEAP BOUNDARIES:");
-            Log.println("=================");
-        } else {
-            Log.print("Cycle ");
-            Log.print(profilingCycle);
-            Log.println(" PREVIOUS HEAP BOUNDARIES:");
-            Log.println("=================");
-        }
+    public void print(int profilingCycle) {
+        Log.print("Cycle ");
+        Log.print(profilingCycle);
+        Log.println(" HEAP BOUNDARIES:");
+        Log.println("=================");
+
         for (int i = 1; i < bufferSize; i++) {
             Log.print(readNumaNode(i));
             Log.print(" ");
