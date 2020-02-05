@@ -183,11 +183,12 @@ public class NUMAProfiler {
      */
     public static String[] objectAccessCounterNames;
 
-    public Address heapStart;
+    public static Address heapStart;
     public Address toStart;
     public Address toEnd;
     public Address fromStart;
     public Address fromEnd;
+    public static int memoryPageSize;
 
     /**
      * An enum that maps each Object Access Counter name with a {@link VmThreadLocal#profilingCounters} index.
@@ -279,6 +280,8 @@ public class NUMAProfiler {
         numaConfig = new NUMALib();
 
         heapStart = vm().config.heapScheme().getHeapStartAddress();
+
+        memoryPageSize = NUMALib.numaPageSize();
 
         profilingCycle = 1;
         if (NUMAProfilerVerbose) {
@@ -541,6 +544,17 @@ public class NUMAProfiler {
     }
 
     /**
+     * Finds the index of the memory page of an address in the heapPages Buffer.
+     * It is based on the calculation:
+     * pageIndex = (address - firstPageAddress) / pageSize
+     * @param address an address
+     * @return the memory page index of the address
+     */
+    private static int getHeapPagesIndexOfAddress(Address address) {
+        return address.minus(heapStart).dividedBy(memoryPageSize).toInt();
+    }
+
+    /**
      * Find the NUMA Node for each allocated Object.
      * For every object, call the {@linkplain #getNumaNodeForAddress(long)} method to get its physical NUMA Node.
      * Write the node in newObjects Buffer.
@@ -627,7 +641,7 @@ public class NUMAProfiler {
             // Get NUMA node of address using NUMALib
             node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
             // Get the index of the memory page in the heapPages Buffer
-            pageIndex = currentAddress.minus(heapStart).dividedBy(memoryPageSize).toInt();
+            pageIndex = getHeapPagesIndexOfAddress(currentAddress);
             // Write the NUMA node of the page in the heapPages Buffer
             heapPages.writeNumaNode(pageIndex, node);
 
@@ -682,10 +696,7 @@ public class NUMAProfiler {
      */
     private static int getNumaNodeForAddress(long address) {
         long firstPageAddress = getFirstHeapPage().toLong();
-        int pageSize = NUMALib.numaPageSize();
-        long numerator = address - firstPageAddress;
-        long div = numerator / (long) pageSize;
-        int pageIndex = (int) div;
+        int pageIndex = getHeapPagesIndexOfAddress(Address.fromLong(address));
 
         int objNumaNode = heapPages.readNumaNode(pageIndex);
         // if outdated, use the sys call to get the numa node and update heapPages buffer
