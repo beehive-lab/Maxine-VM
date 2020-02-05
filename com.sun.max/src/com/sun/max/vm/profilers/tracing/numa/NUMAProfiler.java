@@ -538,7 +538,8 @@ public class NUMAProfiler {
 
     /**
      * Find the NUMA Node for each allocated Object.
-     * For every object, find the virtual memory page where the object is placed and get its physical NUMA Node.
+     * For every object, call the {@linkplain #getNumaNodeForAddress(long)} method to get its physical NUMA Node.
+     * Write the node in newObjects Buffer.
      */
     private void findNumaNodeForAllAllocatedObjects() {
         long objectAddress;
@@ -550,6 +551,9 @@ public class NUMAProfiler {
             // compare the calculated object numa node with the libnuma system
             // call returned value for validation (note: increased overhead)
             assert node == NUMALib.numaNodeOfAddress(newObjects.readAddr(i));
+
+            // Write the node in the buffer
+            newObjects.writeNode(i, node);
         }
     }
 
