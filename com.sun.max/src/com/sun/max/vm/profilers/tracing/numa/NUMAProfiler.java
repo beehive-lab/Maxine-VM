@@ -278,6 +278,8 @@ public class NUMAProfiler {
 
         numaConfig = new NUMALib();
 
+        heapStart = vm().config.heapScheme().getHeapStartAddress();
+
         profilingCycle = 1;
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Initialization Complete.");

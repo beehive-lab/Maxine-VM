@@ -1174,9 +1174,14 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         visitCells(visitor);
     }
 
+    /**
+     * The heap starting address is the lower starting address between the {@link #toSpace} and {@link #fromSpace}
+     * since those two objects are swapping in {@link SemiSpaceHeapScheme} after every GC.
+     * @return
+     */
     @Override
     public Address getHeapStartAddress() {
-        return toSpace.start();
+        return toSpace.start().lessThan(fromSpace.start()) ? toSpace.start() : fromSpace.start();
     }
 
     public boolean pin(Object object) {
