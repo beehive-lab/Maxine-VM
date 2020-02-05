@@ -216,7 +216,7 @@ jobs:
         wget -nv http://spec.cs.miami.edu/downloads/osg/java/SPECjvm2008_1_01_setup.jar
         java -jar SPECjvm2008_1_01_setup.jar -i silent -DUSER_INSTALL_DIR=`pwd`/SPECjvm2008
     - name: Benchmark
-      run: $MX testme -insitu -specjvm2008=`pwd`/SPECjvm2008/SPECjvm2008.jar -tests=specjvm2008
+      run: $MX testme -insitu -timeout-scale=200 -specjvm2008=`pwd`/SPECjvm2008/SPECjvm2008.jar -tests=specjvm2008
     - uses: actions/upload-artifact@master
       if: failure()
       with:

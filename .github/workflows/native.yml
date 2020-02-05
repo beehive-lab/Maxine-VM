@@ -153,7 +153,7 @@ jobs:
       env:
         MAXINE_HOME: ./
       run: |
-        ../mx/mx --no-download-progress --suite=maxine testme -insitu -specjvm2008=`pwd`/SPECjvm2008/SPECjvm2008.jar -tests=specjvm2008
+        ../mx/mx --no-download-progress --suite=maxine testme -insitu -timeout-scale=200 -specjvm2008=`pwd`/SPECjvm2008/SPECjvm2008.jar -tests=specjvm2008
     - uses: actions/upload-artifact@master
       if: failure()
       with:
