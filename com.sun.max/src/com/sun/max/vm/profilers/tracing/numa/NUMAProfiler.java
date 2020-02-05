@@ -183,9 +183,11 @@ public class NUMAProfiler {
      */
     public static String[] objectAccessCounterNames;
 
-    public Address fromStart;
-    public Address toStart;
     public Address heapStart;
+    public Address toStart;
+    public Address toEnd;
+    public Address fromStart;
+    public Address fromEnd;
 
     /**
      * An enum that maps each Object Access Counter name with a {@link VmThreadLocal#profilingCounters} index.
@@ -570,21 +572,50 @@ public class NUMAProfiler {
 
         // Get the start and end addresses of the spaces
         toStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().start();
-        Address toEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().end();
+        toEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().end();
         fromStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().start();
-        Address fromEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().end();
+        fromEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().end();
 
         // Scan the heap sequentially. First the toSpace and then the fromSpace
-        Address currentAddress = toStart;
-        //debug
-        int index = 1;
-        int pageIndex = 0;
-        final int memoryPageSize = NUMALib.numaPageSize();
-
-        int node;
 
         // Scan toSpace
-        while (currentAddress.lessThan(toEnd)) {
+        findNumaNodeForAllSpaceMemoryPages(toStart, toEnd, toPageMigrations);
+
+        // scan fromSpace
+        findNumaNodeForAllSpaceMemoryPages(fromStart, fromEnd, fromPageMigrations);
+
+        if (VirtualPagesBuffer.debug) {
+            Log.print("\nMigrated Pages = ");
+            Log.println(pageMigrations);
+
+            Log.print("Migrated To Pages = ");
+            Log.println(toPageMigrations);
+
+            Log.print("Migrated From Pages = ");
+            Log.println(fromPageMigrations);
+
+            //reset migration counters
+            pageMigrations = 0;
+            toPageMigrations = 0;
+            fromPageMigrations = 0;
+        }
+    }
+
+    /**
+     * Find the NUMA node for each memory page in the premises of a specific Memory Space.
+     * @param spaceStartAddress
+     * @param spaceEndAddress
+     * @param spaceMigrations
+     */
+    private void findNumaNodeForAllSpaceMemoryPages(Address spaceStartAddress, Address spaceEndAddress, int spaceMigrations) {
+        final int memoryPageSize = NUMALib.numaPageSize();
+        int index = 1;
+        int pageIndex = 0;
+        int node;
+
+        Address currentAddress = spaceStartAddress;
+
+        while (currentAddress.lessThan(spaceEndAddress)) {
             // Get NUMA node of address using NUMALib
             node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
             // Get the index of the memory page in the heapPages Buffer
@@ -598,7 +629,7 @@ public class NUMAProfiler {
                 prevNode = heapPages.readNumaNode(pageIndex);
                 if (node != prevNode && prevNode != -14) {
                     pageMigrations++;
-                    toPageMigrations++;
+                    spaceMigrations++;
                 }
                 // Print page-node map
                 Log.print(node);
@@ -625,67 +656,6 @@ public class NUMAProfiler {
             // update stats
             int count = heapPages.readStats(node);
             heapPages.writeStats(node, count + 1);
-        }
-
-        index = 1;
-        // scan fromSpace
-        currentAddress = fromStart;
-        while (currentAddress.lessThan(fromEnd)) {
-            // Get NUMA node of address using NUMALib
-            node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
-            // Get the index of the memory page in the heapPages Buffer
-            pageIndex = currentAddress.minus(heapStart).dividedBy(memoryPageSize).toInt();
-            // Write the NUMA node of the page in the heapPages Buffer
-            heapPages.writeNumaNode(pageIndex, node);
-
-            if (VirtualPagesBuffer.debug) {
-                // Track page migrations
-                int prevNode;
-                prevNode = heapPages.readNumaNode(pageIndex);
-                if (node != prevNode && prevNode != -14) {
-                    pageMigrations++;
-                    toPageMigrations++;
-                }
-                // Print page-node map
-                Log.print(node);
-                Log.print(" ");
-                if (index % 64 == 0) {
-                    Log.println("|");
-                }
-                index++;
-                // Log
-                Log.print("write starting address ");
-                Log.print(currentAddress.toLong());
-                Log.print(" of range ");
-                Log.println(index);
-            }
-
-            currentAddress = currentAddress.plus(memoryPageSize);
-
-            // if no NUMA node is found the page is still unallocated
-            if (node == NUMALib.EFAULT) {
-                node = VirtualPagesBuffer.maxNumaNodes;
-            }
-
-            // update stats
-            int count = heapPages.readStats(node);
-            heapPages.writeStats(node, count + 1);
-        }
-
-        if (VirtualPagesBuffer.debug) {
-            Log.print("\nMigrated Pages = ");
-            Log.println(pageMigrations);
-
-            Log.print("Migrated To Pages = ");
-            Log.println(toPageMigrations);
-
-            Log.print("Migrated From Pages = ");
-            Log.println(fromPageMigrations);
-
-            //reset migration counters
-            pageMigrations = 0;
-            toPageMigrations = 0;
-            fromPageMigrations = 0;
         }
 
     }
