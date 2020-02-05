@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
+ * Copyright (c) 2017, 2019-2020, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -257,7 +257,11 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
                 // The same for the NUMA Profiler
-                if (NUMAProfiler.profileAll() || NUMAProfiler.NUMAProfilerExplicitGCThreshold > 0) {
+                if (!NUMAProfiler.NUMAProfilerFlareAllocationThresholds.equals("0") || NUMAProfiler.NUMAProfilerExplicitGCThreshold >= 0) {
+                    if (!NUMAProfiler.NUMAProfilerFlareAllocationThresholds.equals("0") && NUMAProfiler.NUMAProfilerExplicitGCThreshold >= 0) {
+                        throw FatalError.unexpected("Please choose only one Profiler Policy. You cannot give values for both" +
+                                    "NUMAProfilerExplicitGCThreshold and NUMAProfilerFlareAllocationThresholds");
+                    }
                     // Initialize NUMA Profiler
                     MaxineVM.numaProfiler = new NUMAProfiler();
                 }
