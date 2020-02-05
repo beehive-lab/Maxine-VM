@@ -566,23 +566,29 @@ public class NUMAProfiler {
 
     /**
      * Find the NUMA Node for each virtual memory page of the JVM Heap.
+     * Currently implemented only for the {@link SemiSpaceHeapScheme}.
      */
-    private void findNumaNodeForAllMemoryPages() {
-        assert vm().config.heapScheme() instanceof SemiSpaceHeapScheme;
+    private void findNumaNodeForAllHeapMemoryPages() {
+        if (vm().config.heapScheme() instanceof SemiSpaceHeapScheme) {
 
-        // Get the start and end addresses of the spaces
-        toStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().start();
-        toEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().end();
-        fromStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().start();
-        fromEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().end();
+            // In SemiSpace the heap is composed by two Spaces, the toSpace and fromSpace.
+            // Consequently, we find the NUMA nodes for each Space sequentially.
+            // First the toSpace and then the fromSpace.
 
-        // Scan the heap sequentially. First the toSpace and then the fromSpace
+            // Get the start and end addresses of the Spaces
+            toStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().start();
+            toEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().end();
+            fromStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().start();
+            fromEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().end();
 
-        // Scan toSpace
-        findNumaNodeForAllSpaceMemoryPages(toStart, toEnd, toPageMigrations);
+            // Find toSpace pages' NUMA nodes
+            findNumaNodeForAllSpaceMemoryPages(toStart, toEnd, toPageMigrations);
 
-        // scan fromSpace
-        findNumaNodeForAllSpaceMemoryPages(fromStart, fromEnd, fromPageMigrations);
+            // Find fromSpace pages' NUMA nodes
+            findNumaNodeForAllSpaceMemoryPages(fromStart, fromEnd, fromPageMigrations);
+        } else {
+            FatalError.unimplemented();
+        }
 
         if (VirtualPagesBuffer.debug) {
             Log.print("\nMigrated Pages = ");
@@ -776,7 +782,7 @@ public class NUMAProfiler {
 
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
-            findNumaNodeForAllMemoryPages();
+            findNumaNodeForAllHeapMemoryPages();
             findNumaNodeForAllAllocatedObjects();
         }
 
@@ -1017,7 +1023,7 @@ public class NUMAProfiler {
 
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
-            findNumaNodeForAllMemoryPages();
+            findNumaNodeForAllHeapMemoryPages();
             findNumaNodeForAllAllocatedObjects();
         }
 
