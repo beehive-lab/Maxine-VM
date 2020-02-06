@@ -447,12 +447,11 @@ public class NUMAProfiler {
      * A memory access can be either local (a thread running on N numa node accesses an object on N numa node),
      * inter-node (a thread running on N numa node accesses an object on M numa node with both N and M being on the same blade),
      * or inter-blade (a thread running on N numa node accesses an object on Z numa node which is part of another blade).
-     * @param firstPageAddress
      * @param address
      * @return {@code accessCounterValue} + 0 for LOCAL access, {@code accessCounterValue} + 1 for INTER-NODE access, {@code accessCounterValue} + 2 for INTER-BLADE access (see {@link ACCESS_COUNTER} values)
      *
      */
-    private static int assessAccessLocality(long firstPageAddress, long address, int accessCounterValue) {
+    private static int assessAccessLocality(long address, int accessCounterValue) {
         // get the Numa Node where the thread which is performing the write is running
         final int threadNumaNode = Intrinsics.getCpuID() >> MaxineIntrinsicIDs.NUMA_NODE_SHIFT;
         // get the Numa Node where the written object is placed
@@ -483,7 +482,6 @@ public class NUMAProfiler {
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public static void profileAccess(ACCESS_COUNTER counter, long address) {
-        long firstPageAddress = getFirstHeapPage().toLong();
 
         // if the written object is not part of the data heap
         // TODO: implement some action, currently ignore
@@ -491,7 +489,7 @@ public class NUMAProfiler {
             return;
         }
 
-        final int accessCounter = assessAccessLocality(firstPageAddress, address, counter.value);
+        final int accessCounter = assessAccessLocality(address, counter.value);
 
         // increment local or remote writes
         increaseAccessCounter(accessCounter);
@@ -690,13 +688,12 @@ public class NUMAProfiler {
      * @return physical NUMA node id
      */
     private static int getNumaNodeForAddress(long address) {
-        long firstPageAddress = getFirstHeapPage().toLong();
         int pageIndex = getHeapPagesIndexOfAddress(Address.fromLong(address));
 
         int objNumaNode = heapPages.readNumaNode(pageIndex);
         // if outdated, use the sys call to get the numa node and update heapPages buffer
         if (objNumaNode == NUMALib.EFAULT) {
-            Address pageAddr = Address.fromLong(firstPageAddress).plus(Address.fromInt(memoryPageSize).times(pageIndex));
+            Address pageAddr = heapStart.plus(Address.fromInt(memoryPageSize).times(pageIndex));
             int node = NUMALib.numaNodeOfAddress(pageAddr.toLong());
             heapPages.writeNumaNode(pageIndex, node);
             objNumaNode = node;
