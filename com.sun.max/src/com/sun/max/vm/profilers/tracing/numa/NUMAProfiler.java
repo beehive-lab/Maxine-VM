@@ -273,9 +273,6 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): Initialize the Heap Boundaries Buffer.");
         }
         initializeHeapBoundariesBuffer();
-        int pageSize = NUMALib.numaPageSize();
-        int prevBufSize = Heap.maxSize().dividedBy(pageSize).toInt();
-        previousHeapPages = new VirtualPagesBuffer(prevBufSize);
 
         numaConfig = new NUMALib();
 
@@ -386,8 +383,7 @@ public class NUMAProfiler {
     }
 
     private void initializeHeapBoundariesBuffer() {
-        int pageSize = NUMALib.numaPageSize();
-        int bufSize = Heap.maxSize().dividedBy(pageSize).toInt();
+        int bufSize = Heap.maxSize().dividedBy(memoryPageSize).toInt();
         heapPages = new VirtualPagesBuffer(bufSize);
         heapPages.writeNumaNode(0, NUMALib.numaNodeOfAddress(getFirstHeapPage().toLong()));
     }
@@ -630,7 +626,6 @@ public class NUMAProfiler {
      * @param spaceMigrations
      */
     private void findNumaNodeForAllSpaceMemoryPages(Address spaceStartAddress, Address spaceEndAddress, int spaceMigrations) {
-        final int memoryPageSize = NUMALib.numaPageSize();
         int index = 1;
         int pageIndex = 0;
         int node;
@@ -701,7 +696,7 @@ public class NUMAProfiler {
         int objNumaNode = heapPages.readNumaNode(pageIndex);
         // if outdated, use the sys call to get the numa node and update heapPages buffer
         if (objNumaNode == NUMALib.EFAULT) {
-            Address pageAddr = Address.fromLong(firstPageAddress).plus(Address.fromInt(NUMALib.numaPageSize()).times(pageIndex));
+            Address pageAddr = Address.fromLong(firstPageAddress).plus(Address.fromInt(memoryPageSize).times(pageIndex));
             int node = NUMALib.numaNodeOfAddress(pageAddr.toLong());
             heapPages.writeNumaNode(pageIndex, node);
             objNumaNode = node;
