@@ -701,8 +701,8 @@ public class NUMAProfiler {
         int objNumaNode = heapPages.readNumaNode(pageIndex);
         // if outdated, use the sys call to get the numa node and update heapPages buffer
         if (objNumaNode == NUMALib.EFAULT) {
-            long pageAddr = firstPageAddress + (pageIndex * NUMALib.numaPageSize());
-            int node = NUMALib.numaNodeOfAddress(pageAddr);
+            Address pageAddr = Address.fromLong(firstPageAddress).plus(Address.fromInt(NUMALib.numaPageSize()).times(pageIndex));
+            int node = NUMALib.numaNodeOfAddress(pageAddr.toLong());
             heapPages.writeNumaNode(pageIndex, node);
             objNumaNode = node;
         }
