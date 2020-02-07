@@ -68,6 +68,7 @@ import java.util.List;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+import static com.sun.max.vm.MaxineVM.useNUMAProfiler;
 import static com.sun.max.vm.MaxineVM.vm;
 import static com.sun.max.vm.VMConfiguration.vmConfig;
 import static com.sun.max.vm.VMOptions.register;
@@ -256,14 +257,16 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     final String heapProfOptionPrefix = hprofOption.toString();
                     heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
-                // The same for the NUMA Profiler
-                if (!NUMAProfiler.NUMAProfilerFlareAllocationThresholds.equals("0") || NUMAProfiler.NUMAProfilerExplicitGCThreshold >= 0) {
-                    if (!NUMAProfiler.NUMAProfilerFlareAllocationThresholds.equals("0") && NUMAProfiler.NUMAProfilerExplicitGCThreshold >= 0) {
-                        throw FatalError.unexpected("Please choose only one Profiler Policy. You cannot give values for both" +
-                                    "NUMAProfilerExplicitGCThreshold and NUMAProfilerFlareAllocationThresholds");
+                // Initialize the NUMA Profiler
+                if (useNUMAProfiler) {
+                    // Initialization is allowed only for one policy (or none).
+                    if (!(!NUMAProfiler.NUMAProfilerFlareAllocationThresholds.equals("0") && NUMAProfiler.NUMAProfilerExplicitGCThreshold >= 0)) {
+                        Log.println("Initialize profiler");
+                        MaxineVM.numaProfiler = new NUMAProfiler();
+                    } else {
+                        throw FatalError.unexpected("Please choose only one Profiler Policy. You cannot give values for both " +
+                            "NUMAProfilerExplicitGCThreshold and NUMAProfilerFlareAllocationThresholds");
                     }
-                    // Initialize NUMA Profiler
-                    MaxineVM.numaProfiler = new NUMAProfiler();
                 }
                 break;
             }
