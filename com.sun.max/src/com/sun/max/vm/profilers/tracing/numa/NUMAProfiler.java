@@ -183,7 +183,9 @@ public class NUMAProfiler {
      */
     public static String[] objectAccessCounterNames;
 
-    public static Address heapStart;
+    @CONSTANT_WHEN_NOT_ZERO
+    private static Address heapStart;
+
     public Address toStart;
     public Address toEnd;
     public Address fromStart;
