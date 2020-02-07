@@ -770,7 +770,7 @@ def numaprofiler(args):
     Run the Maxine VM with the NUMA Profiler and the given options and arguments.
 
     where options include:
-        all                                                         profile the allocated objects by any method. 1st priority (after log) if present.
+        all                                                         profile the all allocated objects
         bufferSize                                                  the profiler's buffer size.
         entry <entry point method> [ | exit <exit point method> ]   profile the allocated objects from the entry until the exit method. If no exitpoint given profiles until the end.
         log                                                         execute the application and log the compiled methods by C1X and T1X. 1st priority if present.
@@ -794,18 +794,12 @@ def numaprofiler(args):
         #ignore the rest profiler options
         ignoreTheRestOptions(vmArgs, profilerOptions)
     else:
-        # all | entry | entry exit | none
-        if 'all' in vmArgs:
-            #if the all option is present, ignore the rest
-            profilerArgs.append('-XX:+NUMAProfilerAll')
-            ignoreTheRestOptions(vmArgs, profilerOptions)
-        elif 'entry' in vmArgs:
+        
+        # entry | entry exit
+        if 'entry' in vmArgs:
             profilerArgs.append(getEntryOrExitPoint('entry', vmArgs))
             if 'exit' in vmArgs:
                 profilerArgs.append(getEntryOrExitPoint('exit', vmArgs))
-        else:
-            #if none option is present, use the all option
-            profilerArgs.append('-XX:+NUMAProfilerAll')
 
         #enable/disable verbosity
         if 'verbose' in vmArgs:
@@ -818,6 +812,10 @@ def numaprofiler(args):
             del vmArgs[index+1]
             del vmArgs[index]
             profilerArgs.append('-XX:NUMAProfilerExplicitGCThreshold='+num)
+        elif 'all' in vmArgs:
+            index = vmArgs.index('all')
+            del vmArgs[index]
+            profilerArgs.append('-XX:NUMAProfilerExplicitGCThreshold=0')
 
         if 'buffersize' in vmArgs:
             index = vmArgs.index('buffersize')
