@@ -269,6 +269,8 @@ public class NUMAProfiler {
 
         charArrayBuffer = new char[RecordBuffer.MAX_CHARS];
 
+        memoryPageSize = NUMALib.numaPageSize();
+
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Initialize the Heap Boundaries Buffer.");
         }
@@ -277,8 +279,6 @@ public class NUMAProfiler {
         numaConfig = new NUMALib();
 
         heapStart = vm().config.heapScheme().getHeapStartAddress();
-
-        memoryPageSize = NUMALib.numaPageSize();
 
         profilingCycle = 1;
         if (NUMAProfilerVerbose) {
