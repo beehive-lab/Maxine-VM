@@ -425,8 +425,7 @@ public class NUMAProfiler {
         }
         //guard RecordBuffer from overflow
         if (newObjects.currentIndex >= newObjects.bufferSize) {
-            Log.print("Allocations Buffer out of bounds. Increase the Buffer Size.");
-            MaxineVM.exit(1);
+            throw FatalError.unexpected("Allocations Buffer out of bounds. Increase the Buffer Size.");
         }
         newObjects.record(uniqueId, threadId, charArrayBuffer, size, address);
         uniqueId++;
@@ -676,8 +675,7 @@ public class NUMAProfiler {
                 int node = NUMALib.numaNodeOfAddress(newAddr);
                 //guard survivors RecordBuffer from overflow
                 if (to.currentIndex >= to.bufferSize) {
-                    Log.print("Survivor Buffer out of bounds! Increase the Buffer Size.");
-                    MaxineVM.exit(1);
+                    throw FatalError.unexpected("Survivor Buffer out of bounds! Increase the Buffer Size.");
                 }
                 // write it to Buffer
                 to.record(from.readId(i), from.readThreadId(i), from.readType(i), from.readSize(i), newAddr, node);

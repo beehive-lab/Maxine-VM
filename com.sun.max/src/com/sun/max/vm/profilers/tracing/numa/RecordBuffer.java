@@ -118,9 +118,7 @@ class RecordBuffer {
                 VirtualMemory.Type.DATA);
 
         if (space.isZero()) {
-            Log.print(this.buffersName);
-            Log.print("'s Type Array Allocation Failed.");
-            System.exit(0);
+            throw FatalError.unexpected(this.buffersName + "'s Type Array Allocation Failed.");
         }
         return space;
     }
@@ -229,10 +227,8 @@ class RecordBuffer {
         writeLong(addresses, currentIndex, address);
         currentIndex++;
         if (currentIndex >= bufferSize) {
-            Log.print("Off-heap Record Buffer overflow detected at index: ");
-            Log.println(currentIndex);
-            Log.println("Suggestion: Increase the AllocationProfilerBufferSize.");
-            System.exit(1);
+            throw FatalError.unexpected("Off-heap Record Buffer overflow detected at index: " + currentIndex +
+                "\nIncrease the AllocationProfilerBufferSize.");
         }
     }
 
