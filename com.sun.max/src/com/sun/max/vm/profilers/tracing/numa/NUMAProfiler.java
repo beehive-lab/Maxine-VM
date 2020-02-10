@@ -398,8 +398,6 @@ public class NUMAProfiler {
         return charArrayBuffer;
     }
 
-    private static boolean ongoingAllocation = false;
-
     /**
      * This method is called when a profiled object is allocated.
      */
@@ -414,23 +412,11 @@ public class NUMAProfiler {
         //transform the object type from String to char[] and pass the charArrayBuffer[] to record
         charArrayBuffer = asCharArray(type);
         final int threadId = VmThread.current().id();
-        //detect recursive allocations if another allocation is ongoing
-        if (NUMAProfilerDebug) {
-            if (ongoingAllocation) {
-                Log.println("Recursive Allocation. ");
-                Log.println(type);
-                throw FatalError.unexpected("Recursive Allocation.");
-            }
-            ongoingAllocation = true;
-        }
         //guard RecordBuffer from overflow
         FatalError.check(newObjects.currentIndex < newObjects.bufferSize, "Allocations Buffer out of bounds. Increase the Buffer Size.");
         newObjects.record(uniqueId, threadId, charArrayBuffer, size, address);
         uniqueId++;
         totalNewSize = totalNewSize + size;
-        if (NUMAProfilerDebug) {
-            ongoingAllocation = false;
-        }
         unlock(lockDisabledSafepoints);
     }
 
