@@ -97,6 +97,7 @@ public class NUMAProfiler {
      * The Buffer who keeps track of the physical NUMA node of any virtual memory page allocated for the JVM Heap.
      */
     private static VirtualPagesBuffer heapPages;
+    private static VirtualPagesBuffer previousHeapPages;
 
     @SuppressWarnings("unused")
     private static boolean NUMAProfilerVerbose;
@@ -182,6 +183,15 @@ public class NUMAProfiler {
      */
     public static String[] objectAccessCounterNames;
 
+    @CONSTANT_WHEN_NOT_ZERO
+    private static Address heapStart;
+
+    public Address toStart;
+    public Address toEnd;
+    public Address fromStart;
+    public Address fromEnd;
+    public final int memoryPageSize;
+
     /**
      * An enum that maps each Object Access Counter name with a {@link VmThreadLocal#profilingCounters} index.
      */
@@ -261,12 +271,16 @@ public class NUMAProfiler {
 
         charArrayBuffer = new char[RecordBuffer.MAX_CHARS];
 
+        memoryPageSize = NUMALib.numaPageSize();
+
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Initialize the Heap Boundaries Buffer.");
         }
         initializeHeapBoundariesBuffer();
 
         numaConfig = new NUMALib();
+
+        heapStart = vm().config.heapScheme().getHeapStartAddress();
 
         profilingCycle = 1;
         if (NUMAProfilerVerbose) {
@@ -363,21 +377,10 @@ public class NUMAProfiler {
         return false;
     }
 
-    /**
-     * Find heap's first page address and Numa Node and set it in heapPages.
-     */
-    private void findFirstHeapPage() {
-        Address startAddress = vm().config.heapScheme().getHeapStartAddress();
-        int node = NUMALib.numaNodeOfAddress(startAddress.toLong());
-        heapPages.writeAddr(0, startAddress.toLong());
-        heapPages.writeNumaNode(0, node);
-    }
-
     private void initializeHeapBoundariesBuffer() {
-        int pageSize = NUMALib.numaPageSize();
-        int bufSize = Heap.maxSize().dividedBy(pageSize).toInt();
+        int bufSize = Heap.maxSize().dividedBy(memoryPageSize).toInt();
         heapPages = new VirtualPagesBuffer(bufSize);
-        findFirstHeapPage();
+        heapPages.writeNumaNode(0, NUMALib.numaNodeOfAddress(heapStart.toLong()));
     }
 
     /**
@@ -395,8 +398,6 @@ public class NUMAProfiler {
         return charArrayBuffer;
     }
 
-    private static boolean ongoingAllocation = false;
-
     /**
      * This method is called when a profiled object is allocated.
      */
@@ -411,55 +412,12 @@ public class NUMAProfiler {
         //transform the object type from String to char[] and pass the charArrayBuffer[] to record
         charArrayBuffer = asCharArray(type);
         final int threadId = VmThread.current().id();
-        //detect recursive allocations if another allocation is ongoing
-        if (NUMAProfilerDebug) {
-            if (ongoingAllocation) {
-                Log.println("Recursive Allocation. ");
-                Log.println(type);
-                throw FatalError.unexpected("Recursive Allocation.");
-            }
-            ongoingAllocation = true;
-        }
         //guard RecordBuffer from overflow
-        if (newObjects.currentIndex >= newObjects.bufferSize) {
-            Log.print("Allocations Buffer out of bounds. Increase the Buffer Size.");
-            MaxineVM.exit(1);
-        }
+        FatalError.check(newObjects.currentIndex < newObjects.bufferSize, "Allocations Buffer out of bounds. Increase the Buffer Size.");
         newObjects.record(uniqueId, threadId, charArrayBuffer, size, address);
         uniqueId++;
         totalNewSize = totalNewSize + size;
-        if (NUMAProfilerDebug) {
-            ongoingAllocation = false;
-        }
         unlock(lockDisabledSafepoints);
-    }
-
-    /**
-     * Get the physical NUMA node id for a virtual address.
-     *
-     * We check whether the NUMA node is found. It might return EFAULT in case the page was still
-     * unallocated to a physical NUMA node by the last {@link NUMALib} coreToNUMANodeMap update.
-     * In that case the system call from NUMALib is called directly and the values are updated.
-     *
-     * @param firstPageAddress
-     * @param address
-     * @return physical NUMA node id
-     */
-    private static int getObjectNumaNode(long firstPageAddress, long address) {
-        int pageSize = NUMALib.numaPageSize();
-        long numerator = address - firstPageAddress;
-        long div = numerator / (long) pageSize;
-        int pageIndex = (int) div;
-
-        int objNumaNode = heapPages.readNumaNode(pageIndex);
-        // check whether the numa node is found
-        if (objNumaNode == NUMALib.EFAULT) {
-            long pageAddr = heapPages.readAddr(pageIndex);
-            int node = NUMALib.numaNodeOfAddress(pageAddr);
-            heapPages.writeNumaNode(pageIndex, node);
-            objNumaNode = node;
-        }
-        return objNumaNode;
     }
 
     /**
@@ -467,16 +425,15 @@ public class NUMAProfiler {
      * A memory access can be either local (a thread running on N numa node accesses an object on N numa node),
      * inter-node (a thread running on N numa node accesses an object on M numa node with both N and M being on the same blade),
      * or inter-blade (a thread running on N numa node accesses an object on Z numa node which is part of another blade).
-     * @param firstPageAddress
      * @param address
      * @return {@code accessCounterValue} + 0 for LOCAL access, {@code accessCounterValue} + 1 for INTER-NODE access, {@code accessCounterValue} + 2 for INTER-BLADE access (see {@link ACCESS_COUNTER} values)
      *
      */
-    private static int assessAccessLocality(long firstPageAddress, long address, int accessCounterValue) {
+    private static int assessAccessLocality(long address, int accessCounterValue) {
         // get the Numa Node where the thread which is performing the write is running
         final int threadNumaNode = Intrinsics.getCpuID() >> MaxineIntrinsicIDs.NUMA_NODE_SHIFT;
         // get the Numa Node where the written object is placed
-        final int objectNumaNode = getObjectNumaNode(firstPageAddress, address);
+        final int objectNumaNode = getNumaNodeForAddress(address);
 
         if (threadNumaNode != objectNumaNode) {
             // get the Blade where the thread Numa Node is located
@@ -503,7 +460,6 @@ public class NUMAProfiler {
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
     @NEVER_INLINE
     public static void profileAccess(ACCESS_COUNTER counter, long address) {
-        long firstPageAddress = heapPages.readAddr(0);
 
         // if the written object is not part of the data heap
         // TODO: implement some action, currently ignore
@@ -511,7 +467,7 @@ public class NUMAProfiler {
             return;
         }
 
-        final int accessCounter = assessAccessLocality(firstPageAddress, address, counter.value);
+        final int accessCounter = assessAccessLocality(address, counter.value);
 
         // increment local or remote writes
         increaseAccessCounter(accessCounter);
@@ -555,75 +511,127 @@ public class NUMAProfiler {
     private void resetHeapBoundaries() {
         final boolean lockDisabledSafepoints = lock();
         heapPages.resetBuffer();
-        findFirstHeapPage();
+        heapPages.writeNumaNode(0, NUMALib.numaNodeOfAddress(heapStart.toLong()));
         unlock(lockDisabledSafepoints);
     }
 
     /**
-     * Find the NUMA Node for each allocated Object.
-     * For every object, find the virtual memory page where the object is placed and get its physical NUMA Node.
+     * Finds the index of the memory page of an address in the heapPages Buffer.
+     * It is based on the calculation:
+     * pageIndex = (address - firstPageAddress) / pageSize
+     * @param address an address
+     * @return the memory page index of the address
      */
-    private void findObjectNumaNode() {
-        int pageSize = NUMALib.numaPageSize();
+    private static int getHeapPagesIndexOfAddress(Address address) {
+        return address.minus(heapStart).dividedBy(numaProfiler.memoryPageSize).toInt();
+    }
+
+    /**
+     * Find the NUMA Node for each allocated Object.
+     * For every object, call the {@linkplain #getNumaNodeForAddress(long)} method to get its physical NUMA Node.
+     * Write the node in newObjects Buffer.
+     */
+    private void findNumaNodeForAllAllocatedObjects() {
         long objectAddress;
-        long firstPageAddress = heapPages.readAddr(0);
-        int pageIndex;
-        int maxPageIndex = heapPages.pagesCurrentIndex;
+
         for (int i = 0; i < newObjects.currentIndex; i++) {
             objectAddress = newObjects.readAddr(i);
-            // safe for heap up to 8TB
-            long numerator = objectAddress - firstPageAddress;
-            long div = numerator / (long) pageSize;
-            pageIndex = (int) div;
-            if (pageIndex > maxPageIndex) {
-                Log.println("Heap Ranges Overflow");
-                MaxineVM.exit(1);
-            }
-            int node = heapPages.readNumaNode(pageIndex);
+            int node = getNumaNodeForAddress(objectAddress);
+
             // compare the calculated object numa node with the libnuma system
             // call returned value for validation (note: increased overhead)
             assert node == NUMALib.numaNodeOfAddress(newObjects.readAddr(i));
-            newObjects.writeNode(i, node);
 
-            if (VirtualPagesBuffer.debug) {
-                Log.print("object in address ");
-                Log.print(objectAddress);
-                Log.print(" found in range ");
-                Log.print(pageIndex);
-                Log.print(" [");
-                Log.print(heapPages.readAddr(pageIndex));
-                Log.println("]");
-            }
+            // Write the node in the buffer
+            newObjects.writeNode(i, node);
         }
     }
 
     /**
      * Find the NUMA Node for each virtual memory page of the JVM Heap.
+     * Currently implemented only for the {@link SemiSpaceHeapScheme}.
      */
-    private void findNumaNodeForPages() {
-        assert vm().config.heapScheme() instanceof SemiSpaceHeapScheme;
-        Address currentAddress = vm().config.heapScheme().getHeapStartAddress();
-        int     index          = 0;
-        while (vm().config.heapScheme().contains(currentAddress)) {
-            int node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
-            if (VirtualPagesBuffer.debug) {
-                Log.print("write starting address ");
-                Log.print(currentAddress.toLong());
-                Log.print(" of range ");
-                Log.println(index);
-            }
-            heapPages.writeAddr(index, currentAddress.toLong());
-            heapPages.writeNumaNode(index, node);
-            index++;
-            currentAddress = currentAddress.plus(NUMALib.numaPageSize());
-            //update stats
-            if (node < 0) {
+    private void findNumaNodeForAllHeapMemoryPages() {
+        if (vm().config.heapScheme() instanceof SemiSpaceHeapScheme) {
+
+            // In SemiSpace the heap is composed by two Spaces, the toSpace and fromSpace.
+            // Consequently, we find the NUMA nodes for each Space sequentially.
+            // First the toSpace and then the fromSpace.
+
+            // Get the start and end addresses of the Spaces
+            toStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().start();
+            toEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().end();
+            fromStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().start();
+            fromEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().end();
+
+            // Find toSpace pages' NUMA nodes
+            findNumaNodeForAllSpaceMemoryPages(toStart, toEnd);
+
+            // Find fromSpace pages' NUMA nodes
+            findNumaNodeForAllSpaceMemoryPages(fromStart, fromEnd);
+        } else {
+            FatalError.unimplemented();
+        }
+    }
+
+    /**
+     * Find the NUMA node for each memory page in the premises of a specific Memory Space.
+     * @param spaceStartAddress
+     * @param spaceEndAddress
+     */
+    private void findNumaNodeForAllSpaceMemoryPages(Address spaceStartAddress, Address spaceEndAddress) {
+        int pageIndex = 0;
+        int node;
+
+        Address currentAddress = spaceStartAddress;
+
+        while (currentAddress.lessThan(spaceEndAddress)) {
+            // Get NUMA node of address using NUMALib
+            node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
+            // Get the index of the memory page in the heapPages Buffer
+            pageIndex = getHeapPagesIndexOfAddress(currentAddress);
+            // Write the NUMA node of the page in the heapPages Buffer
+            heapPages.writeNumaNode(pageIndex, node);
+
+            // Get the next memory page address
+            currentAddress = currentAddress.plus(memoryPageSize);
+
+            // if no NUMA node is found the page is still unallocated
+            if (node == NUMALib.EFAULT) {
                 node = VirtualPagesBuffer.maxNumaNodes;
             }
+
+            // update stats
             int count = heapPages.readStats(node);
             heapPages.writeStats(node, count + 1);
         }
 
+    }
+
+    /**
+     * Get the physical NUMA node id for a virtual address.
+     *
+     * We use {@code heapPages} (a {@link VirtualPagesBuffer} instance) as a "cache" that stores a mapping
+     * to a physical NUMA node for each virtual memory page. We calculate the index of the memory page into
+     * the cache (to avoid the linear search) and we get the corresponding NUMA node.
+     * It might return EFAULT (=-14) in case it is the first hit of the memory page in the current cycle.
+     * In that case the system call from NUMALib is called directly and the values are updated.
+     *
+     * @param address
+     * @return physical NUMA node id
+     */
+    private static int getNumaNodeForAddress(long address) {
+        int pageIndex = getHeapPagesIndexOfAddress(Address.fromLong(address));
+
+        int objNumaNode = heapPages.readNumaNode(pageIndex);
+        // if outdated, use the sys call to get the numa node and update heapPages buffer
+        if (objNumaNode == NUMALib.EFAULT) {
+            Address pageAddr = heapStart.plus(Address.fromInt(numaProfiler.memoryPageSize).times(pageIndex));
+            int node = NUMALib.numaNodeOfAddress(pageAddr.toLong());
+            heapPages.writeNumaNode(pageIndex, node);
+            objNumaNode = node;
+        }
+        return objNumaNode;
     }
 
     /**
@@ -650,10 +658,7 @@ public class NUMAProfiler {
                 // update NUMA Node
                 int node = NUMALib.numaNodeOfAddress(newAddr);
                 //guard survivors RecordBuffer from overflow
-                if (to.currentIndex >= to.bufferSize) {
-                    Log.print("Survivor Buffer out of bounds! Increase the Buffer Size.");
-                    MaxineVM.exit(1);
-                }
+                FatalError.check(to.currentIndex < to.bufferSize, "Survivor Buffer out of bounds! Increase the Buffer Size.");
                 // write it to Buffer
                 to.record(from.readId(i), from.readThreadId(i), from.readType(i), from.readSize(i), newAddr, node);
                 totalSurvSize = totalSurvSize + from.readSize(i);
@@ -712,8 +717,8 @@ public class NUMAProfiler {
 
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
-            findNumaNodeForPages();
-            findObjectNumaNode();
+            findNumaNodeForAllHeapMemoryPages();
+            findNumaNodeForAllAllocatedObjects();
         }
 
         if (NUMAProfilerVerbose) {
@@ -763,11 +768,6 @@ public class NUMAProfiler {
             Log.println("(NUMA Profiler): Clean-up NUMAProfiler Buffer. [post-gc phase]");
         }
         newObjects.resetBuffer();
-
-        if (NUMAProfilerVerbose) {
-            Log.println("(NUMA Profiler): Reset HeapBoundaries Buffer. [post-gc phase]");
-        }
-        resetHeapBoundaries();
 
         if (NUMAProfilerVerbose) {
             Log.println("(NUMA Profiler): Dump Survivors Buffer. [post-GC phase]");
@@ -953,8 +953,8 @@ public class NUMAProfiler {
 
         // guard libnuma sys call usage during non-profiling cycles
         if (newObjects.currentIndex > 0) {
-            findNumaNodeForPages();
-            findObjectNumaNode();
+            findNumaNodeForAllHeapMemoryPages();
+            findNumaNodeForAllAllocatedObjects();
         }
 
         if (!NUMAProfilerDebug) {
