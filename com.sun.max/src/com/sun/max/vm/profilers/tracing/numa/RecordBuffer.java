@@ -226,10 +226,6 @@ class RecordBuffer {
         writeInt(sizes, currentIndex, size);
         writeLong(addresses, currentIndex, address);
         currentIndex++;
-        if (currentIndex >= bufferSize) {
-            throw FatalError.unexpected("Off-heap Record Buffer overflow detected at index: " + currentIndex +
-                "\nIncrease the AllocationProfilerBufferSize.");
-        }
     }
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
