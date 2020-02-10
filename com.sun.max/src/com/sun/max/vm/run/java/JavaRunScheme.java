@@ -260,8 +260,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 // Initialize the NUMA Profiler
                 if (useNUMAProfiler) {
                     // Initialization is allowed only for one policy (or none).
-                    if (!(!NUMAProfiler.NUMAProfilerFlareAllocationThresholds.equals("0") && NUMAProfiler.NUMAProfilerExplicitGCThreshold >= 0)) {
-                        Log.println("Initialize profiler");
+                    if (NUMAProfiler.NUMAProfilerFlareAllocationThresholds.equals("0") || NUMAProfiler.NUMAProfilerExplicitGCThreshold < 0) {
                         MaxineVM.numaProfiler = new NUMAProfiler();
                     } else {
                         throw FatalError.unexpected("Please choose only one Profiler Policy. You cannot give values for both " +
