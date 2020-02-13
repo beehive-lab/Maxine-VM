@@ -453,8 +453,8 @@ public class NUMAProfiler {
     private static void increaseAccessCounter(int counter) {
         Pointer tla = VmThread.currentTLA();
         assert ETLA.load(tla) == tla;
-        int value = profilingCounters[counter].load(tla).toInt() + 1;
-        profilingCounters[counter].store(tla, Address.fromInt(value));
+        long value = profilingCounters[counter].load(tla).toLong() + 1;
+        profilingCounters[counter].store(tla, Address.fromLong(value));
     }
 
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
@@ -872,7 +872,7 @@ public class NUMAProfiler {
             Pointer etla = ETLA.load(tla);
             for (int i = 0; i < profilingCounters.length; i++) {
                 VmThreadLocal profilingCounter = profilingCounters[i];
-                final int count = profilingCounter.load(etla).toInt();
+                final long count = profilingCounter.load(etla).toLong();
                 if (count != 0) {
                     Log.print("(accessCounter);");
                     Log.print(profilingCycle);
