@@ -147,7 +147,7 @@ class RecordBuffer {
             if (writeIndex * Character.BYTES >= StringBufferSizeInBytes) {
                 Log.print("Off-heap String array overflow detected at index: ");
                 Log.println(writeIndex * Character.BYTES);
-                Log.println("Suggestion: Increase the AllocationProfilerBufferSize.");
+                Log.println("Suggestion: Increase the NUMAProfilerBufferSize.");
                 break;
             }
             types.plus(writeIndex * Character.BYTES).setChar(c);
