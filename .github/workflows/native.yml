@@ -50,7 +50,7 @@ jobs:
         MAXINE_HOME: ./
       run: |
         ../mx/mx --no-download-progress --suite=maxine image -use-numa-profiler
-        ../mx/mx --no-download-progress --suite=maxine vm -XX:+NUMAProfilerAll -cp test/bin test.output.HelloWorld
+        ../mx/mx --no-download-progress --suite=maxine vm -XX:NUMAProfilerExplicitGCThreshold=0 -cp test/bin test.output.HelloWorld
     - name: mx image
       env:
         MAXINE_HOME: ./
