@@ -403,7 +403,7 @@ final public class GenMSEHeapScheme extends HeapSchemeWithTLABAdaptor  implement
 
     @Override
     public Address getHeapStartAddress() {
-        throw new UnsupportedOperationException("not implemented");
+        throw FatalError.unimplemented();
     }
 
     @Override

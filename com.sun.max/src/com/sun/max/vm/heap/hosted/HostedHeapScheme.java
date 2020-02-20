@@ -130,12 +130,12 @@ public class HostedHeapScheme extends HeapSchemeAdaptor {
 
     @Override
     public void disableCustomAllocation() {
-        FatalError.unexpected("Non implemented");
+        FatalError.unimplemented();
     }
 
     @Override
     public Address getHeapStartAddress() {
-        throw new UnsupportedOperationException("not implemented");
+        throw FatalError.unimplemented();
     }
 
     @Override
@@ -145,19 +145,17 @@ public class HostedHeapScheme extends HeapSchemeAdaptor {
 
     @Override
     public void enableCustomAllocation(Address customAllocator) {
-        FatalError.unexpected("Non implemented");
+        FatalError.unimplemented();
     }
 
     @Override
     public TimeLogger timeLogger() {
-        FatalError.unexpected("Non implemented");
-        return null;
+        throw FatalError.unimplemented();
     }
 
     @Override
     public PhaseLogger phaseLogger() {
-        FatalError.unexpected("Non implemented");
-        return null;
+        throw FatalError.unimplemented();
     }
 
     @Override
