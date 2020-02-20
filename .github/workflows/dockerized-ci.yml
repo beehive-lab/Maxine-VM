@@ -35,7 +35,9 @@ jobs:
         $MX jttgen
         $MX canonicalizeprojects
     - name: x86-image
-      run: $MX -J-ea image
+      run: |
+        $MX -J-ea image @gss
+        $MX -J-ea image
     - name: Gate
       run: $MX -J-Xmx1g gate -maxvm-args=-Xmx1g -refvm-args=-Xmx1g
     - uses: actions/upload-artifact@master
