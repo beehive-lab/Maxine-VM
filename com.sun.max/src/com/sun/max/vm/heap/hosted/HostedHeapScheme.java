@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -134,6 +136,11 @@ public class HostedHeapScheme extends HeapSchemeAdaptor {
     @Override
     public Address getHeapStartAddress() {
         throw new UnsupportedOperationException("not implemented");
+    }
+
+    @Override
+    public void forAllSpaces(Pointer.Procedure procedure) {
+        FatalError.unimplemented();
     }
 
     @Override

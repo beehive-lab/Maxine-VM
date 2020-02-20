@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -258,6 +260,11 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
     @Override
     public Address getHeapStartAddress() {
         throw new UnsupportedOperationException("not implemented");
+    }
+
+    @Override
+    public void forAllSpaces(Pointer.Procedure procedure) {
+        FatalError.unimplemented();
     }
 
     @INLINE

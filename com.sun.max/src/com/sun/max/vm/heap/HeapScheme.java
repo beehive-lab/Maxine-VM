@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
@@ -493,6 +495,13 @@ public interface HeapScheme extends VMScheme {
      *
      */
     Address getHeapStartAddress();
+
+    /**
+     * Invokes {@code procedure} on each space of the HeapScheme.
+     *
+     * @param procedure
+     */
+    void forAllSpaces(Pointer.Procedure procedure);
 
     /*
      * Logging support.
