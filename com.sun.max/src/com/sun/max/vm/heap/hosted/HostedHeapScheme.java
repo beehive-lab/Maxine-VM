@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -128,29 +130,32 @@ public class HostedHeapScheme extends HeapSchemeAdaptor {
 
     @Override
     public void disableCustomAllocation() {
-        FatalError.unexpected("Non implemented");
+        FatalError.unimplemented();
     }
 
     @Override
     public Address getHeapStartAddress() {
-        return null;
+        throw FatalError.unimplemented();
+    }
+
+    @Override
+    public void forAllSpaces(Pointer.Procedure procedure) {
+        FatalError.unimplemented();
     }
 
     @Override
     public void enableCustomAllocation(Address customAllocator) {
-        FatalError.unexpected("Non implemented");
+        FatalError.unimplemented();
     }
 
     @Override
     public TimeLogger timeLogger() {
-        FatalError.unexpected("Non implemented");
-        return null;
+        throw FatalError.unimplemented();
     }
 
     @Override
     public PhaseLogger phaseLogger() {
-        FatalError.unexpected("Non implemented");
-        return null;
+        throw FatalError.unimplemented();
     }
 
     @Override

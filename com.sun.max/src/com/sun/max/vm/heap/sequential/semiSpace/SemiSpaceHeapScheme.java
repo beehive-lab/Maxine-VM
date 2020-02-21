@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2017, 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2016, Andrey Rodchenko. All rights reserved.
@@ -110,14 +112,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     @INSPECTED
     private LinearAllocationMemoryRegion toSpace = new LinearAllocationMemoryRegion(TO_REGION_NAME);
-
-    public LinearAllocationMemoryRegion getToSpace() {
-        return toSpace;
-    }
-
-    public LinearAllocationMemoryRegion getFromSpace() {
-        return fromSpace;
-    }
 
     /**
      * Used when {@linkplain #grow(GrowPolicy) growing} the heap.
@@ -1182,6 +1176,12 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     @Override
     public Address getHeapStartAddress() {
         return toSpace.start().lessThan(fromSpace.start()) ? toSpace.start() : fromSpace.start();
+    }
+
+    @Override
+    public void forAllSpaces(Pointer.Procedure procedure) {
+        procedure.run(Reference.fromJava(fromSpace).toOrigin());
+        procedure.run(Reference.fromJava(toSpace).toOrigin());
     }
 
     public boolean pin(Object object) {

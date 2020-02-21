@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2018-2020, APT Group, School of Computer Science,
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
+ * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,9 +23,11 @@
 package com.sun.max.vm.profilers.tracing.numa;
 
 import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -32,6 +36,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.intrinsics.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -547,45 +552,37 @@ public class NUMAProfiler {
         }
     }
 
+    @INTRINSIC(UNSAFE_CAST)
+    private static native MemoryRegion asMemoryRegion(Object object);
+
+    private final Pointer.Procedure findNumaNodeForSpace = new Pointer.Procedure() {
+        public void run(Pointer pointer) {
+            Reference    reference = Reference.fromOrigin(pointer);
+            MemoryRegion space     = asMemoryRegion(reference);
+            findNumaNodeForAllSpaceMemoryPages(space);
+        }
+    };
+
     /**
      * Find the NUMA Node for each virtual memory page of the JVM Heap.
      * Currently implemented only for the {@link SemiSpaceHeapScheme}.
      */
     private void findNumaNodeForAllHeapMemoryPages() {
-        if (vm().config.heapScheme() instanceof SemiSpaceHeapScheme) {
-
-            // In SemiSpace the heap is composed by two Spaces, the toSpace and fromSpace.
-            // Consequently, we find the NUMA nodes for each Space sequentially.
-            // First the toSpace and then the fromSpace.
-
-            // Get the start and end addresses of the Spaces
-            toStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().start();
-            toEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getToSpace().end();
-            fromStart = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().start();
-            fromEnd = ((SemiSpaceHeapScheme) vm().config.heapScheme()).getFromSpace().end();
-
-            // Find toSpace pages' NUMA nodes
-            findNumaNodeForAllSpaceMemoryPages(toStart, toEnd);
-
-            // Find fromSpace pages' NUMA nodes
-            findNumaNodeForAllSpaceMemoryPages(fromStart, fromEnd);
-        } else {
-            FatalError.unimplemented();
-        }
+        vm().config.heapScheme().forAllSpaces(findNumaNodeForSpace);
     }
 
     /**
      * Find the NUMA node for each memory page in the premises of a specific Memory Space.
-     * @param spaceStartAddress
-     * @param spaceEndAddress
+     *
+     * @param space
      */
-    private void findNumaNodeForAllSpaceMemoryPages(Address spaceStartAddress, Address spaceEndAddress) {
-        int pageIndex = 0;
+    private void findNumaNodeForAllSpaceMemoryPages(MemoryRegion space) {
+        int pageIndex;
         int node;
 
-        Address currentAddress = spaceStartAddress;
+        Address currentAddress = space.start();
 
-        while (currentAddress.lessThan(spaceEndAddress)) {
+        while (currentAddress.lessThan(space.end())) {
             // Get NUMA node of address using NUMALib
             node = NUMALib.numaNodeOfAddress(currentAddress.toLong());
             // Get the index of the memory page in the heapPages Buffer
