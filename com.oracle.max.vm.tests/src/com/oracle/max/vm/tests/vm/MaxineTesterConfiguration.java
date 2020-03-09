@@ -389,6 +389,8 @@ public class MaxineTesterConfiguration {
         imageConfig("gssd", opt_c1x, "-run=java", "-heap=sequential.gen.semiSpace", "-build=DEBUG");
         imageConfig("ss", opt_c1x, "-run=java", "-heap=sequential.semiSpace");
         imageConfig("ssd", opt_c1x, "-run=java", "-heap=sequential.semiSpace", "-build=DEBUG");
+        imageConfig("sss", opt_c1x, "-run=java", "-heap=sequential.multiSemiSpace");
+        imageConfig("sssd", opt_c1x, "-run=java", "-heap=sequential.multiSemiSpace", "-build=DEBUG");
         imageConfig("ms", opt_c1x, "-run=java", "-heap=gcx.ms");
         imageConfig("msd", opt_c1x, "-run=java", "-heap=gcx.ms", "-build=DEBUG");
         imageConfig("msed", opt_c1x, "-run=java", "-heap=gcx.mse", "-build=DEBUG");
