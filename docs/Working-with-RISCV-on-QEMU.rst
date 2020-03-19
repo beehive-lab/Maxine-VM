@@ -53,7 +53,7 @@ and to boot it (with 2 cores and 2G ram)
         -device virtio-net-device,netdev=usernet \
         -netdev user,id=usernet,hostfwd=tcp::10000-:22
 
-After the boot process is completed you can login using ``riscv`` as login and ``fedora_rocks1`` as the password.
+After the boot process is completed you can login using ``riscv`` as login and ``fedora_rocks!`` as the password.
 SSH is also enabled and you can ssh in the VM through port ``10000`` using the following command.
 
 ::
