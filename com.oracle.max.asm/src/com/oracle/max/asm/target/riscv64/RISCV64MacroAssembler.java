@@ -70,7 +70,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
                             ((instruction & 0xFF) << 11) | (((instruction >>> 19) & 0x1) << 19);
         displacement = displacement << 1;
         // check the sign bit
-        if (((1 << 19) & displacement) == 0) {
+        if (((1 << 20) & displacement) == 0) {
             return displacement;
         }
         // negative number -- sign extend.
@@ -922,7 +922,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      * @return true if valid arithmetic immediate, false otherwise.
      */
     public static boolean is20BitArithmeticImmediate(long imm) {
-        return NumUtil.isInt(Math.abs(imm)) && ((int) imm >= 0 ? NumUtil.isUnsignedNbit(19, (int) imm) : NumUtil.isSignedNbit(20, (int) imm));
+        return NumUtil.isSignedNbit(21, imm);
     }
 
     public void add(int size, CiRegister dest, CiRegister source, long delta) {
