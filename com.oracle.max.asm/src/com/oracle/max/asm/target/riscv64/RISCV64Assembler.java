@@ -28,6 +28,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64Assembler extends AbstractAssembler {
+    public static final int JTYPE_IMM_BITS = 21;
     public CiRegister frameRegister;
     public CiRegister scratchRegister;
     public CiRegister scratchRegister1;
@@ -257,7 +258,7 @@ public class RISCV64Assembler extends AbstractAssembler {
     private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm21, int pos) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.getEncoding() >> 5 == 0;
-        assert isSignedNbit(21, imm21);
+        assert isSignedNbit(JTYPE_IMM_BITS, imm21);
         int instruction = opcode.getValue();
         instruction |= rd.getEncoding() << 7;
         instruction |= ((imm21 >> 20) & 1) << 31; // This places bit 20 of imm21 in bit 31 of instruction
