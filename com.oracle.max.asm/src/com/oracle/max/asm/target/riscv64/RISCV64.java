@@ -273,4 +273,8 @@ public class RISCV64 extends CiArchitecture {
         return isIntReg(reg) && !reg.equals(zr) && !reg.equals(sp);
     }
 
+    @Override
+    public boolean usesTrampolines() {
+        return true;
+    }
 }

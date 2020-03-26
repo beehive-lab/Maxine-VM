@@ -892,6 +892,22 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 throw new InternalError("Unknown PatchInfoRISCV64." + tag);
             }
         }
+        /*
+         * Hook fixup to create the trampoline array for the current compilation.
+         */
+        createTrampolines();
+    }
+
+    /**
+     * Create trampolines for all calls in the compilation.
+     */
+    private void createTrampolines() {
+        int calls = safepointsBuilder.numberOfCalls();
+        // Account for the adapter call, if there is one.
+        if (adapterGenerator != null) {
+            calls++;
+        }
+        this.trampolines = asm.trampolines(calls);
     }
 
     @HOSTED_ONLY

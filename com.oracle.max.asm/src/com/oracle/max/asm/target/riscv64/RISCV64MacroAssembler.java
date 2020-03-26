@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2018-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -36,16 +38,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
      * </code>
      */
     public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 3;
-    public static final int INSTRUCTION_SIZE = 4;
 
-    public static final int CALL_TRAMPOLINE_INSTRUCTIONS = 6;
-    public static final int RIP_CALL_INSTRUCTION_SIZE = ((2 * CALL_TRAMPOLINE_INSTRUCTIONS) + 1) * INSTRUCTION_SIZE;
-    public static final int CALL_TRAMPOLINE1_OFFSET = INSTRUCTION_SIZE;
-    public static final int CALL_TRAMPOLINE2_OFFSET = INSTRUCTION_SIZE * (CALL_TRAMPOLINE_INSTRUCTIONS + 1);
-    public static final int CALL_BRANCH_OFFSET = RIP_CALL_INSTRUCTION_SIZE - INSTRUCTION_SIZE;
-    public static final int MOV_OFFSET_IN_TRAMPOLINE = 2 * INSTRUCTION_SIZE;
+    /** Size of a call-site == 1 instruction. */
+    public static final int RIP_CALL_INSTRUCTION_SIZE = INSTRUCTION_SIZE;
 
-    private  static final int MOV_32_BIT_CONSTANT_INSTRUCTION_NUMBER = 2;
+    private static final int MOV_32_BIT_CONSTANT_INSTRUCTION_NUMBER = 2;
 
     /**
      * Same variables are declared in RISCV64T1XCompilation. However the values here are decremented by one because
@@ -323,6 +320,10 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         return instructions;
     }
 
+    public static int addUpperImmediatePCHelper(CiRegister dst, int imm32) {
+        return AUIPC.getValue() | dst.number << 7 | (imm32 & 0xFFFFF000);
+    }
+
     public static int shiftLeftLogicImmediateHelper(CiRegister dst, CiRegister rs, int imm32) {
         return COMP.getValue() | dst.number << 7 | 1 << 12 | rs.number << 15 | imm32 << 20;
     }
@@ -353,6 +354,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public static int jumpAndLinkImmediateHelper(CiRegister rd, int imm32) {
+        assert NumUtil.isSignedNbit(21, (long) imm32);
         int instruction = JAL.getValue();
         instruction |= rd.getEncoding() << 7;
         instruction |= ((imm32 >> 20) & 1) << 31; // This places bit 20 of imm32 in bit 31 of instruction
@@ -399,6 +401,11 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     public static boolean isJumpInstruction(int instruction) {
         int opcode = instruction & 0b1111111;
         return opcode == JALR.getValue() || opcode == JAL.getValue();
+    }
+
+    public static boolean isJumpImmediateInstruction(int instruction) {
+        int opcode = instruction & 0b1111111;
+        return opcode == JAL.getValue();
     }
 
     public static boolean isAddInstruction(int instruction) {
@@ -1251,25 +1258,7 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
     }
 
     public final void call() {
-        int before = codeBuffer.position();
-        jal(RISCV64.zero, CALL_TRAMPOLINE1_OFFSET); // Jump to Trampoline 1
-        // Trampoline 1
-        auipc(scratchRegister1, 0);
-        addi(scratchRegister1, scratchRegister1, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE1_OFFSET);
-        nop(MOV_32_BIT_CONSTANT_INSTRUCTION_NUMBER); // mov32BitConstant(scratchRegister, 0);
-        add(64, scratchRegister, scratchRegister1, scratchRegister);
-
-        jal(RISCV64.zero, CALL_TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE); // Jump to last branch
-        // Trampoline 2
-        auipc(scratchRegister1, 0);
-        addi(scratchRegister1, scratchRegister1, CALL_BRANCH_OFFSET - CALL_TRAMPOLINE2_OFFSET);
-        nop(MOV_32_BIT_CONSTANT_INSTRUCTION_NUMBER); // mov32BitConstant(scratchRegister, 0);
-        add(64, scratchRegister, scratchRegister1, scratchRegister);
-        int after = codeBuffer.position();
-        assert CALL_BRANCH_OFFSET == after - before : after - before;
-        jalr(RISCV64.ra, scratchRegister, 0);
-        after = codeBuffer.position();
-        assert RIP_CALL_INSTRUCTION_SIZE == after - before : after - before;
+        jal(RISCV64.ra, 0);
     }
 
     public final void ret() {

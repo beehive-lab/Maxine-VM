@@ -332,7 +332,7 @@ public class VmThread {
      * handler will reset the guard pages when it calls {@link #loadExceptionForHandler()}.
      */
     public void checkYellowZoneForRaisingException() {
-        assert platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64 :
+        assert platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64 || platform().isa == ISA.RISCV64 :
                 "Unimplemented: com.sun.max.vm.thread.VmThread.checkYellowZoneForRaisingException for " + platform().isa;
         if (!yellowZoneUnprotected) {
             Pointer sp = VMRegister.getCpuStackPointer();

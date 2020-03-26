@@ -1592,8 +1592,8 @@ public abstract class TargetMethod extends MemoryRegion {
         }
     }
 
+    @HOSTED_ONLY
     public final void offlineFixupTrampolineCallSite() {
-        assert MaxineVM.isHosted();
         assert directCallees.length == 1;
         int safepointIndex = safepoints.nextDirectCall(0);
         Object currentDirectCallee = directCallees[0];

@@ -287,10 +287,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             // Aarch64 entry points are patched in one pass to avoid overlapping long range call-site patches.
             Aarch64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.in(tm));
         } else if (platform().isa == ISA.RISCV64) {
-            RISCV64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
-            if (vm().compilationBroker.needsAdapters()) {
-                RISCV64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
-            }
+            RISCV64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.in(tm));
         } else {
             throw FatalError.unimplemented("com.oracle.max.vm.ext.maxri.MaxTargetMethod.redirectTo");
         }
