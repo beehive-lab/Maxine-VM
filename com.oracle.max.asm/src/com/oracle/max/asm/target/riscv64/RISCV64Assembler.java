@@ -1230,11 +1230,14 @@ public class RISCV64Assembler extends AbstractAssembler {
     /** The number of instructions in a trampoline. */
     public static final int TRAMPOLINE_INSTRUCTIONS = 4;
 
-    /** The size of a trampoline in bytes. */
-    public static final int TRAMPOLINE_SIZE = (TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE) + Long.BYTES;
+    /** The size of the reserved space for the offset operand. */
+    public static final int TRAMPOLINE_OFFSET_SIZE = Integer.BYTES;
 
-    /** The offset of the address operand in a trampoline. */
-    public static final int TRAMPOLINE_ADDRESS_OFFSET = TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE;
+    /** The size of a trampoline in bytes. */
+    public static final int TRAMPOLINE_SIZE = (TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE) + TRAMPOLINE_OFFSET_SIZE;
+
+    /** The offset of the offset operand in a trampoline. */
+    public static final int TRAMPOLINE_OFFSET_OFFSET = TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE;
 
     /**
      * Constructs an array of trampolines for long range calls.
@@ -1249,18 +1252,19 @@ public class RISCV64Assembler extends AbstractAssembler {
      */
     @Override
     public byte[] trampolines(int count) {
+        assert this.codeBuffer instanceof Buffer.LittleEndian;
         byte[] trampolines = new byte[count * TRAMPOLINE_SIZE];
         int instruction;
         for (int i = 0; i < trampolines.length; i += TRAMPOLINE_SIZE) {
             instruction = addUpperImmediatePCHelper(scratchRegister, 0);
-            writeInstruction(instruction, trampolines, i);
-            instruction = ldHelper(scratchRegister1, scratchRegister, TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE);
-            writeInstruction(instruction, trampolines, i + INSTRUCTION_SIZE);
+            writeInt(instruction, trampolines, i);
+            instruction = lwHelper(scratchRegister1, scratchRegister, TRAMPOLINE_INSTRUCTIONS * INSTRUCTION_SIZE);
+            writeInt(instruction, trampolines, i + INSTRUCTION_SIZE);
             instruction = addSubInstructionHelper(scratchRegister, scratchRegister, scratchRegister1, false);
-            writeInstruction(instruction, trampolines, i + 2 * INSTRUCTION_SIZE);
+            writeInt(instruction, trampolines, i + 2 * INSTRUCTION_SIZE);
             instruction = jumpAndLinkHelper(zero, scratchRegister, 0);
-            writeInstruction(instruction, trampolines, i + 3 * INSTRUCTION_SIZE);
-            writeLong(0, trampolines, i + TRAMPOLINE_ADDRESS_OFFSET);
+            writeInt(instruction, trampolines, i + 3 * INSTRUCTION_SIZE);
+            writeInt(0, trampolines, i + TRAMPOLINE_OFFSET_OFFSET);
         }
         return trampolines;
     }
@@ -1271,8 +1275,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param buffer
      * @param offset
      */
-    private void writeInstruction(int instruction, byte[] buffer, int offset) {
-        assert this.codeBuffer instanceof Buffer.LittleEndian;
+    public static void writeInt(int instruction, byte[] buffer, int offset) {
         assert buffer.length >= offset + 3 : "Buffer too small";
         buffer[offset + 0] = (byte) (instruction       & 0xFF);
         buffer[offset + 1] = (byte) (instruction >> 8  & 0xFF);
@@ -1285,48 +1288,12 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param buffer
      * @param offset
      */
-    public static int readInstruction(byte[] buffer, int offset) {
+    public static int readInt(byte[] buffer, int offset) {
         assert buffer.length >= offset + 3 : "Buffer too small";
         int instruction = buffer[offset + 0] & 0xFF;
         instruction |= (buffer[offset + 1] & 0xFF) << 8;
         instruction |= (buffer[offset + 2] & 0xFF) << 16;
         instruction |= (buffer[offset + 3] & 0xFF) << 24;
         return instruction;
-    }
-
-    /**
-     * Write a Long integer in little endian order into the byte array at the specified offset.
-     * @param value
-     * @param buffer
-     * @param offset
-     */
-    public static void writeLong(long value, byte[] buffer, int offset) {
-        assert buffer.length >= offset + 7 : "Buffer too small";
-        buffer[offset + 0] = (byte) (value       & 0xFF);
-        buffer[offset + 1] = (byte) (value >> 8  & 0xFF);
-        buffer[offset + 2] = (byte) (value >> 16 & 0xFF);
-        buffer[offset + 3] = (byte) (value >> 24 & 0xFF);
-        buffer[offset + 4] = (byte) (value >> 32 & 0xFF);
-        buffer[offset + 5] = (byte) (value >> 40 & 0xFF);
-        buffer[offset + 6] = (byte) (value >> 48 & 0xFF);
-        buffer[offset + 7] = (byte) (value >> 56 & 0xFF);
-    }
-
-    /**
-     * Read a Long integer from the byte array at the specified offset in little endian order.
-     * @param buffer
-     * @param offset
-     */
-    public static long readLong(byte[] buffer, int offset) {
-        assert buffer.length >= offset + 7 : "Buffer too small";
-        long value = buffer[offset + 0] & 0xFF;
-        value |= (buffer[offset + 1] & 0xFF) << 8;
-        value |= (buffer[offset + 2] & 0xFF) << 16;
-        value |= (buffer[offset + 3] & 0xFF) << 24;
-        value |= (buffer[offset + 4] & 0xFF) << 32;
-        value |= (buffer[offset + 5] & 0xFF) << 40;
-        value |= (buffer[offset + 6] & 0xFF) << 48;
-        value |= (buffer[offset + 7] & 0xFF) << 56;
-        return value;
     }
 }

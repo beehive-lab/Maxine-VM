@@ -224,7 +224,7 @@ public abstract class Trap {
         }
 
         if (Platform.target().arch.isRISCV64()
-            && pc.readInt(0) == RISCV64MacroAssembler.ldHelper(RISCV64.zero, RISCV64.x29, 0)
+            && pc.readInt(0) == RISCV64MacroAssembler.lwHelper(RISCV64.zero, RISCV64.x29, 0)
             && pc.readInt(-4) == RISCV64MacroAssembler.branchNotEqualHelper(RISCV64.x30, RISCV64.x29, 8)) {
             trapNumber = ARITHMETIC_EXCEPTION;
         }

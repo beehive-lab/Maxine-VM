@@ -376,15 +376,6 @@ public class RISCV64MacroAssembler extends RISCV64Assembler {
         return instruction;
     }
 
-    public static int ldHelper(CiRegister rd, CiRegister rs, int imm32) {
-        int instruction = LD.getValue();
-        instruction |= rd.getEncoding() << 7;
-        instruction |= 3 << 12;
-        instruction |= rs.getEncoding() << 15;
-        instruction |= imm32 << 20;
-        return instruction;
-    }
-
     /**
      * Checks if the given jump instruction is a linked branch or not.
      * If it is linked, then rd != RISCV64.x0
