@@ -141,7 +141,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs1
      * @param imm32
      */
-    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32, int pos) {
+    private static int itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.getEncoding() >> 5 == 0;
         assert rs1.getEncoding() >> 5 == 0;
@@ -151,15 +151,7 @@ public class RISCV64Assembler extends AbstractAssembler {
         instruction |= rs1.getEncoding() << 15;
         instruction |= imm32 << 20;
 
-        if (pos == -1) {
-            emitInt(instruction);
-        } else {
-            emitInt(instruction, pos);
-        }
-    }
-
-    private void itype(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int imm32) {
-        itype(opcode, rd, funct3, rs1, imm32, -1);
+        return instruction;
     }
 
     /**
@@ -177,8 +169,8 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param shamt
      * @param ext
      */
-    private void shiftHelper(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int shamt, int ext) {
-        itype(opcode, rd, funct3, rs1, ext << 5 | shamt);
+    private int shiftHelper(RISCV64opCodes opcode, CiRegister rd, int funct3, CiRegister rs1, int shamt, int ext) {
+        return itype(opcode, rd, funct3, rs1, ext << 5 | shamt);
     }
 
     /**
@@ -320,11 +312,11 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void jalr(CiRegister rd, CiRegister rs, int imm32) {
-        itype(JALR, rd, 0, rs, imm32);
+        emitInt(itype(JALR, rd, 0, rs, imm32));
     }
 
     public void jalr(CiRegister rd, CiRegister rs, int imm32, int pos) {
-        itype(JALR, rd, 0, rs, imm32, pos);
+        emitInt(itype(JALR, rd, 0, rs, imm32), pos);
     }
 
     /**
@@ -418,7 +410,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void lb(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 0, rs, imm32);
+        emitInt(itype(LOAD, rd, 0, rs, imm32));
     }
 
     /**
@@ -428,7 +420,11 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void lh(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 1, rs, imm32);
+        emitInt(itype(LOAD, rd, 1, rs, imm32));
+    }
+
+    public static int lwHelper(CiRegister rd, CiRegister rs, int imm32) {
+        return itype(LOAD, rd, 2, rs, imm32);
     }
 
     /**
@@ -438,7 +434,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void lw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 2, rs, imm32);
+        emitInt(lwHelper(rd, rs, imm32));
     }
 
     /**
@@ -448,7 +444,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void lbu(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 4, rs, imm32);
+        emitInt(itype(LOAD, rd, 4, rs, imm32));
     }
 
     /**
@@ -458,7 +454,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void lhu(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LOAD, rd, 5, rs, imm32);
+        emitInt(itype(LOAD, rd, 5, rs, imm32));
     }
 
     /**
@@ -498,7 +494,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void addi(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 0, rs, imm32);
+        emitInt(itype(COMP, rd, 0, rs, imm32));
     }
 
     /**
@@ -508,7 +504,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void slti(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 3, rs, imm32);
+        emitInt(itype(COMP, rd, 3, rs, imm32));
     }
 
     /**
@@ -518,7 +514,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void sltiu(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 3, rs, imm32);
+        emitInt(itype(COMP, rd, 3, rs, imm32));
     }
 
     /**
@@ -528,7 +524,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void xori(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 4, rs, imm32);
+        emitInt(itype(COMP, rd, 4, rs, imm32));
     }
 
     /**
@@ -538,7 +534,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void ori(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 6, rs, imm32);
+        emitInt(itype(COMP, rd, 6, rs, imm32));
     }
 
     /**
@@ -548,7 +544,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void andi(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP, rd, 7, rs, imm32);
+        emitInt(itype(COMP, rd, 7, rs, imm32));
     }
 
     /**
@@ -558,7 +554,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void slli(CiRegister rd, CiRegister rs, int imm32) {
-        shiftHelper(COMP, rd, 1, rs, imm32, 0);
+        emitInt(shiftHelper(COMP, rd, 1, rs, imm32, 0));
     }
 
     /**
@@ -568,7 +564,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void srli(CiRegister rd, CiRegister rs, int imm32) {
-        shiftHelper(COMP, rd, 5, rs, imm32, 0);
+        emitInt(shiftHelper(COMP, rd, 5, rs, imm32, 0));
     }
 
     /**
@@ -578,7 +574,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void srai(CiRegister rd, CiRegister rs, int imm32) {
-        shiftHelper(COMP, rd, 5, rs, imm32, 32);
+        emitInt(shiftHelper(COMP, rd, 5, rs, imm32, 32));
     }
 
     /**
@@ -771,28 +767,28 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param successorMask
      */
     public void fence(int predecessorMask, int successorMask) {
-        itype(FENCE, x0, 0, x0, predecessorMask << 4 | successorMask);
+        emitInt(itype(FENCE, x0, 0, x0, predecessorMask << 4 | successorMask));
     }
 
     /**
      *
      */
     public void fencei() {
-        itype(FENCE, x0, 0, x0, 0);
+        emitInt(itype(FENCE, x0, 0, x0, 0));
     }
 
     /**
      *
      */
     public void ecall() {
-        itype(SYS, x0, 0, x0, 0);
+        emitInt(itype(SYS, x0, 0, x0, 0));
     }
 
     /**
      *
      */
     public void ebreak() {
-        itype(SYS, x0, 0, x0, 1);
+        emitInt(itype(SYS, x0, 0, x0, 1));
     }
 
     /**
@@ -802,7 +798,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs
      */
     public void csrrw(CiRegister rd, int csr, CiRegister rs) {
-        itype(SYS, rd, 1, rs, csr);
+        emitInt(itype(SYS, rd, 1, rs, csr));
     }
 
     /**
@@ -812,7 +808,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs
      */
     public void csrrs(CiRegister rd, int csr, CiRegister rs) {
-        itype(SYS, rd, 2, rs, csr);
+        emitInt(itype(SYS, rd, 2, rs, csr));
     }
 
     /**
@@ -822,7 +818,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param rs
      */
     public void csrrc(CiRegister rd, int csr, CiRegister rs) {
-        itype(SYS, rd, 3, rs, csr);
+        emitInt(itype(SYS, rd, 3, rs, csr));
     }
 
     /**
@@ -879,7 +875,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void lwu(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LD, rd, 6, rs, imm32);
+        emitInt(itype(LD, rd, 6, rs, imm32));
     }
 
     /**
@@ -889,7 +885,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void ld(CiRegister rd, CiRegister rs, int imm32) {
-        itype(LD, rd, 3, rs, imm32);
+        emitInt(itype(LD, rd, 3, rs, imm32));
     }
 
     /**
@@ -909,7 +905,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void addiw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP64, rd, 0, rs, imm32);
+        emitInt(itype(COMP64, rd, 0, rs, imm32));
     }
 
     /**
@@ -919,7 +915,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void slliw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP64, rd, 1, rs, imm32);
+        emitInt(itype(COMP64, rd, 1, rs, imm32));
     }
 
     /**
@@ -929,7 +925,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void srliw(CiRegister rd, CiRegister rs, int imm32) {
-        itype(COMP64, rd, 5, rs, imm32);
+        emitInt(itype(COMP64, rd, 5, rs, imm32));
     }
 
     /**
@@ -939,7 +935,7 @@ public class RISCV64Assembler extends AbstractAssembler {
      * @param imm32
      */
     public void sraiw(CiRegister rd, CiRegister rs, int imm32) {
-        shiftHelper(COMP64, rd, 5, rs, imm32, 32);
+        emitInt(shiftHelper(COMP64, rd, 5, rs, imm32, 32));
     }
 
     /**
@@ -1019,16 +1015,16 @@ public class RISCV64Assembler extends AbstractAssembler {
 
     public void fmvxd(CiRegister rd, CiRegister rs) {
         assert rd.isGeneral() || rs.isFpu();
-        itype(RV32D, rd, 0, rs, 0b111000100000);
+        emitInt(itype(RV32D, rd, 0, rs, 0b111000100000));
     }
 
     public void fmvdx(CiRegister rd, CiRegister rs) {
         assert rd.isFpu() || rs.isGeneral();
-        itype(RV32D, rd, 0, rs, 0b111100100000);
+        emitInt(itype(RV32D, rd, 0, rs, 0b111100100000));
     }
 
     public void fld(CiRegister dst, CiRegister base, int offset) {
-        itype(LOAD_FP, dst, 3, base, offset);
+        emitInt(itype(LOAD_FP, dst, 3, base, offset));
     }
 
     public void fsd(CiRegister rd, CiRegister rs, int offset) {
@@ -1036,35 +1032,35 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fcvtsd(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b010000000001);
+        emitInt(itype(RV32D, rd, 0, rs, 0b010000000001));
     }
 
     public void fcvtds(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b010000100000);
+        emitInt(itype(RV32D, rd, 0, rs, 0b010000100000));
     }
 
     public void fcvtdw(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b110100100000);
+        emitInt(itype(RV32D, rd, 0, rs, 0b110100100000));
     }
 
     public void fcvtwd(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b110000100000);
+        emitInt(itype(RV32D, rd, 0, rs, 0b110000100000));
     }
 
     public void fcvtwdRTZ(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0b001, rs, 0b110000100000);
+        emitInt(itype(RV32D, rd, 0b001, rs, 0b110000100000));
     }
 
     public void fcvtdl(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b110100100010);
+        emitInt(itype(RV32D, rd, 0, rs, 0b110100100010));
     }
 
     public void fcvtld(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b110000100010);
+        emitInt(itype(RV32D, rd, 0, rs, 0b110000100010));
     }
 
     public void fcvtldRTZ(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0b001, rs, 0b110000100010);
+        emitInt(itype(RV32D, rd, 0b001, rs, 0b110000100010));
     }
 
     public void fsgnjd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
@@ -1080,7 +1076,7 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fsqrtd(CiRegister rd, CiRegister rs) {
-        itype(RV32D, rd, 0, rs, 0b010110100000);
+        emitInt(itype(RV32D, rd, 0, rs, 0b010110100000));
     }
 
     public void fltd(CiRegister rd, CiRegister rs1, CiRegister rs2) {
@@ -1121,7 +1117,7 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void flw(CiRegister dst, CiRegister base, int offset) {
-        itype(LOAD_FP, dst, 2, base, offset);
+        emitInt(itype(LOAD_FP, dst, 2, base, offset));
     }
 
     public void fsw(CiRegister dst, CiRegister base, int offset) {
@@ -1129,47 +1125,47 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fcvtls(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0, rs, 0b110000000010);
+        emitInt(itype(RV32F, rd, 0, rs, 0b110000000010));
     }
 
     public void fcvtlsRTZ(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0b001, rs, 0b110000000010);
+        emitInt(itype(RV32F, rd, 0b001, rs, 0b110000000010));
     }
 
     public void fcvtws(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0, rs, 0b110000000000);
+        emitInt(itype(RV32F, rd, 0, rs, 0b110000000000));
     }
 
     public void fcvtwsRTZ(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0b001, rs, 0b110000000000);
+        emitInt(itype(RV32F, rd, 0b001, rs, 0b110000000000));
     }
 
     public void fcvtwus(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0, rs, 0b110000000001);
+        emitInt(itype(RV32F, rd, 0, rs, 0b110000000001));
     }
 
     public void fcvtwusRTZ(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0b001, rs, 0b110000000001);
+        emitInt(itype(RV32F, rd, 0b001, rs, 0b110000000001));
     }
 
     public void fcvtsw(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0, rs, 0b110100000000);
+        emitInt(itype(RV32F, rd, 0, rs, 0b110100000000));
     }
 
     public void fcvtswu(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0, rs, 0b110100000001);
+        emitInt(itype(RV32F, rd, 0, rs, 0b110100000001));
     }
 
     public void fmvxw(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0, rs, 0b111000000000);
+        emitInt(itype(RV32F, rd, 0, rs, 0b111000000000));
     }
 
     public void fmvwx(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0, rs, 0b111100000000);
+        emitInt(itype(RV32F, rd, 0, rs, 0b111100000000));
     }
 
     public void fcvtsl(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0, rs, 0b110100000010);
+        emitInt(itype(RV32F, rd, 0, rs, 0b110100000010));
     }
 
     public void fsgnjs(CiRegister rd, CiRegister rs1, CiRegister rs2) {
@@ -1185,7 +1181,7 @@ public class RISCV64Assembler extends AbstractAssembler {
     }
 
     public void fsqrts(CiRegister rd, CiRegister rs) {
-        itype(RV32F, rd, 0, rs, 0b010110000000);
+        emitInt(itype(RV32F, rd, 0, rs, 0b010110000000));
     }
 
     public void flts(CiRegister rd, CiRegister rs1, CiRegister rs2) {
@@ -1213,12 +1209,12 @@ public class RISCV64Assembler extends AbstractAssembler {
     // Atomic instructions
     public void lrw(CiRegister dest, CiRegister addr, int aq, int rl) {
         int imm32 = 0b00000 + (rl << 5) + (aq << 6) + (0b00010 << 7);
-        itype(LRSC, dest, 0b010, addr, imm32);
+        emitInt(itype(LRSC, dest, 0b010, addr, imm32));
     }
 
     public void lrd(CiRegister dest, CiRegister addr, int aq, int rl) {
         int imm32 = 0b00000 + (rl << 5) + (aq << 6) + (0b00010 << 7);
-        itype(LRSC, dest, 0b011, addr, imm32);
+        emitInt(itype(LRSC, dest, 0b011, addr, imm32));
     }
 
     public void scw(CiRegister dest, CiRegister addr, CiRegister src, int aq, int rl) {
