@@ -1621,7 +1621,7 @@ public final class RISCV64LIRAssembler extends LIRAssembler {
                     int afterLea = masm.codeBuffer.position();
                     masm.codeBuffer.setPosition(beforeLea);
                     masm.auipc(dst, 0);
-                    masm.mov64BitConstant(scratchRegister, beforeLea - afterLea);
+                    masm.mov32BitConstant(scratchRegister, beforeLea - afterLea);
                     masm.add(dst, dst, scratchRegister);
                     masm.codeBuffer.setPosition(afterLea);
                     break;

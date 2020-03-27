@@ -918,8 +918,8 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                     }
                 }
                 asm.add(scratch, scratch, scratch1);
-                // movInstr.length + RISCV64MacroAssembler.INSTRUCTION_SIZE to account for the mov32bitConstant and add above.
-                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - (movInstr.length + RISCV64MacroAssembler.INSTRUCTION_SIZE));
+                // movInstr.length + 1 to account for the mov32bitConstant and add above.
+                asm.nop(RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS - (movInstr.length + 1));
                 asm.ldru(64, reg, RISCV64Address.createBaseRegisterOnlyAddress(scratch));
                 byte[] patternMov32BitConstant = asm.codeBuffer.close(true);
 
