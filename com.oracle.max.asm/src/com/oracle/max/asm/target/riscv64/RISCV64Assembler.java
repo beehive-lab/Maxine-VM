@@ -19,6 +19,7 @@
  */
 package com.oracle.max.asm.target.riscv64;
 
+import static com.oracle.max.asm.NumUtil.*;
 import static com.oracle.max.asm.target.riscv64.RISCV64.*;
 import static com.oracle.max.asm.target.riscv64.RISCV64opCodes.*;
 
@@ -27,6 +28,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64Assembler extends AbstractAssembler {
+    public static final int JTYPE_IMM_BITS = 21;
     public CiRegister frameRegister;
     public CiRegister scratchRegister;
     public CiRegister scratchRegister1;
@@ -250,28 +252,25 @@ public class RISCV64Assembler extends AbstractAssembler {
      * </pre>
      * @param opcode
      * @param rd
-     * @param imm32
+     * @param imm21
      * @param pos
      */
-    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32, int pos) {
+    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm21, int pos) {
         assert opcode.getValue() >> 7 == 0;
         assert rd.getEncoding() >> 5 == 0;
+        assert isSignedNbit(JTYPE_IMM_BITS, imm21);
         int instruction = opcode.getValue();
         instruction |= rd.getEncoding() << 7;
-        instruction |= ((imm32 >> 20) & 1) << 31; // This places bit 20 of imm32 in bit 31 of instruction
-        instruction |= ((imm32 >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm32 in bits 30:21 of instruction
-        instruction |= ((imm32 >> 11) & 1) << 20; // This places bit 11 of imm32 in bit20 of instruction
-        instruction |= ((imm32 >> 12) & 0xFF) << 12; // This places bits 19:12 of imm32 in bits 19:12 of instruction
+        instruction |= ((imm21 >> 20) & 1) << 31; // This places bit 20 of imm21 in bit 31 of instruction
+        instruction |= ((imm21 >> 1) & 0x3FF) << 21; // This places bits 10:1 of imm21 in bits 30:21 of instruction
+        instruction |= ((imm21 >> 11) & 1) << 20; // This places bit 11 of imm21 in bit20 of instruction
+        instruction |= ((imm21 >> 12) & 0xFF) << 12; // This places bits 19:12 of imm21 in bits 19:12 of instruction
 
         if (pos == -1) {
             emitInt(instruction);
         } else {
             emitInt(instruction, pos);
         }
-    }
-
-    private void jtype(RISCV64opCodes opcode, CiRegister rd, int imm32) {
-        jtype(opcode, rd, imm32, -1);
     }
 
     // RV32I Base instruction set /////////////////////////////////////////////
@@ -301,20 +300,12 @@ public class RISCV64Assembler extends AbstractAssembler {
         utype(AUIPC, rd, imm32, pos);
     }
 
-
-
-    /**
-     *
-     * @param rd
-     * @param imm32
-     * @param pos
-     */
-    public void jal(CiRegister rd, int imm32, int pos) {
-        jtype(JAL, rd, imm32, pos);
+    public void jal(CiRegister rd, int imm21, int pos) {
+        jtype(JAL, rd, imm21, pos);
     }
 
-    public void jal(CiRegister rd, int imm32) {
-        jtype(JAL, rd, imm32);
+    public void jal(CiRegister rd, int imm21) {
+        jtype(JAL, rd, imm21, -1);
     }
 
     /**
