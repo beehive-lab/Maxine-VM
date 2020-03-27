@@ -26,7 +26,16 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
 public class RISCV64MacroAssembler extends RISCV64Assembler {
-    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 15;
+    /**
+     * Reserved space for worst case scenario.
+     *
+     * <code>
+     *     lui   x29, %hi(offset)
+     *     addi  x29, x29, %lo(offset)
+     *     add   x28, x28, x29
+     * </code>
+     */
+    public static final int PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS = 3;
     public static final int INSTRUCTION_SIZE = 4;
 
     public static final int CALL_TRAMPOLINE_INSTRUCTIONS = 6;
