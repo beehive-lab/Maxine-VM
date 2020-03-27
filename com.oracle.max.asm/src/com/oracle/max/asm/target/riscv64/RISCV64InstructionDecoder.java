@@ -34,7 +34,7 @@ public final class RISCV64InstructionDecoder {
         assert pos + RISCV64MacroAssembler.INSTRUCTION_SIZE *
                 RISCV64MacroAssembler.PLACEHOLDER_INSTRUCTIONS_FOR_LONG_OFFSETS <= code.length;
 
-        pos += 4; //skip asm.auipc(scratch, 0);
+        pos += RISCV64MacroAssembler.INSTRUCTION_SIZE; //skip asm.auipc(scratch, 0);
 
         //Nop everything except the asm.auipc(scratch, 0);
         int instruction = RISCV64MacroAssembler.addImmediateHelper(RISCV64.x0, RISCV64.x0, 0);
