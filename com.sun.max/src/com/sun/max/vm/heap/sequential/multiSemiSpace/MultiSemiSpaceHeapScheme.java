@@ -603,7 +603,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
 //                }
                 final Pointer fromCell = Layout.originToCell(fromOrigin);
                 final Size    size     = Layout.size(fromOrigin);
-                final Pointer toCell   = gcAllocate(size, splitIndex);
+                final Pointer toCell   = gcAllocate(size);
                 if (DebugHeap.isTagging()) {
                     DebugHeap.writeCellTag(toCell);
                 }
@@ -886,6 +886,11 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
         toSpaces[splitIndex].mark.set(cell.plus(size));
         FatalError.check(allocationMark(splitIndex).lessThan(tops[splitIndex]), "GC allocation overflow");
         return cell;
+    }
+
+    public Pointer gcAllocate(Size size) {
+        final int splitIndex = getSplitIndex();
+        return gcAllocate(size, splitIndex);
     }
 
     private boolean inSafetyZone; // set after we have thrown OutOfMemoryError and are using the safety zone
