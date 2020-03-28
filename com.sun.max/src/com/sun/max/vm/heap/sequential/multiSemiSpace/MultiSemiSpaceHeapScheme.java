@@ -298,6 +298,11 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
         }
     }
 
+    @INLINE
+    private int getSplitIndex() {
+        return VmThread.current().id() % NUMBER_OF_SPLITS;
+    }
+
     private final class GC implements SpecialReferenceManager.GC {
 
         public boolean isReachable(Reference ref) {
@@ -314,7 +319,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
         }
 
         public Reference preserve(Reference ref) {
-            final int splitIndex = VmThread.current().id() % NUMBER_OF_SPLITS;
+            final int splitIndex = getSplitIndex();
             Pointer oldAllocationMark = allocationMark(splitIndex).asPointer();
             Reference newRef = mapRef(ref);
             if (!oldAllocationMark.equals(allocationMark(splitIndex).asPointer())) {
@@ -825,7 +830,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
 
     private boolean collectGarbageImpl(MultiSemiSpaceGCRequest gcRequest) {
         final Size requestedFreeSpace = gcRequest.requestedBytes;
-        int split = VmThread.current().id() % NUMBER_OF_SPLITS;
+        int split = getSplitIndex();
         if ((gcRequest.explicit && !DisableExplicitGC) || immediateFreeSpace(split).lessThan(requestedFreeSpace)) {
             executeGC();
         }
@@ -984,7 +989,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
         Pointer oldAllocationMark;
         Pointer cell;
         Address end;
-        final int splitIndex = VmThread.current().id() % NUMBER_OF_SPLITS;
+        final int splitIndex = getSplitIndex();
         do {
             if (GCBeforeAllocation && !VmThread.isAttaching()) {
                 GCRequest.setGCRequest(size);
