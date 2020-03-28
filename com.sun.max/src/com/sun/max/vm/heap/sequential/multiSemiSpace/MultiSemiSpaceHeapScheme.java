@@ -282,12 +282,6 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
     }
 
     @INLINE
-    private Address allocationMark() {
-        final int spaceIndex = VmThread.current().id() % NUMBER_OF_SPLITS;
-        return allocationMark(spaceIndex);
-    }
-
-    @INLINE
     private Address allocationMark(int spaceIndex) {
         return toSpaces[spaceIndex].mark().asAddress();
     }
@@ -701,7 +695,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
                 Log.print("Visit Region: To Space");
                 Log.println();
             }
-            while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {
+            while (cell.isNotZero() && cell.lessThan(allocationMark(i)) && cell.getWord().isNotZero()) {
                 cell = DebugHeap.checkDebugCellTag(start, cell);
                 cell = visitor.visitCell(cell);
             }
@@ -839,7 +833,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
             // check to see if we can reset safety zone
             if (inSafetyZone) {
                 for (int i = 0; i < NUMBER_OF_SPLITS; i++) {
-                    if (tops[i].minus(allocationMark()).greaterThan(safetyZoneSize)) {
+                    if (tops[i].minus(allocationMark(i)).greaterThan(safetyZoneSize)) {
                         tops[i] = tops[i].minus(safetyZoneSize);
                         inSafetyZone = false;
                     }
@@ -866,7 +860,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
     public Size reportUsedSpace() {
         Size total = Size.zero();
         for (int i = 0; i < NUMBER_OF_SPLITS; i++) {
-            total = total.plus(allocationMark().minus(toSpaces[i].start()).asSize());
+            total = total.plus(allocationMark(i).minus(toSpaces[i].start()).asSize());
         }
         return total;
     }
@@ -996,7 +990,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
                 GCRequest.setGCRequest(size);
                 Heap.collectGarbage();
             }
-            oldAllocationMark = allocationMark().asPointer();
+            oldAllocationMark = allocationMark(splitIndex).asPointer();
             cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
             end = cell.plus(size);
             while (end.greaterThan(tops[splitIndex])) {
@@ -1022,7 +1016,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
                         throw new OutOfMemoryError();
                     }
                 }
-                oldAllocationMark = allocationMark().asPointer();
+                oldAllocationMark = allocationMark(splitIndex).asPointer();
                 cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
                 end = cell.plus(size);
             }
@@ -1090,8 +1084,8 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
             for (int i = 0; i < NUMBER_OF_SPLITS; i++) {
                 if (Heap.logGCPhases()) {
                     phaseLogger.logVerifyingHeapObjects(Interval.BEGIN);
-                    phaseLogger.logVerifyingRegion(toSpaces[i], toSpaces[i].start().asPointer(), allocationMark());
                 }
+                phaseLogger.logVerifyingRegion(toSpaces[i], toSpaces[i].start().asPointer(), allocationMark(i));
             }
             if (Heap.verbose()) {
                 Log.println("--To Space Verification: Start");
