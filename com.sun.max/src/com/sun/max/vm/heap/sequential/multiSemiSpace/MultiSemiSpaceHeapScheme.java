@@ -275,6 +275,18 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
                     Log.print(heapAllocationSize.toLong());
                     Log.print(" bytes of memory for object heap ");
                     Log.println(i);
+                    Log.print("From Space ");
+                    Log.print(i);
+                    Log.print(" ");
+                    Log.print(fromSpaces[i].start());
+                    Log.print(" ");
+                    Log.println(fromSpaces[i].end());
+                    Log.print("To   Space ");
+                    Log.print(i);
+                    Log.print(" ");
+                    Log.print(toSpaces[i].start());
+                    Log.print(" ");
+                    Log.println(toSpaces[i].end());
                 }
             }
 
