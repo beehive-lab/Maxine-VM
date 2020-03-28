@@ -177,12 +177,12 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
     /**
      * Procedure used to verify a reference.
      */
-//    private final DebugHeap.RefVerifier refVerifier = new DebugHeap.RefVerifier(toSpaces);
+    private final DebugHeap.RefVerifier refVerifier = new DebugHeap.RefVerifier(toSpaces[0], toSpaces[1]);
 
     /**
      * Procedure used to verify GC root reference well-formedness.
      */
-//    private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
+    private final SequentialHeapRootsScanner gcRootsVerifier = new SequentialHeapRootsScanner(refVerifier);
 
     /**
      * A VM option for triggering a GC before every allocation.
@@ -379,9 +379,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
                 swapSemiSpaces(); // Swap semispaces. From--> To and To-->From
                 stopTimer(clearTimer);
 
-//                for (int i = 0; i < NUMBER_OF_SPLITS; i++) {
-//                    refVerifier.setValidSpaces(fromSpaces[i], toSpaces[i]);
-//                }
+                refVerifier.setValidSpaces(toSpaces[0], toSpaces[1], fromSpaces[0], fromSpaces[1]);
                 if (Heap.logGCPhases()) {
                     phaseLogger.logScanningRoots(Interval.BEGIN);
                 }
@@ -474,10 +472,8 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
                 Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
 
                 // Post-verification of the heap.
-//                for (int i = 0; i < NUMBER_OF_SPLITS; i++) {
-//                    refVerifier.setValidHeapSpace(toSpaces[i]);
-//                }
-//                verifyObjectSpaces(GCCallbackPhase.AFTER);
+                refVerifier.setValidSpaces(toSpaces[0], toSpaces[1]);
+                verifyObjectSpaces(GCCallbackPhase.AFTER);
 
                 if (Heap.logGCTime()) {
                     timeLogger.logPhaseTimes(invocationCount,
@@ -598,9 +594,9 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
                 if (!forwardRef.isZero()) {
                     return forwardRef;
                 }
-//                if (VerifyReferences) {
-//                    refVerifier.verifyRefAtIndex(Address.zero(), 0, ref);
-//                }
+                if (VerifyReferences) {
+                    refVerifier.verifyRefAtIndex(Address.zero(), 0, ref);
+                }
                 final Pointer fromCell = Layout.originToCell(fromOrigin);
                 final Size    size     = Layout.size(fromOrigin);
                 final Pointer toCell   = gcAllocate(size);
@@ -1085,7 +1081,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
         if (Heap.logGCPhases()) {
             phaseLogger.logVerifyingStackReferences(Interval.BEGIN);
         }
-//        gcRootsVerifier.run();
+        gcRootsVerifier.run();
         if (Heap.logGCPhases()) {
             phaseLogger.logVerifyingStackReferences(Interval.END);
         }
@@ -1100,9 +1096,10 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
             if (Heap.verbose()) {
                 Log.println("--To Space Verification: Start");
             }
-//            for (int i = 0; i < NUMBER_OF_SPLITS; i++) {
-//                DebugHeap.verifyRegion(toSpaces[i], toSpaces[i].start().asPointer(), allocationMark(), refVerifier, detailLogger);
-//            }
+            for (int i = 0; i < NUMBER_OF_SPLITS; i++) {
+                DebugHeap.verifyRegion(toSpaces[i], toSpaces[i].start().asPointer(), allocationMark(i), refVerifier,
+                        detailLogger);
+            }
             if (Heap.verbose()) {
                 Log.println("--To Space Verification: End");
             }
@@ -1138,7 +1135,7 @@ public class MultiSemiSpaceHeapScheme extends HeapSchemeWithTLAB implements Cell
             if (Heap.logGCPhases()) {
                 phaseLogger.logVerifyingRegion(cr, cr.start().asPointer(), cr.getAllocationMark());
             }
-//            DebugHeap.verifyRegion(cr, cr.start().asPointer(), cr.getAllocationMark(), refVerifier, detailLogger);
+            DebugHeap.verifyRegion(cr, cr.start().asPointer(), cr.getAllocationMark(), refVerifier, detailLogger);
         }
     }
 
