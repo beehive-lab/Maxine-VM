@@ -50,4 +50,18 @@ public final class JDK_java_lang_String {
     public String intern() {
         return SymbolTable.intern(thisString());
     }
+
+    /**
+     * Cast a {@code java.lang.Sting} Instance to this instance to a {@code java.lang.String}.
+     * @return this instance viewed as a string
+     */
+    @INTRINSIC(UNSAFE_CAST)
+    private static native JDK_java_lang_String asJLSAlias(String string);
+
+    @ALIAS(declaringClass = String.class)
+    private char[] value;
+
+    public static char[] getCharArray(String string) {
+        return asJLSAlias(string).value;
+    }
 }

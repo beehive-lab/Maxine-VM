@@ -36,6 +36,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.sequential.semiSpace.*;
 import com.sun.max.vm.intrinsics.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
@@ -117,11 +118,6 @@ public class NUMAProfiler {
 
     private static int totalNewSize  = 0;
     private static int totalSurvSize = 0;
-
-    /**
-     * A buffer to transform a String object to char array.
-     */
-    private static char[] charArrayBuffer;
 
     /**
      * PROFILING POLICY 1: Explicit GC Driven
@@ -274,8 +270,6 @@ public class NUMAProfiler {
         survivors1 = new RecordBuffer(survivorBufferSize, "Survivors Buffer No1");
         survivors2 = new RecordBuffer(survivorBufferSize, "Survivors Buffer No2");
 
-        charArrayBuffer = new char[RecordBuffer.MAX_CHARS];
-
         memoryPageSize = NUMALib.numaPageSize();
 
         if (NUMAProfilerVerbose) {
@@ -389,21 +383,6 @@ public class NUMAProfiler {
     }
 
     /**
-     * This method has the same functionality as the String.toCharArray() but
-     * we avoid the new object creation.
-     * @param str, The String to be converted to char array.
-     */
-    private static char[] asCharArray(String str) {
-        int i = 0;
-        while (i < str.length()) {
-            charArrayBuffer[i] = str.charAt(i);
-            i++;
-        }
-        charArrayBuffer[i] = '\0';
-        return charArrayBuffer;
-    }
-
-    /**
      * This method is called when a profiled object is allocated.
      */
     @NO_SAFEPOINT_POLLS("numa profiler call chain must be atomic")
@@ -415,11 +394,10 @@ public class NUMAProfiler {
          * we read it before locking. */
         final boolean lockDisabledSafepoints = lock();
         //transform the object type from String to char[] and pass the charArrayBuffer[] to record
-        charArrayBuffer = asCharArray(type);
         final int threadId = VmThread.current().id();
         //guard RecordBuffer from overflow
         FatalError.check(newObjects.currentIndex < newObjects.bufferSize, "Allocations Buffer out of bounds. Increase the Buffer Size.");
-        newObjects.record(uniqueId, threadId, charArrayBuffer, size, address);
+        newObjects.record(uniqueId, threadId, JDK_java_lang_String.getCharArray(type), size, address);
         uniqueId++;
         totalNewSize = totalNewSize + size;
         unlock(lockDisabledSafepoints);

@@ -151,9 +151,6 @@ class RecordBuffer {
                 break;
             }
             types.plus(writeIndex * Character.BYTES).setChar(c);
-            if (c == '\0') {
-                break;
-            }
             charIndex++;
             writeIndex = stringIndex + charIndex;
         }
