@@ -306,6 +306,8 @@ public class DebugHeap {
          * {@linkplain Code#bootCodeRegion code} regions. This value is ignored if {@code null}.
          */
         MemoryRegion space2;
+        MemoryRegion space3;
+        MemoryRegion space4;
         /**
          * Array holding references values (other than {@code null}  that must be excluded from verification.
          */
@@ -358,6 +360,12 @@ public class DebugHeap {
             if (space2 != null && space2.contains(origin)) {
                 return;
             }
+            if (space3 != null && space3.contains(origin)) {
+                return;
+            }
+            if (space4 != null && space4.contains(origin)) {
+                return;
+            }
             if (exclusions != null) {
                 for (int i = 0; i < exclusions.length; i++) {
                     if (origin.equals(Pointer.fromLong(exclusions[i]))) {
@@ -390,6 +398,8 @@ public class DebugHeap {
         public void setValidHeapSpace(MemoryRegion space) {
             this.space1 = space;
             this.space2 = null;
+            this.space3 = null;
+            this.space4 = null;
         }
 
         /**
@@ -401,6 +411,21 @@ public class DebugHeap {
         public void setValidSpaces(MemoryRegion space1, MemoryRegion space2) {
             this.space1 = space1;
             this.space2 = space2;
+            this.space3 = null;
+            this.space4 = null;
+        }
+
+        /**
+         * Set the verifier to include two extra valid memory region in addition to the boot, code and immortal heap regions.
+         * This replaces all previous heap space (except for the default ones).
+         * @param space1 a memory region
+         * @param space2 a memory region
+         */
+        public void setValidSpaces(MemoryRegion space1, MemoryRegion space2, MemoryRegion space3, MemoryRegion space4) {
+            this.space1 = space1;
+            this.space2 = space2;
+            this.space3 = space3;
+            this.space4 = space4;
         }
 
         public void setExclusions(long [] exclusions) {

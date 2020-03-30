@@ -369,8 +369,11 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         @Override
         public void aaload() {
             frame.pop(INTEGER);
-            final VerificationType array = frame.pop(OBJECT_ARRAY);
+            final VerificationType array = frame.pop(REFERENCE);
             if (array != NULL) {
+                if (!array.isArray()) {
+                    verifyError("Require array type in aaload");
+                }
                 final VerificationType element = array.componentType();
                 frame.push(element);
             } else {
@@ -380,9 +383,12 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
 
         @Override
         public void aastore() {
-            frame.pop(OBJECT);
+            frame.pop(REFERENCE_OR_WORD);
             frame.pop(INTEGER); // index
-            frame.pop(OBJECT_ARRAY);
+            final VerificationType array = frame.pop(REFERENCE);
+            if (array != NULL && !array.isArray()) {
+                verifyError("Require array type in aastore");
+            }
             // The remaining type check is done at runtime, throwing ArrayStoreException if it fails
         }
 
