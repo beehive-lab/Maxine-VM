@@ -116,7 +116,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             }
         }
         if (target.arch.isRISCV64() && result.targetMethod().targetCodeSize() >= RISCV64.MAX_DIRECT_JUMP_SIZE) {
-            throw new CiBailout("methods larger than 1MB are not supported in RISCV64: ");
+            throw new CiBailout("methods larger than 1MB are not supported in RISCV64: "  + result.targetMethod());
         }
 
         return result;
