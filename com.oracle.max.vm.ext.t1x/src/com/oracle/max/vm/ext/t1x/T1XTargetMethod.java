@@ -258,7 +258,7 @@ public class T1XTargetMethod extends TargetMethod {
         }
 
         if (!MaxineVM.isHosted() && install) {
-            if (isRISCV64() && codeLength() >= CiUtil.M - CiUtil.K) {
+            if (isRISCV64() && codeLength() >= RISCV64.MAX_DIRECT_JUMP_SIZE) {
                 throw new CiBailout("methods larger than 1MB are not supported in RISCV64: " + classMethodActor());
             }
             linkDirectCalls();
