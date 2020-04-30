@@ -275,6 +275,8 @@ public class RISCV64 extends CiArchitecture {
         return isIntReg(reg) && !reg.equals(zr) && !reg.equals(sp);
     }
 
+    public static final int MAX_DIRECT_JUMP_SIZE = CiUtil.M - CiUtil.K;
+
     @Override
     public boolean usesTrampolines() {
         return true;
