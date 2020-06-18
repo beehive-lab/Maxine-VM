@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
@@ -892,6 +894,22 @@ public class RISCV64T1XCompilation extends T1XCompilation {
                 throw new InternalError("Unknown PatchInfoRISCV64." + tag);
             }
         }
+        /*
+         * Hook fixup to create the trampoline array for the current compilation.
+         */
+        createTrampolines();
+    }
+
+    /**
+     * Create trampolines for all calls in the compilation.
+     */
+    private void createTrampolines() {
+        int calls = safepointsBuilder.numberOfCalls();
+        // Account for the adapter call, if there is one.
+        if (adapterGenerator != null) {
+            calls++;
+        }
+        this.trampolines = asm.trampolines(calls);
     }
 
     @HOSTED_ONLY

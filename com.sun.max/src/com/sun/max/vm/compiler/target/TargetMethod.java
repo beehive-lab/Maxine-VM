@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2017-2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, Andrey Rodchenko. All rights reserved.
@@ -1592,8 +1594,8 @@ public abstract class TargetMethod extends MemoryRegion {
         }
     }
 
+    @HOSTED_ONLY
     public final void offlineFixupTrampolineCallSite() {
-        assert MaxineVM.isHosted();
         assert directCallees.length == 1;
         int safepointIndex = safepoints.nextDirectCall(0);
         Object currentDirectCallee = directCallees[0];

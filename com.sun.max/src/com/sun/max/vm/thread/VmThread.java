@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2017, 2020, APT Group, School of Computer Science,
+ * Copyright (c) 2020, APT Group, Department of Computer Science,
+ * School of Engineering, The University of Manchester. All rights reserved.
+ * Copyright (c) 2017, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, 2016, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -332,7 +334,7 @@ public class VmThread {
      * handler will reset the guard pages when it calls {@link #loadExceptionForHandler()}.
      */
     public void checkYellowZoneForRaisingException() {
-        assert platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64 :
+        assert platform().isa == ISA.AMD64 || platform().isa == ISA.ARM || platform().isa == ISA.Aarch64 || platform().isa == ISA.RISCV64 :
                 "Unimplemented: com.sun.max.vm.thread.VmThread.checkYellowZoneForRaisingException for " + platform().isa;
         if (!yellowZoneUnprotected) {
             Pointer sp = VMRegister.getCpuStackPointer();

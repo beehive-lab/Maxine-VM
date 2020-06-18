@@ -20,6 +20,7 @@
  */
 package com.sun.c1x;
 
+import com.oracle.max.asm.target.riscv64.RISCV64;
 import com.oracle.max.cri.intrinsics.IntrinsicImpl;
 import com.oracle.max.criutils.TTY;
 import com.sun.c1x.debug.CFGPrinterObserver;
@@ -113,6 +114,9 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
                 long time = (System.nanoTime() - startTime) / 100000;
                 TTY.println(String.format("C1X %4d %-70s %-45s %-50s | %3d.%dms %5dB", index, "", "", "", time / 10, time % 10, result.targetMethod().targetCodeSize()));
             }
+        }
+        if (target.arch.isRISCV64() && result.targetMethod().targetCodeSize() >= RISCV64.MAX_DIRECT_JUMP_SIZE) {
+            throw new CiBailout("methods larger than 1MB are not supported in RISCV64: "  + result.targetMethod());
         }
 
         return result;
