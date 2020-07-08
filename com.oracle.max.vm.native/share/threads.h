@@ -80,13 +80,8 @@ typedef void (*VmThreadDetachMethod)(Address tla);
  * @return true if the sleep was interrupted
  */
 extern jboolean thread_sleep(jlong numberOfMilliSeconds);
-#if os_WINDOWS
-DWORD WINAPI thread_run(LPVOID param);
-#else
-	
-void * thread_run(void *arg);
 
-#endif
+void *thread_run(void *arg);
 int thread_attachCurrent(void **penv, JavaVMAttachArgs* args, boolean daemon);
 int thread_detachCurrent();
 

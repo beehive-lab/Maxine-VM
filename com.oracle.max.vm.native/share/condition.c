@@ -18,15 +18,6 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "os.h"
-#if os_WINDOWS
-#ifdef _WIN32_WINNT
-#undef _WIN32_WINNT
-#endif
-#define _WIN32_WINNT 0x0600   // needed for tools like MINGW in order to use condition variables which became available from Windows Vista and on. Visual Studio might define it on its own
-#include <windows.h>
-
-#endif
 #include <sys/time.h>
 #include <time.h>
 #include <string.h>
@@ -54,10 +45,6 @@ void condition_initialize(Condition condition) {
     }
 #elif os_MAXVE
     *condition = maxve_condition_create();
-#elif os_WINDOWS
-	InitializeConditionVariable(condition);
-	//initialize condtionVariable does not return anything!
-
 #else
 #   error
 #endif
@@ -75,8 +62,6 @@ void condition_destroy(Condition condition) {
     if (pthread_cond_destroy(condition) != 0) {
         c_FATAL();
     }
-#elif os_WINDOWS
-//condition variables cannot get destroyed https://stackoverflow.com/questions/28975958/why-does-windows-have-no-deleteconditionvariable-function-to-go-together-with
 #endif
 }
 
@@ -95,7 +80,7 @@ void condition_destroy(Condition condition) {
  * @return false if an error occurred, true otherwise (i.e. the thread was notified or interrupted).
  *        In either case, the current thread has reacquired the lock on 'mutex'.
  */
-boolean condition_wait(Condition condition, Mutex mutex) { //mutex is not needed in windows
+boolean condition_wait(Condition condition, Mutex mutex) {
 #if log_MONITORS
     log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ")", thread_self(), condition, mutex);
 #endif
@@ -116,8 +101,6 @@ boolean condition_wait(Condition condition, Mutex mutex) { //mutex is not needed
         /* (Doug) I assume 1 means EINTR */
         return true;
     }
-#elif os_WINDOWS
-	error = !SleepConditionVariableCS (condition, mutex, INFINITE); // non zero return value means success on Windows!
 #endif
     if (error != 0) {
         log_println("condition_wait      (" THREAD_CONDVAR_MUTEX_FORMAT ") unexpected error code %d [%s]", thread_self(), condition, mutex, error, strerror(error));
@@ -129,7 +112,7 @@ boolean condition_wait(Condition condition, Mutex mutex) { //mutex is not needed
     return true;
 }
 
-#if (os_DARWIN || os_LINUX )
+#if (os_DARWIN || os_LINUX)
 /*
  * This function is taken from HotSpot (os_linux.cpp).
  */
@@ -176,7 +159,7 @@ boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
     log_println("condition_timedWait (" THREAD_CONDVAR_MUTEX_FORMAT ", %d)", thread_self(), condition, mutex, timeoutMilliSeconds);
 #endif
 	int error;
-#if (os_DARWIN || os_LINUX )
+#if (os_DARWIN || os_LINUX)
 	struct timeval now;
 	int status = gettimeofday(&now, NULL);
 	c_ASSERT(status != -1);
@@ -215,8 +198,6 @@ boolean condition_timedWait(Condition condition, Mutex mutex, Unsigned8 timeoutM
 	    /* (Doug) I assume 1 means EINTR */
 	    return true;
 	}
-#elif os_WINDOWS
-	error = !SleepConditionVariableCS (condition, mutex, timeoutMilliSeconds); // non zero return value means success on Windows!
 #else
 #    error
 #endif
@@ -241,9 +222,6 @@ boolean condition_notify(Condition condition) {
     return cond_signal(condition) == 0;
 #elif os_MAXVE
     return maxve_condition_notify(*condition, 0) == 0;
-#elif os_WINDOWS
-	 WakeConditionVariable (condition); //WakeConditionVariable returns nothing
-	 return true;
 #else
 #  error
 #endif
@@ -253,15 +231,12 @@ boolean condition_notifyAll(Condition condition) {
 #if log_MONITORS
     log_println("condition_notifyAll (" THREAD_CONDVAR_FORMAT ")", thread_self(), condition);
 #endif
-#if (os_DARWIN || os_LINUX )
+#if (os_DARWIN || os_LINUX)
     return pthread_cond_broadcast(condition) == 0;
 #elif os_SOLARIS
     return cond_broadcast(condition) == 0;
 #elif os_MAXVE
     return maxve_condition_notify(*condition, 1) == 0;
-#elif os_WINDOWS
-	WakeAllConditionVariable (condition); //WakeAllConditionVariable returns nothing
-	return true;
 #else
 #   error
 #endif

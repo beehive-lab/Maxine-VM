@@ -27,7 +27,7 @@ LIB = javatest
 
 include $(PROJECT)/platform/platform.mk
 
-SOURCES = jvmni.c tests.c threads.c jnitests.c jvm.c jni.c threadLocals.c image.c log.c virtualMemory.c mutex.c c.c trap.c time.c jmm.c jvmti.c relocation.c signal.c dataio.c
+SOURCES = jvmni.c tests.c threads.c jnitests.c
 
 SOURCE_DIRS = javatest jni platform hosted share substrate
 

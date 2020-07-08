@@ -19,13 +19,9 @@
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 #include "os.h"
-#if !os_WINDOWS
+
 #include <sys/types.h>
 #include <sys/mman.h>
-#else
-#include <windows.h>
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 

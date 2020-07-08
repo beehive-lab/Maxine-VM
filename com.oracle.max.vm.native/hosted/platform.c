@@ -18,21 +18,12 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "os.h"
-#if !os_WINDOWS
 #include <unistd.h>
-#else
-		#include <windows.h>
-        #include <io.h>
-#endif
 #include "word.h"
 #include "isa.h"
 #include "jni.h"
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
-
-
 
 JNIEXPORT void JNICALL
 JVM_OnLoad(JavaVM *vm, char *options, void *arg)
@@ -63,14 +54,7 @@ Java_com_sun_max_platform_Platform_nativeGetOS(JNIEnv *env, jclass c)
 
 JNIEXPORT jint JNICALL
 Java_com_sun_max_platform_Platform_nativeGetPageSize(JNIEnv *env, jclass c) {
-	#if os_WINDOWS
-		SYSTEM_INFO systemInfo = {0};
-		GetSystemInfo(&systemInfo);
-		return systemInfo.dwPageSize ; 
-		
-	#else
-		return (jint) sysconf(_SC_PAGESIZE);
-	#endif
+    return (jint) sysconf(_SC_PAGESIZE);
 }
 
 

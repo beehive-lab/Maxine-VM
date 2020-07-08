@@ -19,16 +19,11 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
- 
-#include "os.h"
 
-#if (!os_WINDOWS)
-	#include <alloca.h>
-#else
-	#include <windows.h>
-#endif
+#include <alloca.h>
 #include <unistd.h>
 
+#include "os.h"
 #include "isa.h"
 #include "virtualMemory.h"
 
@@ -46,9 +41,8 @@
 #include "trap.h"
 #include "threads.h"
 #include "threadLocals.h"
-#if !os_WINDOWS
 #include <sys/mman.h>
-#endif
+
 #if (os_DARWIN || os_LINUX)
 #   include <pthread.h>
 #   include <errno.h>
@@ -62,16 +56,6 @@
 #   include "maxve.h"
     typedef maxve_Thread Thread;
 #define thread_current() (maxve_get_current())
-
-#elif os_WINDOWS
-
-	#include <malloc.h>
-	#include <windows.h>
-	#include <winnt.h>	
-	#include <intrin.h>
-	typedef HANDLE  Thread;
-#define thread_current() ((Thread) GetCurrentThread())
-
 #endif
 
 #if log_NUMA_THREADS
@@ -130,20 +114,6 @@ void thread_getStackInfo(Address *stackBase, Size* stackSize) {
     }
 
     pthread_attr_destroy(&attr);
-#elif os_WINDOWS
-    SYSTEM_INFO systemInfo = {0};
-    GetSystemInfo(&systemInfo);
-
-    NT_TIB *tib = (NT_TIB*)NtCurrentTeb();
-    *stackBase = (DWORD_PTR)tib->StackBase - systemInfo.dwPageSize ; //In windows, guard size is always one memory page so we remove it from stacksize.
-
-
-    MEMORY_BASIC_INFORMATION mbi = {0};
-    if (VirtualQuery((LPCVOID)(stackBase ), &mbi, sizeof(MEMORY_BASIC_INFORMATION)) != 0) //we use virtualquery to get windows reserved stack size (not committed). 
-    {
-        DWORD_PTR allocationStart = (DWORD_PTR)mbi.AllocationBase;
-        *stackSize  = (size_t) stackBase - allocationStart;
-    }
 #elif os_DARWIN
     pthread_t self = pthread_self();
     void *stackTop = pthread_get_stackaddr_np(self);
@@ -176,7 +146,7 @@ void thread_getStackInfo(Address *stackBase, Size* stackSize) {
  */
 static Thread thread_create(jint id, Size stackSize, int priority) {
     Thread thread;
-#if !os_MAXVE && !os_WINDOWS
+#if !os_MAXVE
     int error;
 #endif
 
@@ -188,10 +158,8 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
 #if log_THREADS
     log_println("thread_create: id = %d, stack size = %ld", id, stackSize);
 #endif
-#if os_WINDOWS
-#define PTHREAD_STACK_MIN 0
-#endif
-#if (os_LINUX || os_DARWIN )
+
+#if (os_LINUX || os_DARWIN)
     if (stackSize < PTHREAD_STACK_MIN) {
         stackSize = PTHREAD_STACK_MIN;
     }
@@ -216,7 +184,7 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
     if (thread == NULL) {
         return (Thread) 0;
     }
-#elif (os_LINUX || os_DARWIN )
+#elif (os_LINUX || os_DARWIN)
     pthread_attr_t attributes;
     pthread_attr_init(&attributes);
 
@@ -232,15 +200,6 @@ static Thread thread_create(jint id, Size stackSize, int priority) {
         log_println("pthread_create failed with error: %d", error);
         return (Thread) 0;
     }
-#elif (os_WINDOWS)
- thread = CreateThread(NULL, stackSize, thread_run, NULL, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL); //we demand explicitly stack size to be reservedd
- //Also guard is set automatically
- if(!thread){
-	 log_println("thread_create failed with error: %d", GetLastError());
-        return (Thread) 0;
- }
- //the only way to make thread detached is to invalidate its handle using CloseHandle(). However, this would result in returning an invalid Thread at the end of the function
-	 
 #elif os_SOLARIS
     if (stackSize < thr_min_stack()) {
         stackSize = thr_min_stack();
@@ -267,13 +226,7 @@ void *thread_self() {
  *
  * @param arg the pre-allocated, but uninitialized, thread locals block.
  */
- #if os_WINDOWS
-DWORD WINAPI thread_run(void *arg) //we prefer this signature in order to avoid compiler waring on Windows.
-
- #else
-void * thread_run(void *arg)
-#endif
- {
+void *thread_run(void *arg) {
 
     Address tlBlock = (Address) arg;
     TLA etla = ETLA_FROM_TLBLOCK(tlBlock);
@@ -354,11 +307,7 @@ void * thread_run(void *arg)
     setCurrentThreadSignalMaskOnThreadExit(result == 1);
 
     /* Successful thread exit */
-	#if os_WINDOWS
-		return 0;
-	#else
-		return NULL;
-	#endif
+    return NULL;
 }
 
 /**
@@ -529,12 +478,10 @@ Java_com_sun_max_vm_thread_VmThread_nativeYield(JNIEnv *env, jclass c) {
     thr_yield();
 #elif os_DARWIN
     sched_yield();
-#elif os_LINUX 
+#elif os_LINUX
     pthread_yield();
 #elif os_MAXVE
     maxve_yield();
-#elif os_WINDOWS
-	SwitchToThread();
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -557,7 +504,7 @@ Java_com_sun_max_vm_thread_VmThread_nativeInterrupt(JNIEnv *env, jclass c, Addre
             log_exit(11, "Error sending signal SIGUSR1 to native thread %p", nativeThread);
         }
     }
-#elif os_LINUX || os_DARWIN 
+#elif os_LINUX || os_DARWIN
     // Signals the thread
     int result = pthread_kill((pthread_t) nativeThread, SIGUSR1);
     if (result != 0) {
@@ -570,12 +517,7 @@ Java_com_sun_max_vm_thread_VmThread_nativeInterrupt(JNIEnv *env, jclass c, Addre
         }
     }
 #elif os_MAXVE
-
 	maxve_interrupt((void*) nativeThread);
-#elif os_WINDOWS
-	c_UNIMPLEMENTED();
-
-    
 #else
     c_UNIMPLEMENTED();
  #endif
@@ -584,20 +526,6 @@ Java_com_sun_max_vm_thread_VmThread_nativeInterrupt(JNIEnv *env, jclass c, Addre
 jboolean thread_sleep(jlong numberOfMilliSeconds) {
 #if os_MAXVE
     return maxve_sleep(numberOfMilliSeconds * 1000000);
-#elif os_WINDOWS
-HANDLE timer;	
-LARGE_INTEGER li;	
-if(!(timer = CreateWaitableTimer(NULL, TRUE, NULL)))
-		return FALSE;
-	
-li.QuadPart = -(numberOfMilliSeconds * 1000000);
-if(!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE)){
-		CloseHandle(timer);
-		return FALSE;
-	}
-	WaitForSingleObject(timer, INFINITE);
-	CloseHandle(timer);
-	return TRUE;
 #else
     struct timespec time, remainder;
 
