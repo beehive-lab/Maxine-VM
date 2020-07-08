@@ -19,15 +19,13 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include "os.h"
-#if os_WINDOWS
-#include <windows.h>
-#endif
+
 #include "c.h"
 #include "threads.h"
 #include "virtualMemory.h"
 #include "log.h"
 #include "jni.h"
+#include "os.h"
 #include "isa.h"
 #include "image.h"
 #include "trap.h"
@@ -51,7 +49,7 @@
 static Address theJavaTrapStub;
 static boolean traceTraps = false;
 
-#if !os_MAXVE && !os_WINDOWS //Windows do not support POSIX signals unfortunately. You can only raise some signals from within your own process/thread but not send it to another process/thread
+#if !os_MAXVE
 
 /**
  * All signals.
@@ -79,13 +77,13 @@ static sigset_t blockedOnThreadExitSignals;
 int getTrapNumber(int signal) {
     switch (signal) {
     case SIGSEGV:
-#if !os_MAXVE && !os_WINDOWS
+#if !os_MAXVE
     case SIGBUS:
 #endif
         return MEMORY_FAULT;
     case SIGFPE:
         return ARITHMETIC_EXCEPTION;
-#if !os_MAXVE && !os_WINDOWS
+#if !os_MAXVE
     case SIGUSR1:
         return ASYNC_INTERRUPT;
      default:
@@ -98,12 +96,12 @@ int getTrapNumber(int signal) {
 #if os_SOLARIS
 #include <thread.h>
 #define thread_setSignalMask thr_sigsetmask
-#elif os_DARWIN || os_LINUX 
+#elif os_DARWIN || os_LINUX
 #define thread_setSignalMask pthread_sigmask
 #endif
 
 void setCurrentThreadSignalMaskOnThreadExit(boolean isVmOperationThread) {
-#if !os_MAXVE && !os_WINDOWS 
+#if !os_MAXVE
     if (!isVmOperationThread) {
         /* disable signals sent by Thread.interrupt() as thread is transitioning to not alive state. */
         thread_setSignalMask(SIG_BLOCK, &blockedOnThreadExitSignals, NULL);
@@ -112,7 +110,7 @@ void setCurrentThreadSignalMaskOnThreadExit(boolean isVmOperationThread) {
 }
 
 void setCurrentThreadSignalMask(boolean isVmOperationThread) {
-#if !os_MAXVE && !os_WINDOWS
+#if !os_MAXVE
     if (isVmOperationThread) {
         thread_setSignalMask(SIG_SETMASK, &vmAndDefaultSignals, NULL);
     } else {
@@ -122,12 +120,9 @@ void setCurrentThreadSignalMask(boolean isVmOperationThread) {
 #endif
 }
 
-void* setSignalHandler(int sig, SignalHandlerFunction handler) { //Changed 'signal' argument to 'sig' because it overlapped with windows signal() function
+void* setSignalHandler(int signal, SignalHandlerFunction handler) {
 #if os_MAXVE
-	maxve_register_fault_handler(sig, handler);
-	return NULL;
-#elif os_WINDOWS
-	signal(sig, handler);
+	maxve_register_fault_handler(signal, handler);
 	return NULL;
 #else
     struct sigaction newSigaction;
@@ -137,14 +132,14 @@ void* setSignalHandler(int sig, SignalHandlerFunction handler) { //Changed 'sign
     sigemptyset(&newSigaction.sa_mask);
     newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
 
-#if os_SOLARIS || os_LINUX || os_DARWIN 
-    if (sig == SIGUSR1) {
+#if os_SOLARIS || os_LINUX || os_DARWIN
+    if (signal == SIGUSR1) {
         newSigaction.sa_flags = SA_SIGINFO |  SA_ONSTACK;
     }
 #endif
     newSigaction.sa_sigaction = handler;
 
-    if (sigaction(sig, &newSigaction, &oldSigaction) != 0) {
+    if (sigaction(signal, &newSigaction, &oldSigaction) != 0) {
         log_exit(1, "sigaction failed");
     }
 
@@ -152,7 +147,7 @@ void* setSignalHandler(int sig, SignalHandlerFunction handler) { //Changed 'sign
         log_lock();
         log_print("Registered handler %p [", handler);
         log_print_symbol((Address) handler);
-        log_print("] for signal %d", sig);
+        log_print("] for signal %d", signal);
         if (oldSigaction.sa_handler != NULL) {
             log_print(" replacing handler ");
             log_print_symbol((Address) oldSigaction.sa_handler);
@@ -168,7 +163,7 @@ void* setSignalHandler(int sig, SignalHandlerFunction handler) { //Changed 'sign
 static Address getInstructionPointer(UContext *ucontext) {
 #if os_SOLARIS
     return ucontext->uc_mcontext.gregs[REG_PC];
-#elif os_LINUX 
+#elif os_LINUX
 #   if isa_AMD64
     return ucontext->uc_mcontext.gregs[REG_RIP];
 #   elif isa_IA32
@@ -184,10 +179,6 @@ static Address getInstructionPointer(UContext *ucontext) {
     return ucontext->uc_mcontext->__ss.__rip;
 #elif os_MAXVE
     return ucontext->rip;
-#elif os_WINDOWS
-#if isa_AMD64
-    return ucontext->Rip;
-	#endif
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -201,7 +192,7 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
     ucontext->uc_mcontext.gregs[REG_PC] = (greg_t) stub;
 #elif os_DARWIN
     ucontext->uc_mcontext->__ss.__rip = stub;
-#elif os_LINUX 
+#elif os_LINUX
 #   if isa_AMD64
         ucontext->uc_mcontext.gregs[REG_RIP] = (greg_t) stub;
 #   elif isa_IA32
@@ -215,19 +206,15 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
 #   endif
 #elif os_MAXVE
     ucontext->rip = (unsigned long) stub;
-#elseif os_WINDOWS
-#   if isa_AMD64
-        ucontext->uc_mcontext.rip = (greg_t) stub;
-	#endif
 #else
     c_UNIMPLEMENTED();
 #endif
 }
 
-static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) { //there is no siginfo_t struct in Windows
+static Address getFaultAddress(SigInfo * sigInfo, UContext *ucontext) {
 #if (os_DARWIN || os_SOLARIS || os_LINUX )
     return (Address) sigInfo->si_addr;
-#elif (os_MAXVE) || os_WINDOWS
+#elif (os_MAXVE)
     return (Address) sigInfo;
 #endif
 }
@@ -241,7 +228,7 @@ char *vmSignalName(int signal) {
     case SIGSEGV: return "SIGSEGV";
     case SIGFPE: return "SIGFPE";
     case SIGILL: return "SIGILL";
-#if !os_MAXVE && !os_WINDOWS
+#if !os_MAXVE
     case SIGUSR1: return "SIGUSR1";
     case SIGBUS: return "SIGBUS";
 #endif
@@ -282,15 +269,12 @@ static boolean handleDivideOverflow(UContext *ucontext) {
     if (rip[0] == 0xf7) {
 #if os_SOLARIS
         Address dividend = ucontext->uc_mcontext.gregs[REG_RAX];
-#elif os_LINUX 
+#elif os_LINUX
         Address dividend = ucontext->uc_mcontext.gregs[REG_RAX];
 #elif os_DARWIN
         Address dividend = ucontext->uc_mcontext->__ss.__rax;
 #elif os_MAXVE
         Address dividend = ucontext->rax;
-#elif os_WINDOWS
-	    Address dividend = ucontext->Rax;
-
 #else
         c_UNIMPLEMENTED();
 #endif
@@ -310,15 +294,12 @@ static boolean handleDivideOverflow(UContext *ucontext) {
             /* Set the remainder to 0. */
 #if os_SOLARIS
             ucontext->uc_mcontext.gregs[REG_RDX] = 0;
-#elif os_LINUX 
+#elif os_LINUX
             ucontext->uc_mcontext.gregs[REG_RDX] = 0;
 #elif os_DARWIN
             ucontext->uc_mcontext->__ss.__rdx = 0;
 #elif os_MAXVE
             ucontext->rdx = 0;
-#elif os_WINDOWS
-            ucontext->Rdx = 0;
-
 #else
             c_UNIMPLEMENTED();
 #endif
@@ -465,9 +446,6 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #elif isa_AMD64 && (os_SOLARIS || os_LINUX)
     tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext.gregs[REG_R14]);
     ucontext->uc_mcontext.gregs[REG_R14] = (Address) dtla;
-#elif isa_AMD64 && os_WINDOWS
-    tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->R14);
-    ucontext->R14 = (Address) dtla;
 #elif isa_AMD64 && os_DARWIN
     tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->uc_mcontext->__ss.__r14);
     ucontext->uc_mcontext->__ss.__r14 = (Address) dtla;
@@ -493,17 +471,11 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 /**
  * The handler for signals handled by SignalDispatcher.java.
  */
- #if os_WINDOWS
- static void userSignalHandlerDef(int signal) {
-    void postSignal(int signal);
-    postSignal(signal);
-}
-#else
 static void userSignalHandlerDef(int signal, SigInfo *signalInfo, UContext *ucontext) {
     void postSignal(int signal);
     postSignal(signal);
 }
-#endif
+
 /* Defined global declared in trap.h */
 SignalHandlerFunction userSignalHandler = (SignalHandlerFunction) userSignalHandlerDef;
 
@@ -519,7 +491,7 @@ void nativeTrapInitialize(Address javaTrapStub) {
     setSignalHandler(SIGILL, (SignalHandlerFunction) vmSignalHandler);
     setSignalHandler(SIGFPE, (SignalHandlerFunction) vmSignalHandler);
 
-#if !os_MAXVE && !os_WINDOWS //no support for windows signals
+#if !os_MAXVE
     setSignalHandler(SIGBUS, (SignalHandlerFunction) vmSignalHandler);
     setSignalHandler(SIGUSR1, (SignalHandlerFunction) vmSignalHandler);
 

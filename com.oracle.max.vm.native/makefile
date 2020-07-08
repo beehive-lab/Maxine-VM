@@ -28,7 +28,7 @@
 
 include platform/platform.mk
 
-all : hosted substrate launch  javatest tele
+all : hosted substrate launch tele javatest
 
 hosted : build/$(OS)/hosted/makefile
 	$(AT) (cd build/$(OS)/hosted; $(MAKE) all)

@@ -23,7 +23,7 @@
 
 #include "word.h"
 
-#if (os_LINUX || os_WINDOWS)
+#if os_LINUX
 #   include <sys/ucontext.h>
 #   include <sys/user.h>
 typedef struct user_regs_struct *aarch64_OsTeleIntegerRegisters;

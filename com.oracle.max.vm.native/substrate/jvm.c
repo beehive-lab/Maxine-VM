@@ -26,24 +26,21 @@
  * In cases where we bypass JDK's native libraries (@see com.sun.max.vm.jdk)
  * we can simply omit unneeded JVM interface functions that would otherwise occur here.
  */
-#include "os.h"
-#if os_WINDOWS
-#ifdef _WIN32_WINNT
-#undef _WIN32_WINNT 
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sched.h>
+#if os_DARWIN
+#include <sys/poll.h>
+#else
+#include <poll.h>
 #endif
-#define _WIN32_WINNT 0x0600 //needed for tools like MINGW which declare an earlier version of Windows making some features of win32 api unavailable. Visual Studio might not need this.
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#define lseek64 _lseeki64
-#define open _open
-#define close _close //open and close work on mingw but are deprecated in MSVC so we better use _ before the name. (Internally, they call win32 funcs like CreateFile() and are added by Microsoft for POSIX compatibility
-#define ftruncate _chsize
-#define ioctl(a, b, c) ioctlsocket(a, b, (u_long *) c)
-#include <windows.h>
-#endif
-
-
-
 
 #include "vm.h"
 #include "log.h"
@@ -53,43 +50,15 @@
 #include "maxine.h"
 #include "memory.h"
 
-#if !os_WINDOWS
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
-
-
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sched.h>
-#endif
-#include <fcntl.h>
-
-#include <errno.h>
-#include <string.h>
-
-#if os_DARWIN
-#include <sys/poll.h>
-#elif !os_WINDOWS
-#include <poll.h>
-#endif
-#if !os_WINDOWS
-#include <sys/socket.h>
-#endif
-
-
 #if os_SOLARIS
 #include <sys/filio.h>
 #endif
 
-#if os_DARWIN 
+#if os_DARWIN
 #define lseek64 lseek
 #include <sys/poll.h>
-#endif
 
-#include <stdint.h>
+#endif
 
 
 // Platform-independent error return values from OS functions
@@ -284,7 +253,7 @@ JVM_ActiveProcessorCount(void) {
     }
     // Otherwise return number of online cpus
     return online_cpus;
-#elif os_LINUX 
+#elif os_LINUX
     cpu_set_t cpus;  // can represent at most 1024 (CPU_SETSIZE) processors
     int cpus_size = sizeof(cpu_set_t);
     int processor_count = sysconf(_SC_NPROCESSORS_CONF);
@@ -310,11 +279,6 @@ JVM_ActiveProcessorCount(void) {
     int online_cpus = sysconf(_SC_NPROCESSORS_ONLN);
     c_ASSERT(online_cpus > 0);
     return online_cpus;
-#elif os_WINDOWS
-	SYSTEM_INFO systemInfo = {0};
-    GetSystemInfo(&systemInfo);
-	return systemInfo.dwNumberOfProcessors; //not sure if we need logical or physical processors
-	//alternatively we can read NUMBER_OF_PROCESSORS environment variable
 #else
     UNIMPLEMENTED();
     return 0;
@@ -323,15 +287,12 @@ JVM_ActiveProcessorCount(void) {
 
 #if os_SOLARIS || os_LINUX || os_DARWIN
 #include <dlfcn.h>
-
 #endif
 
 void *
 JVM_LoadLibrary(const char *name) {
-#if os_SOLARIS || os_LINUX || os_DARWIN 
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return dlopen(name, RTLD_LAZY);
-#elif os_WINDOWS
-	return LoadLibraryA(name);
 #else
     UNIMPLEMENTED();
     return 0;
@@ -342,8 +303,6 @@ void
 JVM_UnloadLibrary(void * handle) {
 #if os_SOLARIS || os_LINUX || os_DARWIN
     dlclose(handle);
-#elif os_WINDOWS
-	FreeLibrary(handle);
 #else
     UNIMPLEMENTED();
 #endif
@@ -351,10 +310,8 @@ JVM_UnloadLibrary(void * handle) {
 
 void *
 JVM_FindLibraryEntry(void *handle, const char *name) {
-#if os_SOLARIS || os_LINUX || os_DARWIN 
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return dlsym(handle, name);
-#elif os_WINDOWS
-	return GetProcAddress(handle, name);
 #else
     UNIMPLEMENTED();
     return 0;
@@ -486,9 +443,7 @@ JVM_SetNativeThreadName(JNIEnv *env, jobject jthread, jstring name) {
     /* Same as JDK7u4 (and before): do nothing as not yet implemented on either Solaris / Linux */
 #endif
 }
-#if os_WINDOWS //Microsot uses an empty  Yield() Macro (obsolete, not needed) in windows.h which breaks our code so we need to undef it.
-#undef Yield
-#endif 
+
 void
 JVM_Yield(JNIEnv *env, jclass threadClass) {
     vm.Yield(env);
@@ -636,7 +591,7 @@ JVM_GetArrayElement(JNIEnv *env, jobject arr, jint index) {
 jvalue
 JVM_GetPrimitiveArrayElement(JNIEnv *env, jobject arr, jint index, jint wCode) {
     UNIMPLEMENTED_WITH_ENV();
-    return (jvalue) (jint)0;
+    return (jvalue) 0;
 }
 
 void
@@ -770,9 +725,7 @@ JVM_DefineClassWithSource(JNIEnv *env, const char *name, jobject loader,
 /*
  * Reflection support functions
  */
-#if os_WINDOWS //Microsot defines  GetClassName as GetClassNameA  in windows.h which breaks our code so we need to undef it.
-#undef GetClassName
-#endif 
+
 jstring
 JVM_GetClassName(JNIEnv *env, jclass cls) {
     return vm.GetClassName(env, cls);
@@ -1131,37 +1084,36 @@ JVM_RaiseSignal(jint sig) {
     if (kill(getpid(), sig) < 0) {
         log_println("error raising signal %d in current process: %s", sig, strerror(errno));
     }
-#elif os_WINDOWS
-	if(raise(sig))
-		log_println("error raising signal %d in current process: %s", sig, strerror(errno));
-
 #else
     UNIMPLEMENTED();
 #endif
     return JNI_TRUE;
 }
 
-#if os_DARWIN || os_LINUX || os_WINDOWS
+#if os_DARWIN || os_LINUX
 typedef struct {
   const char *name;
   int   number;
 } Signal;
 
 Signal signals[] = {
-	#if !os_WINDOWS
    {"HUP",     SIGHUP},
-   
+   {"INT",     SIGINT},
    {"QUIT",    SIGQUIT},
    {"ILL",     SIGILL},
    {"TRAP",    SIGTRAP},
+   {"ABRT",    SIGABRT},
 #if os_DARWIN
    {"EMT",     SIGEMT},
 #endif
+   {"FPE",     SIGFPE},
    {"KILL",    SIGKILL},
    {"BUS",     SIGBUS},
+   {"SEGV",    SIGSEGV},
    {"SYS",     SIGSYS},
    {"PIPE",    SIGPIPE},
    {"ALRM",    SIGALRM},
+   {"TERM",    SIGTERM},
    {"URG",     SIGURG},
    {"STOP",    SIGSTOP},
    {"TSTP",    SIGTSTP},
@@ -1180,23 +1132,12 @@ Signal signals[] = {
 #endif
    {"USR1",    SIGUSR1},
    {"USR2",    SIGUSR2},
-   
- 
-   #endif
-    {"ABRT",    SIGABRT},
-	{"FPE",     SIGFPE},
-    {"ILL",     SIGILL},
-    {"INT",     SIGINT},
-    {"SEGV",    SIGSEGV},
-    {"TERM",    SIGTERM},
-
-   
   };
 #endif
 
 jint
 JVM_FindSignal(const char *name) {
-#if os_DARWIN || os_LINUX || os_WINDOWS
+#if os_DARWIN || os_LINUX
     unsigned int i;
     for (i = 0; i < ARRAY_LENGTH(signals); i++) {
         if(!strcmp(name, signals[i].name)) {
@@ -1863,7 +1804,7 @@ jint JVM_GetLastErrorString(char *buffer, size_t length) {
     if (errno == 0) {
         return 0;
     }
-#if os_DARWIN || os_SOLARIS || os_LINUX || os_WINDOWS
+#if os_DARWIN || os_SOLARIS || os_LINUX
     const char *s = strerror(errno);
     size_t n = strlen(s);
     if (n >= length) {
@@ -1885,7 +1826,7 @@ jint JVM_GetLastErrorString(char *buffer, size_t length) {
  */
 char *JVM_NativePath(char *path) {
     jvmni_log_println("JVM_NativePath(%s)", path);
-#if os_DARWIN || os_SOLARIS || os_LINUX || os_WINDOWS
+#if os_DARWIN || os_SOLARIS || os_LINUX
     return path;
 #else
     UNIMPLEMENTED();
@@ -1961,7 +1902,6 @@ JVM_Write(jint fd, char *buf, jint nbytes) {
 jint JVM_Available(jint fd, jlong *pbytes) {
     jlong cur, end;
 
-	#if !os_WINDOWS
     struct stat st;
     if (fstat(fd, &st) >= 0) {
         if (S_ISCHR(st.st_mode) || S_ISFIFO(st.st_mode) || S_ISSOCK(st.st_mode)) {
@@ -1972,7 +1912,6 @@ jint JVM_Available(jint fd, jlong *pbytes) {
             }
         }
     }
-	#endif
     if ((cur = lseek64(fd, 0L, SEEK_CUR)) == -1) {
         return 0;
     } else if ((end = lseek64(fd, 0L, SEEK_END)) == -1) {
@@ -2006,9 +1945,7 @@ JVM_Lseek(jint fd, jlong offset, jint whence) {
  */
 jint
 JVM_SetLength(jint fd, jlong length) {
-    return 
-	
-	ftruncate(fd, length);
+    return ftruncate(fd, length);
 }
 
 /*
@@ -2017,12 +1954,7 @@ JVM_SetLength(jint fd, jlong length) {
  */
 jint
 JVM_Sync(jint fd) {
-	#if !os_WINDOWS
-		return fsync(fd);
-	#else
-		return !FlushFileBuffers((HANDLE)_get_osfhandle(fd)); //_get_osfhandle transforms fd to HANDLE that is needed by FlushFileBuffers
-//Windows return nonzero on success
-	#endif
+    return fsync(fd);
 }
 
 /*
@@ -2031,7 +1963,7 @@ JVM_Sync(jint fd) {
 
 jint
 JVM_InitializeSocketLibrary(void) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return 0;
 #else
     UNIMPLEMENTED();
@@ -2039,15 +1971,16 @@ JVM_InitializeSocketLibrary(void) {
 #endif
 }
 
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
 #include <sys/types.h>
+#include <sys/socket.h>
 #else
 struct sockaddr;
 #endif
 
 jint
 JVM_Socket(jint domain, jint type, jint protocol) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return socket(domain, type, protocol);
 #else
     UNIMPLEMENTED();
@@ -2057,7 +1990,7 @@ JVM_Socket(jint domain, jint type, jint protocol) {
 
 jint
 JVM_SocketClose(jint fd) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return close(fd);
 #else
     UNIMPLEMENTED();
@@ -2067,7 +2000,7 @@ JVM_SocketClose(jint fd) {
 
 jint
 JVM_SocketShutdown(jint fd, jint howto) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return shutdown(fd, howto);
 #else
     UNIMPLEMENTED();
@@ -2077,9 +2010,7 @@ JVM_SocketShutdown(jint fd, jint howto) {
 
 jint
 JVM_Recv(jint fd, char *buf, jint nBytes, jint flags) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
-
-
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return recv(fd, buf, nBytes, flags);
 #else
     UNIMPLEMENTED();
@@ -2089,8 +2020,7 @@ JVM_Recv(jint fd, char *buf, jint nBytes, jint flags) {
 
 jint
 JVM_Send(jint fd, char *buf, jint nBytes, jint flags) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
-
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return send(fd, buf, nBytes, flags);
 #else
     UNIMPLEMENTED();
@@ -2098,10 +2028,6 @@ JVM_Send(jint fd, char *buf, jint nBytes, jint flags) {
 #endif
 }
 
-#if os_WINDOWS
-extern int gettimeofday(struct timeval * tp);
-
-#endif
 jint
 JVM_Timeout(int fd, long timeout) {
 #if os_DARWIN || os_LINUX
@@ -2159,36 +2085,6 @@ JVM_Timeout(int fd, long timeout) {
           }
       } else return res;
     }
-#elif os_WINDOWS
-Unsigned8 prevtime,newtime;
-    struct timeval t;
-
-    gettimeofday(&t);
-    prevtime = ((Unsigned8)t.tv_sec * 1000)  +  t.tv_usec / 1000;
-
-    for(;;) {
-      WSAPOLLFD pfd;
-
-      pfd.fd = fd;
-      pfd.events = POLLIN | POLLERR;
-
-      int res = WSAPoll(&pfd, 1, timeout);
-
-      if (res == SOCKET_ERROR && errno == EINTR) {
-
-        // On Windows any value < 0 means "forever" too
-
-        if(timeout >= 0) {
-          gettimeofday(&t);
-          newtime = ((Unsigned8)t.tv_sec * 1000)  +  t.tv_usec / 1000;
-          timeout -= newtime - prevtime;
-          if(timeout <= 0)
-            return OS_OK;
-          prevtime = newtime;
-        }
-      } else
-        return res;
-    }
 #else
     UNIMPLEMENTED();
     return 0;
@@ -2197,7 +2093,7 @@ Unsigned8 prevtime,newtime;
 
 jint
 JVM_Listen(jint fd, jint count) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return listen(fd, count);
 #else
     UNIMPLEMENTED();
@@ -2207,7 +2103,7 @@ JVM_Listen(jint fd, jint count) {
 
 jint
 JVM_Connect(jint fd, struct sockaddr *him, jint len) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return connect(fd, him, len);
 #else
     UNIMPLEMENTED();
@@ -2217,7 +2113,7 @@ JVM_Connect(jint fd, struct sockaddr *him, jint len) {
 
 jint
 JVM_Bind(jint fd, struct sockaddr *him, jint len) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return bind(fd, him, len);
 #else
     UNIMPLEMENTED();
@@ -2227,7 +2123,7 @@ JVM_Bind(jint fd, struct sockaddr *him, jint len) {
 
 jint
 JVM_Accept(jint fd, struct sockaddr *him, jint *len) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     if (fd < 0) {
         return -1;
     }
@@ -2277,8 +2173,7 @@ JVM_SocketAvailable(jint fd, jint *pbytes) {
     // note ioctl can return 0 when successful, JVM_SocketAvailable
     // is expected to return 0 on failure and 1 on success to the jdk.
     return (ret == OS_ERR) ? 0 : 1;
-#elif os_LINUX || os_WINDOWS
-
+#elif os_LINUX
     // Linux doc says EINTR not returned, unlike Solaris
     int ret = ioctl(fd, FIONREAD, pbytes);
 
@@ -2294,7 +2189,7 @@ JVM_SocketAvailable(jint fd, jint *pbytes) {
 
 jint
 JVM_GetSockName(jint fd, struct sockaddr *him, int *len) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return getsockname(fd, him, (socklen_t*) len);
 #else
     UNIMPLEMENTED();
@@ -2304,7 +2199,7 @@ JVM_GetSockName(jint fd, struct sockaddr *him, int *len) {
 
 jint
 JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return getsockopt(fd, level, optname, optval, (socklen_t*) optlen);
 #else
     UNIMPLEMENTED();
@@ -2314,7 +2209,7 @@ JVM_GetSockOpt(jint fd, int level, int optname, char *optval, int *optlen) {
 
 jint
 JVM_SetSockOpt(jint fd, int level, int optname, const char *optval, int optlen) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return setsockopt(fd, level, optname, optval, optlen);
 #else
     UNIMPLEMENTED();
@@ -2350,7 +2245,7 @@ JVM_GetHostByName(char* name) {
 
 int
 JVM_GetHostName(char* name, int namelen) {
-#if os_SOLARIS || os_LINUX || os_DARWIN || os_WINDOWS
+#if os_SOLARIS || os_LINUX || os_DARWIN
     return gethostname(name, namelen);
 #else
     UNIMPLEMENTED();

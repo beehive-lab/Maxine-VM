@@ -18,27 +18,16 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-#include "log.h"
-#if os_WINDOWS
-#include <windows.h>
-#define pthread_self GetCurrentThread
-#else
 #include <dlfcn.h>
 
-#endif
-
+#include "log.h"
 #include "jni.h"
 #include "mutex.h"
 #include "threads.h"
-
-
 
 #if !os_MAXVE
 static FILE *fileStream = NULL;
@@ -57,14 +46,14 @@ static mutex_Struct allocationProfiler_mutexStruct;
 void log_initialize(const char *path) {
     mutex_initialize(&log_mutexStruct);
     mutex_initialize(&allocationProfiler_mutexStruct);
-#if !os_MAXVE && !os_WINDOWS
+#if !os_MAXVE
     if (path == NULL) {
         path = "stdout";
     }
     if (strncmp(path, "stdout\0", 7) == 0) {
         fileStream = stdout;
         /* Set the file stream to flush whenever a newline character is encountered */
-     //   setlinebuf(fileStream);
+        setlinebuf(fileStream);
     } else if (strncmp(path, "stderr\0", 7) == 0) {
         fileStream = stderr;
     } else {
@@ -74,7 +63,7 @@ void log_initialize(const char *path) {
             exit(1);
         }
         /* Set the file stream to flush whenever a newline character is encountered */
-       // setlinebuf(fileStream);
+        setlinebuf(fileStream);
     }
 #endif
 }
@@ -82,7 +71,7 @@ void log_initialize(const char *path) {
 void log_lock(void) {
 	int result;
 	if ((result = mutex_enter_nolog(&log_mutexStruct)) != 0) {
-	    log_exit(-1, "Thread %d could not lock mutex %p: %s", pthread_self(), &log_mutexStruct, strerror(result));
+	    log_exit(-1, "Thread %p could not lock mutex %p: %s", thread_self(), &log_mutexStruct, strerror(result));
 	}
 }
 
@@ -90,14 +79,14 @@ void numaProfiler_lock(void) {
     int result;
     result = mutex_enter_nolog(&allocationProfiler_mutexStruct);
     if (result != 0) {
-        log_exit(-1, "Thread %d could not lock mutex %p: %s", pthread_self(), &allocationProfiler_mutexStruct, strerror(result));
+        log_exit(-1, "Thread %p could not lock mutex %p: %s", thread_self(), &allocationProfiler_mutexStruct, strerror(result));
     }
 }
 
 void log_unlock(void) {
     int result;
 	if ((result = mutex_exit_nolog(&log_mutexStruct)) != 0) {
-        log_exit(-1, "Thread %d could not unlock mutex %p: %s", pthread_self(), &log_mutexStruct, strerror(result));
+        log_exit(-1, "Thread %p could not unlock mutex %p: %s", thread_self(), &log_mutexStruct, strerror(result));
 	}
 }
 
@@ -105,7 +94,7 @@ void numaProfiler_unlock(void) {
     int result;
     result = mutex_exit_nolog(&allocationProfiler_mutexStruct);
     if (result != 0) {
-        log_exit(-1, "Thread %d could not unlock mutex %p: %s", pthread_self(), &allocationProfiler_mutexStruct, strerror(result));
+        log_exit(-1, "Thread %p could not unlock mutex %p: %s", thread_self(), &allocationProfiler_mutexStruct, strerror(result));
     }
 }
 
@@ -122,14 +111,14 @@ void log_print_format(const char *format, ...) {
 }
 
 void log_flush() {
-#if !os_MAXVE && !os_WINDOWS
+#if !os_MAXVE
     FILE* out = fileStream == NULL ? stdout : fileStream;
     fflush(out);
 #endif
 }
 
 void log_print_vformat(const char *format, va_list ap) {
-#if !os_MAXVE && !os_WINDOWS
+#if !os_MAXVE
     FILE* out = fileStream == NULL ? stdout : fileStream;
     vfprintf(out, format, ap);
 #else
@@ -208,8 +197,8 @@ void log_print_newline() {
 }
 
 void log_print_symbol(Address address) {
-#if !os_MAXVE && !os_WINDOWS
-     Dl_info info;
+#if !os_MAXVE
+    Dl_info info;
     if (dladdr((void *) address, &info) != 0) {
         if (info.dli_sname == NULL) {
             log_print("%s (%p+%d)", info.dli_fname, info.dli_fbase, address - (Address) info.dli_fbase);

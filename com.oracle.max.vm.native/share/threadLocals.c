@@ -18,14 +18,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
- #include "os.h"
-#if !os_WINDOWS
-	#include <unistd.h>
-#else
-	#include <windows.h>
-	#include <malloc.h>
-	#define aligned_alloc(a, b) _aligned_malloc(a, b)
-#endif
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -55,9 +48,6 @@
     typedef maxve_Thread Thread;
     typedef maxve_SpecificsKey ThreadLocalsKey;
     typedef void (*ThreadLocalsBlockDestructor)(void *);
-#elif os_WINDOWS
-    typedef DWORD ThreadLocalsKey;
-
 #endif
 
 int theTLASize = -1;
@@ -96,7 +86,7 @@ static void deallocateThreadLocalBlock(Address tlBlock, Size tlBlockSize) {
  * lazily commit memory reserved for the initial thread's stack.
  */
 static void commitStackMemoryForInitialThread(Address base, int pageSize) {
-#if os_LINUX || os_WINDOWS
+#if os_LINUX
     /* Writing to the bottom page of the reserved stack (appears) not to be
      * sufficient on Linux. Using alloca() to allocate a chunk approximately
      * the size of the remaining stack seems to fix it. */
@@ -357,7 +347,7 @@ void threadLocalsBlock_destroy(Address tlBlock) {
 void tla_initialize(int tlaSize) {
     theTLASize = tlaSize;
 #if !TELE
-#if os_DARWIN || os_LINUX 
+#if os_DARWIN || os_LINUX
     int error = pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor)(void *) threadLocalsBlock_destroy);
     #if log_THREADS
         log_println("tla_initialize: pthread_key_create returned code = %d", error);
@@ -365,8 +355,6 @@ void tla_initialize(int tlaSize) {
     if (error != 0) {
         log_exit(-1, "tla_initialize: pthread_key_create returned non zero code = %d", error);
     }
-#elif os_WINDOWS
-	theThreadLocalsKey = TlsAlloc();
 #elif os_SOLARIS
     thr_keycreate(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
 #elif os_MAXVE
@@ -380,7 +368,7 @@ void tla_initialize(int tlaSize) {
 
 Address threadLocalsBlock_current() {
     Address tlBlock;
-#if os_DARWIN || os_LINUX 
+#if os_DARWIN || os_LINUX
     tlBlock = (Address) pthread_getspecific(theThreadLocalsKey);
 #elif os_SOLARIS
     Address value;
@@ -391,8 +379,6 @@ Address threadLocalsBlock_current() {
     tlBlock = value;
 #elif os_MAXVE
     tlBlock = (Address) maxve_thread_getSpecific(theThreadLocalsKey);
-#elif os_WINDOWS
-	tlBlock  = (Address) TlsGetValue(theThreadLocalsKey);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -400,14 +386,12 @@ Address threadLocalsBlock_current() {
 }
 
 void threadLocalsBlock_setCurrent(Address tlBlock) {
-#if (os_DARWIN || os_LINUX )
+#if (os_DARWIN || os_LINUX)
     pthread_setspecific(theThreadLocalsKey, (void *) tlBlock);
 #elif os_SOLARIS
     thr_setspecific(theThreadLocalsKey, (void *) tlBlock);
 #elif os_MAXVE
     maxve_thread_setSpecific(theThreadLocalsKey, (void *) tlBlock);
-#elif os_WINDOWS
-	TlsSetValue(theThreadLocalsKey, (LPVOID) tlBlock);
 #endif
 }
 

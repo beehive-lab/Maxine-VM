@@ -25,7 +25,7 @@ void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters os, isa_Can
 
 #if os_DARWIN
 #define CANONICALIZE(reg, ucReg) c->reg = (Word) os->__##reg
-#elif os_LINUX || os_MAXVE || os_WINDOWS
+#elif os_LINUX || os_MAXVE
 #ifdef __arm__
 #define CANONICALIZE(reg, intpos) c->reg = (Word) os->uregs[intpos]
 #else
@@ -79,7 +79,7 @@ void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters os, isa_Can
 void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters os, isa_CanonicalFloatingPointRegisters c) {
 #if os_DARWIN
 #define CANONICALIZE(reg) c->xmm##reg = (*((Word *) (&os->__fpu_xmm##reg)))
-#elif os_LINUX || os_WINDOWS
+#elif os_LINUX
 #define CANONICALIZE(reg) c->xmm##reg = (Word) ((XMMRegister *) &os->xmm_space)[reg].low
 #elif os_SOLARIS
 #define CANONICALIZE(reg) c->xmm##reg = (Word) *((Word *) &os->fp_reg_set.fpchip_state.xmm[reg])
@@ -116,7 +116,7 @@ void isa_canonicalizeTeleStateRegisters(isa_OsTeleStateRegisters os, isa_Canonic
 #if os_DARWIN
     c->rip = (Word) os->__rip;
     c->flags = (Word) os->__rflags;
-#elif os_LINUX || os_WINDOWS
+#elif os_LINUX
 #ifdef __arm__
     log_println("ARM: isa_canonicalizeTeleStateRegisters is not implemented!");
 #else

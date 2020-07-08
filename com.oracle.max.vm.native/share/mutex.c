@@ -20,11 +20,6 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#include "os.h"
-#if os_WINDOWS
-#include <windows.h>
-#endif
-
 #include "mutex.h"
 #include "log.h"
 #include "threads.h"
@@ -55,8 +50,6 @@ void mutex_initialize(Mutex mutex) {
     }
 #elif os_MAXVE
     *mutex = maxve_monitor_create();
-#elif os_WINDOWS
-	InitializeCriticalSection(mutex);   //windows CS's are recursive be default ,mutex is pointer to Critical section
 #   else
         c_UNIMPLEMENTED();
 #   endif
@@ -72,9 +65,6 @@ int mutex_enter_nolog(Mutex mutex) {
         c_ASSERT(false);
     }
     return 0;
-#elif os_WINDOWS
-	 EnterCriticalSection(mutex);   //mutex is pointer to Critical section. EnterCriticalSection returns nothing
-	 return 0; //0 means success for funcs like pthread_mutex_lock
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -83,11 +73,8 @@ int mutex_enter_nolog(Mutex mutex) {
 int mutex_try_enter(Mutex mutex) {
 #if os_SOLARIS
     return mutex_trylock(mutex);
-#elif os_LINUX || os_DARWIN 
+#elif os_LINUX || os_DARWIN
     return pthread_mutex_trylock(mutex);
-#elif os_WINDOWS
-	return !TryEnterCriticalSection(mutex);   //mutex is pointer to Critical section. On windows non zero return value means success that's why we use ! at the result
-
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -111,9 +98,6 @@ int mutex_exit_nolog(Mutex mutex) {
         c_ASSERT(false);
     }
     return 0;
-#elif os_WINDOWS
-	 LeaveCriticalSection(mutex); //mutex is pointer to Critical section
-	 return 0;
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -140,8 +124,5 @@ void mutex_dispose(Mutex mutex) {
     }
 #elif os_MAXVE
     c_UNIMPLEMENTED();
-#elif os_WINDOWS
-    DeleteCriticalSection(mutex); //mutex is pointer to Critical section
-
 #endif
 }
