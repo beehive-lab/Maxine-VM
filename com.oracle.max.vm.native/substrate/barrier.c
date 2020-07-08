@@ -1,6 +1,4 @@
 /*
- * Copyright (c) 2020, APT Group, Department of Computer Science,
- * School of Engineering, The University of Manchester. All rights reserved.
  * Copyright (c) 2019, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  *
@@ -40,7 +38,7 @@
 
 /*
  * Pre-processor override for whether to compile in the membarrier system call.
- * Currently only affects Aarch64 and RISCV64. See syscall_membarrier() in this compilation
+ * Currently only affects Aarch64. See syscall_membarrier() in this compilation
  * unit.
  */
 #ifndef USE_SYS_MEMBARRIER
@@ -64,7 +62,7 @@ static int membarrier_init(void) __attribute__ ((unused));
 void
 syscall_membarrier()
 {
-#if isa_AARCH64 || isa_RISCV64
+#if isa_AARCH64
 # if USE_SYS_MEMBARRIER
     static volatile int barrier_kind = 0;
     if (!barrier_kind) {

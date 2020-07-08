@@ -53,10 +53,12 @@ typedef long long           Signed8;
 typedef float               Float4;
 typedef double              Float8;
 
+#define true 1
+#define false 0
 #if !defined(false) && !defined(true)
     typedef enum {false, true}  boolean;
 #else
-    typedef int                 boolean;
+    typedef unsigned char                 boolean;
 #endif
 
 #define MAX_PATH_LENGTH     2048

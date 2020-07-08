@@ -23,7 +23,7 @@
 
 void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters os, isa_CanonicalIntegerRegisters c) {
 
-#if os_LINUX
+#if os_LINUX || os_WINDOWS
 #define CANONICALIZE(reg) c->r##reg = (Word) os->regs[reg]
 #else
 #define CANONICALIZE(reg, ucReg) c_UNIMPLEMENTED()

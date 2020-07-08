@@ -29,14 +29,22 @@
 #   include <signal.h>
 #   include <stdlib.h>
 #   include <string.h>
-#   include <sys/ucontext.h>
+#if (!os_WINDOWS)
+	#   include <sys/ucontext.h>
 #   include <unistd.h>
-#endif
 
+#endif
+#endif
 #include "os.h"
 
-#if os_MAXVE
+#if os_MAXVE 
 #define SignalHandlerFunction fault_handler_t
+#elif os_WINDOWS
+typedef void SigInfo;
+
+typedef void (*SignalHandlerFunction)(int signal); //Windows want a signal handler with one argument (Remember, Windows do not support POSIX signals. They can only be used as exceptions raised from within the same process. You cannot send them to other threads/ procs)
+
+typedef CONTEXT UContext;
 #else
 typedef ucontext_t UContext;
 typedef siginfo_t SigInfo;

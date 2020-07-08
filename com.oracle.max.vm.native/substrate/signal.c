@@ -24,6 +24,10 @@
 /**
  * Native functions for SignalDispatcher.java.
  */
+#include "os.h"
+#if os_WINDOWS
+#include <windows.h>
+#endif
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
@@ -32,7 +36,9 @@
 #include "threads.h"
 #include "log.h"
 
-#if os_DARWIN
+#if os_WINDOWS
+static HANDLE signal_sem;
+#elif os_DARWIN
 #include <mach/mach.h>
 static semaphore_t signal_sem;
 #elif os_SOLARIS
@@ -43,11 +49,11 @@ static semaphore_t signal_sem;
 #define sem_destroy sema_destroy
 #define sem_t       sema_t
 static sem_t signal_sem;
-#elif os_LINUX
+#elif os_MAXVE
+#else
 #include <semaphore.h>
 static sem_t signal_sem;
-#elif os_MAXVE
-// no signals, so nothing necessary
+
 #endif
 
 boolean traceSignals = false;
@@ -69,10 +75,15 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalNotify(JNIEnv *env, jcl
     if (kr != KERN_SUCCESS) {
         log_exit(11, "semaphore_signal failed: %s", mach_error_string(kr));
     }
-#elif os_LINUX || os_SOLARIS
+#elif os_LINUX || os_SOLARIS 
     if (sem_post(&signal_sem) != 0) {
         log_exit(11, "sem_post failed: %s", strerror(errno));
     }
+#elif os_WINDOWS
+	 if(!ReleaseSemaphore(signal_sem, 1, NULL))
+		log_exit(GetLastError(), "ReleaseSemaphore failed");
+
+
 #elif os_MAXVE
 #else
     c_UNIMPLEMENTED();
@@ -113,13 +124,18 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalWait(JNIEnv *env, jclas
     if (kr != KERN_SUCCESS) {
         log_exit(11, "semaphore_wait failed: %s", mach_error_string(kr));
     }
-#elif os_LINUX || os_SOLARIS
+#elif os_LINUX || os_SOLARIS 
     int ret;
-    while ((ret = sem_wait(&signal_sem) == EINTR)) {
+    while ((ret = sem_wait(&signal_sem) == EINTR)) { //not sure if EINTR can occur on Windows (No sending signals is supported
     }
     if (ret != 0) {
         log_exit(11, "sem_wait failed: %s", strerror(errno));
     }
+#elif os_WINDOWS
+	if ( WaitForSingleObject(signal_sem,INFINITE) == WAIT_FAILED)
+		 log_exit(GetLastError(), "WaitForSingleObject failed:");
+
+
 #elif os_MAXVE
 #else
     c_UNIMPLEMENTED();
@@ -139,10 +155,13 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalInit(JNIEnv *env, jclas
     if (kr != KERN_SUCCESS) {
         log_exit(11, "semaphore_create failed: %s", mach_error_string(kr));
     }
-#elif os_LINUX
+#elif os_LINUX 
     if (sem_init(&signal_sem, 0, 0) != 0) {
         log_exit(11, "sem_init failed: %s", strerror(errno));
     }
+#elif os_WINDOWS
+	signal_sem = CreateSemaphoreA(NULL, 1, 50000,NULL); //Windows Semaphore needs to have initial val 1 not 0 like Linux. If it was 0 no thread could enter
+//Unfortunately, Windows Semaphores need a maximum value representing how many can enter it so we use a random big value (50000)
 #elif os_SOLARIS
     if (sem_init(&signal_sem, 0, USYNC_THREAD, NULL) != 0) {
         log_exit(11, "sema_init failed: %s", strerror(errno));
@@ -176,6 +195,8 @@ Java_com_sun_max_vm_runtime_SignalDispatcher_nativeSignalFinalize(JNIEnv *env, j
     if (sem_destroy(&signal_sem) != 0) {
         log_exit(11, "sema_destroy failed: %s", strerror(errno));
     }
+#elif os_WINDOWS
+	CloseHandle(signal_sem);
 #endif
 }
 

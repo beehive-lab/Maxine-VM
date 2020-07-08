@@ -22,6 +22,7 @@
 #
 
 # Print verbose output only when MX_VERBOSE is set to y (i.e. mx -V command is used)
+
 ifneq ($(MX_VERBOSE), y)
     AT := @
     MAKE := $(MAKE) -s
@@ -54,6 +55,8 @@ ifneq ($(MAIN),)
     TARGET := LAUNCH
 endif
 
+OS := windows
+ISA := amd64
 # HOSTOS is the platform we are compiling on
 HOSTOS = $(shell uname -s)
 # TARGETOS is the platform we are compiling for (usually the same as HOSTOS)
@@ -151,9 +154,9 @@ ifeq ($(TARGETOS),SunOS)
     endif
 endif
 
-ifeq ($(findstring CYGWIN,$(TARGETOS)),CYGWIN)
+ifeq ($(TARGETOS),WindowsNT)
     OS := windows
-    ISA := ia32
+    ISA := amd64
 endif
 
 # There are three variants for Maxine VE, owing to the 32/64 dom0 variants
@@ -310,20 +313,33 @@ ifeq ($(OS),solaris)
 endif
 
 ifeq ($(OS),windows)
-    # determine predefined macros: touch foo.c; gcc -E -dD foo.c
     ifneq "$(findstring def, $(origin CC))" ""
         # origin of CC is either undefined or default, so set it here
         CC = gcc
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -ansi -Wall -pedantic -Wno-long-long -mno-cygwin -DWINDOWS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK)
+        CFLAGS = -g -Wall -Wno-long-long  -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DWINDOWS -D__int64=int64_t -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK) $(OTHER_CFLAGS)
     endif
-    C_DEPENDENCIES_FLAGS = -MM -DWINDOWS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
-    LINK_MAIN = $(CC) -g -mno-cygwin -Wall -W1,----add-stdcall-alias -ldl
-    LINK_LIB = $(CC) -g -shared -mno-cygwin -Wall -W1,----add-stdcall-alias
+    C_DEPENDENCIES_FLAGS = -M -DWINDOWS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
+    # The '-rpath' linker option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
+    # find Maxine's version of the libjvm.so library.
+    # The '-z execstack' is a workaround that stops the runtime dynamic linker from
+    # changing the protection of the main thread's stack (via mprotect) *after* the
+    # yellow guard page (for detecting stack overflow) has been mprotected. Without
+    # this flag, the main thread's complete stack (including the guard page) is
+    # mprotected with PROT_READ, PROT_WRITE, PROT_EXEC when dlopen() is called to
+    # open libjava.so.
+    LINK_MAIN = $(CC)  -g  -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
+  
+    LINK_LIB = $(CC) -g -shared -mwindows 
+    LINK_LIB_POSTFIX += -lole32 -lws2_32
+
+   
+   
     LIB_PREFIX =
-    LIB_SUFFIX = .dll
+	LIB_SUFFIX = .dll
+
 endif
 
 ifeq ($(OS),maxve)
@@ -413,9 +429,15 @@ else
             endif
             JNI_INCLUDES = -I $(dir $(JNI_H_PATH))
         endif
-    else
-        JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
-        JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)
+    else 
+		ifeq ($(OS),windows)
+			JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/win32/
+			JNI_H_PATH = $(JAVA_HOME)/include/win32/jni.h
+		else
+			JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
+			JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)
+		endif
+		
     endif
 endif
 

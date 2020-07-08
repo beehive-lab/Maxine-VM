@@ -36,6 +36,10 @@
  * A set of VM functions implemented in Java that can (only) be called from C code.
  * These are defined in VMFunctionsSource.java.
  */
+ #include "os.h"
+ #if os_WINDOWS
+ #undef GetClassName
+ #endif //Microsoft defines GetClassName as GetClassNameA in some header files which breaks our code
 typedef struct vmInterface_ {
 // START GENERATED CODE
         void (JNICALL *Unimplemented) (JNIEnv *env);
