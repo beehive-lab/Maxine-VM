@@ -20,10 +20,13 @@
  */
 #include "os.h"
 
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#if !os_WINDOWS
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -277,7 +280,7 @@ static void checkTrailer(int fd) {
     if (trailerStructPtr->identification != theHeader->identification || trailerStructPtr->bootImageFormatVersion != theHeader->bootImageFormatVersion || trailerStructPtr->randomID != theHeader->randomID) {
         log_println("inconsistent trailer");
 #if !MEMORY_IMAGE
-        offset = lseek(fd, -sizeof(trailerStruct), SEEK_END);
+        offset = lseek(fd, (long int)-sizeof(trailerStruct), SEEK_END);
         if (offset != fileSize - (off_t) sizeof(trailerStruct)) {
             log_exit(1, "could not set trailer position at end of file");
         }
@@ -304,7 +307,7 @@ static void mapHeapAndCode(int fd) {
 #endif
 #if MEMORY_IMAGE
     theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
-#elif os_SOLARIS || os_DARWIN || os_LINUX
+#elif os_SOLARIS || os_DARWIN || os_LINUX || os_WINDOWS
     Address reservedVirtualSpace = (Address) 0;
     size_t virtualSpaceSize = 1024L * theHeader->reservedVirtualSpaceSize;
     c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
@@ -332,7 +335,7 @@ static void mapHeapAndCode(int fd) {
             log_exit(4, "could not reserve virtual space for boot image");
         }
     }
-    if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
+    if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) { //CAUTION on Windows, the Base Address must be a multiple of dwAllocationGranularity else mapping fails (UNTESTED since no image file is availabe)
         log_exit(4, "could not map boot image");
     }
     if (reservedVirtualSpace) {
@@ -419,7 +422,7 @@ void image_load(char *imageFileName) {
     }
 #endif
 
-    readHeader(fd);
+    readHeader(fd); 
     checkImage();
     readStringInfo(fd);
     checkTrailer(fd);

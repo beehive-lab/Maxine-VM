@@ -40,12 +40,28 @@
         Word low;
         Word high;
     } XMMRegister;
+#elif os_WINDOWS
+//#   include <sys/ucontext.h>
+#	include "usercygwinamd64.h"
+    typedef struct user_regs_struct *amd64_OsTeleIntegerRegisters;
+    typedef struct user_fpregs_struct *amd64_OsTeleFloatingPointRegisters;
+    typedef struct user_regs_struct *amd64_OsTeleStateRegisters;
+    typedef struct {
+        Word low;
+        Word high;
+    } XMMRegister;
 #elif os_SOLARIS
 #   include <sys/procfs.h>
 	typedef prgreg_t *amd64_OsTeleIntegerRegisters;
 	typedef prfpregset_t *amd64_OsTeleFloatingPointRegisters;
 	typedef prgreg_t *amd64_OsTeleStateRegisters;
 #elif os_MAXVE
+#   include <maxve_db.h>
+#   include <maxve.h>
+    typedef struct db_regs* amd64_OsTeleIntegerRegisters;
+    typedef struct db_regs* amd64_OsTeleStateRegisters;
+    typedef struct db_regs* amd64_OsTeleFloatingPointRegisters;
+#elif os_WINDOWS
 #   include <maxve_db.h>
 #   include <maxve.h>
     typedef struct db_regs* amd64_OsTeleIntegerRegisters;

@@ -21,15 +21,47 @@
 #include "os.h"
 #include "jni.h"
 #include "maxine.h"
-
 #include <sys/types.h>
-#include <sys/time.h>
 
+#if !os_WINDOWS
+#include <sys/time.h> //MINGW may contain this file but it is not officially part of WINAPI so other SDKs (eg. Visual Studio do not include it)
+#endif
 #if os_DARWIN
 #include <mach/mach_time.h>
 #include <mach/kern_return.h>
 #elif os_LINUX
 #include <dlfcn.h>
+#elif os_WINDOWS
+#include <windows.h>
+#include <stdint.h>
+int gettimeofday(struct timeval * tp)
+{
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
+    // until 00:00:00 January 1, 1970 
+    static const uint64_t EPOCH = ((uint64_t) 116444736000000000ULL);
+
+    SYSTEMTIME  system_time;
+    FILETIME    file_time;
+    uint64_t    time;
+
+    GetSystemTime( &system_time );
+    SystemTimeToFileTime( &system_time, &file_time );
+    time =  ((uint64_t)file_time.dwLowDateTime )      ;
+    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+    tp->tv_sec  = (long) ((time - EPOCH) / 10000000L);
+    tp->tv_usec = (long) (system_time.wMilliseconds * 1000);
+    return 0;
+}
+
+int clock_gettime(int x, struct timespec *spec)     
+{  __int64 wintime; GetSystemTimeAsFileTime((FILETIME*)&wintime);
+   wintime      -=(int64_t)116444736000000000;  //1jan1601 to 1jan1970
+   spec->tv_sec  =wintime / (int64_t)10000000;           //seconds
+   spec->tv_nsec =wintime % (int64_t)10000000 *100;      //nano-seconds
+   return 0;
+}
 #endif
 
 
@@ -69,7 +101,7 @@ jlong native_nanoTime(void) {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	return (uint64_t)tv.tv_sec * (uint64_t)(1000 * 1000 * 1000) + (uint64_t)(tv.tv_usec * 1000);
-#elif os_LINUX
+#elif os_LINUX 
 
 #ifndef CLOCK_MONOTONIC
 #define CLOCK_MONOTONIC (1)
@@ -119,15 +151,24 @@ jlong native_nanoTime(void) {
     c_ASSERT(status != -1);
     jlong usecs = ((jlong) time.tv_sec) * (1000 * 1000) + (jlong) time.tv_usec;
     return 1000 * usecs;
+#elif os_WINDOWS
+    struct timespec time;
+	clock_gettime(1, &time);
+    return ((jlong)time.tv_sec) * (1000 * 1000 * 1000) + (jlong) time.tv_nsec;
+//NOT 100% TESTED
 #else
 	return 1;
 #endif
 }
 
 jlong native_currentTimeMillis(void) {
-#if os_SOLARIS || os_DARWIN || os_LINUX
+#if os_SOLARIS || os_DARWIN || os_LINUX || os_WINDOWS
 	struct timeval tv;
+	#if os_WINDOWS
+	gettimeofday(&tv);
+	#else
 	gettimeofday(&tv, NULL);
+	#endif
 	// we need to cast to jlong to avoid overflows in ARMv7
 	return ((jlong) tv.tv_sec * 1000) + ((jlong) tv.tv_usec / 1000);
 #else

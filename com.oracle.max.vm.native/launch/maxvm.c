@@ -18,13 +18,19 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+ #include "os.h"
+#if os_WINDOWS
+#include <windows.h>
+char last_dl_error [100]; //emulating dlerror() function not available on Windows
+
+#else
 #include <dlfcn.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
 
-#include "os.h"
 #include "maxine.h"
 
 typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
@@ -58,6 +64,15 @@ typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
 #include <CoreFoundation/CoreFoundation.h>
 const CFNullRef initializeCoreFoundationOnMainThread;
 
+#elif os_WINDOWS
+#define LIBRARY_NAME "jvm.dll"
+#define MAIN_EXTRA_ARGS
+#define PROG_PATH argv[0]
+char *dlerror(){
+	
+	
+	return last_dl_error;
+}
 #else
 #define LIBRARY_NAME "libjvm.so"
 #define MAIN_EXTRA_ARGS
@@ -108,23 +123,42 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
     strncpy(libraryPath, programPath, prefixLength);
     strcpy(libraryPath + prefixLength, LIBRARY_NAME);
 #endif
+	#if os_WINDOWS
+	void *result = LoadLibraryA(libraryPath);
+	 if (result==NULL) {
+       sprintf(last_dl_error, "dl function : LoadLibraryA error code : %lu", GetLastError ());
+  	   fprintf(stderr, "could not load %s: %s %s\n", LIBRARY_NAME, dlerror(), libraryPath);
+	   exit(1);
 
+  }
+	MaxineFunction maxine = (MaxineFunction) GetProcAddress(result, "maxine");
+	if (maxine == 0) {
+		sprintf(last_dl_error, "dl function : LoadLibraryA error code : %lu", GetLastError ());
+		fprintf(stderr, "could not find symbol 'maxine' in %s: %s %s\n", LIBRARY_NAME, dlerror(), libraryPath);
+		exit(1);
+	}
+	
+		return (*maxine)(argc, argv, NULL);
+
+	#else
     void *handle = dlopen(libraryPath, RTLD_LAZY | RTLD_GLOBAL);
 	if (handle == 0) {
-		fprintf(stderr, "could not load %s: %s\n", LIBRARY_NAME, dlerror());
+		fprintf(stderr, "could not load %s: %s %s\n", LIBRARY_NAME, dlerror(), libraryPath);
 		exit(1);
 	}
 
 	MaxineFunction maxine = (MaxineFunction) dlsym(handle, "maxine");
 	if (maxine == 0) {
-        fprintf(stderr, "could not find symbol 'maxine' in %s: %s\n", LIBRARY_NAME, dlerror());
+        fprintf(stderr, "could not find symbol 'maxine' in %s: %s %s\n", LIBRARY_NAME, dlerror(), libraryPath);
 		exit(1);
 	}
+	#endif
 
 #if os_DARWIN
 	return (*maxine)(argc, argv, programPath);
 #else
     free(libraryPath);
+	
 	return (*maxine)(argc, argv, NULL);
 #endif
 }
