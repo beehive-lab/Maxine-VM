@@ -24,8 +24,11 @@
  * JNI code for any of the JavaTester tests that use native methods.
  */
 #include "os.h"
-
+#if !os_WINDOWS
 #include <pthread.h>
+#else 
+	#include <windows.h>
+#endif
 #include "jni.h"
 
 JNIEXPORT void JNICALL
@@ -96,23 +99,42 @@ void upcall(jclass cls) {
     (*env)->DeleteGlobalRef(env, cls);
     (*vm)->DetachCurrentThread(vm);
 }
-
+#if os_WINDOWS
+DWORD WINAPI thread_function(void *arguments) {//we prefer this signature in order to avoid compiler waring on Windows.
+#else
 void *thread_function(void *arguments) {
+#endif
     upcall((jclass) arguments);
-    return NULL;
+   #if os_WINDOWS
+		return 0;
+	#else
+		return NULL;
+	#endif
 }
 
 JNIEXPORT void JNICALL
 Java_test_output_AttachThread_callHelloWorldOnAttachedThread(JNIEnv *env, jclass clazz) {
-    pthread_t thread_id;
-    pthread_attr_t attributes;
-
+	#if !os_WINDOWS
+		pthread_t thread_id;
+		pthread_attr_t attributes;
+	
+	#endif
     /* Convert argument to be a global handle as it is going to the new thread */
     clazz = (*env)->NewGlobalRef(env, clazz);
-    void *arguments = clazz;
+	#if os_WINDOWS
+		LPVOID
+	#else
+    void *
+	#endif 
+	arguments = clazz;
+	#if !os_WINDOWS
 
     pthread_attr_init(&attributes);
     pthread_attr_setdetachstate(&attributes, PTHREAD_CREATE_JOINABLE);
     pthread_create(&thread_id, &attributes, thread_function, arguments);
     pthread_attr_destroy(&attributes);
+	#else
+	CreateThread(NULL, 0, thread_function, arguments, 0, NULL);
+
+	#endif
 }

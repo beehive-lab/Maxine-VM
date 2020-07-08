@@ -18,6 +18,10 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+#include "os.h"
+#if os_WINDOWS
+#include <windows.h>
+#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -26,7 +30,6 @@
 #include "log.h"
 #include "jni.h"
 #include "mutex.h"
-#include "os.h"
 #include "word.h"
 #include "threads.h"
 
