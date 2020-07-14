@@ -142,7 +142,7 @@ public final class Platform {
             if (os == OS.DARWIN) {
                 // Darwin requires 16-byte stack frame alignment.
                 stackAlignment = 16;
-            } else if (os == OS.SOLARIS || os == OS.LINUX) {
+            } else if (os == OS.SOLARIS || os == OS.LINUX || os == OS.WINDOWS) {
                 // Linux apparently also requires it for functions that pass floating point functions on the stack.
                 // One such function in the Maxine code base is log_print_float() in log.c which passes a float
                 // value to fprintf on the stack. However, gcc doesn't fix the alignment itself so we simply
