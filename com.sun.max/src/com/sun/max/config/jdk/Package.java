@@ -31,6 +31,8 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.jdk.*;
+import static com.sun.max.platform.Platform.*;
+import com.sun.max.platform.*;
 
 /**
  * Redirection for the standard set of JDK packages to include in the image.
@@ -150,8 +152,11 @@ public class Package extends BootImagePackage {
         if (JDK.JDK_VERSION == JDK.JDK_8) {
             Extensions.resetField("java.lang.invoke.MethodHandles$Lookup", "LOOKASIDE_TABLE");
             Extensions.registerClassForReInit("java.lang.invoke.MethodHandles$Lookup");
-            Extensions.resetField("java.lang.UNIXProcess", "processReaperExecutor");
-            Extensions.registerClassForReInit("java.lang.UNIXProcess");
+			
+			if(platform().os != OS.WINDOWS ){
+				Extensions.resetField("java.lang.UNIXProcess", "processReaperExecutor");
+				Extensions.registerClassForReInit("java.lang.UNIXProcess");
+			}
             Extensions.resetField("java.io.File", "fs");
             Extensions.registerClassForReInit("java.io.File");
 
@@ -170,11 +175,11 @@ public class Package extends BootImagePackage {
      */
     @Override
     public void loading() {
+
         if (loadingDone) {
             return;
         }
         loadingDone = true;
-
         // Classes that must not be in the boot image for various reasons
         HostedBootClassLoader.omitClass(java.io.File.class.getName() + "$LazyInitialization");
         HostedBootClassLoader.omitClass(java.io.File.class.getName() + "$TempDirectory");
