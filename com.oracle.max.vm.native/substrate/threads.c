@@ -135,15 +135,17 @@ void thread_getStackInfo(Address *stackBase, Size* stackSize) {
     GetSystemInfo(&systemInfo);
 
     NT_TIB *tib = (NT_TIB*)NtCurrentTeb();
-    *stackBase = (DWORD_PTR)tib->StackBase - systemInfo.dwPageSize ; //In windows, guard size is always one memory page so we remove it from stacksize.
+    *stackBase = (DWORD_PTR)tib->StackBase; //On windows, guard size is always one memory page so we remove it from stacksize.
 
 
     MEMORY_BASIC_INFORMATION mbi = {0};
-    if (VirtualQuery((LPCVOID)(stackBase ), &mbi, sizeof(MEMORY_BASIC_INFORMATION)) != 0) //we use virtualquery to get windows reserved stack size (not committed). 
+    if (VirtualQuery((LPCVOID)(*stackBase - systemInfo.dwPageSize ), &mbi, sizeof(MEMORY_BASIC_INFORMATION)) != 0) //we use virtualquery to get windows reserved stack size (not committed). 
     {
         DWORD_PTR allocationStart = (DWORD_PTR)mbi.AllocationBase;
-        *stackSize  = (size_t) stackBase - allocationStart;
+        *stackSize  = (size_t) (*stackBase) - allocationStart;
     }
+	 *stackBase = (DWORD_PTR)mbi.AllocationBase + systemInfo.dwAllocationGranularity; //tib->StackBase is actually the HIGHEST address of the stack, we want the lowest so we use AllocationBase + guard_size
+	 *stackSize -= systemInfo.dwAllocationGranularity;//On windows, guard size is always one memory page so we remove it from stacksize.
 #elif os_DARWIN
     pthread_t self = pthread_self();
     void *stackTop = pthread_get_stackaddr_np(self);
@@ -294,7 +296,6 @@ void * thread_run(void *arg)
         threadLocalsBlock_create(id, tlBlock, 0);
     }
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
-
     /* Grab the global thread lock so that:
      *   1. This thread can atomically be added to the thread list
      *   2. This thread is blocked if a GC is currently underway. Once we have the lock,
@@ -585,18 +586,7 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
 #if os_MAXVE
     return maxve_sleep(numberOfMilliSeconds * 1000000);
 #elif os_WINDOWS
-HANDLE timer;	
-LARGE_INTEGER li;	
-if(!(timer = CreateWaitableTimer(NULL, TRUE, NULL)))
-		return FALSE;
-	
-li.QuadPart = -(numberOfMilliSeconds * 1000000);
-if(!SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE)){
-		CloseHandle(timer);
-		return FALSE;
-	}
-	WaitForSingleObject(timer, INFINITE);
-	CloseHandle(timer);
+Sleep(numberOfMilliSeconds);
 	return TRUE;
 #else
     struct timespec time, remainder;
