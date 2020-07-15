@@ -435,7 +435,7 @@ else
     else 
 		ifeq ($(OS),windows)
 			JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/win32/
-			JNI_H_PATH = $(JAVA_HOME)/include/win32/jni.h
+			JNI_H_PATH = $(JAVA_HOME)/include/jni.h
 		else
 			JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
 			JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)
