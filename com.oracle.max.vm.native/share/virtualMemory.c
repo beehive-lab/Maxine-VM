@@ -148,7 +148,7 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
 	Address result;
 	if(protNone == JNI_TRUE){ 
 	
-		 result = (Address) VirtualAlloc( (void *) address, size,    MEM_COMMIT | MEM_RESERVE| PAGE_WRITECOPY,   PAGE_NOACCESS);
+		 result = (Address) VirtualAlloc( (void *) address, size,     MEM_RESERVE,   PAGE_NOACCESS| PAGE_WRITECOPY);
 		
 		//virtualalloc is the only win32 function that supports the PROT_NONE equivalent PAGE_NOACCESS
 		//PAGE_WRITECOPY is equivalent to MAP_PRIVATE
@@ -158,13 +158,15 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
 	else {
 		//if protnone is not used, we can use CreateFileMappingA + MapViewOfFile combination to emulate mmap() on Windows
 		//INVALID_HANDLE_VALUE means that we dont use an actual file but the system pagefile, similar to fd= -1 & MPI_ANON in mmap()
-		 HANDLE fmapping = CreateFileMappingA( INVALID_HANDLE_VALUE  , NULL , PAGE_READWRITE  | SEC_COMMIT,0u ,size,   NULL);
-		//FILE_MAP_COPY is equivalent to MAP_PRIVATE
+		 HANDLE fmapping = CreateFileMappingA( INVALID_HANDLE_VALUE  , NULL , PAGE_EXECUTE_READWRITE  | SEC_RESERVE,0u ,size,   NULL);
+	//	FILE_MAP_COPY is equivalent to MAP_PRIVATE
 if(!fmapping)
 					log_println("%d\n", GetLastError());
-		result = (Address) MapViewOfFileEx (fmapping,   FILE_MAP_READ | FILE_MAP_WRITE | FILE_MAP_COPY,   0, 0,   size, (LPVOID)address);
-		if(!result)
-					log_println("%d\n", GetLastError());
+		result = (Address) MapViewOfFileEx (fmapping,   FILE_MAP_ALL_ACCESS | FILE_MAP_COPY,   0, 0,   size, (LPVOID)address);
+			// result = (Address) VirtualAlloc( (void *) address, size,   MEM_RESERVE,    PAGE_READWRITE);
+
+	if(!result)
+					log_println("%d %d\n", GetLastError(), size);
 			
 
 	}
@@ -266,7 +268,7 @@ Address virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd,
 	//_get_osfhandle returns a Windows HANDLE for the file descriptor fd, needed by CreateFileMappingA
 	if(!fmapping)
 					log_println("%d\n", GetLastError());
-	Address result = (Address) MapViewOfFileEx (fmapping,   FILE_MAP_READ | FILE_MAP_WRITE| FILE_MAP_COPY,   (DWORD)(offset >> 32), (DWORD) offset,   size,(LPVOID) address);
+	Address result = (Address) MapViewOfFileEx (fmapping,   FILE_MAP_ALL_ACCESS| FILE_MAP_COPY,   (DWORD)(offset >> 32), (DWORD) offset,   size,(LPVOID) address);
 	//the only diffrence is that we use MapViewOfFileEx instead MapViewOfFile. The first one allows us to provide an initial base address where the mapping begins (last argument)
 	
 	if(!result)
@@ -349,7 +351,7 @@ boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int typ
 
 void virtualMemory_protectPages(Address address, int count) {
 /* log_println("---   protected %p .. %p", address, address + (count * virtualMemory_getPageSize())); */
-    c_ASSERT(virtualMemory_pageAlign(address) == address);
+   c_ASSERT(virtualMemory_pageAlign(address) == address);
 #if os_SOLARIS || os_DARWIN || os_LINUX 
     if (mprotect((void *) address, count * virtualMemory_getPageSize(), PROT_NONE) != 0) {
          int error = errno;
@@ -357,9 +359,9 @@ void virtualMemory_protectPages(Address address, int count) {
     }
 #elif os_WINDOWS
 	DWORD old; //needed for VirtualProtect
-	int error  = GetLastError();
+	int error = 0 ;
 	if(!VirtualProtect((LPVOID) address,count * virtualMemory_getPageSize(), PAGE_NOACCESS, &old)) //PAGE_NOACCESS (WINAPI)  = PROT_NONE (UNIX)
-	    log_exit(error, "protectPages: VirtualProtect(%p) failed", address);
+	    log_exit(error, "protectPages: VirtualProtect(%p) failed %d", address, GetLastError());
 	
 
 #elif os_MAXVE
@@ -398,7 +400,7 @@ unsigned int virtualMemory_getPageSize(void) {
 		#if os_WINDOWS
 		SYSTEM_INFO systemInfo = {0};
 		GetSystemInfo(&systemInfo);
-		pageSize = systemInfo.dwPageSize ; 
+		pageSize = systemInfo.dwAllocationGranularity ; 
 		#else
         pageSize = getpagesize();
 	#endif
@@ -435,6 +437,12 @@ Size virtualMemory_getPhysicalMemorySize(void) {
  * Aligns a given address up to the next page-aligned address if it is not already page-aligned.
  */
 Address virtualMemory_pageAlign(Address address) {
+	#if os_WINDOWS //aparrently windows do not care about page alignment but rather memory allocation granularity
+		SYSTEM_INFO systemInfo = {0};
+		GetSystemInfo(&systemInfo);
+		long alignment = systemInfo.dwAllocationGranularity - 1 ; 
+	#else
     long alignment = virtualMemory_getPageSize() - 1;
+	#endif
     return ((long)(address + alignment) & ~alignment);
 }

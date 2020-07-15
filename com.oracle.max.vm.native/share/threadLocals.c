@@ -24,7 +24,9 @@
 #else
 	#include <windows.h>
 	#include <malloc.h>
-	#define aligned_alloc(a, b) _aligned_malloc(a, b)
+	#include <memory.h>
+
+	#define aligned_alloc(a, b) _aligned_malloc(b, a)
 #endif
 #include <stdlib.h>
 #include <string.h>
@@ -78,7 +80,7 @@ static Address allocateThreadLocalBlock(size_t tlBlockSize) {
 	return result;
 #else
 	c_ASSERT(tlBlockSize < 100000000);
-    return (Address) aligned_alloc(4096, tlBlockSize);
+    return (Address) aligned_alloc(virtualMemory_getPageSize(), tlBlockSize);
 #endif
 }
 
@@ -104,13 +106,17 @@ static void commitStackMemoryForInitialThread(Address base, int pageSize) {
     alloca(s);
     volatile char *p = (volatile char *) base;
     p[0] = p[0];
-#elif os_SOLARIS
+#elif os_SOLARIS 
     /* Writing to the bottom page of the reserved stack (appears) to be sufficient on Solaris. */
     volatile char *p = (volatile char *) base;
     p[0] = p[0];
 #elif os_DARWIN
     /* Mac OS X appears to commit the whole stack. */
-#endif
+#elif os_WINDOWS // On Windows
+	//VirtualAlloc(base, pageSize,MEM_COMMIT,PAGE_READWRITE );
+		
+	
+	#endif
 }
 
 /**
@@ -123,9 +129,11 @@ static void commitStackMemoryForInitialThread(Address base, int pageSize) {
  * @param stackSize ignored if tlBlock != 0
  */
 Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
-    c_ASSERT(id != 0);
+
+	c_ASSERT(id != 0);
     const int s = tlaSize();
     const int tlaSize = s;
+
     const int pageSize = virtualMemory_getPageSize();
     const jboolean attaching = id < 0 || id == PRIMORDIAL_THREAD_ID;
     jboolean haveRedZone = false;
@@ -168,12 +176,12 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
 
     /* Clear each of the thread local spaces: */
     memset((void *) ttla, 0, tlaSize);
+
     memset((void *) etla, 0, tlaSize);
     memset((void *) dtla, 0, tlaSize);
 
     /* Clear the NativeThreadLocals: */
     memset((void *) ntl, 0, sizeof(NativeThreadLocalsStruct));
-
     ntl->handle = (Address) thread_self();
     ntl->stackBase = stackBase;
     ntl->stackSize = stackSize;
@@ -202,13 +210,13 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
 
         startGuardZone = ntl->redZone;
         guardZonePages = YELLOW_ZONE_PAGES + RED_ZONE_PAGES;
-
         if (id == PRIMORDIAL_THREAD_ID) {
             commitStackMemoryForInitialThread(ntl->stackBase, pageSize);
         }
     }
 
-    tla_store(etla, ETLA, etla);
+    tla_store(etla, ETLA, etla);	
+
     tla_store(etla, DTLA, dtla);
     tla_store(etla, TTLA, ttla);
 
@@ -264,8 +272,11 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
         maxve_initStack(ntl);
 #else
         virtualMemory_protectPages(startGuardZone, guardZonePages);
+			printf("vvvvvvv \n");
+
 #endif
     }
+	
     /* Protect the first page of the TL block (which contains the first word of the triggered thread locals) */
     virtualMemory_protectPages(tlBlock, 1);
 

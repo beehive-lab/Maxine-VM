@@ -49,6 +49,12 @@
 	#define sleep(a) Sleep(a * 1000)
 	#define strdup _strdup
 	char last_dl_error [100]; //emulating dlerror() function not available on Windows
+	char *dlerror(){
+	
+	
+		return last_dl_error;
+	}
+
 #endif
 
 
@@ -320,7 +326,7 @@ void debugger_initialize() {
 #if log_TELE
         log_println("Stopping VM for debugger");
 #endif
-#if os_DARWIN || os_LINUX || os_WINDOWS
+#if os_DARWIN || os_LINUX 
         kill(getpid(), SIGTRAP);
 #elif os_SOLARIS
         int ctlfd = open("/proc/self/ctl", O_WRONLY);
@@ -392,22 +398,18 @@ int maxine(int argc, char *argv[], char *executablePath) {
     tla_initialize(image_header()->tlaSize);
     debugger_initialize();
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
-
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
-#if os_WINDOWS
-char *dlerror(){
-	
-	
-	return last_dl_error;
-}
-#endif
 
 #if log_LOADER
     log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
                     tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
-    exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+	#if os_WINDOWS
+	printf("reached here \n");
+	#endif
+   exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);

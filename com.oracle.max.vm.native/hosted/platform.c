@@ -66,7 +66,7 @@ Java_com_sun_max_platform_Platform_nativeGetPageSize(JNIEnv *env, jclass c) {
 	#if os_WINDOWS
 		SYSTEM_INFO systemInfo = {0};
 		GetSystemInfo(&systemInfo);
-		return systemInfo.dwPageSize ; 
+		return systemInfo.dwAllocationGranularity ;  //Windows do not care about page alignment but about memory allocatio granularity
 		
 	#else
 		return (jint) sysconf(_SC_PAGESIZE);
