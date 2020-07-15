@@ -27,8 +27,11 @@ LIB = javatest
 
 include $(PROJECT)/platform/platform.mk
 
-SOURCES = jvmni.c tests.c threads.c jnitests.c jvm.c jni.c threadLocals.c image.c log.c virtualMemory.c mutex.c c.c trap.c time.c jmm.c jvmti.c relocation.c signal.c dataio.c
-
+ifeq ($(OS),windows)
+    SOURCES = jvmni.c tests.c threads.c jnitests.c jvm.c jni.c threadLocals.c image.c log.c virtualMemory.c mutex.c c.c trap.c time.c jmm.c jvmti.c relocation.c signal.c dataio.c
+else
+    SOURCES = jvmni.c tests.c threads.c jnitests.c
+endif	
 SOURCE_DIRS = javatest jni platform hosted share substrate
 
 include $(PROJECT)/share/share.mk

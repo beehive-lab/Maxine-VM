@@ -27,8 +27,13 @@
 # testing, inspecting (browsing, profiling and debugging) and running a Maxine VM.
 
 include platform/platform.mk
+ifeq ($(OS),windows)
+    all : hosted substrate launch  javatest 
+else
+    all : hosted substrate launch  javatest tele
 
-all : hosted substrate launch  javatest tele
+
+endif
 
 hosted : build/$(OS)/hosted/makefile
 	$(AT) (cd build/$(OS)/hosted; $(MAKE) all)

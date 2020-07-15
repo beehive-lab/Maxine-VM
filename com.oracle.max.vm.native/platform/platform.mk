@@ -55,8 +55,6 @@ ifneq ($(MAIN),)
     TARGET := LAUNCH
 endif
 
-OS := windows
-ISA := amd64
 # HOSTOS is the platform we are compiling on
 HOSTOS = $(shell uname -s)
 # TARGETOS is the platform we are compiling for (usually the same as HOSTOS)
@@ -157,6 +155,11 @@ endif
 ifeq ($(TARGETOS),WindowsNT)
     OS := windows
     ISA := amd64
+else
+    ifeq ($(findstring MINGW,$(TARGETOS)), MINGW)
+        OS := windows
+        ISA := amd64
+	endif
 endif
 
 # There are three variants for Maxine VE, owing to the 32/64 dom0 variants

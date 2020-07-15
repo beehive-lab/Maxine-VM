@@ -32,6 +32,10 @@ SOURCES = maxvm.c
 SOURCE_DIRS = jni platform share substrate launch
 
 include $(PROJECT)/platform/platform.mk
+ifeq ($(OS),windows)
+    MAIN = maxvm.exe #some cp implementations for windows require .exe at the end, while other work without it
+
+endif
 include $(PROJECT)/share/share.mk
 
 all : $(MAIN)
