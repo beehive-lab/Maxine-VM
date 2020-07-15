@@ -238,7 +238,7 @@ static void checkImage(void) {
         log_exit(2, "image has insufficient alignment - expected: %d, found: %d", MIN_CACHE_ALIGNMENT, theHeader->cacheAlignment);
     }
     if (theHeader->pageSize != (jint) virtualMemory_getPageSize()) {
-        //log_exit(2, "image has wrong page size - expected: %d, found: %d", virtualMemory_getPageSize(), theHeader->pageSize);
+        log_exit(2, "image has wrong page size - expected: %d, found: %d", virtualMemory_getPageSize(), theHeader->pageSize);
     }
 
     FOR_ALL_THREAD_LOCALS(CHECK_THREAD_LOCAL)
