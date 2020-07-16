@@ -448,7 +448,7 @@ static void relocate(int fd) {
     }
     n = read(fd, relocationData, theHeader->relocationDataSize);
     if (n != theHeader->relocationDataSize) {
-        log_exit(1, "could not read relocation data %d %d %d %d", n, theHeader->relocationDataSize, actualFileOffset, GetLastError());
+        log_exit(1, "could not read relocation data %d %d %d ", n, theHeader->relocationDataSize, actualFileOffset);
     }
 #else
     relocationData = (Byte*)(((char*)&maxvm_image_start) + wantedFileOffset);
@@ -493,7 +493,7 @@ if (open_img_result == INVALID_HANDLE_VALUE || !open_img_result)
     fd = open(imageFileName, _O_RDWR|_O_BINARY); //on windows, we use the image both as file handle (for executing) as well as a file descriptor (for reading)
 
 #else
-    fd = open(imageFileName, _O_RDWR); //on windows, we use the image both as file handle (for executing) as well as a file descriptor (for reading)
+    fd = open(imageFileName, O_RDWR); //on windows, we use the image both as file handle (for executing) as well as a file descriptor (for reading)
     
 #endif
 if (fd < 0) {
