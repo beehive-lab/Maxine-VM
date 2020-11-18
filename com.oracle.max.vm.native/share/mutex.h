@@ -35,8 +35,9 @@
 #elif os_MAXVE
 #   include <maxve.h>
     typedef maxve_monitor_t mutex_Struct;
+#elif os_WINDOWS
+typedef CRITICAL_SECTION  mutex_Struct;
 #endif
-
 typedef mutex_Struct *Mutex;
 
 extern void mutex_initialize(Mutex mutex);

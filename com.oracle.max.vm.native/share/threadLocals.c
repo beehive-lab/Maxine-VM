@@ -18,7 +18,16 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-#include <unistd.h>
+ #include "os.h"
+#if !os_WINDOWS
+	#include <unistd.h>
+#else
+	#include <windows.h>
+	#include <malloc.h>
+	#include <memory.h>
+
+	#define aligned_alloc(a, b) _aligned_malloc(b, a)
+#endif
 #include <stdlib.h>
 #include <string.h>
 
@@ -48,6 +57,9 @@
     typedef maxve_Thread Thread;
     typedef maxve_SpecificsKey ThreadLocalsKey;
     typedef void (*ThreadLocalsBlockDestructor)(void *);
+#elif os_WINDOWS
+    typedef DWORD ThreadLocalsKey;
+
 #endif
 
 int theTLASize = -1;
@@ -68,7 +80,7 @@ static Address allocateThreadLocalBlock(size_t tlBlockSize) {
 	return result;
 #else
 	c_ASSERT(tlBlockSize < 100000000);
-    return (Address) aligned_alloc(4096, tlBlockSize);
+    return (Address) aligned_alloc(virtualMemory_getPageSize(), tlBlockSize);
 #endif
 }
 
@@ -86,7 +98,7 @@ static void deallocateThreadLocalBlock(Address tlBlock, Size tlBlockSize) {
  * lazily commit memory reserved for the initial thread's stack.
  */
 static void commitStackMemoryForInitialThread(Address base, int pageSize) {
-#if os_LINUX
+#if os_LINUX || os_WINDOWS
     /* Writing to the bottom page of the reserved stack (appears) not to be
      * sufficient on Linux. Using alloca() to allocate a chunk approximately
      * the size of the remaining stack seems to fix it. */
@@ -94,13 +106,17 @@ static void commitStackMemoryForInitialThread(Address base, int pageSize) {
     alloca(s);
     volatile char *p = (volatile char *) base;
     p[0] = p[0];
-#elif os_SOLARIS
+#elif os_SOLARIS 
     /* Writing to the bottom page of the reserved stack (appears) to be sufficient on Solaris. */
     volatile char *p = (volatile char *) base;
     p[0] = p[0];
 #elif os_DARWIN
     /* Mac OS X appears to commit the whole stack. */
-#endif
+#elif os_WINDOWS // On Windows
+	//VirtualAlloc(base, pageSize,MEM_COMMIT,PAGE_READWRITE );
+		
+	
+	#endif
 }
 
 /**
@@ -113,9 +129,11 @@ static void commitStackMemoryForInitialThread(Address base, int pageSize) {
  * @param stackSize ignored if tlBlock != 0
  */
 Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
-    c_ASSERT(id != 0);
+
+	c_ASSERT(id != 0);
     const int s = tlaSize();
     const int tlaSize = s;
+
     const int pageSize = virtualMemory_getPageSize();
     const jboolean attaching = id < 0 || id == PRIMORDIAL_THREAD_ID;
     jboolean haveRedZone = false;
@@ -158,12 +176,12 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
 
     /* Clear each of the thread local spaces: */
     memset((void *) ttla, 0, tlaSize);
+
     memset((void *) etla, 0, tlaSize);
     memset((void *) dtla, 0, tlaSize);
 
     /* Clear the NativeThreadLocals: */
     memset((void *) ntl, 0, sizeof(NativeThreadLocalsStruct));
-
     ntl->handle = (Address) thread_self();
     ntl->stackBase = stackBase;
     ntl->stackSize = stackSize;
@@ -192,13 +210,13 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
 
         startGuardZone = ntl->redZone;
         guardZonePages = YELLOW_ZONE_PAGES + RED_ZONE_PAGES;
-
         if (id == PRIMORDIAL_THREAD_ID) {
             commitStackMemoryForInitialThread(ntl->stackBase, pageSize);
         }
     }
 
-    tla_store(etla, ETLA, etla);
+    tla_store(etla, ETLA, etla);	
+
     tla_store(etla, DTLA, dtla);
     tla_store(etla, TTLA, ttla);
 
@@ -254,8 +272,11 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
         maxve_initStack(ntl);
 #else
         virtualMemory_protectPages(startGuardZone, guardZonePages);
+			printf("vvvvvvv \n");
+
 #endif
     }
+	
     /* Protect the first page of the TL block (which contains the first word of the triggered thread locals) */
     virtualMemory_protectPages(tlBlock, 1);
 
@@ -347,7 +368,7 @@ void threadLocalsBlock_destroy(Address tlBlock) {
 void tla_initialize(int tlaSize) {
     theTLASize = tlaSize;
 #if !TELE
-#if os_DARWIN || os_LINUX
+#if os_DARWIN || os_LINUX 
     int error = pthread_key_create(&theThreadLocalsKey, (ThreadLocalsBlockDestructor)(void *) threadLocalsBlock_destroy);
     #if log_THREADS
         log_println("tla_initialize: pthread_key_create returned code = %d", error);
@@ -355,6 +376,8 @@ void tla_initialize(int tlaSize) {
     if (error != 0) {
         log_exit(-1, "tla_initialize: pthread_key_create returned non zero code = %d", error);
     }
+#elif os_WINDOWS
+	theThreadLocalsKey = TlsAlloc();
 #elif os_SOLARIS
     thr_keycreate(&theThreadLocalsKey, (ThreadLocalsBlockDestructor) threadLocalsBlock_destroy);
 #elif os_MAXVE
@@ -368,7 +391,7 @@ void tla_initialize(int tlaSize) {
 
 Address threadLocalsBlock_current() {
     Address tlBlock;
-#if os_DARWIN || os_LINUX
+#if os_DARWIN || os_LINUX 
     tlBlock = (Address) pthread_getspecific(theThreadLocalsKey);
 #elif os_SOLARIS
     Address value;
@@ -379,6 +402,8 @@ Address threadLocalsBlock_current() {
     tlBlock = value;
 #elif os_MAXVE
     tlBlock = (Address) maxve_thread_getSpecific(theThreadLocalsKey);
+#elif os_WINDOWS
+	tlBlock  = (Address) TlsGetValue(theThreadLocalsKey);
 #else
     c_UNIMPLEMENTED();
 #endif
@@ -386,12 +411,14 @@ Address threadLocalsBlock_current() {
 }
 
 void threadLocalsBlock_setCurrent(Address tlBlock) {
-#if (os_DARWIN || os_LINUX)
+#if (os_DARWIN || os_LINUX )
     pthread_setspecific(theThreadLocalsKey, (void *) tlBlock);
 #elif os_SOLARIS
     thr_setspecific(theThreadLocalsKey, (void *) tlBlock);
 #elif os_MAXVE
     maxve_thread_setSpecific(theThreadLocalsKey, (void *) tlBlock);
+#elif os_WINDOWS
+	TlsSetValue(theThreadLocalsKey, (LPVOID) tlBlock);
 #endif
 }
 

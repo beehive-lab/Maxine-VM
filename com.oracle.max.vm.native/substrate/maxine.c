@@ -26,34 +26,66 @@
  * hands control over to the VM's compiled code, which has been written in Java,
  * by calling a VM entry point as a C function.
  */
-#include <dlfcn.h>
+ #include "os.h"
+
+ #if !os_WINDOWS
+	#include <dlfcn.h>
+	#include <unistd.h>
+	#include <alloca.h>
+	#include <sys/param.h>
+	#include <sys/resource.h>
+	#include <sys/stat.h>
+	#include <pwd.h>
+#else
+	#ifdef _WIN32_WINNT
+	#undef _WIN32_WINNT 
+	#endif
+	#define _WIN32_WINNT 0x0600 //needed for tools like MINGW which declare an earlier version of Windows making some features of win32 api unavailable. Visual Studio might not need this.
+	#include <windows.h>
+	#include <initguid.h>
+	#include <KnownFolders.h>
+	#include <ShlObj.h>
+	#include <signal.h>
+	#define sleep(a) Sleep(a * 1000)
+	#define strdup _strdup
+	char last_dl_error [100]; //emulating dlerror() function not available on Windows
+	char *dlerror(){
+	
+	
+		return last_dl_error;
+	}
+
+#endif
+
+
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <alloca.h>
+
 #include <errno.h>
-#include <pwd.h>
 #include <time.h>
-#include <sys/param.h>
-#include <sys/resource.h>
-#include <sys/stat.h>
+
 #include <math.h>
 #include "log.h"
 #include "isa.h"
 #include "image.h"
 #include "threads.h"
-#include "os.h"
 #include "vm.h"
 #include "virtualMemory.h"
 #include "maxine.h"
 #include <fenv.h>
 
+
+
+
+
 #if os_MAXVE
 #include "maxve.h"
 #endif
 
-#ifdef arm
+#ifdef arm 
+#if !os_WINDOWS
 #include <pthread.h>
+#endif
 #endif
 
 
@@ -76,7 +108,10 @@ static void max_fd_limit() {
             log_println("setrlimit failed");
         }
     }
+#elif os_WINDOWS
+	_setmaxstdio(16777216); //windows support setting the max number of fds but they do not have a global max defined. That numer is the theoeretical max fo 64 bit machines
 #endif
+
 }
 
 #define IMAGE_FILE_NAME  "maxine.vm"
@@ -96,15 +131,18 @@ static void getExecutablePath(char *result) {
 #elif os_MAXVE
     result[0] = 0;
     return;
-#elif os_LINUX
+#elif os_LINUX 
     char *linkName = "/proc/self/exe";
 #elif os_SOLARIS
     char *linkName = "/proc/self/path/a.out";
+#elif os_WINDOWS
+	
+	 int numberOfChars = GetModuleFileNameA(NULL,result, MAX_PATH_LENGTH);
 #else
 #   error getExecutablePath() not supported on other platforms yet
 #endif
 
-#if os_LINUX || os_SOLARIS
+#if os_LINUX || os_SOLARIS 
     // read the symbolic link to figure out what the executable is.
     int numberOfChars = readlink(linkName, result, MAX_PATH_LENGTH);
     if (numberOfChars < 0) {
@@ -116,7 +154,11 @@ static void getExecutablePath(char *result) {
     char *p;
     // chop off the name of the executable
     for (p = result + (numberOfChars - 1); p >= result; p--) {
+		#if os_WINDOWS
+		 if (*p == '\\') {
+		#else
         if (*p == '/') {
+		#endif
             p[1] = 0;
             break;
         }
@@ -146,7 +188,14 @@ static void *openLibrary(char *path) {
         log_println("openLibrary(\"%s\")", path);
     }
 #endif
+#if !os_WINDOWS
     void *result = dlopen(path, RTLD_LAZY);
+#else
+	void *result = LoadLibraryA(path);
+	 if (result==NULL) {
+       sprintf(last_dl_error, "dl function : LoadLibraryA error code : %lu", GetLastError ());
+    }
+#endif
 #if log_LINKER
     char* errorMessage = dlerror();
     if (path == NULL) {
@@ -162,8 +211,16 @@ static void *openLibrary(char *path) {
 }
 
 static void* loadSymbol(void* handle, const char* symbol) {
+	#if os_WINDOWS
+	void* result = GetProcAddress(handle, symbol);
+	if (!result) {
+       sprintf(last_dl_error, "dl function : GetProcAddress error code : %lu", GetLastError ());
+
+    }
+	#else
     void* result = dlsym(handle, symbol);
-#if log_LINKER
+	#endif
+#if log_LINKER //NOT IMPLEMENTED FOR WINDOWS, you can get info using the dlerror() function we defined
 #if os_MAXVE
     log_println("loadSymbol(%p, \"%s\") = %p", handle, symbol, result);
 #else
@@ -183,7 +240,7 @@ static void* loadSymbol(void* handle, const char* symbol) {
     return result;
 }
 
-#if os_DARWIN || os_SOLARIS || os_LINUX
+#if os_DARWIN || os_SOLARIS || os_LINUX  
 
 #include <netinet/in.h>
 #include <netdb.h>
@@ -194,7 +251,7 @@ static void* loadSymbol(void* handle, const char* symbol) {
 
 #if os_DARWIN
 #include <crt_externs.h>
-#elif os_LINUX
+#elif os_LINUX 
 #include <sys/prctl.h>
 #elif os_SOLARIS
 #define _STRUCTURED_PROC 1 /* Use new definitions in procfs.h instead of those in procfs_old.h */
@@ -215,7 +272,7 @@ void debugger_initialize() {
     char *port = getenv("MAX_AGENT_PORT");
     if (port != NULL) {
 
-#if os_LINUX && defined(PR_SET_PTRACER)
+#if (os_LINUX ) && defined(PR_SET_PTRACER)
         /* See info about PR_SET_PTRACER at https://wiki.ubuntu.com/Security/Features#ptrace */
         char *val = getenv("MAX_AGENT_PID");
         if (val == NULL) {
@@ -269,7 +326,7 @@ void debugger_initialize() {
 #if log_TELE
         log_println("Stopping VM for debugger");
 #endif
-#if os_DARWIN || os_LINUX
+#if os_DARWIN || os_LINUX 
         kill(getpid(), SIGTRAP);
 #elif os_SOLARIS
         int ctlfd = open("/proc/self/ctl", O_WRONLY);
@@ -284,7 +341,7 @@ void debugger_initialize() {
     }
 }
 #else
-#define debugger_initialize()
+#define debugger_initialize() //not implemented for WINDOWS
 #endif
 
 /**
@@ -293,6 +350,9 @@ void debugger_initialize() {
 typedef jint (*VMRunMethod)(Address tlBlock, int tlBlockSize, Address bootHeapRegionStart, void *openLibrary(char *), void *dlsym(void *, const char *), char *dlerror(void),
 			    void* vmInterface, JNIEnv jniEnv, void *jmmInterface, void *jvmtiInterface, int argc, char *argv[]);
 
+#if  os_WINDOWS
+__declspec(dllexport)
+#endif
 int maxine(int argc, char *argv[], char *executablePath) {
     VMRunMethod method;
     int exitCode = 0;
@@ -338,7 +398,6 @@ int maxine(int argc, char *argv[], char *executablePath) {
     tla_initialize(image_header()->tlaSize);
     debugger_initialize();
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
-
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
@@ -346,7 +405,11 @@ int maxine(int argc, char *argv[], char *executablePath) {
     log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
                     tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
-    exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+	#if os_WINDOWS
+	printf("reached here \n");
+	#endif
+   exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
@@ -405,8 +468,12 @@ void core_dump() {
     log_print("dumping core....\n  heap @ ");
     log_print_symbol(image_heap());
     log_print_newline();
+	#if os_WINDOWS
+		raise(SIGABRT);
+	#else
     // Use kill instead of abort so the vm process keeps running after the core is created.
     kill(getpid(), SIGABRT);
+	#endif
     sleep(3);
 #endif
 }
@@ -444,6 +511,23 @@ void *native_properties(void) {
     }
 #if os_MAXVE
     maxve_native_props(&nativeProperties);
+#elif os_WINDOWS
+	
+	nativeProperties.user_name = malloc(MAX_PATH_LENGTH);
+		nativeProperties.user_dir = malloc(MAX_PATH_LENGTH);
+		nativeProperties.user_home = malloc(MAX_PATH_LENGTH);
+
+	DWORD size = MAX_PATH_LENGTH;
+	GetUserNameA(nativeProperties.user_name, &size);
+	size = MAX_PATH_LENGTH;
+	char * tmp;
+	SHGetKnownFolderPath(&FOLDERID_Profile, 0, NULL, (WCHAR **) &tmp);	//Unfortunately, windows return home dir only in Unicode (Wide) format, not ANSI
+	nativeProperties.user_home = (char*) _wcsdup((const wchar_t * ) tmp);
+      CoTaskMemFree(tmp); //SHGetKnownFolderPath allocated that space and it is our responsibility to free it
+	GetCurrentDirectory(MAX_PATH_LENGTH, nativeProperties.user_dir);
+//CAUTION nativeProperties.user_home  contains the path in Unicode format so it cannot be printed with %s but rather with %ls using printf
+  
+	
 #else
     /* user properties */
     {

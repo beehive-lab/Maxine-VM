@@ -215,6 +215,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
             case LINUX:
             case MAXVE:
             case DARWIN:
+			case WINDOWS:
             case SOLARIS: {
                 // If you change this for any platform above, you may also want to revisit reservedVirtualSpaceSize,
                 // bootRegionMappingConstraint and the native implementation of mapHeapAndCode.

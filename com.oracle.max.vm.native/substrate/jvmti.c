@@ -18,7 +18,15 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+#include "os.h"
+#if os_WINDOWS
+#ifdef _WIN32_WINNT
+#undef _WIN32_WINNT
+#endif
+#define _WIN32_WINNT 0x0600   // needed for tools like MINGW in order to use condition variables which became available from Windows Vista and on. Visual Studio might define it on its own
+#include <windows.h>
 
+#endif
 #include <stdlib.h>
 #include <jvmti.h>
 #include <jni.h>
@@ -28,7 +36,7 @@
 
 // (cwi): Java 7 added a new JVMTI function, so it is necessary to distinguish between Java 6 and Java 7.
 // This is the only #define that I found in the header files that allows this distinction.
-#if os_LINUX || os_SOLARIS
+#if os_LINUX || os_SOLARIS || os_WINDOWS
 #include <classfile_constants.h>
 #endif
 

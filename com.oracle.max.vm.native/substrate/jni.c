@@ -26,7 +26,10 @@
  * arguments in such an array. This isolates the implementation of such functions
  * from the platform/compiler dependent way in which varargs are implemented.
  */
-#include <alloca.h>
+#include "os.h"
+#if os_WINDOWS
+#include <windows.h>
+#endif
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -37,7 +40,9 @@
 #include "threads.h"
 
 #include "vm.h"
-
+#if !os_WINDOWS
+#include <alloca.h>
+#endif
 #ifndef  JNI_VERSION_1_6
 #error The version of jni.h being included must define the JNI_VERSION_1_6 macro
 #endif
@@ -808,11 +813,15 @@ jint JNICALL jni_GetEnv(JavaVM *javaVM, void **penv, jint version) {
         return JNI_OK;
     }
 }
-
+#if os_WINDOWS
+__declspec( dllimport ) 
+#endif
 jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, void *args) {
     return c_UNIMPLEMENTED();
 }
-
+#if os_WINDOWS
+__declspec( dllimport ) 
+#endif
 jint JNICALL jni_DestroyJavaVM(JavaVM *vm) {
     return c_UNIMPLEMENTED();
 }
@@ -829,7 +838,9 @@ jint JNICALL jni_AttachCurrentThreadAsDaemon(JavaVM *vm, void **penv, void *args
 jint JNICALL jni_DetachCurrentThread(JavaVM *vm) {
     return thread_detachCurrent();
 }
-
+#if os_WINDOWS
+__declspec( dllimport ) 
+#endif
 jint JNICALL JNI_GetDefaultJavaVMInitArgs(void *args_) {
     return c_UNIMPLEMENTED();
 }
@@ -857,7 +868,7 @@ JNIEXPORT jint JNICALL JNI_GetCreatedJavaVMs_Impl(JavaVM **vm, jsize vmBufLen, j
     return JNI_OK;
 }
 
-JNIEXPORT jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vm, jsize vmBufLen, jsize *nVMs) {
+JNIEXPORT jint JNICALL __imp_JNI_GetCreatedJavaVMs(JavaVM **vm, jsize vmBufLen, jsize *nVMs) {
     return JNI_GetCreatedJavaVMs_Impl(vm, vmBufLen, nVMs);
 }
 

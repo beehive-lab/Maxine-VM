@@ -20,10 +20,15 @@
  */
 #include "os.h"
 
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+#if !os_WINDOWS
+	#include <unistd.h>
+#else
+	#include <windows.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -259,6 +264,7 @@ static void checkTrailer(int fd) {
     if (fileSize != expectedFileSize) {
         log_exit(2, "wrong image file size: expected %u bytes, read %u", expectedFileSize,  fileSize);
     }
+
     offset = lseek(fd, trailerOffset, SEEK_SET);
     if (offset != trailerOffset) {
         log_exit(1, "could not set trailer position in file");
@@ -277,7 +283,7 @@ static void checkTrailer(int fd) {
     if (trailerStructPtr->identification != theHeader->identification || trailerStructPtr->bootImageFormatVersion != theHeader->bootImageFormatVersion || trailerStructPtr->randomID != theHeader->randomID) {
         log_println("inconsistent trailer");
 #if !MEMORY_IMAGE
-        offset = lseek(fd, -sizeof(trailerStruct), SEEK_END);
+        offset = lseek(fd, (long int)-sizeof(trailerStruct), SEEK_END);
         if (offset != fileSize - (off_t) sizeof(trailerStruct)) {
             log_exit(1, "could not set trailer position at end of file");
         }
@@ -294,17 +300,15 @@ static void checkTrailer(int fd) {
         exit(2);
     }
 }
+#if os_WINDOWS
 
-static void mapHeapAndCode(int fd) {
-    int heapOffsetInImage = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
+static void mapHeapAndCode_winHandle(HANDLE open_img_result){
+	 int heapOffsetInImage = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
     int heapAndCodeSize = theHeader->heapSize + theHeader->codeSize;
     c_ASSERT(virtualMemory_pageAlign((Size) heapAndCodeSize) == (Size) heapAndCodeSize);
-#if log_LOADER
-    log_println("image.mapHeapAndCode");
-#endif
-#if MEMORY_IMAGE
-    theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
-#elif os_SOLARIS || os_DARWIN || os_LINUX
+
+
+
     Address reservedVirtualSpace = (Address) 0;
     size_t virtualSpaceSize = 1024L * theHeader->reservedVirtualSpaceSize;
     c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
@@ -332,8 +336,69 @@ static void mapHeapAndCode(int fd) {
             log_exit(4, "could not reserve virtual space for boot image");
         }
     }
-    if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
-        log_exit(4, "could not map boot image");
+		virtualMemory_deallocate(theHeap,heapAndCodeSize, MEM_RELEASE  ); //windows cannot map twice before freeing. However, we need the first map in order to get a validbase address (correctly aligned) for the second map
+  
+  HANDLE fmapping = CreateFileMappingA( open_img_result  , NULL , PAGE_EXECUTE_READWRITE| SEC_COMMIT  ,0u ,0,   NULL);
+	if(!fmapping)
+					log_println("ss %d\n", GetLastError());
+	Address result = (Address) MapViewOfFileEx (fmapping,   FILE_MAP_READ | FILE_MAP_WRITE | FILE_MAP_EXECUTE |FILE_MAP_COPY,   (DWORD)((Size)heapOffsetInImage >> 32), (DWORD) heapOffsetInImage,   heapAndCodeSize,(LPVOID) theHeap);
+	
+	if(!result)
+		log_println("error %d\n", GetLastError());
+
+    if (reservedVirtualSpace) {
+        Address *addr = image_offset_as_address(Address *, reservedVirtualSpaceFieldOffset);
+        *addr = reservedVirtualSpace;
+    }
+
+    theCode = theHeap + theHeader->heapSize;
+    theCodeEnd = theCode + theHeader->codeSize;
+
+}
+#endif
+static void mapHeapAndCode(int fd) {
+    int heapOffsetInImage = virtualMemory_pageAlign(sizeof(struct image_Header) + theHeader->stringDataSize + theHeader->relocationDataSize);
+    int heapAndCodeSize = theHeader->heapSize + theHeader->codeSize;
+    c_ASSERT(virtualMemory_pageAlign((Size) heapAndCodeSize) == (Size) heapAndCodeSize);
+#if log_LOADER
+    log_println("image.mapHeapAndCode");
+#endif
+#if MEMORY_IMAGE
+    theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
+#elif os_SOLARIS || os_DARWIN || os_LINUX || os_WINDOWS
+    Address reservedVirtualSpace = (Address) 0;
+    size_t virtualSpaceSize = 1024L * theHeader->reservedVirtualSpaceSize;
+    c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
+    if (virtualSpaceSize != 0) {
+        // VM configuration asks for reserving an address space of size reservedVirtualSpaceSize.
+        // The following will create a mapping in virtual space of the requested size.
+        // The address returned might subsequently be used to memory map various regions, including the
+        // boot heap region, automatically splitting this mapping.
+        // In any case,  the VM (mostly the heap scheme) is responsible for releasing unused reserved space.
+        reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
+        if (reservedVirtualSpace == ALLOC_FAILED) {
+            log_exit(4, "could not reserve requested virtual space");
+        }
+    }
+    if (theHeader->bootRegionMappingConstraint == 1) {
+        // Map the boot heap region at the start of the reserved space
+        theHeap = reservedVirtualSpace;
+    } else if (theHeader->bootRegionMappingConstraint == 2) {
+        // Map the boot heap region at the end of the reserved space. The start of the boot heap region is page-aligned.
+        theHeap = reservedVirtualSpace + virtualSpaceSize - heapAndCodeSize;
+    } else {
+        // Map the boot heap region anywhere outside of the reserved space.
+        theHeap = virtualMemory_allocatePrivateAnon((Address) 0, heapAndCodeSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
+        if (theHeap == ALLOC_FAILED) {
+            log_exit(4, "could not reserve virtual space for boot image");
+        }
+    }
+	   #if os_WINDOWS
+		virtualMemory_deallocate(theHeap,heapAndCodeSize, MEM_RELEASE  ); //windows cannot map twice before freeing. However, we need the first map in order to get a validbase address (correctly aligned) for the second map
+		#endif
+    if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) { //CAUTION on Windows, the Base Address must be a multiple of dwAllocationGranularity else mapping fails (UNTESTED since no image file is availabe)
+     
+		log_exit(4, "could not map boot image");
     }
     if (reservedVirtualSpace) {
         Address *addr = image_offset_as_address(Address *, reservedVirtualSpaceFieldOffset);
@@ -383,7 +448,7 @@ static void relocate(int fd) {
     }
     n = read(fd, relocationData, theHeader->relocationDataSize);
     if (n != theHeader->relocationDataSize) {
-        log_exit(1, "could not read relocation data");
+        log_exit(1, "could not read relocation data %d %d %d ", n, theHeader->relocationDataSize, actualFileOffset);
     }
 #else
     relocationData = (Byte*)(((char*)&maxvm_image_start) + wantedFileOffset);
@@ -413,21 +478,46 @@ void image_load(char *imageFileName) {
 #if log_LOADER
     log_println("reading image from %s", imageFileName);
 #endif
-    fd = open(imageFileName, O_RDWR);
-    if (fd < 0) {
+#if os_WINDOWS
+HANDLE open_img_result = CreateFileA(
+  imageFileName ,
+  GENERIC_READ | GENERIC_WRITE|GENERIC_EXECUTE ,
+  FILE_SHARE_WRITE | FILE_SHARE_READ,
+  NULL,
+  OPEN_EXISTING,
+  FILE_ATTRIBUTE_NORMAL,
+  NULL
+);
+if (open_img_result == INVALID_HANDLE_VALUE || !open_img_result)
+	        log_exit(1, "could not open image file: %s %d", imageFileName, GetLastError());
+    fd = open(imageFileName, _O_RDWR|_O_BINARY); //on windows, we use the image both as file handle (for executing) as well as a file descriptor (for reading)
+
+#else
+    fd = open(imageFileName, O_RDWR); //on windows, we use the image both as file handle (for executing) as well as a file descriptor (for reading)
+    
+#endif
+if (fd < 0) {
         log_exit(1, "could not open image file: %s", imageFileName);
     }
 #endif
 
-    readHeader(fd);
+    readHeader(fd); 
     checkImage();
     readStringInfo(fd);
     checkTrailer(fd);
+	#if os_WINDOWS
+	//_close(fd);
+	mapHeapAndCode_winHandle( open_img_result);
+	    //mapHeapAndCode(fd);
+
+	#else
     mapHeapAndCode(fd);
+	#endif
 #if log_LOADER
     log_println("code @%p codeEnd @%p heap @%p", theCode, theCodeEnd, theHeap);
 #endif
     relocate(fd);
+
 #if log_LOADER
     log_println("code @%p codeEnd @%p heap @%p", theCode, theCodeEnd, theHeap);
 #endif
